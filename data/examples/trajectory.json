@@ -1,0 +1,42 @@
+{
+  "schema": "trajectory/1",
+  "joint_names": [
+    "left_shoulder_pitch",
+    "left_shoulder_roll",
+    "left_elbow",
+    "right_shoulder_pitch",
+    "right_shoulder_roll",
+    "right_elbow"
+  ],
+  "times": [
+    0.0,
+    1.0,
+    2.0
+  ],
+  "positions": [
+    [
+      0.17,
+      0.17,
+      -0.35,
+      0.17,
+      -0.17,
+      -0.35
+    ],
+    [
+      0.17,
+      0.17,
+      -0.35,
+      1.2,
+      -0.17,
+      -0.6
+    ],
+    [
+      1.2,
+      0.17,
+      -0.6,
+      1.2,
+      -0.17,
+      -0.6
+    ]
+  ]
+}

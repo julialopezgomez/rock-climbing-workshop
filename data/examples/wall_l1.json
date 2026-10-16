@@ -1,0 +1,87 @@
+{
+  "schema": "wall/1",
+  "id": "example_l1",
+  "level": 1,
+  "holds": [
+    {
+      "id": "L0",
+      "position": [
+        0.3175,
+        0.0,
+        0.16
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L1",
+      "position": [
+        0.3175,
+        0.0,
+        0.31
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L2",
+      "position": [
+        0.3175,
+        0.0,
+        0.46
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L3",
+      "position": [
+        0.3175,
+        0.0,
+        0.61
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R0",
+      "position": [
+        0.4825,
+        0.0,
+        0.16
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R1",
+      "position": [
+        0.4825,
+        0.0,
+        0.31
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R2",
+      "position": [
+        0.4825,
+        0.0,
+        0.46
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R3",
+      "position": [
+        0.4825,
+        0.0,
+        0.61
+      ],
+      "kind": "unknown"
+    }
+  ],
+  "start": {
+    "contacts": {
+      "right_hand": "R2",
+      "left_hand": "L2",
+      "right_foot": "R0",
+      "left_foot": "L0"
+    }
+  }
+}

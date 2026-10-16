@@ -1,0 +1,30 @@
+{
+  "schema": "contact_plan/1",
+  "wall_id": "example_l1",
+  "stances": [
+    {
+      "contacts": {
+        "right_hand": "R2",
+        "left_hand": "L2",
+        "right_foot": "R0",
+        "left_foot": "L0"
+      }
+    },
+    {
+      "contacts": {
+        "right_hand": "R3",
+        "left_hand": "L2",
+        "right_foot": "R0",
+        "left_foot": "L0"
+      }
+    },
+    {
+      "contacts": {
+        "right_hand": "R3",
+        "left_hand": "L3",
+        "right_foot": "R0",
+        "left_foot": "L0"
+      }
+    }
+  ]
+}
