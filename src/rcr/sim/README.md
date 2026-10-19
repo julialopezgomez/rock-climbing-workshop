@@ -49,3 +49,65 @@ are untouched. If its interface differs (e.g. it owns the loop), a thin adapter 
 - The grip model v0.
 - The camera placement.
 - Whether `Sim` also exposes rendered images (`images()`) for perception. Add it when perception needs it.
+
+## v0, implemented (prep fork)
+
+Built with `MjSpec` from the Microban model, so the clone stays untouched and the generated XML
+(`build/scene.xml`, plus `build/robot_climb.xml` for placo) is a one-path swap for the official sim.
+
+- **Wall** — the M3 grid is a generated texture, not 4929 hole geoms; the board uses stiff contact
+  (`solref 0.002`), because MuJoCo's default lets the robot sink ~10 mm into it.
+- **Holds** — `CupHold` in `geometry.py`, shape in `meshes.CupShape`: a **trapezoidal backplate with a
+  full hemispherical bowl in front of its lower part, opening upwards** (side-on, frame 880), measured off a 10x crop of their
+  video (frame 520). Every MuJoCo primitive is solid, so plate and bowl are generated STL meshes;
+  that is fine because holds never collide with the robot. Theirs reaches ~31 mm below the bolt
+  line, just outside the Ø0.060 m envelope; ours is pushed to its edge (29.5 mm) — the orange cups in the organisers' render. Sizes were
+  measured off their video (`videos/compressed/microban_climb.mp4`, frame 0): board corners give a
+  homography, orange blobs give cup centres, and the hole grid gives the scale. A cup is about
+  40 × 30 mm, which fits the Ø0.060 × 0.100 m envelope. Holds sit on `contype/conaffinity 2`, so they
+  never collide with the robot: the weld *is* the grip.
+  **Discrepancy:** their plate looks wider than one pitch, so its two bolts cannot be in horizontally
+  adjacent holes as [Rules §4] requires. We follow the rules (0.015 m apart).
+- **Layout** — `levels.organisers_wall()` reproduces their wall: rows every 3 or 4 pitches
+  alternating (≈0.0525 m), one to four cups per row, scattered across columns 15–36
+  (x ≈ 0.24–0.56 m). Rows below j≈22 were behind the robot in that frame and follow the same
+  spacing and density. `levels.generate(1|2|3)` still gives the rulebook levels.
+- **Limbs** — `LimbTip`, read side-on from their video. Hands: past the end of the forearm, a
+  finger bent towards the wall *with the arm raised* (the climbing pose), ending in a grey ball
+  (frames 880–940). Feet: the stock foot plate with a ball just past the toe, in the plane of the
+  sole (frames 760, 920 — what looks like a bar beside the leg there is the plate seen edge-on).
+  The ball is what sits in a cup; the sim's tip site is its centre. Dimensions [Ours], read against
+  the forearm, until the climbing limbs are published [Rules §2.5].
+- **Actuators** — Microban's are `<motor>`, i.e. **torque**, not position servos; `data.ctrl` is N·m.
+  The scene clamps them to **0.64 N·m** (1.75 A × 0.366 N·m/A), which the stock XML leaves unset.
+  `ServoGains` then runs the P loop the real servos run.
+
+### Grip: `Sim.expect(stance)`
+Our contact model is a weld, so something must decide when a ball leaves a cup. **The caller says, the
+sim does not guess.** Inference was tried and does not work: constraint force is the wrong signal (four
+welds carry tens of newtons internally, a servo pulls with about six), and so is the commanded pose
+(it disagrees with the welded contacts by more than the signal). So whoever runs the loop calls
+`expect(stance)` when the plan moves on; capture still requires the ball to actually arrive within
+20 mm of the cup, slowly.
+
+### Measured
+- Four-limb hang: all limbs held, trunk drifts ~9 mm over 5 s, grip forces sum to the robot's weight
+  (8.27 N), peak torque ~20 % of the limit at rest.
+- All four ArUco markers detect from both cameras.
+
+### Using it
+`Sim(wall)` builds and compiles the scene and writes `build/scene.xml` (plus `build/robot_climb.xml`,
+a robot-only model, since placo needs a single kinematic tree). `reset()` is deliberately not
+implemented: it needs a pose for `wall.start`, which is kinematics, not simulation. Solve that, then
+`place(joints, base_pos, base_quat)` and `hold_start()`.
+
+### Worth knowing before writing the controller
+Playing joint angles open-loop will not place a limb accurately: the robot is a floating base in a
+closed chain, and with 0.64 N·m servos each limb sags ~15 mm, so the base ends up away from wherever
+the kinematics assumed. `RobotState.base_pose` is there for closing that loop.
+
+### Open
+- Four 3-DOF welds over-constrain the robot, so reported grip forces include large internal
+  components. Only the vertical sum is trustworthy.
+- A friction backend (ball resting in a cup, no weld) needs real limb geometry; it would also remove
+  the `contype 2` hack and `expect()`.
