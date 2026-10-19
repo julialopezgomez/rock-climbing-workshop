@@ -41,13 +41,14 @@ MICROBAN_XML = Path(
 # - hands: past the end of the forearm, then bent towards the wall *with the
 #   arm raised overhead* — the climbing pose. (Chosen with the arms hanging,
 #   the hook flips away from the wall once the arm is raised.)
-# - feet: the stock foot plate, with the ball just past the toe, in the plane
-#   of the sole — their frames 760 and 920.
+# - feet: the same J-hook on the stock foot plate: past the toe, then bent
+#   down out of the sole, so the ball drops into a cup from above and the
+#   plate stays clear of the rim [Ours]. (Foot frame: z to the toe, -y down.)
 LIMB_PARENTS = {
     "right_hand": ("radius", (0.0, -0.067, 0.0135), ((0.0, -1.0, 0.0), (1.0, 0.0, 0.0))),
     "left_hand": ("radius_2", (0.0, 0.067, -0.0135), ((0.0, 1.0, 0.0), (-1.0, 0.0, 0.0))),
-    "right_foot": ("foot", (0.0, -0.0217, 0.082), ((0.0, 0.0, 1.0),)),
-    "left_foot": ("foot_2", (0.0, -0.0217, 0.082), ((0.0, 0.0, 1.0),)),
+    "right_foot": ("foot", (0.0, -0.0217, 0.082), ((0.0, 0.0, 1.0), (0.0, -1.0, 0.0))),
+    "left_foot": ("foot_2", (0.0, -0.0217, 0.082), ((0.0, 0.0, 1.0), (0.0, -1.0, 0.0))),
 }
 
 SERVO_TORQUE_LIMIT = 0.64  # [N.m] 1.75 A x 0.366 N.m/A [Microban constants.py]
@@ -62,7 +63,7 @@ class SceneConfig:
     add_cameras: bool = True
     camera_distance: float = 1.5
     torque_limit: float = SERVO_TORQUE_LIMIT
-    robot_start: tuple[float, float, float] = (0.40, 0.14, 0.75)
+    robot_start: tuple[float, float, float] = (0.40, -0.14, 0.75)
 
 
 def pegboard_texture(path: Path, px_per_mm: int = 2) -> Path:
@@ -100,7 +101,7 @@ def _add_wall(spec: mujoco.MjSpec, wall: WallModel, cfg: SceneConfig, asset_dir:
     board.add_geom(
         name="wall_board",
         type=mujoco.mjtGeom.mjGEOM_BOX,
-        pos=[WALL_WIDTH / 2, -WALL_THICKNESS / 2, WALL_HEIGHT / 2],
+        pos=[WALL_WIDTH / 2, WALL_THICKNESS / 2, WALL_HEIGHT / 2],
         size=[WALL_WIDTH / 2, WALL_THICKNESS / 2, WALL_HEIGHT / 2],
         material="pegboard_mat",
         rgba=[0.95, 0.88, 0.75, 1.0],
@@ -129,7 +130,7 @@ def _add_wall(spec: mujoco.MjSpec, wall: WallModel, cfg: SceneConfig, asset_dir:
             board.add_geom(
                 name=f"marker_{mid}",
                 type=mujoco.mjtGeom.mjGEOM_BOX,
-                pos=[mx, 0.0005, mz],
+                pos=[mx, -0.0005, mz],
                 size=[mk.PLATE / 2, 0.0005, mk.PLATE / 2],
                 material=f"aruco_{mid}_mat",
                 contype=0,
@@ -149,7 +150,8 @@ def _add_cup(board, hold_id: str, x: float, z: float, cup: CupHold) -> None:
             name=f"hold_{hold_id}_{part}",
             type=mujoco.mjtGeom.mjGEOM_MESH,
             meshname=f"cup_{part}",
-            pos=[x, off_wall, z],
+            pos=[x, -off_wall, z],
+            quat=[0, 0, 0, 1],  # mesh y points out of the wall
             material=material,
             friction=[cup.friction, 0.005, 0.0001],
             contype=2,
@@ -159,7 +161,7 @@ def _add_cup(board, hold_id: str, x: float, z: float, cup: CupHold) -> None:
         board.add_geom(
             name=f"hold_{hold_id}_bolt{'lr'[sign > 0]}",
             type=mujoco.mjtGeom.mjGEOM_CYLINDER,
-            pos=[x + sign * cup.bolt_spacing / 2, cup.shape.plate_thickness + off_wall, z],
+            pos=[x + sign * cup.bolt_spacing / 2, -(cup.shape.plate_thickness + off_wall), z],
             size=[cup.bolt_radius, 0.0001, 0],
             euler=[np.pi / 2, 0, 0],
             rgba=[0.20, 0.20, 0.22, 1.0],
@@ -169,6 +171,11 @@ def _add_cup(board, hold_id: str, x: float, z: float, cup: CupHold) -> None:
 
 
 def _robot_spec(cfg: SceneConfig) -> mujoco.MjSpec:
+    if not MICROBAN_XML.exists():
+        raise FileNotFoundError(
+            f"Microban model not found at {MICROBAN_XML}: clone github.com/Rhoban/microban and "
+            "set MICROBAN_XML to its src/model/mjcf/robot.xml (see src/rcr/sim/README.md)"
+        )
     spec = mujoco.MjSpec.from_file(str(MICROBAN_XML))
     spec.meshdir = str((MICROBAN_XML.parent / "assets").resolve())
     grey = [0.62, 0.63, 0.66, 1.0]
@@ -178,7 +185,7 @@ def _robot_spec(cfg: SceneConfig) -> mujoco.MjSpec:
         if parent is None:
             raise ValueError(f"{parent_name} missing from {MICROBAN_XML}")
         body = parent.add_body(name=limb, pos=start)
-        lengths = (tip.reach, tip.hook) if "hand" in limb else (tip.toe,)
+        lengths = (tip.reach, tip.hook) if "hand" in limb else (tip.toe, tip.toe_hook)
         points = [np.zeros(3)]
         for direction, length in zip(path, lengths, strict=True):
             points.append(points[-1] + np.array(direction) * length)
@@ -241,8 +248,8 @@ def build_scene(
     spec.visual.headlight.ambient = [0.22, 0.22, 0.24]
     spec.visual.headlight.diffuse = [0.35, 0.35, 0.35]
     for pos, direction, shadow in (
-        ([WALL_WIDTH / 2 - 0.5, 1.6, 2.2], [0.2, -0.35, -1], True),
-        ([WALL_WIDTH / 2, 2.2, 0.8], [0, -1, -0.05], False),
+        ([WALL_WIDTH / 2 - 0.5, -1.6, 2.2], [0.2, 0.35, -1], True),
+        ([WALL_WIDTH / 2, -2.2, 0.8], [0, 1, -0.05], False),
     ):
         spec.worldbody.add_light(
             pos=pos,
@@ -269,7 +276,7 @@ def build_scene(
     spec.worldbody.add_geom(
         name="floor",
         type=mujoco.mjtGeom.mjGEOM_PLANE,
-        pos=[WALL_WIDTH / 2, 0.6, 0],
+        pos=[WALL_WIDTH / 2, -0.6, 0],
         size=[3, 3, 0.05],
         material="floor_mat",
     )
@@ -281,7 +288,7 @@ def build_scene(
         for name, side in (("cam_left", -1.0), ("cam_right", +1.0)):
             spec.worldbody.add_camera(
                 name=name,
-                pos=[WALL_WIDTH / 2 + side * 0.60, cfg.camera_distance, WALL_HEIGHT * 0.5],
+                pos=[WALL_WIDTH / 2 + side * 0.60, -cfg.camera_distance, WALL_HEIGHT * 0.5],
                 mode=mujoco.mjtCamLight.mjCAMLIGHT_TARGETBODY,
                 targetbody="wall_centre",
                 fovy=70.0,
@@ -309,6 +316,6 @@ def build_scene(
 
 
 def _facing_wall() -> list[float]:
-    """Microban's front is +x in its own frame; the wall is at -y here."""
-    half = -np.pi / 4
+    """Microban's front is +x in its own frame; the wall is at +y here."""
+    half = np.pi / 4
     return [float(np.cos(half)), 0.0, 0.0, float(np.sin(half))]

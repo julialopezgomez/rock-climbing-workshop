@@ -1,7 +1,7 @@
 """The contracts between modules. INTERFACES.md is the documentation of record for this file.
 
 Units are SI (m, s, rad). Wall frame [Ours]: origin at the bottom-left corner of the wall face,
-x to the right, z up, y out of the wall (towards the robot / cameras).
+x to the right, z up (seen from the front), y into the wall: the robot is at y < 0. Right-handed.
 
 Fields marked CHANGE are expected to change; change them only together with INTERFACES.md,
 the examples in data/examples/ and the tests (see CLAUDE.md).

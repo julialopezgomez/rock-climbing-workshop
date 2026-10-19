@@ -34,7 +34,7 @@ CI runs all of these. Keep `main` green.
 - **The controller does not know its backend.** It sees `RobotState` in and `JointTargets` out, nothing else.
 - **Do not rewrite Microban's Move or Scheduler.** Wrap our controller as a Move (see `src/rcr/robot/README.md`).
 - **SI units and the wall frame** everywhere: m, s, rad. Origin at the bottom-left of the wall face, x right, z up,
-  y out of the wall. Quaternions are (w, x, y, z).
+  y into the wall (robot and cameras at y < 0; right-handed). Quaternions are (w, x, y, z).
 - **Keep it simple.** Use plain dataclasses and functions; no frameworks, no class hierarchies, few files. If something
   isn't needed yet, write a line in the module README instead of creating a file.
 - **Tag design choices** in docs and comments: **[Rules]** (from the rulebook, cite the section), **[Microban]**

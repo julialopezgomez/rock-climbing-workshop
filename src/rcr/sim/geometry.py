@@ -1,7 +1,7 @@
 """Wall, hold and end-effector geometry, in the wall frame.
 
 Wall frame [Ours, INTERFACES.md]: origin at the bottom-left corner of the wall
-face, x right, y out of the wall (towards the robot), z up. The MuJoCo world
+face, x right, z up, y into the wall (the robot is at y < 0). The MuJoCo world
 *is* this frame, so nothing converts coordinates.
 
 Shapes follow the organisers' own simulator video (images/microban_climb_poster.jpg
@@ -77,7 +77,7 @@ class CupHold:
         x, _, z = position
         s = self.shape
         bottom = z + s.bowl_rim - s.bowl_depth + s.wall
-        return (x, s.plate_thickness + s.bowl_radius * BOWL_STANDOFF, bottom + ball_radius)
+        return (x, -(s.plate_thickness + s.bowl_radius * BOWL_STANDOFF), bottom + ball_radius)
 
 
 @dataclass(frozen=True)
@@ -86,8 +86,9 @@ class LimbTip:
 
     Side-on (frames 880-940) each forearm ends in a short bent finger with a
     grey ball on the end, a J-hook pointing at the wall when the arm is
-    raised. The feet are the stock plate with a ball just past the toe
-    (frames 760, 920). The ball is what sits in a cup. Dimensions [Ours], read against the
+    raised. The feet carry the same hook past the toe, bent down out of the
+    sole, so the plate stays above the cup [Ours]. The ball is what sits in a
+    cup. Dimensions [Ours], read against the
     forearm (~0.020 m wide), and kept parametric until the climbing limbs are
     published [Rules §2.5].
     """
@@ -96,5 +97,6 @@ class LimbTip:
     finger_radius: float = 0.0045
     reach: float = 0.008  # straight on past the end of the link
     hook: float = 0.018  # then bent towards the wall
-    toe: float = 0.004  # foot: neck from the toe edge to the ball
+    toe: float = 0.006  # foot: straight on past the toe
+    toe_hook: float = 0.022  # then bent down, out of the sole
     mass: float = 0.008

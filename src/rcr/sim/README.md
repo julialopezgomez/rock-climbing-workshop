@@ -48,7 +48,6 @@ are untouched. If its interface differs (e.g. it owns the loop), a thin adapter 
 - Reuse Microban's sim code vs write our own (depends on D1).
 - The grip model v0.
 - The camera placement.
-- Whether `Sim` also exposes rendered images (`images()`) for perception. Add it when perception needs it.
 
 ## v0, implemented (prep fork)
 
@@ -74,8 +73,8 @@ Built with `MjSpec` from the Microban model, so the clone stays untouched and th
   spacing and density. `levels.generate(1|2|3)` still gives the rulebook levels.
 - **Limbs** — `LimbTip`, read side-on from their video. Hands: past the end of the forearm, a
   finger bent towards the wall *with the arm raised* (the climbing pose), ending in a grey ball
-  (frames 880–940). Feet: the stock foot plate with a ball just past the toe, in the plane of the
-  sole (frames 760, 920 — what looks like a bar beside the leg there is the plate seen edge-on).
+  (frames 880–940). Feet: the same hook on the stock foot plate, past the toe and bent down out of
+  the sole, so the ball drops into the cup and the plate stays above the rim [Ours].
   The ball is what sits in a cup; the sim's tip site is its centre. Dimensions [Ours], read against
   the forearm, until the climbing limbs are published [Rules §2.5].
 - **Actuators** — Microban's are `<motor>`, i.e. **torque**, not position servos; `data.ctrl` is N·m.
@@ -95,11 +94,39 @@ welds carry tens of newtons internally, a servo pulls with about six), and so is
   (8.27 N), peak torque ~20 % of the limit at rest.
 - All four ArUco markers detect from both cameras.
 
+### Setup
+```bash
+uv sync --group sim                       # mujoco + opencv
+git clone https://github.com/Rhoban/microban.git ~/Code/rock-climbing/microban   # until D1 decides
+export MICROBAN_XML=/path/to/microban/src/model/mjcf/robot.xml                    # if cloned elsewhere
+```
+Without either, `run_pipeline.py --check` reports the sim as `skip` and `tests/test_sim.py` skips (as on CI).
+
 ### Using it
-`Sim(wall)` builds and compiles the scene and writes `build/scene.xml` (plus `build/robot_climb.xml`,
-a robot-only model, since placo needs a single kinematic tree). `reset()` is deliberately not
-implemented: it needs a pose for `wall.start`, which is kinematics, not simulation. Solve that, then
-`place(joints, base_pos, base_quat)` and `hold_start()`.
+```python
+sim = Sim(wall)  # builds build/scene.xml (+ build/robot_climb.xml for placo)
+state = sim.reset()  # hanging on wall.start, settled, time = 0
+sim.expect(next_stance)  # when the plan moves on: the limb that changes lets go
+state = sim.step(JointTargets(...))  # one 20 ms tick; absent joints go to Microban's NEUTRAL_POSE
+sim.score  # Score(height, top_time) [Rules §8]
+sim.images()  # {"cam_left": rgb, "cam_right": rgb}
+```
+- `reset()` solves a start pose with a small IK (`start.py`) that puts each ball on its cup, the trunk
+  upright and facing the wall [Ours]. It raises if `wall.start` is unreachable.
+- `reset(stance)` hangs the robot on any `Stance` instead (free limbs = `None`), or raises if a ball
+  cannot reach its cup. `tests/test_sim.py` has a `STANCES` list to edit and `verify()`, which also
+  rejects a pose that hits the wall or itself (`wall_penetration`, `self_penetration`);
+  `uv run mjpython tests/test_sim.py stances` applies them one by one in the viewer.
+- `RobotState`: the IMU comes from Microban's IMU site sensors (`orientation`, `angular-velocity`);
+  `base_pose` is the trunk, i.e. what the cameras would give.
+- `step()` rejects joint names it does not know. The servo PD runs every 2 ms physics step.
+- **`tests/test_sim.py` is the one place to try it.** `uv run mjpython tests/test_sim.py [l1|l2|l3|organisers|file]`
+  opens the robot on a wall in the viewer (macOS needs `mjpython`); `uv run pytest tests/test_sim.py` runs
+  the checks. Its `run()` loop is where the controller plugs in later (`targets = controller.step(state)`).
+
+**Wall frame:** y points *into* the wall, so the robot and cameras are at y < 0. The earlier
+"y out of the wall" with x right and z up was left-handed, which MuJoCo rendered mirrored (marker 3 to
+the right of marker 4, and `right_hand` on the robot's left).
 
 ### Worth knowing before writing the controller
 Playing joint angles open-loop will not place a limb accurately: the robot is a floating base in a
@@ -107,6 +134,8 @@ closed chain, and with 0.64 N·m servos each limb sags ~15 mm, so the base ends 
 the kinematics assumed. `RobotState.base_pose` is there for closing that loop.
 
 ### Open
+- Not modelled yet: Microban's servo model (BAM) and its actuation/sensor delays (P2.3), a safety-rope
+  catch. Physics runs at 2 ms, not Microban's 5 ms.
 - Four 3-DOF welds over-constrain the robot, so reported grip forces include large internal
   components. Only the vertical sum is trustworthy.
 - A friction backend (ball resting in a cup, no weld) needs real limb geometry; it would also remove

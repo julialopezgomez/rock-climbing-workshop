@@ -8,7 +8,7 @@ dependencies = ["numpy"]
 
 [dependency-groups]
 # Filled in when the module that needs them gets a v0.
-sim = []        # e.g. mujoco, better-actuator-models (Microban's servo model)
+sim = ["mujoco>=3.16.0", "opencv-python>=5.0.0.93"]  # opencv: wall texture + ArUco plates
 perception = [] # e.g. opencv (ArUco)
 dev = ["pytest", "ruff"]
 

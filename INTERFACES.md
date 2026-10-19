@@ -13,7 +13,8 @@ marked **CHANGE** below are the ones we expect to change.
 - **Units:** SI everywhere: m, s, rad, rad/s. No mm and no degrees in code or files.
 - **Wall frame** [Ours]:
   - origin at the bottom-left corner of the wall face;
-  - **x** to the right, **z** up, **y** out of the wall (towards the robot and cameras).
+  - **x** to the right and **z** up, as seen from in front of the wall; **y** into the wall, so the robot and
+    cameras are at y < 0. Right-handed, so it is MuJoCo's world frame as is.
   - Wall: 0.800 m wide × 1.400 m high × 0.010 m thick [Rules §3].
 - **Grid** [Rules §3–4]:
   - M3 holes at a 0.015 m pitch with a 0.010 m border, so hole (i, j) is at x = 0.010 + 0.015·i, z = 0.010 + 0.015·j (i = 0..52, j = 0..92).

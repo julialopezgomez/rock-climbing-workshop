@@ -15,7 +15,7 @@ import typing
 from pathlib import Path
 from types import NoneType
 
-from rcr import controller, io, link, optimiser, perception, planner, sim
+from rcr import controller, io, link, optimiser, perception, planner
 from rcr.types import (
     MICROBAN_JOINTS,
     ContactPlan,
@@ -65,6 +65,17 @@ def stage(name: str, fn, expected, example, *args):
     return out, status
 
 
+def _sim(wall: WallModel):
+    """The sim backend, or None if this machine cannot build it (no --group sim, no Microban)."""
+    try:
+        from rcr import sim
+
+        return sim.Sim(wall)
+    except (ImportError, FileNotFoundError) as e:
+        print(f"  {'sim.Sim':<32} -> {'RobotState':<18} skip ({e})")
+        return None
+
+
 def check() -> int:
     wall_ex = io.load_wall(EXAMPLES / "wall_l1.json")
     plan_ex = io.load_contact_plan(EXAMPLES / "contact_plan.json")
@@ -105,11 +116,19 @@ def check() -> int:
     targets_ex = JointTargets(positions=first)
     targets, s = stage("controller.Controller.step", ctrl.step, JointTargets, targets_ex, state_ex)
     results.append(s)
-    backend = sim.Sim(wall)
-    _, s = stage("sim.Sim.step", backend.step, RobotState, state_ex, targets)
-    results.append(s)
+    backend = _sim(wall)
+    if backend is None:
+        results.append("skip")
+    else:
+        state, s = stage("sim.Sim.reset", backend.reset, RobotState, state_ex, wall.start)
+        results.append(s)
+        _, s = stage("sim.Sim.step", backend.step, RobotState, state, targets)
+        results.append(s)
 
-    print(f"check passed: {results.count('ok')} implemented, {results.count('stub')} stubs")
+    print(
+        f"check passed: {results.count('ok')} implemented, {results.count('stub')} stubs, "
+        f"{results.count('skip')} skipped"
+    )
     return 0
 
 

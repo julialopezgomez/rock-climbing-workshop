@@ -7,7 +7,8 @@ never collide with the robot), so MuJoCo's convex hull for contact does not
 matter.
 
 Hold-local frame: origin at the midpoint of the two bolts on the wall face,
-x right, y out of the wall, z up — the same axes as the wall frame.
+y out of the wall (towards the robot), z up. scene.py places it turned 180° about z,
+since the wall frame's y points into the wall; the cup is symmetric in x.
 """
 
 from __future__ import annotations
