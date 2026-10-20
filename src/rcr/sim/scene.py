@@ -25,7 +25,7 @@ from rcr.sim.geometry import (
     LimbTip,
     hole_xz,
 )
-from rcr.sim.meshes import cup_stls
+from rcr.sim.meshes import HOLD_STL_SCALE
 from rcr.types import WALL_HEIGHT, WALL_WIDTH, WallModel
 
 MICROBAN_XML = Path(
@@ -67,12 +67,12 @@ class SceneConfig:
 
 
 def pegboard_texture(path: Path, px_per_mm: int = 2) -> Path:
-    """Render the M3 hole grid as a texture — 4929 hole geoms would be absurd."""
+    """Render the M3 hole grid as a texture — 4836 hole geoms would be absurd."""
     import cv2
 
     w = int(WALL_WIDTH * 1000 * px_per_mm)
     h = int(WALL_HEIGHT * 1000 * px_per_mm)
-    img = np.full((h, w, 3), (150, 199, 232), dtype=np.uint8)  # MDF tan (cv2 writes BGR)
+    img = np.full((h, w, 3), (150, 199, 232), dtype=np.uint8)  # plywood tan (cv2 writes BGR)
     r = max(1, int(HOLE_DIAMETER / 2 * 1000 * px_per_mm))
     for j in range(N_ROWS):
         for i in range(N_COLS):
@@ -88,10 +88,8 @@ def pegboard_texture(path: Path, px_per_mm: int = 2) -> Path:
 def _add_wall(spec: mujoco.MjSpec, wall: WallModel, cfg: SceneConfig, asset_dir: Path) -> None:
     board = spec.worldbody.add_body(name="wall", pos=[0, 0, 0])
 
-    plate_mesh, bowl_mesh = cup_stls(asset_dir, cfg.hold.shape)
-    # Absolute: meshdir points at Microban's assets, and we do not write into the clone.
-    spec.add_mesh(name="cup_plate", file=str(plate_mesh.resolve()))
-    spec.add_mesh(name="cup_bowl", file=str(bowl_mesh.resolve()))
+    # The organisers' hold mesh, in mm. Absolute: meshdir points at Microban's assets.
+    spec.add_mesh(name="hold", file=str(cfg.hold.mesh.resolve()), scale=[HOLD_STL_SCALE] * 3)
 
     # The hole grid is always there; the markers are a separate, optional thing.
     pegboard_texture(asset_dir / "pegboard.png")
@@ -139,29 +137,28 @@ def _add_wall(spec: mujoco.MjSpec, wall: WallModel, cfg: SceneConfig, asset_dir:
 
 
 def _add_cup(board, hold_id: str, x: float, z: float, cup: CupHold) -> None:
-    """One orange cup — plate and half-bowl are a single mesh — plus its bolts.
+    """One hold — the organisers' mesh, moved only: its frame is the wall's — plus its bolts.
 
     Holds live on contype/conaffinity 2 so they do not collide with the robot:
     the weld in attach.py is the grip model (see sim/README.md).
     """
     off_wall = 0.0004  # clear of the board face, or the plate z-fights with it
-    for part, material in (("plate", "cup_mat"), ("bowl", "cup_mat")):
-        board.add_geom(
-            name=f"hold_{hold_id}_{part}",
-            type=mujoco.mjtGeom.mjGEOM_MESH,
-            meshname=f"cup_{part}",
-            pos=[x, -off_wall, z],
-            quat=[0, 0, 0, 1],  # mesh y points out of the wall
-            material=material,
-            friction=[cup.friction, 0.005, 0.0001],
-            contype=2,
-            conaffinity=2,
-        )
+    dx, dy, dz = cup.mesh_pos
+    board.add_geom(
+        name=f"hold_{hold_id}",
+        type=mujoco.mjtGeom.mjGEOM_MESH,
+        meshname="hold",
+        pos=[x + dx, dy - off_wall, z + dz],
+        material="cup_mat",
+        friction=[cup.friction, 0.005, 0.0001],
+        contype=2,
+        conaffinity=2,
+    )
     for sign in (-1, +1):
         board.add_geom(
             name=f"hold_{hold_id}_bolt{'lr'[sign > 0]}",
             type=mujoco.mjtGeom.mjGEOM_CYLINDER,
-            pos=[x + sign * cup.bolt_spacing / 2, -(cup.shape.plate_thickness + off_wall), z],
+            pos=[x + sign * cup.bolt_spacing / 2, -(cup.plate_thickness + off_wall), z],
             size=[cup.bolt_radius, 0.0001, 0],
             euler=[np.pi / 2, 0, 0],
             rgba=[0.20, 0.20, 0.22, 1.0],

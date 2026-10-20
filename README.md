@@ -2,7 +2,7 @@
 
 This is our team project for the [Rock Climbing Robots](https://rock-climbing-robots.github.io/) hackathon
 (Bordeaux, 29 Oct – 1 Nov 2026). The robot is Microban-based ([Rhoban/microban](https://github.com/Rhoban/microban)), and the rules are
-[draft1](https://github.com/rock-climbing-robots/rules/releases).
+[v1.1](https://github.com/rock-climbing-robots/rules/releases/tag/v1.1).
 
 The repo is a skeleton for the pipeline: contracts, stubs and a check, with no algorithms yet. We have
 **not** chosen the planner, the optimiser or the controller. When we choose or change one, the change
