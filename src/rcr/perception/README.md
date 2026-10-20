@@ -26,7 +26,8 @@ Real perception is parked (see ROADMAP). The pipeline loads a **hand-written wal
 - A live `robot_pose` can be sent to the robot over the link (`LaptopLink.send_pose`) if the controller needs it.
 
 ## v0 could be
-- hand-written walls built from grid indices (hold x = 0.0175 + 0.015·i, z = 0.010 + 0.015·j) [Rules §4];
+- hand-written walls built from grid indices: a hold centred on hole (i, j), bolted through (i ± 1, j), is at
+  x = 0.0175 + 0.015·i, z = 0.010 + 0.015·j, with i = 1..50 [Rules v1.1 §4, Figures 2–3];
 - later, ArUco 1–4 for extrinsics plus hand-entered hold grid positions;
 - later still, holds detected in the images.
 

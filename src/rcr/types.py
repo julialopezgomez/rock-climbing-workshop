@@ -18,7 +18,10 @@ from typing import Literal
 WALL_WIDTH = 0.800  # [m] [Rules §3]
 WALL_HEIGHT = 1.400  # [m] [Rules §3]
 GRID_PITCH = 0.015  # [m] M3 hole grid [Rules §3]
-GRID_MARGIN = 0.010  # [m] border before the first hole [Rules §3]
+# [m] border before the first hole: 17.5 mm left/right, 10 mm top/bottom, so 52 x 93 holes
+# [Rules v1.1 Figure 2]. (The §3 text still says 10 mm on all sides; the figure is newer.)
+GRID_MARGIN_X = 0.0175
+GRID_MARGIN_Z = 0.010
 
 CONTROL_HZ = 50  # robot loop rate [Microban scheduler]
 
@@ -56,6 +59,7 @@ LIMBS: tuple[Limb, ...] = ("right_hand", "left_hand", "right_foot", "left_foot")
 class Hold:
     id: str
     # [m] wall frame: midpoint between the hold's two bolts, on the wall face (y = 0) [Rules §4].
+    # The bolts are two pitches apart, so this is the grid hole between them.
     position: tuple[float, float, float]
     # CHANGE: hold shape / how to grip it. The provided holds are not published yet.
     kind: str = "unknown"

@@ -121,6 +121,28 @@ def show_stances(wall: WallModel, seconds: float = 3.0) -> None:
 pytestmark = pytest.mark.skipif(not MICROBAN_XML.exists(), reason=f"no Microban at {MICROBAN_XML}")
 
 
+def test_grid_and_hold_follow_the_rules():
+    from rcr.sim.geometry import BOLT_SPACING, N_COLS, N_ROWS, CupHold, hold_position
+
+    assert (N_COLS, N_ROWS) == (52, 93)  # [Rules v1.1 Figure 2]
+    assert BOLT_SPACING == pytest.approx(0.030)  # [Rules v1.1 Figure 3]
+    assert hold_position(20, 10) == pytest.approx((0.3175, 0.0, 0.16))  # the bolt midpoint
+    for i in (0, N_COLS - 1):
+        with pytest.raises(ValueError, match="bolt off the grid"):
+            hold_position(i, 10)
+    hold = CupHold()  # the organisers' hold.stl
+    hold.validate()  # inside the Ø0.060 x 0.100 m envelope
+    v = hold.vertices()
+    assert -v[:, 1].min() == pytest.approx(0.043)  # depth [Rules Figure 3]
+    assert v[:, 1].max() == pytest.approx(0.0)  # back face on the wall
+    socket = np.linalg.norm(v - hold.mesh_pos, axis=1)  # distances from the socket centre
+    assert np.isclose(socket, hold.socket_radius, atol=1e-4).sum() > 1000  # the spherical socket
+    # a ball as big as the socket sits on its centre: 14 mm down, 26 mm out [Rules Figure 3]
+    assert hold.grasp_point((0.3, 0.0, 0.5), hold.socket_radius) == pytest.approx(
+        (0.3, -0.026, 0.486)
+    )
+
+
 @pytest.fixture
 def sim(tmp_path):
     return Sim(load_wall(), out=tmp_path / "scene.xml")

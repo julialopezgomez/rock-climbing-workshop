@@ -18,8 +18,8 @@ The official simulator is **not released yet** (website: "T.B.D."). It will be M
 and holds, and robots relying on rendered camera images [Rules §7]. Until then, we build our own emulation from the rules:
 
 - **Wall + holds from the `WallModel`** [Rules §3–4]:
-  - a 0.800 × 1.400 × 0.010 m board, vertical;
-  - each hold a placeholder shape inside its Ø0.060 × 0.100 m envelope, at `Hold.position`.
+  - a 0.800 × 1.400 × 0.010 m plywood board, vertical, with 52 × 93 holes (17.5 mm side margin) [Rules v1.1 Figure 2];
+  - each hold the organisers' hold mesh (`data/holds/hold.stl`, Figure 3), bolted two pitches apart, at `Hold.position`.
 - **ArUco 1–4 + 2 cameras** [Rules §5.1–5.2]:
   - DICT_4X4_50 textures at the corner positions in INTERFACES.md;
   - two cameras, one on each side, both seeing the whole wall (placement is a guess until the official sim);
@@ -54,19 +54,20 @@ are untouched. If its interface differs (e.g. it owns the loop), a thin adapter 
 Built with `MjSpec` from the Microban model, so the clone stays untouched and the generated XML
 (`build/scene.xml`, plus `build/robot_climb.xml` for placo) is a one-path swap for the official sim.
 
-- **Wall** — the M3 grid is a generated texture, not 4929 hole geoms; the board uses stiff contact
+- **Wall** — the M3 grid (52 × 93 holes, 17.5 mm side and 10 mm top/bottom margins [Rules v1.1 Figure 2];
+  the §3 text still says 10 mm all round) is a generated texture, not 4836 hole geoms; the board uses stiff contact
   (`solref 0.002`), because MuJoCo's default lets the robot sink ~10 mm into it.
-- **Holds** — `CupHold` in `geometry.py`, shape in `meshes.CupShape`: a **trapezoidal backplate with a
-  full hemispherical bowl in front of its lower part, opening upwards** (side-on, frame 880), measured off a 10x crop of their
-  video (frame 520). Every MuJoCo primitive is solid, so plate and bowl are generated STL meshes;
-  that is fine because holds never collide with the robot. Theirs reaches ~31 mm below the bolt
-  line, just outside the Ø0.060 m envelope; ours is pushed to its edge (29.5 mm) — the orange cups in the organisers' render. Sizes were
-  measured off their video (`videos/compressed/microban_climb.mp4`, frame 0): board corners give a
-  homography, orange blobs give cup centres, and the hole grid gives the scale. A cup is about
-  40 × 30 mm, which fits the Ø0.060 × 0.100 m envelope. Holds sit on `contype/conaffinity 2`, so they
-  never collide with the robot: the weld *is* the grip.
-  **Discrepancy:** their plate looks wider than one pitch, so its two bolts cannot be in horizontally
-  adjacent holes as [Rules §4] requires. We follow the rules (0.015 m apart).
+- **Holds** — the organisers' own mesh, `data/holds/hold.stl` (from their rules repo, the file Figure 3 is drawn
+  from), placed by `CupHold` in `geometry.py` with a translation only (its axes are the wall frame's), with the
+  origin at the socket centre, **26 mm out and 14 mm below** the bolt midpoint (`Hold.position`) [Rules v1.1 Figure 3].
+  A 3 mm back plate is bolted through holes **two pitches (0.030 m) apart**; the bucket has a **spherical socket of
+  12.7 mm radius** that takes the robot's ball end. A ball rests at the bottom of the socket (`grasp_point`): on the
+  socket centre if it is as big as the socket, lower by the clearance if it is smaller. Ours is 10 mm until the limbs
+  are published, so it sits 2.7 mm below the centre. Holds sit on `contype/conaffinity 2` and never collide with the
+  robot: the weld *is* the grip. The colour stays the orange of the organisers' render; green in Figure 3 is not a rule.
+  **Rules v1.1, read together:** §4 says "side by side, 15 mm apart" (the grid pitch) and Figure 3 says "two pitches
+  apart (30 mm)"; we read them as bolts in holes (i − 1, j) and (i + 1, j), so `Hold.position` is hole (i, j). Hold x
+  positions are unchanged from the draft1 version of this sim.
 - **Layout** — `levels.organisers_wall()` reproduces their wall: rows every 3 or 4 pitches
   alternating (≈0.0525 m), one to four cups per row, scattered across columns 15–36
   (x ≈ 0.24–0.56 m). Rows below j≈22 were behind the robot in that frame and follow the same

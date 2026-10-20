@@ -17,9 +17,17 @@ marked **CHANGE** below are the ones we expect to change.
     cameras are at y < 0. Right-handed, so it is MuJoCo's world frame as is.
   - Wall: 0.800 m wide × 1.400 m high × 0.010 m thick [Rules §3].
 - **Grid** [Rules §3–4]:
-  - M3 holes at a 0.015 m pitch with a 0.010 m border, so hole (i, j) is at x = 0.010 + 0.015·i, z = 0.010 + 0.015·j (i = 0..52, j = 0..92).
-  - A hold uses two horizontally adjacent holes, so a hold's reference point is x = 0.0175 + 0.015·i, z = 0.010 + 0.015·j, y = 0.
-  - A hold fits a Ø0.060 × 0.100 m cylinder whose axis is normal to the wall.
+  - 52 × 93 M3 holes at a 0.015 m pitch, with a 0.0175 m border left and right and 0.010 m top and bottom
+    [Rules v1.1 Figure 2; the §3 text still says 0.010 m on all sides]. Hole (i, j) is at
+    x = 0.0175 + 0.015·i, z = 0.010 + 0.015·j (i = 0..51, j = 0..92).
+  - A hold is bolted through holes (i − 1, j) and (i + 1, j), two pitches (0.030 m) apart [Rules §4, Figure 3].
+    Its reference point (`Hold.position`) is the bolt midpoint, which is hole (i, j) itself:
+    x = 0.0175 + 0.015·i, z = 0.010 + 0.015·j, y = 0, with i = 1..50.
+  - A hold fits a Ø0.060 × 0.100 m cylinder whose axis is normal to the wall, centred between the bolts.
+  - The provided hold [Rules Figure 3; mesh in `data/holds/hold.stl`]: a bucket below the bolt line with a spherical
+    socket (radius 0.0127 m) that takes the robot's ball end. The socket centre is 0.014 m below and 0.026 m out from
+    `Hold.position` (wall frame offset (0, −0.026, −0.014)); the hold sticks out 0.043 m from the wall.
+    `Hold.position` stays the bolt midpoint, so walls do not depend on the hold shape.
 - **ArUco** [Rules §5.2]:
   - DICT_4X4_50 markers, 0.100 m code + 0.018 m white border (0.136 m total), with the outer border corner on the wall corner.
   - Marker centres in the wall frame (y = 0):
