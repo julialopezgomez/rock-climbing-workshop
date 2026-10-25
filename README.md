@@ -42,7 +42,7 @@ src/rcr/
   controller/            ROBOT:  trajectory + robot state -> joint targets (Pi-safe)
   link/                  both:   trajectory, start/stop, pose ->; <- robot state
   sim/                   laptop: backend with the robot's role
-  robot/                 how our code meets Microban (README only for now)
+  robot/                 how our code meets Microban; our climbing hooks (hooks.py)
 ```
 
 Each module has a `README.md` that covers purpose, input, output, where it runs, v0 ideas and open decisions.

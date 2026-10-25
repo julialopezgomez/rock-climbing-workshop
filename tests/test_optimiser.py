@@ -47,6 +47,7 @@ from rcr.optimiser import collision as col  # noqa: E402
 from rcr.optimiser import edge_checks as fe  # noqa: E402
 from rcr.optimiser import robot_model as rm  # noqa: E402
 from rcr.optimiser import transition as tr  # noqa: E402
+from rcr.robot import hooks  # noqa: E402
 from rcr.types import (  # noqa: E402
     LIMBS,
     MICROBAN_JOINTS,
@@ -108,13 +109,13 @@ def test_kinematics_match_pinocchio(model):
     pin = pytest.importorskip("pinocchio")
     pm = pin.buildModelFromUrdf(os.environ["MICROBAN_URDF"], pin.JointModelFreeFlyer())
     balls = {}
-    for limb, hook in rm.HOOKS.items():
+    for limb, hook in hooks.HOOKS.items():
         link = pm.frames[pm.getFrameId(hook.link, pin.FrameType.BODY)]
-        placement = link.placement * pin.SE3(np.eye(3), rm.hook_ball_centre(hook))
+        placement = link.placement * pin.SE3(np.eye(3), hooks.ball_centre(hook))
         balls[limb] = pm.addFrame(
             pin.Frame(f"{limb}_ball", link.parentJoint, placement, pin.FrameType.OP_FRAME)
         )
-        for mass, point in rm.hook_masses(hook):
+        for mass, point in hooks.masses(hook):
             pm.inertias[link.parentJoint] += pin.Inertia(
                 mass, link.placement * point, np.zeros((3, 3))
             )

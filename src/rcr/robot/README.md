@@ -1,7 +1,22 @@
 # robot
 
-**Purpose:** the real-robot backend, which is Microban ([Rhoban/microban](https://github.com/Rhoban/microban)). There is
-no code here yet. This README explains how our code meets Microban.
+**Purpose:** the real-robot backend, which is Microban ([Rhoban/microban](https://github.com/Rhoban/microban)). This
+README explains how our code meets Microban. The only code here is what we add to Microban's robot.
+
+## What we add to Microban: the climbing hooks [Ours]
+Microban as published has no climbing limbs, and the organisers will publish theirs [Rules §2.5]. Until then each hand
+and foot carries a hook: a short bent finger, fixed to a Microban link, ending in a ball that rests in a hold's socket.
+They are defined once, in [`hooks.py`](hooks.py), and the optimiser's model and the sim both take them from there.
+
+When the real limbs are known, change [`hooks.py`](hooks.py) and nothing else:
+- **the shape:** `HOOKS`, which link each hook is fixed to, where on it, and its finger segments;
+- **the size:** `BALL_RADIUS`, `FINGER_RADIUS`, `BALL_INSET`;
+- **the mass:** `MASS`, `SEGMENT_MASS_SHARE`.
+
+Then run the tests, which check that the optimiser and the sim agree, and solve the plan again: the motions depend on the
+hooks. The contact point on a hold follows the ball's radius. Two other guesses also depend on the real limbs and holds:
+the hold's push direction and friction (`normals`, `mu` in `rcr.optimiser.transition.TransitionConfig`), and the hold's
+socket (`SOCKET_RADIUS` in `rcr.optimiser.collision`, `CupHold` in `rcr.sim`).
 
 ## What Microban gives us [Microban]
 - **Hardware:**

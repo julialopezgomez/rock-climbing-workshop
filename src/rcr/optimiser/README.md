@@ -33,7 +33,7 @@ URDF to machine precision (positions, Jacobians, CoM, gravity torques, `integrat
 ## Files
 | File | What |
 |---|---|
-| `robot_model.py` | reads the URDF (never edited), and Microban's collision shapes and visual meshes from its MJCF; adds the hooks; builds the CasADi functions (`limb_positions`, `limb_jacobians`, `com`, `gravity_torques`, `body_points`, `integrate`, `link_frames`, `point_jacobian`) once |
+| `robot_model.py` | reads the URDF (never edited), and Microban's collision shapes and visual meshes from its MJCF; adds the hooks (from `rcr.robot.hooks`); builds the CasADi functions (`limb_positions`, `limb_jacobians`, `com`, `gravity_torques`, `body_points`, `integrate`, `link_frames`, `point_jacobian`) once |
 | `transition.py` | `TransitionConfig`, `solve_static_pose`, `solve_transition`; the physics of one sample, each as a small function; the collision loop `_solve_clear` |
 | `collision.py` | the hold mesh and its convex pieces, the robot's convex shapes, exact signed distances and their gradients (`coal`), and `check_trajectory` along a motion |
 | `edge_checks.py` | `feasibility(wall, a, b)` and `trace`: the checks above, and their cache |
@@ -190,8 +190,9 @@ fresh values (variables and multipliers at zero), so a move's result does not de
 | `phase_a_duration`, `phase_b_duration` | 1 s, 2 s | [Ours] |
 | `ipopt` | `tol` 1e-6, `max_iter` 150, `mu_init` 1e-3 (rounds start next to their answer), silent; the static pose starts cold: IPOPT's own `mu_init` and 1000 iterations | [Ours] |
 
-The hooks (`HOOKS` in `robot_model.py`) are the sim's: the same balls, to 0.01 mm, and the same 8 g each (a test
-checks both). Replace them, in that one place, when the climbing limbs are published [Rules §2.5].
+The hooks are defined once, in `rcr.robot.hooks`, shared with the sim: the same balls (a test checks them to 0.01 mm)
+and the same 8 g each. Replace them there, in that one place, when the climbing limbs are published [Rules §2.5]. The
+contact point (`contact_offset`) follows the hook's ball radius.
 
 ## How to run
 ```bash

@@ -38,12 +38,14 @@ import coal
 import numpy as np
 
 from rcr.optimiser import robot_model as rm
+from rcr.robot import hooks
 from rcr.types import Hold
 
 REPO = Path(__file__).resolve().parents[3]
 HOLD_STL = REPO / "data" / "holds" / "hold.stl"  # the organisers' hold, in mm [Rules v1.1 §4]
 HOLD_STL_SCALE = 0.001  # [m/mm]
 HOLD_MESH_OFFSET = (0.0, -0.026, -0.014)  # [m] socket centre (the mesh origin) from Hold.position
+SOCKET_RADIUS = 0.0127  # [m] the hold's spherical socket, measured on hold.stl (rcr.sim CupHold)
 PIECES_CACHE = REPO / "build" / "holds"  # the convex pieces, keyed by the STL's sha256
 COACD_THRESHOLD = 0.02  # CoACD concavity: 106 pieces, swelling < ~0.4 mm into the socket [Ours]
 TOUCHING = 5e-5  # [m] the exact mesh reports a ball resting in its socket as -4e-6 m
@@ -109,11 +111,11 @@ def _z_to(direction: np.ndarray) -> np.ndarray:
 
 @lru_cache(maxsize=1)
 def robot_shapes() -> tuple[RobotShape, ...]:
-    """The convex hulls of Microban's visual meshes, plus our hooks (rm.HOOKS)."""
+    """The convex hulls of Microban's visual meshes, plus our hooks (hooks.HOOKS)."""
     shapes = [
         _hull_shape(f"{s.link}_{i}", s) for i, s in enumerate(rm.read_visual_shapes(rm.mjcf_path()))
     ]
-    for limb, hook in rm.HOOKS.items():
+    for limb, hook in hooks.HOOKS.items():
         point = np.array(hook.start, dtype=float)
         for k, (direction, length) in enumerate(hook.segments):
             end = point + np.array(direction, dtype=float) * length
@@ -121,11 +123,11 @@ def robot_shapes() -> tuple[RobotShape, ...]:
                 RobotShape(
                     f"{limb}_finger{k}",
                     hook.link,
-                    coal.Capsule(rm.HOOK_FINGER_RADIUS, length),
+                    coal.Capsule(hooks.FINGER_RADIUS, length),
                     (point + end) / 2,
                     _z_to(np.array(direction, dtype=float)),
-                    length / 2 + rm.HOOK_FINGER_RADIUS,
-                    rm.HOOK_FINGER_RADIUS,
+                    length / 2 + hooks.FINGER_RADIUS,
+                    hooks.FINGER_RADIUS,
                     limb,
                 )
             )
@@ -134,11 +136,11 @@ def robot_shapes() -> tuple[RobotShape, ...]:
             RobotShape(
                 f"{limb}_ball",
                 hook.link,
-                coal.Sphere(rm.HOOK_BALL_RADIUS),
-                rm.hook_ball_centre(hook),
+                coal.Sphere(hooks.BALL_RADIUS),
+                hooks.ball_centre(hook),
                 np.eye(3),
-                rm.HOOK_BALL_RADIUS,
-                rm.HOOK_BALL_RADIUS,
+                hooks.BALL_RADIUS,
+                hooks.BALL_RADIUS,
                 limb,
             )
         )
@@ -564,7 +566,7 @@ def _self_gaps(shapes, pairs):
 
 def _hook_limb(link: str) -> str | None:
     """The limb whose hook is fixed on this link: its shapes may touch that hook's holds."""
-    return next((limb for limb, hook in rm.HOOKS.items() if hook.link == link), None)
+    return next((limb for limb, hook in hooks.HOOKS.items() if hook.link == link), None)
 
 
 def _resting(contacts, a: int, b: int) -> dict[str, str]:

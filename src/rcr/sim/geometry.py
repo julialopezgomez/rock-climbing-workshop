@@ -17,6 +17,7 @@ from pathlib import Path
 
 import numpy as np
 
+from rcr.robot import hooks
 from rcr.sim.meshes import HOLD_STL, HOLD_STL_SCALE, read_stl
 from rcr.types import GRID_MARGIN_X, GRID_MARGIN_Z, GRID_PITCH, WALL_HEIGHT, WALL_WIDTH
 
@@ -116,10 +117,11 @@ class LimbTip:
     published [Rules §2.5].
     """
 
-    ball_radius: float = 0.010
-    finger_radius: float = 0.0045
-    reach: float = 0.008  # straight on past the end of the link
-    hook: float = 0.018  # then bent towards the wall
-    toe: float = 0.006  # foot: straight on past the toe
-    toe_hook: float = 0.022  # then bent down, out of the sole
-    mass: float = 0.008
+    # Defaults from rcr.robot.hooks, where the hooks are defined (change them there).
+    ball_radius: float = hooks.BALL_RADIUS
+    finger_radius: float = hooks.FINGER_RADIUS
+    reach: float = hooks.HOOKS["right_hand"].segments[0][1]  # straight on past the end of the link
+    hook: float = hooks.HOOKS["right_hand"].segments[1][1]  # then bent towards the wall
+    toe: float = hooks.HOOKS["right_foot"].segments[0][1]  # foot: straight on past the toe
+    toe_hook: float = hooks.HOOKS["right_foot"].segments[1][1]  # then bent down, out of the sole
+    mass: float = hooks.MASS
