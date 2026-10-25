@@ -12,7 +12,7 @@ from rcr.types import ContactPlan, Hold, Stance, Trajectory, WallModel
 
 WALL_SCHEMA = "wall/1"
 CONTACT_PLAN_SCHEMA = "contact_plan/1"
-TRAJECTORY_SCHEMA = "trajectory/1"
+TRAJECTORY_SCHEMA = "trajectory/2"
 
 
 def _save(obj: object, schema: str, path: Path | str) -> None:
@@ -61,4 +61,10 @@ def save_trajectory(trajectory: Trajectory, path: Path | str) -> None:
 
 def load_trajectory(path: Path | str) -> Trajectory:
     d = _load(TRAJECTORY_SCHEMA, path)
-    return Trajectory(joint_names=d["joint_names"], times=d["times"], positions=d["positions"])
+    return Trajectory(
+        joint_names=d["joint_names"],
+        times=d["times"],
+        positions=d["positions"],
+        planned_positions=d.get("planned_positions"),
+        trunk_poses=d.get("trunk_poses"),
+    )

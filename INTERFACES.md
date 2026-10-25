@@ -63,7 +63,9 @@ marked **CHANGE** below are the ones we expect to change.
 | | `stances` | `list[Stance]` | `stances[0] == wall.start`; consecutive stances usually differ by one limb (not enforced) |
 | `Trajectory` | `joint_names` | `list[str]` | Microban motor names; joints not listed keep Microban's neutral pose |
 | | `times` | `list[float]` s | from the start of the climb, strictly increasing |
-| | `positions` | `list[list[float]]` rad | one row per time, one column per joint. **CHANGE** likely additions: velocities, gains, stance index |
+| | `positions` | `list[list[float]]` rad | one row per time, one column per joint: what the robot executes. **CHANGE** likely additions: velocities, gains, stance index |
+| | `planned_positions` | `list[list[float]] \| None` rad | optional: the optimiser's planned angles, before `positions` were pre-loaded against servo sag. Only for replay; the robot ignores it [Ours] |
+| | `trunk_poses` | `list[list[float]] \| None` | optional: the trunk per time, wall frame: `x, y, z` m, `qw, qx, qy, qz`. Only for replay; the robot ignores it [Ours] |
 | `Feasibility` | `feasible` | `bool` | |
 | | `cost` | `float` | lower is better; meaning owned by the optimiser. **CHANGE** |
 | | `reason` | `str` | human-readable, for debugging |
@@ -104,42 +106,52 @@ layout is fine.
 ```json
 {
   "schema": "wall/1",
-  "id": "example_l1",
+  "id": "example_hard",
   "level": 1,
   "holds": [
     {"id": "L0", "position": [0.3175, 0.0, 0.16], "kind": "unknown"},
     {"id": "R0", "position": [0.4825, 0.0, 0.16], "kind": "unknown"}
   ],
-  "start": {"contacts": {"right_hand": "R2", "left_hand": "L2", "right_foot": "R0", "left_foot": "L0"}}
+  "start": {"contacts": {"right_hand": "R3", "left_hand": "L3", "right_foot": "R0", "left_foot": "L0"}}
 }
 ```
-(Excerpt: the [full example](data/examples/wall_l1.json) has 8 holds in two columns, with rows at z = 0.16 / 0.31 / 0.46 / 0.61.)
+(Excerpt: the [full example](data/examples/wall_hard.json) has 34 holds up to z = 1.27 m on the 1.4 m board.
+- Up to 0.70 m: the columns drift and the rows are uneven, 0.06–0.09 m apart.
+- 0.70–0.90 m: random holds, each at most 3 cm sideways from the one below it on its side.
+- Above 0.90 m: a regular ladder, rows every 0.075 m.
+
+It is the only example wall. An earlier regular wall, rows every 0.075 m, was removed.)
 
 ### Contact plan: `contact_plan/1`
 
 ```json
 {
   "schema": "contact_plan/1",
-  "wall_id": "example_l1",
+  "wall_id": "example_hard",
   "stances": [
-    {"contacts": {"right_hand": "R2", "left_hand": "L2", "right_foot": "R0", "left_foot": "L0"}},
-    {"contacts": {"right_hand": "R3", "left_hand": "L2", "right_foot": "R0", "left_foot": "L0"}},
-    {"contacts": {"right_hand": "R3", "left_hand": "L3", "right_foot": "R0", "left_foot": "L0"}}
+    {"contacts": {"right_hand": "R3", "left_hand": "L3", "right_foot": "R0", "left_foot": "L0"}},
+    {"contacts": {"right_hand": "R3", "left_hand": "L4", "right_foot": "R0", "left_foot": "L0"}},
+    {"contacts": {"right_hand": "R3", "left_hand": "L4", "right_foot": "R0", "left_foot": "L1"}}
   ]
 }
 ```
+(Excerpt: the [full example](data/examples/contact_plan_hard.json) climbs in 35 moves, in an irregular order, until
+the hands are at 1.27 m. Above 0.70 m each move was kept only once the full trajectory optimisation had solved it.)
 
-### Trajectory: `trajectory/1`
+### Trajectory: `trajectory/2`
 
 ```json
 {
-  "schema": "trajectory/1",
-  "joint_names": ["left_shoulder_pitch", "left_shoulder_roll", "left_elbow",
-                  "right_shoulder_pitch", "right_shoulder_roll", "right_elbow"],
-  "times": [0.0, 1.0, 2.0],
-  "positions": [[0.17, 0.17, -0.35, 0.17, -0.17, -0.35],
-                [0.17, 0.17, -0.35, 1.2, -0.17, -0.6],
-                [1.2, 0.17, -0.6, 1.2, -0.17, -0.6]]
+  "schema": "trajectory/2",
+  "joint_names": ["left_shoulder_pitch", "left_shoulder_roll", "left_elbow"],
+  "times": [0.0, 0.25],
+  "positions": [[0.17, 0.17, -0.35], [0.18, 0.17, -0.36]],
+  "planned_positions": [[0.12, 0.15, -0.30], [0.13, 0.15, -0.31]],
+  "trunk_poses": [[0.40, -0.13, 0.31, 0.71, 0.0, 0.0, 0.71], [0.40, -0.13, 0.31, 0.71, 0.0, 0.0, 0.71]]
 }
 ```
-The values in the examples are **placeholders** that are valid against the types. They are not a motion anyone has checked.
+`trajectory/2` adds the two optional replay fields to `trajectory/1`; `null` when absent. The
+[example](data/examples/trajectory.json) is the optimiser's solution of the example plan, written by
+`tests/test_optimiser.py --hard --save`.
+
+The wall and the plan are made-up examples, valid against the types; the trajectory is solved from them.

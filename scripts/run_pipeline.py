@@ -81,8 +81,8 @@ def _sim(wall: WallModel):
 
 
 def check() -> int:
-    wall_ex = io.load_wall(EXAMPLES / "wall_l1.json")
-    plan_ex = io.load_contact_plan(EXAMPLES / "contact_plan.json")
+    wall_ex = io.load_wall(EXAMPLES / "wall_hard.json")
+    plan_ex = io.load_contact_plan(EXAMPLES / "contact_plan_hard.json")
     traj_ex = io.load_trajectory(EXAMPLES / "trajectory.json")
     check_examples(wall_ex, plan_ex, traj_ex)
     print(

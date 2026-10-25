@@ -14,8 +14,8 @@ ROOT = Path(__file__).resolve().parent.parent
 EXAMPLES = ROOT / "data" / "examples"
 
 FORMATS = [
-    ("wall_l1.json", io.load_wall, io.save_wall),
-    ("contact_plan.json", io.load_contact_plan, io.save_contact_plan),
+    ("wall_hard.json", io.load_wall, io.save_wall),
+    ("contact_plan_hard.json", io.load_contact_plan, io.save_contact_plan),
     ("trajectory.json", io.load_trajectory, io.save_trajectory),
 ]
 

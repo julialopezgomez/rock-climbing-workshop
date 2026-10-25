@@ -1,6 +1,6 @@
 """The sim in one place: watch the robot on the wall, and check that the sim works.
 
-    uv run mjpython tests/test_sim.py               # robot on the example L1 wall, until closed
+    uv run mjpython tests/test_sim.py               # robot on the example wall, until closed
     uv run mjpython tests/test_sim.py organisers    # or l1 | l2 | l3 | organisers | a wall/1 file
     uv run mjpython tests/test_sim.py stances       # apply the STANCES below, one after another
     uv run pytest tests/test_sim.py                 # the checks
@@ -27,7 +27,7 @@ from rcr.sim.scene import MICROBAN_XML  # noqa: E402
 from rcr.sim.start import NEUTRAL_POSE  # noqa: E402
 from rcr.types import MICROBAN_JOINTS, JointTargets, Stance, WallModel  # noqa: E402
 
-EXAMPLE_WALL = Path(__file__).resolve().parent.parent / "data" / "examples" / "wall_l1.json"
+EXAMPLE_WALL = Path(__file__).resolve().parent.parent / "data" / "examples" / "wall_hard.json"
 WALLS = {"l1": levels.level1, "l2": levels.level2, "l3": levels.level3}
 WALLS["organisers"] = levels.organisers_wall
 
@@ -61,19 +61,19 @@ def run(wall: WallModel) -> None:
 
 
 # --- Stances: define them here, apply them, look at them ----------------------------------------
-# A Stance (rcr.types) is a hold id or None (free) per limb. These use the example L1 wall's holds:
-# L0..L3 left column, R0..R3 right column, rows at z = 0.16 / 0.31 / 0.46 / 0.61 m.
+# A Stance (rcr.types) is a hold id or None (free) per limb. These use the example wall's holds
+# (data/examples/wall_hard.json): L0..L7 left, R0..R7 right, M2 and M5 in the middle.
 
 STANCES = {
-    "start": Stance({"right_hand": "R2", "left_hand": "L2", "right_foot": "R0", "left_foot": "L0"}),
+    "start": Stance({"right_hand": "R3", "left_hand": "L3", "right_foot": "R0", "left_foot": "L0"}),
     "right hand free": Stance(
-        {"right_hand": None, "left_hand": "L2", "right_foot": "R0", "left_foot": "L0"}
+        {"right_hand": None, "left_hand": "L3", "right_foot": "R0", "left_foot": "L0"}
     ),
     "right hand up": Stance(
-        {"right_hand": "R3", "left_hand": "L2", "right_foot": "R0", "left_foot": "L0"}
+        {"right_hand": "R4", "left_hand": "L3", "right_foot": "R0", "left_foot": "L0"}
     ),
     "one row higher": Stance(
-        {"right_hand": "R3", "left_hand": "L3", "right_foot": "R1", "left_foot": "L1"}
+        {"right_hand": "R4", "left_hand": "L4", "right_foot": "R1", "left_foot": "L1"}
     ),
 }
 
@@ -182,10 +182,10 @@ def test_step_follows_the_joint_targets_contract(sim):
 
 def test_expect_releases_the_limb_that_moves_on(sim):
     sim.reset()
-    sim.expect(Stance(contacts={**sim.wall.start.contacts, "right_hand": "R3"}))
+    sim.expect(Stance(contacts={**sim.wall.start.contacts, "right_hand": "R4"}))
     assert not sim.attachment.is_attached("right_hand")
     assert sim.attachment.is_attached("left_hand")
-    assert sim.score.height == pytest.approx(0.46)  # the start hands, R2/L2
+    assert sim.score.height == pytest.approx(0.385)  # the start hands, R3/L3
     assert sim.score.top_time is None
 
 
@@ -200,7 +200,7 @@ def test_verify_accepts_a_reachable_stance(sim):
 
 
 def test_verify_rejects_what_the_robot_cannot_do(sim):
-    too_far = {"right_hand": "R3", "left_hand": "L3", "right_foot": "R0", "left_foot": "L0"}
+    too_far = {"right_hand": "R6", "left_hand": "L6", "right_foot": "R0", "left_foot": "L0"}
     assert "not reachable" in verify(sim, Stance(too_far))  # a 0.45 m stretch
     crossed = {"right_hand": None, "left_hand": "L2", "right_foot": "L0", "left_foot": "R0"}
     assert "hits itself" in verify(sim, Stance(crossed))

@@ -166,6 +166,39 @@ def read_collision_shapes(path: Path) -> list[CollisionShape]:
     return shapes
 
 
+@dataclass(frozen=True)
+class VisualShape:
+    """One of Microban's visual meshes [Microban MJCF]: what the sim draws, in its link's frame."""
+
+    link: str
+    mesh: Path  # STL, in metres
+    offset: np.ndarray  # [m] the mesh frame's origin, link frame
+    rotation: np.ndarray  # 3x3, the mesh frame's axes in the link frame
+
+
+def read_visual_shapes(path: Path) -> list[VisualShape]:
+    """Microban's visual meshes (MJCF geoms of class "visual"), on the URDF's links."""
+    root = ET.parse(path).getroot()
+    meshdir = path.parent / root.find("compiler").get("meshdir", ".")
+    files = {}
+    for mesh in root.iter("mesh"):
+        file = mesh.get("file")
+        files[mesh.get("name", Path(file).stem)] = meshdir / file
+    shapes = []
+    for body in root.iter("body"):
+        for geom in body.findall("geom"):
+            if geom.get("class") == "visual" and geom.get("type") == "mesh":
+                shapes.append(
+                    VisualShape(
+                        link=body.get("name"),
+                        mesh=files[geom.get("mesh")],
+                        offset=_floats(geom.get("pos"), "0 0 0"),
+                        rotation=_quat_rotation(geom.get("quat")),
+                    )
+                )
+    return shapes
+
+
 def read_collision_points(path: Path) -> dict[str, np.ndarray]:
     """link -> P x 3 points [m, link frame] on Microban's collision shapes, to keep out of the wall.
 
@@ -344,6 +377,35 @@ def integrate_expression(q, dq):
     return ca.vertcat(position, quaternion, q[7:] + dq[6:])
 
 
+def difference(q0: np.ndarray, q1: np.ndarray) -> np.ndarray:
+    """dq (NV) with integrate(q0, dq) = q1: the inverse of integrate_expression (numpy)."""
+    w0, x0, y0, z0 = q0[3:7]
+    relative = (
+        np.array(  # conj(quaternion0) * quaternion1: the trunk's turn, in its own frame
+            [
+                [w0, x0, y0, z0],
+                [-x0, w0, z0, -y0],
+                [-y0, -z0, w0, x0],
+                [-z0, y0, -x0, w0],
+            ]
+        )
+        @ np.asarray(q1[3:7], dtype=float)
+    )
+    relative *= np.sign(relative[0]) or 1.0  # the shorter way round
+    sine = np.linalg.norm(relative[1:])
+    angle = 2 * np.arctan2(sine, relative[0])
+    omega = relative[1:] * (angle / sine if sine > 1e-12 else 2.0)
+    k = np.array([[0, -omega[2], omega[1]], [omega[2], 0, -omega[0]], [-omega[1], omega[0], 0]])
+    if angle > 1e-6:
+        b, c = (1 - np.cos(angle)) / angle**2, (angle - np.sin(angle)) / angle**3
+    else:
+        b, c = 0.5, 1.0 / 6.0
+    rotation0 = np.array(quaternion_matrix(ca.DM(q0[3:7])))
+    local = rotation0.T @ (np.asarray(q1[0:3]) - np.asarray(q0[0:3]))
+    v = np.linalg.solve(np.eye(3) + b * k + c * (k @ k), local)
+    return np.concatenate([v, omega, np.asarray(q1[7:]) - np.asarray(q0[7:])])
+
+
 # --- The model ----------------------------------------------------------------------------------
 
 
@@ -436,6 +498,48 @@ def load_robot_model() -> RobotModel:
         lower=np.array([revolute[n].lower for n in MICROBAN_JOINTS]),
         upper=np.array([revolute[n].upper for n in MICROBAN_JOINTS]),
     )
+
+
+@lru_cache(maxsize=1)
+def limb_reach() -> dict[str, tuple[np.ndarray, float]]:
+    """limb -> (its first joint's origin in the trunk frame [m], the furthest its ball can get
+    from there [m]), from the URDF and the hooks. An upper bound, never an underestimate:
+        the first joint turns about an axis through that origin, so it does not change the
+        distance; down the chain (joint origins, then the ball), the distance between every other
+        point depends on the one joint between them only; its largest over that joint's range
+        (sampled, plus how far the point can move between two samples), summed, bounds the reach.
+    Arms 0.153 m and legs 0.238 m, against 0.150 m and 0.219 m over 20000 random poses."""
+    urdf = read_urdf(urdf_path())
+    by_child = {j.child: j for j in urdf.joints}
+    out = {}
+    for limb, hook in HOOKS.items():
+        chain, link = [], hook.link
+        while link != ROOT_LINK:
+            chain.append(by_child[link])
+            link = chain[-1].parent
+        chain.reverse()
+        # hops[m]: point m+1 from point m, in the frame of the link point m is the origin of
+        hops = [j.xyz for j in chain[1:]] + [hook_ball_centre(hook)]
+        reach = 0.0
+        for m in range(0, len(hops), 2):
+            if m + 1 == len(hops):
+                reach += float(np.linalg.norm(hops[m]))
+                continue
+            joint = chain[m + 1]  # between points m+1 and m+2: the only angle their distance has
+            angles = np.linspace(joint.lower, joint.upper, 2001) if joint.revolute else [0.0]
+            step = (joint.upper - joint.lower) / 2000 if joint.revolute else 0.0
+            far = max(
+                np.linalg.norm(hops[m] + joint.rotation @ _rodrigues(joint.axis, a) @ hops[m + 1])
+                for a in angles
+            )
+            reach += float(far + np.linalg.norm(hops[m + 1]) * step / 2)
+        out[limb] = (chain[0].xyz, reach)
+    return out
+
+
+def _rodrigues(axis: np.ndarray, angle: float) -> np.ndarray:
+    k = np.array([[0, -axis[2], axis[1]], [axis[2], 0, -axis[0]], [-axis[1], axis[0], 0]])
+    return np.eye(3) + np.sin(angle) * k + (1 - np.cos(angle)) * (k @ k)
 
 
 def _point_jacobians(urdf: Urdf, names: tuple[str, ...]) -> dict[str, ca.Function]:
