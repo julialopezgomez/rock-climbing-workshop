@@ -30,6 +30,45 @@ The kinematics are written in CasADi straight from Microban's URDF (`robot_model
 `pinocchio.casadi`: the PyPI `pin` wheel has no CasADi bindings. The tests check them against Pinocchio on the same
 URDF to machine precision (positions, Jacobians, CoM, gravity torques, `integrate`).
 
+**Each move from stance pose to stance pose, and the move cache [Ours, after FARO]:** every stance has its own pose
+(`stance_pose`): balanced, clear, solved from a fresh guess, so it depends on the stance and the holds only. A move
+(`solve_move`, on by default with `TransitionConfig.settle`) starts at stance a's pose, ends freely, then a *settle* with
+all four balls held brings the robot to stance b's pose. So a move depends on its two stances and the holds around them,
+never on the moves before it.
+
+- **Why:** before, each move started wherever the previous one ended. A hold changed far away made move 2 come out
+  14° different, and the full re-solve of the example plan then failed at move 9, which had solved before.
+- **Measured on the example plan (35 moves):**
+  - 34 solve this way; move 32 (right foot to R10) does not;
+  - two runs are identical to the last digit;
+  - consecutive moves join exactly (2e-7);
+  - about 21 minutes in all.
+
+  Pinning the move's own end to stance b's pose, without a settle, solved only 21.
+- **The move cache** (`move_cache.py`) stores every move's outcome under its layout:
+  - the key is the moving limb, stance a's holds and the new hold as grid offsets from where the limb starts, and
+    every other hold within 0.3 m;
+  - a version covers the hooks, the robot model, the hold mesh and the settings.
+
+  Moving all holds by whole grid holes moves the problem with them, so a move solved on one wall serves any wall where
+  its holds are laid out alike. A stored motion is checked again for collisions on the actual wall before it is used.
+  A new version (real limbs, other settings) starts with an empty cache.
+- **Filling it:** `scripts/fill_cache.py` climbs generated walls (levels 1–3) and stores every move it asks for,
+  feasible or not. It resumes where it stopped. `--no-store` measures how many moves the cache already answers.
+  The runner (`tests/test_optimiser.py --hard`) uses the cache too (`build/move_cache/`).
+- **Measured:**
+  - *Example plan:* move 32 (right foot to R10) cannot be done this way, so it was replaced by right foot to R11. All
+    35 moves then solve, in 24 minutes the first time, and the dense re-check finds them all clear. Re-solving from
+    the cache takes about a second per move and gives a byte-identical `trajectory.json`.
+  - *Level 1 ladder* (rules' generator, rungs 0.09 m apart): 13 moves were solved up to 0.82 m. The next 14, to 1.27 m,
+    all came from the cache: the same layout one rung higher. In all, the cache answered 85 of the 99 moves the climb
+    asked about.
+  - *Unseen walls, level 2 (gaps) and level 3 (drift):* a cache filled on level 1 answered only the first moves,
+    where the walls are alike. Gaps and drift make new layouts, solved once each, so the cache has to be filled on
+    many walls of all three levels.
+- **On competition day:** put the real limbs in `rcr.robot.hooks` and run the tests. The cache's version changes,
+  so it starts empty. Then run `scripts/fill_cache.py` on as many generated walls as there is time for.
+
 ## Files
 | File | What |
 |---|---|
@@ -37,6 +76,7 @@ URDF to machine precision (positions, Jacobians, CoM, gravity torques, `integrat
 | `transition.py` | `TransitionConfig`, `solve_static_pose`, `solve_transition`; the physics of one sample, each as a small function; the collision loop `_solve_clear` |
 | `collision.py` | the hold mesh and its convex pieces, the robot's convex shapes, exact signed distances and their gradients (`coal`), and `check_trajectory` along a motion |
 | `edge_checks.py` | `feasibility(wall, a, b)` and `trace`: the checks above, and their cache |
+| `move_cache.py` | `MoveCache`, `solve_move_cached`: solved moves stored by layout and reused on any wall |
 | `__init__.py` | `optimise` (and `solve_plan`, `start_pose`, `iter_plan`, `to_trajectory`): chains the transitions, reusing solved motions, times them, pre-loads against sag; `feasibility` |
 
 ## Formulation
@@ -270,6 +310,10 @@ can't replace them. The remaining cost is the path tier.
 - The robot weighs 0.819 kg [Microban], 0.851 kg with our hooks; the rules allow up to 2 kg [Rules §2.2].
 
 ## Known limitations
+- **Two rungs at once is too far for a hand.** Both level 2 walls generated with gaps (rules' `level2`, seeds 0 and
+  1) stopped the climb: one missing hold left a hand 0.18 m short of the next, which fails the checks at 70 % torque
+  with our placeholder hooks. The real limbs may change this.
+- **The cache only helps with layouts it has seen.** A gap or a drift is a new layout, solved once (30 s – 3 min).
 - **Placeholder hands and holds:** the hooks, the contact normals and mu are ours until the climbing limbs and holds
   are published. Hands are supported only along +z; the real socket may hold more.
 - **The robot's shapes are convex hulls** of Microban's meshes: exact where a part is convex, a little larger where it

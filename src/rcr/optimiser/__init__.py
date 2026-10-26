@@ -44,17 +44,30 @@ def start_pose(wall: WallModel, plan: ContactPlan, cfg: TransitionConfig | None 
 
     cfg = cfg or tr.TransitionConfig()
     validate_plan(wall, plan)
-    first = plan.stances[0]
-    return tr.solve_static_pose(wall, first, tr.initial_guess(wall, first, cfg), cfg)
+    return tr.stance_pose(wall, plan.stances[0], cfg)
 
 
-def iter_plan(wall: WallModel, plan: ContactPlan, q, cfg: TransitionConfig | None = None):
+def iter_plan(
+    wall: WallModel, plan: ContactPlan, q, cfg: TransitionConfig | None = None, cache=None
+):
     """Yield each transition of the plan as it is solved, the first starting at q, each next one
     where the previous ended. A move starts from the same limb's last solved motion when the holds
-    are laid out alike (tr.same_layout): on a regular wall, most moves repeat a row up [Ours]."""
+    are laid out alike (tr.same_layout): on a regular wall, most moves repeat a row up [Ours].
+    With cfg.settle, each move is tr.solve_move instead: from stance a's own pose to stance b's,
+    the same every run (q, from start_pose, is stance 0's pose); with a `cache`
+    (move_cache.MoveCache), stored moves are reused and new ones stored."""
     from rcr.optimiser import transition as tr
 
     cfg = cfg or tr.TransitionConfig()
+    if cfg.settle:  # each move from stance a's own pose to stance b's: q is stance 0's pose
+        from rcr.optimiser.move_cache import solve_move_cached
+
+        for i, (a, b) in enumerate(zip(plan.stances, plan.stances[1:], strict=False)):
+            if cache is None:
+                yield tr.solve_move(wall, a, b, cfg, index=i)
+            else:
+                yield solve_move_cached(wall, a, b, cfg, cache, index=i)[0]
+        return
     solved = {}  # limb -> (layout, start point, configurations) of its last move
     for i, (a, b) in enumerate(zip(plan.stances, plan.stances[1:], strict=False)):
         moving, here = tr.moving_limb(a, b, i), tr.layout(wall, a, b, cfg)
@@ -102,7 +115,7 @@ def to_trajectory(results: list[TransitionResult], cfg: TransitionConfig) -> Tra
             times.append(start + sample_time(k, cfg))
             qs.append(result.q[k])
             rows.append(result.q[k][7:] + result.tau[k] / SERVO_KP)
-        start += cfg.phase_a_duration + cfg.phase_b_duration
+        start += sample_time(len(result.q) - 1, cfg)
 
     def table(rows):
         return [[float(v) for v in row] for row in np.array(rows)]
@@ -118,8 +131,11 @@ def to_trajectory(results: list[TransitionResult], cfg: TransitionConfig) -> Tra
 
 def sample_time(k: int, cfg: TransitionConfig) -> float:
     """[s] time of sample k from the start of its transition: phase A's K steps share
-    phase_a_duration, phase B's N - K steps share phase_b_duration."""
+    phase_a_duration, phase B's N - K steps share phase_b_duration, and a settle's N steps after
+    them (cfg.settle) share settle_duration."""
     n, k_release = cfg.n_samples, cfg.release_sample
+    if k > n:
+        return cfg.phase_a_duration + cfg.phase_b_duration + cfg.settle_duration * (k - n) / n
     if k <= k_release:
         return cfg.phase_a_duration * k / k_release
     return cfg.phase_a_duration + cfg.phase_b_duration * (k - k_release) / (n - k_release)

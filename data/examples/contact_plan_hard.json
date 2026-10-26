@@ -270,7 +270,7 @@
       "contacts": {
         "right_hand": "R12",
         "left_hand": "L14",
-        "right_foot": "R10",
+        "right_foot": "R11",
         "left_foot": "L11"
       }
     },
@@ -278,7 +278,7 @@
       "contacts": {
         "right_hand": "R14",
         "left_hand": "L14",
-        "right_foot": "R10",
+        "right_foot": "R11",
         "left_foot": "L11"
       }
     },
@@ -286,7 +286,7 @@
       "contacts": {
         "right_hand": "R14",
         "left_hand": "L15",
-        "right_foot": "R10",
+        "right_foot": "R11",
         "left_foot": "L11"
       }
     }
