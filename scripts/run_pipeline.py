@@ -48,20 +48,24 @@ def _name(t) -> str:
 
 
 def stage(name: str, fn, expected, example, *args):
-    """Check args/return against fn's annotations, call it, fall back to `example` if a stub."""
+    """Check args/return against fn's annotations, call it, fall back to `example` if a stub,
+    or if this machine lacks what the stage needs (an optional dependency group or Microban)."""
     hints = typing.get_type_hints(fn)
     returns = hints.pop("return", None)
     for (param, hint), arg in zip(hints.items(), args, strict=True):
         if isinstance(hint, type):
             assert isinstance(arg, hint), f"{name}: {param} should be {hint.__name__}"
     assert returns == expected, f"{name}: returns {_name(returns)}, expected {_name(expected)}"
+    why = ""
     try:
         out = fn(*args)
         status = "ok"
     except NotImplementedError:
         out, status = example, "stub"
+    except (ImportError, FileNotFoundError) as e:
+        out, status, why = example, "skip", f" ({e})"
     assert isinstance(out, expected), f"{name}: returned {type(out).__name__}"
-    print(f"  {name:<32} -> {_name(expected):<18} {status}")
+    print(f"  {name:<32} -> {_name(expected):<18} {status}{why}")
     return out, status
 
 
@@ -77,8 +81,8 @@ def _sim(wall: WallModel):
 
 
 def check() -> int:
-    wall_ex = io.load_wall(EXAMPLES / "wall_l1.json")
-    plan_ex = io.load_contact_plan(EXAMPLES / "contact_plan.json")
+    wall_ex = io.load_wall(EXAMPLES / "wall_hard.json")
+    plan_ex = io.load_contact_plan(EXAMPLES / "contact_plan_hard.json")
     traj_ex = io.load_trajectory(EXAMPLES / "trajectory.json")
     check_examples(wall_ex, plan_ex, traj_ex)
     print(

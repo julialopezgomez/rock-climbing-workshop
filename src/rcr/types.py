@@ -99,6 +99,11 @@ class Trajectory:
     joint_names: list[str]  # Microban motor names
     times: list[float]  # [s] from the start of the climb, strictly increasing
     positions: list[list[float]]  # [rad] one row per time, one column per joint
+    # Optional, to replay the plan exactly in the sim; the robot uses `positions` only [Ours].
+    # planned_positions: the optimiser's joint angles, before `positions` were pre-loaded against
+    # servo sag. trunk_poses: the trunk per time, wall frame: x, y, z [m], qw, qx, qy, qz.
+    planned_positions: list[list[float]] | None = None  # [rad] like `positions`
+    trunk_poses: list[list[float]] | None = None
     # CHANGE: likely additions: velocities, per-joint gains, index of the stance of each sample.
 
 
