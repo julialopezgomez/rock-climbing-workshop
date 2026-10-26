@@ -77,7 +77,8 @@ Built with `MjSpec` from the Microban model, so the clone stays untouched and th
   (frames 880–940). Feet: the same hook on the stock foot plate, past the toe and bent down out of
   the sole, so the ball drops into the cup and the plate stays above the rim [Ours].
   The ball is what sits in a cup; the sim's tip site is its centre. Dimensions [Ours], read against
-  the forearm, until the climbing limbs are published [Rules §2.5].
+  the forearm, until the climbing limbs are published [Rules §2.5]. The hooks are defined once, in
+  `rcr.robot.hooks` (shared with the optimiser); `LimbTip` and `LIMB_PARENTS` take them from there.
 - **Actuators** — Microban's are `<motor>`, i.e. **torque**, not position servos; `data.ctrl` is N·m.
   The scene clamps them to **0.64 N·m** (1.75 A × 0.366 N·m/A), which the stock XML leaves unset.
   `ServoGains` then runs the P loop the real servos run.

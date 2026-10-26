@@ -15,6 +15,7 @@ from pathlib import Path
 import mujoco
 import numpy as np
 
+from rcr.robot import hooks
 from rcr.sim import markers as mk
 from rcr.sim.geometry import (
     HOLE_DIAMETER,
@@ -36,19 +37,11 @@ MICROBAN_XML = Path(
 
 # Per limb: the Microban parent body, where the end-effector starts, and the
 # path of its finger as unit directions (each followed for one length from
-# LimbTip), all in the parent's frame [Microban]. The ball sits at the end.
-# Directions were found by forward kinematics with the robot facing the wall:
-# - hands: past the end of the forearm, then bent towards the wall *with the
-#   arm raised overhead* — the climbing pose. (Chosen with the arms hanging,
-#   the hook flips away from the wall once the arm is raised.)
-# - feet: the same J-hook on the stock foot plate: past the toe, then bent
-#   down out of the sole, so the ball drops into a cup from above and the
-#   plate stays clear of the rim [Ours]. (Foot frame: z to the toe, -y down.)
+# LimbTip), all in the parent's frame. The ball sits at the end. The hooks
+# themselves, and why they are shaped so, are in rcr.robot.hooks [Ours].
 LIMB_PARENTS = {
-    "right_hand": ("radius", (0.0, -0.067, 0.0135), ((0.0, -1.0, 0.0), (1.0, 0.0, 0.0))),
-    "left_hand": ("radius_2", (0.0, 0.067, -0.0135), ((0.0, 1.0, 0.0), (-1.0, 0.0, 0.0))),
-    "right_foot": ("foot", (0.0, -0.0217, 0.082), ((0.0, 0.0, 1.0), (0.0, -1.0, 0.0))),
-    "left_foot": ("foot_2", (0.0, -0.0217, 0.082), ((0.0, 0.0, 1.0), (0.0, -1.0, 0.0))),
+    limb: (hook.link, hook.start, tuple(direction for direction, _ in hook.segments))
+    for limb, hook in hooks.HOOKS.items()
 }
 
 SERVO_TORQUE_LIMIT = 0.64  # [N.m] 1.75 A x 0.366 N.m/A [Microban constants.py]
@@ -192,17 +185,17 @@ def _robot_spec(cfg: SceneConfig) -> mujoco.MjSpec:
                 type=mujoco.mjtGeom.mjGEOM_CAPSULE,
                 fromto=[*a, *b],
                 size=[tip.finger_radius, 0, 0],
-                mass=tip.mass * 0.2,
+                mass=tip.mass * hooks.SEGMENT_MASS_SHARE,
                 group=2,  # Microban's visible group; 3 is its hidden collision group
                 rgba=grey,
             )
-        ball = points[-1] + np.array(path[-1]) * tip.ball_radius * 0.6
+        ball = points[-1] + np.array(path[-1]) * tip.ball_radius * hooks.BALL_INSET
         body.add_geom(
             name=f"{limb}_ball",
             type=mujoco.mjtGeom.mjGEOM_SPHERE,
             pos=list(ball),
             size=[tip.ball_radius, 0, 0],
-            mass=tip.mass * 0.6,
+            mass=tip.mass * (1 - hooks.SEGMENT_MASS_SHARE * len(path)),
             group=2,
             rgba=grey,
         )

@@ -40,8 +40,15 @@ import casadi as ca
 import numpy as np
 
 from rcr.optimiser import robot_model as rm
-from rcr.optimiser.collision import Check, Clearance, check_trajectory
+from rcr.optimiser.collision import (
+    HOLD_MESH_OFFSET,
+    SOCKET_RADIUS,
+    Check,
+    Clearance,
+    check_trajectory,
+)
 from rcr.optimiser.robot_model import GRAVITY, NJ, NQ, NV, RobotModel, load_robot_model
+from rcr.robot import hooks
 from rcr.types import LIMBS, MICROBAN_JOINTS, Limb, Stance, WallModel
 
 SERVO_TORQUE_LIMIT = 0.64  # [N·m] 1.75 A x 0.366 N·m/A [Microban constants.py]
@@ -102,7 +109,12 @@ class TransitionConfig:
     # Ball centre relative to Hold.position (the bolt midpoint on the wall face): the bottom of
     # the hold's spherical socket, 26 mm out and 14 mm below the bolts [Rules Figure 3], lowered
     # by the socket/ball clearance (12.7 - 10 mm). The same point as rcr.sim's grasp point.
-    contact_offset: tuple[float, float, float] = (0.0, -0.026, -0.0167)  # [m]
+    # Follows the hook's ball (rcr.robot.hooks.BALL_RADIUS): (0, -0.026, -0.0167) today.
+    contact_offset: tuple[float, float, float] = (
+        HOLD_MESH_OFFSET[0],
+        HOLD_MESH_OFFSET[1],
+        HOLD_MESH_OFFSET[2] - (SOCKET_RADIUS - hooks.BALL_RADIUS),
+    )  # [m]
     # How far the trunk may move from the solve's reference configuration (a static pose's
     # guess, or a transition's start): keeps the exponential map away from wrapping at pi.
     max_trunk_shift: float = 0.3  # [m] per axis [Ours]
@@ -319,8 +331,8 @@ def posture(q, cfg: TransitionConfig):
 def neck_rise(model: RobotModel, q_ref, dq, limb: str):
     """[m] how far the hook's neck rises over NECK_PROBE back along its last segment from the
     ball: NECK_PROBE when it points straight up, cos(angle) * NECK_PROBE in general."""
-    hook = rm.HOOKS[limb]
-    ball = rm.hook_ball_centre(hook)
+    hook = hooks.HOOKS[limb]
+    ball = hooks.ball_centre(hook)
     back = ball - np.array(hook.segments[-1][0], dtype=float) * NECK_PROBE
     point = model.point_jacobian[hook.link]
     return point(q_ref, dq, back)[0][2] - point(q_ref, dq, ball)[0][2]

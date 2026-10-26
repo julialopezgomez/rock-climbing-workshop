@@ -5,7 +5,7 @@ This is the team project for the Rock Climbing Robots hackathon (Bordeaux, 29 Oc
 
 ## Layout
 - `src/rcr/types.py` holds the contracts and `src/rcr/io.py` holds the file formats. Both are Pi-safe.
-- `src/rcr/<module>/`: `perception`, `planner`, `optimiser`, `controller`, `link`, `sim`, plus `robot` (README only).
+- `src/rcr/<module>/`: `perception`, `planner`, `optimiser`, `controller`, `link`, `sim`, plus `robot` (our climbing hooks, `hooks.py`; the rest is README only).
   - Each module's `__init__.py` is its public interface. Put implementations in files next to it and have `__init__`
     delegate to them, so that swapping a method never changes callers.
   - Each module's `README.md` covers purpose, input, output, where it runs and open decisions. Update it when you change the module.

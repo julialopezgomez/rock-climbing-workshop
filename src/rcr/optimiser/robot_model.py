@@ -2,7 +2,7 @@
 
 Microban's URDF is read as is (never edited or copied: it is GPL-3.0 and decision D1, where
 Microban lives, is open) from the path in MICROBAN_URDF. Its climbing limbs are not published
-yet [Rules §2.5], so the four hooks are added here in code, with the same numbers as the sim.
+yet [Rules §2.5], so the four hooks are added to it here, from rcr.robot.hooks (as in the sim).
 The URDF has no collision shapes; Microban's own ones are in its MJCF, next to it in the same
 checkout (../mjcf/robot.xml), whose bodies are the URDF's links. They are read from there.
 
@@ -27,60 +27,13 @@ from pathlib import Path
 import casadi as ca
 import numpy as np
 
+from rcr.robot.hooks import HOOKS, ball_centre, masses
 from rcr.types import LIMBS, MICROBAN_JOINTS
 
 NQ, NV, NJ = 26, 25, len(MICROBAN_JOINTS)
 GRAVITY = 9.81  # [m/s^2], along -z of the wall frame
 ROOT_LINK = "trunk"  # the URDF link the free-flyer base is attached to [Microban]
 CHECKED_COMMIT = "d0a128d"  # Rhoban/microban commit this file was written and tested against
-
-# --- The climbing hooks [Ours] ------------------------------------------------------------------
-# The same hooks as the sim (rcr.sim.scene.LIMB_PARENTS and rcr.sim.geometry.LimbTip; the tests
-# check they match): from a point on a Microban link, a finger of straight segments, each a unit
-# direction and a length in that link's frame, ending in a ball. The ball centre is the limb's
-# contact point. Replace all of this when the organisers publish the climbing limbs.
-HOOK_BALL_RADIUS = 0.010  # [m]
-HOOK_FINGER_RADIUS = 0.0045  # [m] the finger segments, as capsules (rcr.sim LimbTip.finger_radius)
-HOOK_BALL_INSET = 0.6  # ball centre past the finger's end, in ball radii
-HOOK_MASS = 0.008  # [kg] per hook: 20 % per finger segment, the rest in the ball
-HOOK_SEGMENT_MASS_SHARE = 0.2
-
-
-@dataclass(frozen=True)
-class Hook:
-    link: str  # the Microban link it is fixed to
-    start: tuple[float, float, float]  # [m] where the finger starts, link frame
-    segments: tuple[tuple[tuple[float, float, float], float], ...]  # (unit direction, length [m])
-
-
-HOOKS: dict[str, Hook] = {
-    "right_hand": Hook("radius", (0.0, -0.067, 0.0135), (((0, -1, 0), 0.008), ((1, 0, 0), 0.018))),
-    "left_hand": Hook("radius_2", (0.0, 0.067, -0.0135), (((0, 1, 0), 0.008), ((-1, 0, 0), 0.018))),
-    "right_foot": Hook("foot", (0.0, -0.0217, 0.082), (((0, 0, 1), 0.006), ((0, -1, 0), 0.022))),
-    "left_foot": Hook("foot_2", (0.0, -0.0217, 0.082), (((0, 0, 1), 0.006), ((0, -1, 0), 0.022))),
-}
-
-
-def hook_ball_centre(hook: Hook) -> np.ndarray:
-    """[m] the ball centre in the hook's link frame: the end of the finger, plus the inset."""
-    point = np.array(hook.start, dtype=float)
-    for direction, length in hook.segments:
-        point = point + np.array(direction, dtype=float) * length
-    last_direction = np.array(hook.segments[-1][0], dtype=float)
-    return point + last_direction * HOOK_BALL_RADIUS * HOOK_BALL_INSET
-
-
-def hook_masses(hook: Hook) -> list[tuple[float, np.ndarray]]:
-    """(mass [kg], position [m] in the link frame) of each finger segment's middle and the ball."""
-    out, point = [], np.array(hook.start, dtype=float)
-    for direction, length in hook.segments:
-        end = point + np.array(direction, dtype=float) * length
-        out.append((HOOK_MASS * HOOK_SEGMENT_MASS_SHARE, (point + end) / 2))
-        point = end
-    ball_mass = HOOK_MASS - HOOK_MASS * HOOK_SEGMENT_MASS_SHARE * len(hook.segments)
-    out.append((ball_mass, hook_ball_centre(hook)))
-    return out
-
 
 # --- Reading Microban's files -------------------------------------------------------------------
 
@@ -459,11 +412,11 @@ def load_robot_model() -> RobotModel:
 
     q = ca.SX.sym("q", NQ)
     poses = link_poses(urdf, q)
-    balls = [poses[h.link][0] + poses[h.link][1] @ hook_ball_centre(h) for h in HOOKS.values()]
+    balls = [poses[h.link][0] + poses[h.link][1] @ ball_centre(h) for h in HOOKS.values()]
     limb_positions = ca.horzcat(*[balls[LIMBS.index(limb)] for limb in LIMBS])
 
     point_masses = [(link.mass, link.com, link.name) for link in urdf.links.values()]
-    point_masses += [(m, p, h.link) for h in HOOKS.values() for m, p in hook_masses(h)]
+    point_masses += [(m, p, h.link) for h in HOOKS.values() for m, p in masses(h)]
     mass = sum(m for m, _, _ in point_masses)
     com = sum(m * (poses[n][0] + poses[n][1] @ p) for m, p, n in point_masses) / mass
 
@@ -519,7 +472,7 @@ def limb_reach() -> dict[str, tuple[np.ndarray, float]]:
             link = chain[-1].parent
         chain.reverse()
         # hops[m]: point m+1 from point m, in the frame of the link point m is the origin of
-        hops = [j.xyz for j in chain[1:]] + [hook_ball_centre(hook)]
+        hops = [j.xyz for j in chain[1:]] + [ball_centre(hook)]
         reach = 0.0
         for m in range(0, len(hops), 2):
             if m + 1 == len(hops):
