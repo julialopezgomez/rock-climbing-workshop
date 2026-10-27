@@ -617,7 +617,9 @@ def midpoint_poses(opti: ca.Opti, model: RobotModel, dq, q0, holds, moving: Limb
         balls = model.limb_positions(q)
         for i, limb in enumerate(LIMBS):
             if limb != moving or k + 1 <= k_release:
-                opti.subject_to(ca.sumsqr(balls[:, i] - holds[:, i]) <= cfg.midpoint_play**2)
+                # relative to the play: in m^2, IPOPT's tolerance alone allowed 3 mm, not 1 mm
+                drift = (balls[:, i] - holds[:, i]) / cfg.midpoint_play
+                opti.subject_to(ca.sumsqr(drift) <= 1)
                 friction_pyramid(opti, at[limb], cfg.normals[limb], cfg.mu[limb])
             else:
                 opti.subject_to(at[limb] == 0)  # in the air

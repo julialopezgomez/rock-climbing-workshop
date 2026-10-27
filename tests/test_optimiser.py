@@ -66,7 +66,7 @@ from rcr.types import (  # noqa: E402
 EXAMPLES = Path(__file__).resolve().parent.parent / "data" / "examples"
 
 # The example (data/examples/wall_hard.json): 34 holds up to 1.27 m. Drifting columns with uneven
-# rows to 0.70 m, random holds to 0.90 m, a regular ladder above. Its plan: 35 moves until the hands
+# rows to 0.70 m, random holds to 0.90 m, a regular ladder above. Its plan: 38 moves until the hands
 # are at 1.27 m. The tests solve its first moves; the runner below plays all of it.
 WALL, PLAN = EXAMPLES / "wall_hard.json", EXAMPLES / "contact_plan_hard.json"
 TRAJECTORY = EXAMPLES / "trajectory.json"

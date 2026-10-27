@@ -12,7 +12,8 @@ Key (a "mode transition" in FARO's terms, in grid holes, not hold names or heigh
         starts (whole grid holes along the wall and up);
     every other hold in the box around those five, widened by NEAR_SIDE and NEAR_ABOVE, the
         same way (they can be in the way);
-    the version: the hooks, the robot model, the hold mesh, the settings and CACHE_VERSION.
+    the version: the hooks, the robot model, the hold mesh and its convex pieces, the settings
+        and CACHE_VERSION.
 Value: feasible or not, and why not; the solve time; for a feasible move its motion (q, tau and
 forces per sample), stored relative to where the moving limb starts.
 
@@ -36,7 +37,7 @@ import numpy as np
 
 from rcr.types import GRID_PITCH, LIMBS, Stance, WallModel
 
-CACHE_VERSION = 2  # bump when the solver or the key changes what a stored move means
+CACHE_VERSION = 3  # bump when the solver or the key changes what a stored move means
 # The region of other holds that belong to a key: the box around the move's five holds, widened
 # by NEAR_SIDE to the sides and below and by NEAR_ABOVE above (the head, a hook lifted out of its
 # socket) [Ours]. Smaller is reused more; a hold outside that is in the way anyway is caught when
@@ -87,6 +88,7 @@ class MoveCache:
             _sha(rm.urdf_path()),
             _sha(rm.mjcf_path()),
             _sha(col.HOLD_STL),
+            *sorted(_sha(p) for p in col.PIECES_CACHE.glob("hold_pieces_*.npz")),
             repr(cfg),
         ]  # fmt: skip
         return hashlib.sha256("\n".join(parts).encode()).hexdigest()[:16]

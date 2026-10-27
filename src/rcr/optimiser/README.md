@@ -47,7 +47,7 @@ never on the moves before it.
   Pinning the move's own end to stance b's pose, without a settle, solved only 21.
 - **The move cache** (`move_cache.py`) stores every move's outcome under its layout:
   - the key is the moving limb, stance a's holds and the new hold as grid offsets from where the limb starts, and
-    every other hold within 0.3 m;
+    every other hold in the box around those holds, widened by 0.12 m (0.15 m above);
   - a version covers the hooks, the robot model, the hold mesh and the settings.
 
   Moving all holds by whole grid holes moves the problem with them, so a move solved on one wall serves any wall where
@@ -62,11 +62,16 @@ never on the moves before it.
   - `RCR_MOVE_CACHE=<folder>` uses another cache, and `RCR_MOVE_CACHE=off` none (the tests set it, so they always
     solve).
 
-  The example plan then takes 23 s through `optimise()`, against about 24 minutes to solve it.
+  The example plan then takes about 25 s through `optimise()`, against over an hour to solve it.
 - **Measured:**
   - *Example plan:* move 32 (right foot to R10) cannot be done this way, so it was replaced by right foot to R11. All
-    35 moves then solve, in 24 minutes the first time, and the dense re-check finds them all clear. Re-solving from
-    the cache takes about a second per move and gives a byte-identical `trajectory.json`.
+    35 moves then solved, in 24 minutes the first time. Re-solving from the cache takes about a second per move and
+    gives a byte-identical `trajectory.json`.
+  - *After tightening the held-ball drift constraint (cache version 3):* moves 29, 34 and 35 no longer solved; the
+    repair search replaced each by another limb first. The plan now has 38 moves (72 minutes to solve, failures
+    included). The dense re-check (0.5 mm steps) finds one spot: in move 36, just before the left foot's ball lands
+    in L12, a finger edge is 0.13 mm into L12 for an instant (0.05 mm allowed). The solver's 2 mm steps miss it.
+    Left as is for now: it is a tenth of a millimetre on a placeholder hook.
   - *Level 1 ladder* (rules' generator, rungs 0.09 m apart): 13 moves were solved up to 0.82 m. The next 14, to 1.27 m,
     all came from the cache: the same layout one rung higher. In all, the cache answered 85 of the 99 moves the climb
     asked about.
