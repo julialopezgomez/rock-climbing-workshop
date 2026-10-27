@@ -1,7 +1,7 @@
 """Optimiser tests, and a runner that solves the example plan and plays it in the sim.
 
+    git submodule update --init                             # Microban, in third_party/microban
     uv sync --group optimiser --group sim
-    export MICROBAN_URDF=/path/to/microban/src/model/urdf/robot.urdf
     uv run pytest tests/test_optimiser.py                   # the checks
     uv run mjpython tests/test_optimiser.py --hard          # solve the plan, play it as it comes
     uv run mjpython tests/test_optimiser.py --hard --save   # the same, and save the trajectory
@@ -15,8 +15,10 @@ Solving runs in a separate process, so the next transition is solved while the c
 stops part way keeps what it solved: `positions` is what the robot executes, and the planned
 angles and trunk poses in it are what --replay plays. The playback is kinematic: the robot follows
 the optimiser's poses exactly, at the planned times, no physics. Add --headless for no window.
+Solved moves are kept in the move cache (build/move_cache, rcr.optimiser.move_cache), so a move
+solved once is taken from there next time: the whole example then takes about a second a move.
 macOS needs `mjpython` for the window (Linux: python). Without the optimiser group or
-MICROBAN_URDF, pytest skips this file.
+Microban, pytest skips this file.
 """
 
 import os
@@ -28,9 +30,13 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from rcr.robot import microban
+
 ca = pytest.importorskip("casadi")
-if not os.environ.get("MICROBAN_URDF"):
-    pytest.skip("MICROBAN_URDF is not set", allow_module_level=True)
+try:
+    microban.urdf_path()
+except FileNotFoundError as missing:
+    pytest.skip(str(missing), allow_module_level=True)
 
 from rcr import io  # noqa: E402
 from rcr.optimiser import (  # noqa: E402
@@ -38,6 +44,7 @@ from rcr.optimiser import (  # noqa: E402
     feasibility,
     iter_plan,
     optimise,
+    sample_time,
     solve_plan,
     start_pose,
     to_trajectory,
@@ -45,10 +52,12 @@ from rcr.optimiser import (  # noqa: E402
 )
 from rcr.optimiser import collision as col  # noqa: E402
 from rcr.optimiser import edge_checks as fe  # noqa: E402
+from rcr.optimiser import move_cache as mc  # noqa: E402
 from rcr.optimiser import robot_model as rm  # noqa: E402
 from rcr.optimiser import transition as tr  # noqa: E402
 from rcr.robot import hooks  # noqa: E402
 from rcr.types import (  # noqa: E402
+    GRID_PITCH,
     LIMBS,
     MICROBAN_JOINTS,
     ContactPlan,
@@ -61,12 +70,24 @@ from rcr.types import (  # noqa: E402
 EXAMPLES = Path(__file__).resolve().parent.parent / "data" / "examples"
 
 # The example (data/examples/wall_hard.json): 34 holds up to 1.27 m. Drifting columns with uneven
-# rows to 0.70 m, random holds to 0.90 m, a regular ladder above. Its plan: 35 moves until the hands
+# rows to 0.70 m, random holds to 0.90 m, a regular ladder above. Its plan: 38 moves until the hands
 # are at 1.27 m. The tests solve its first moves; the runner below plays all of it.
 WALL, PLAN = EXAMPLES / "wall_hard.json", EXAMPLES / "contact_plan_hard.json"
 TRAJECTORY = EXAMPLES / "trajectory.json"
 FIRST_MOVES = 4  # the example plan's first transitions, solved once for the tests below
 DENSE = col.Clearance(step=0.0005)  # independent re-checks: 4x denser than the solver's
+
+
+@pytest.fixture(scope="module", autouse=True)
+def solve_for_real():
+    """The tests solve every move: no move cache (move_cache.default_cache), unless one sets it."""
+    before = os.environ.get("RCR_MOVE_CACHE")
+    os.environ["RCR_MOVE_CACHE"] = "off"
+    yield
+    if before is None:
+        os.environ.pop("RCR_MOVE_CACHE")
+    else:
+        os.environ["RCR_MOVE_CACHE"] = before
 
 
 @pytest.fixture(scope="module")
@@ -107,7 +128,7 @@ def test_kinematics_match_pinocchio(model):
     """Our CasADi kinematics (written from the URDF) against Pinocchio on the same URDF, with
     the same hooks added as frames and point masses. Pinocchio's quaternion is (x, y, z, w)."""
     pin = pytest.importorskip("pinocchio")
-    pm = pin.buildModelFromUrdf(os.environ["MICROBAN_URDF"], pin.JointModelFreeFlyer())
+    pm = pin.buildModelFromUrdf(str(rm.urdf_path()), pin.JointModelFreeFlyer())
     balls = {}
     for limb, hook in hooks.HOOKS.items():
         link = pm.frames[pm.getFrameId(hook.link, pin.FrameType.BODY)]
@@ -457,6 +478,7 @@ def test_the_climb_is_clear_of_every_hold_and_the_wall(wall, results, model):
     for i, r in enumerate(results):
         a, b = plan.stances[i], plan.stances[i + 1]
         contacts = tr.transition_contacts(a, b, r.moving, cfg)
+        contacts += [dict(b.contacts)] * (len(r.q) - len(contacts))  # the settle (cfg.settle)
         own = {limb: {a.contacts[limb], b.contacts[limb]} for limb in LIMBS}
         checks = col.check_trajectory(model, holds, r.q[0], r.dq, contacts, own, DENSE)
         worst = min(checks, key=lambda c: c.gap)
@@ -506,6 +528,54 @@ def test_optimise_returns_a_trajectory_that_round_trips(wall, tmp_path):
     assert io.load_trajectory(tmp_path / "t.json") == traj
 
 
+def shifted(wall: WallModel, holes_x: int, holes_z: int) -> WallModel:
+    """The same wall with every hold moved by whole grid holes."""
+    dx, dz = holes_x * GRID_PITCH, holes_z * GRID_PITCH
+    moved = [Hold(h.id, (h.position[0] + dx, 0.0, h.position[2] + dz), h.kind) for h in wall.holds]
+    return replace(wall, holds=moved)
+
+
+def test_the_move_cache_keys_on_the_layout_not_on_the_wall(wall, results, tmp_path):
+    a, b = first_row(wall).stances[:2]
+    key, ref = mc.MoveCache.key(wall, a, b)
+    there = shifted(wall, 3, 7)
+    assert mc.MoveCache.key(there, a, b)[0] == key  # the same holds, 3 holes right and 7 up
+    assert mc.MoveCache.key(wall, *first_row(wall).stances[1:3])[0] != key  # another move
+    nudged = a.contacts["right_hand"]  # 0.3 mm off the grid: not cached rather than misread
+    off_grid = replace(wall, holds=[
+        Hold(h.id, (h.position[0] + 0.0003, 0.0, h.position[2]), h.kind) if h.id == nudged else h
+        for h in wall.holds
+    ])  # fmt: skip
+    assert mc.MoveCache.key(off_grid, a, b) is None
+
+    cfg, cache = replace(tr.TransitionConfig(), settle=True), mc.MoveCache(tmp_path)
+    cache.put(wall, a, b, cfg, results[0], solve_time=12.0)
+    entry = cache.get(there, a, b, cfg)  # stored on one wall, read on the shifted one
+    assert entry.feasible and entry.solve_time == 12.0
+    lift = np.array([3 * GRID_PITCH, 0.0, 7 * GRID_PITCH])
+    assert np.allclose(entry.result.q[:, :3], results[0].q[:, :3] + lift)
+    assert np.allclose(entry.result.q[:, 3:], results[0].q[:, 3:])  # the angles stay
+    assert cache.get(wall, a, b, replace(cfg, mu=dict.fromkeys(LIMBS, 0.5))) is None  # new version
+    cache.put(wall, *first_row(wall).stances[1:3], cfg, reason="stance: infeasible")
+    assert not cache.get(there, *first_row(wall).stances[1:3], cfg).feasible
+    assert cache.size(cfg) == (1, 1)
+
+
+def test_feasibility_answers_from_the_cache_and_stores_its_rejections(wall, tmp_path):
+    a = first_row(wall).stances[0]
+    far = Stance({**a.contacts, "right_hand": "R6"})  # rejected by the checks (a 0.225 m reach)
+    cfg = tr.TransitionConfig()
+    os.environ["RCR_MOVE_CACHE"] = str(tmp_path)
+    try:
+        first, ran = fe.trace(wall, a, far)
+        assert not first.feasible and "cache" in [n for n, _ in ran]
+        again, ran = fe.trace(wall, a, far)  # now from the cache: no check runs
+        assert again.reason == f"{first.reason} (cached)" and ran[-1][0] == "cache"
+        assert mc.MoveCache(tmp_path).size(cfg) == (0, 1)
+    finally:
+        os.environ["RCR_MOVE_CACHE"] = "off"
+
+
 def test_targets_are_preloaded_against_sag(results, wall):
     from rcr.optimiser import to_trajectory
 
@@ -550,7 +620,7 @@ def solve_in_background(wall: WallModel, plan: ContactPlan, out) -> None:
         q = start_pose(wall, plan, cfg)
         out.send(("start", q))
         start = time.perf_counter()
-        for i, result in enumerate(iter_plan(wall, plan, q, cfg)):
+        for i, result in enumerate(iter_plan(wall, plan, q, cfg)):  # with the move cache
             out.send(("transition", i, result, time.perf_counter() - start))
             start = time.perf_counter()
         out.send(("done",))
@@ -564,7 +634,6 @@ class PlanPlayer:
 
     def __init__(self, cfg: tr.TransitionConfig, transitions: int):
         self.cfg, self.transitions = cfg, transitions
-        self.duration = cfg.phase_a_duration + cfg.phase_b_duration  # [s] per transition
         self.ready: list = []  # solved, not yet played
         self.playing = None  # (index, result, start time)
         self.pose = None  # the robot's configuration (NQ), None until the start pose is known
@@ -594,8 +663,8 @@ class PlanPlayer:
         if self.playing is not None:
             i, result, start = self.playing
             elapsed = now - start
-            if elapsed < self.duration:
-                self.pose = pose_at([result], elapsed, self.cfg)
+            if elapsed < sample_time(len(result.q) - 1, self.cfg):
+                self.pose = pose_at(result, elapsed, self.cfg)
                 return
             self.pose, self.playing = result.q[-1], None
             self.played += 1
@@ -615,18 +684,14 @@ class PlanPlayer:
         return self.finished and self.playing is None and not self.ready
 
 
-def pose_at(results, t: float, cfg) -> np.ndarray:
-    """The optimiser's configuration (NQ) at time t [s] of the results: linear between samples,
-    the trunk quaternion normalised after interpolating (fine at these small steps)."""
-    from rcr.optimiser import sample_time
-
-    period = cfg.phase_a_duration + cfg.phase_b_duration
-    i = min(int(t // period), len(results) - 1)
-    local = min(t - i * period, period)
-    times = [sample_time(k, cfg) for k in range(cfg.n_samples + 1)]
-    k = min(int(np.searchsorted(times, local, side="right")) - 1, cfg.n_samples - 1)
-    s = (local - times[k]) / (times[k + 1] - times[k])
-    q = (1 - s) * results[i].q[k] + s * results[i].q[k + 1]
+def pose_at(result, t: float, cfg) -> np.ndarray:
+    """The optimiser's configuration (NQ) at time t [s] of one transition: linear between
+    samples, the trunk quaternion normalised after interpolating (fine at these small steps)."""
+    times = [sample_time(k, cfg) for k in range(len(result.q))]
+    t = min(t, times[-1])
+    k = min(int(np.searchsorted(times, t, side="right")) - 1, len(times) - 2)
+    s = (t - times[k]) / (times[k + 1] - times[k])
+    q = (1 - s) * result.q[k] + s * result.q[k + 1]
     q[3:7] /= np.linalg.norm(q[3:7])
     return q
 

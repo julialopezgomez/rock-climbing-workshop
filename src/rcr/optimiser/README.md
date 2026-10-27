@@ -30,6 +30,57 @@ The kinematics are written in CasADi straight from Microban's URDF (`robot_model
 `pinocchio.casadi`: the PyPI `pin` wheel has no CasADi bindings. The tests check them against Pinocchio on the same
 URDF to machine precision (positions, Jacobians, CoM, gravity torques, `integrate`).
 
+**Each move from stance pose to stance pose, and the move cache [Ours, after FARO]:** every stance has its own pose
+(`stance_pose`): balanced, clear, solved from a fresh guess, so it depends on the stance and the holds only. A move
+(`solve_move`, on by default with `TransitionConfig.settle`) starts at stance a's pose, ends freely, then a *settle* with
+all four balls held brings the robot to stance b's pose. So a move depends on its two stances and the holds around them,
+never on the moves before it.
+
+- **Why:** before, each move started wherever the previous one ended. A hold changed far away made move 2 come out
+  14° different, and the full re-solve of the example plan then failed at move 9, which had solved before.
+- **Measured on the example plan (35 moves):**
+  - 34 solve this way; move 32 (right foot to R10) does not;
+  - two runs are identical to the last digit;
+  - consecutive moves join exactly (2e-7);
+  - about 21 minutes in all.
+
+  Pinning the move's own end to stance b's pose, without a settle, solved only 21.
+- **The move cache** (`move_cache.py`) stores every move's outcome under its layout:
+  - the key is the moving limb, stance a's holds and the new hold as grid offsets from where the limb starts, and
+    every other hold in the box around those holds, widened by 0.12 m (0.15 m above);
+  - a version covers the hooks, the robot model, the hold mesh and the settings.
+
+  Moving all holds by whole grid holes moves the problem with them, so a move solved on one wall serves any wall where
+  its holds are laid out alike. A stored motion is checked again for collisions on the actual wall before it is used.
+  A new version (real limbs, other settings) starts with an empty cache.
+- **Filling it:** `scripts/fill_cache.py` climbs generated walls (levels 1–3) and stores every move it asks for,
+  feasible or not. It resumes where it stopped. `--no-store` measures how many moves the cache already answers.
+- **Every run uses it, with no setting:**
+  - `optimise`, `solve_plan` and the runner (`tests/test_optimiser.py --hard`) take stored moves from
+    `build/move_cache/` and add each new one;
+  - `feasibility()` answers a stored move at once and stores its own rejections;
+  - `RCR_MOVE_CACHE=<folder>` uses another cache, and `RCR_MOVE_CACHE=off` none (the tests set it, so they always
+    solve).
+
+  The example plan then takes about 25 s through `optimise()`, against over an hour to solve it.
+- **Measured:**
+  - *Example plan:* move 32 (right foot to R10) cannot be done this way, so it was replaced by right foot to R11. All
+    35 moves then solved, in 24 minutes the first time. Re-solving from the cache takes about a second per move and
+    gives a byte-identical `trajectory.json`.
+  - *After tightening the held-ball drift constraint (cache version 3):* moves 29, 34 and 35 no longer solved; the
+    repair search replaced each by another limb first. The plan now has 38 moves (72 minutes to solve, failures
+    included). The dense re-check (0.5 mm steps) finds one spot: in move 36, just before the left foot's ball lands
+    in L12, a finger edge is 0.13 mm into L12 for an instant (0.05 mm allowed). The solver's 2 mm steps miss it.
+    Left as is for now: it is a tenth of a millimetre on a placeholder hook.
+  - *Level 1 ladder* (rules' generator, rungs 0.09 m apart): 13 moves were solved up to 0.82 m. The next 14, to 1.27 m,
+    all came from the cache: the same layout one rung higher. In all, the cache answered 85 of the 99 moves the climb
+    asked about.
+  - *Unseen walls, level 2 (gaps) and level 3 (drift):* a cache filled on level 1 answered only the first moves,
+    where the walls are alike. Gaps and drift make new layouts, solved once each, so the cache has to be filled on
+    many walls of all three levels.
+- **On competition day:** put the real limbs in `rcr.robot.hooks` and run the tests. The cache's version changes,
+  so it starts empty. Then run `scripts/fill_cache.py` on as many generated walls as there is time for.
+
 ## Files
 | File | What |
 |---|---|
@@ -37,6 +88,7 @@ URDF to machine precision (positions, Jacobians, CoM, gravity torques, `integrat
 | `transition.py` | `TransitionConfig`, `solve_static_pose`, `solve_transition`; the physics of one sample, each as a small function; the collision loop `_solve_clear` |
 | `collision.py` | the hold mesh and its convex pieces, the robot's convex shapes, exact signed distances and their gradients (`coal`), and `check_trajectory` along a motion |
 | `edge_checks.py` | `feasibility(wall, a, b)` and `trace`: the checks above, and their cache |
+| `move_cache.py` | `MoveCache`, `solve_move_cached`: solved moves stored by layout and reused on any wall |
 | `__init__.py` | `optimise` (and `solve_plan`, `start_pose`, `iter_plan`, `to_trajectory`): chains the transitions, reusing solved motions, times them, pre-loads against sag; `feasibility` |
 
 ## Formulation
@@ -196,8 +248,8 @@ contact point (`contact_offset`) follows the hook's ball radius.
 
 ## How to run
 ```bash
-uv sync --group optimiser                      # casadi (IPOPT), coacd (hold pieces), pin (tests)
-export MICROBAN_URDF=/path/to/microban/src/model/urdf/robot.urdf    # Rhoban/microban, tested at d0a128d
+git submodule update --init                    # Microban, in third_party/microban (once)
+uv sync --group optimiser --group sim          # casadi (IPOPT), coacd, coal, pin (tests); mujoco for the runner
 uv run pytest tests/test_optimiser.py                     # solves the example plan's first moves, checks them
 uv run mjpython tests/test_optimiser.py --hard            # solves the example plan, plays it in the sim
 uv run mjpython tests/test_optimiser.py --hard --save     # the same, and saves data/examples/trajectory.json
@@ -224,7 +276,7 @@ traj = to_trajectory(results, TransitionConfig(tau_limit=0.5))
 ```
 Errors say what failed: `ValueError` for a bad plan (naming the stance or transition); `OptimisationError`, naming the
 transition, IPOPT's status and the largest constraint violation, when IPOPT finds no solution. Without the group or
-`MICROBAN_URDF`, `run_pipeline.py --check` reports the stage as `skip`.
+Microban, `run_pipeline.py --check` reports the stage as `skip`.
 
 ## Measured (MacBook, Apple silicon)
 On the earlier regular example (since removed: 12 moves, rows 75 mm apart), the whole plan, with collisions and midpoints, at 70 % torque: **116 s**. The first
@@ -270,6 +322,10 @@ can't replace them. The remaining cost is the path tier.
 - The robot weighs 0.819 kg [Microban], 0.851 kg with our hooks; the rules allow up to 2 kg [Rules §2.2].
 
 ## Known limitations
+- **Two rungs at once is too far for a hand.** Both level 2 walls generated with gaps (rules' `level2`, seeds 0 and
+  1) stopped the climb: one missing hold left a hand 0.18 m short of the next, which fails the checks at 70 % torque
+  with our placeholder hooks. The real limbs may change this.
+- **The cache only helps with layouts it has seen.** A gap or a drift is a new layout, solved once (30 s – 3 min).
 - **Placeholder hands and holds:** the hooks, the contact normals and mu are ours until the climbing limbs and holds
   are published. Hands are supported only along +z; the real socket may hold more.
 - **The robot's shapes are convex hulls** of Microban's meshes: exact where a part is convex, a little larger where it

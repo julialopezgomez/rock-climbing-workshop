@@ -118,7 +118,10 @@ def show_stances(wall: WallModel, seconds: float = 3.0) -> None:
 
 # --- Checks (pytest) ------------------------------------------------------------------------------
 
-pytestmark = pytest.mark.skipif(not MICROBAN_XML.exists(), reason=f"no Microban at {MICROBAN_XML}")
+pytestmark = pytest.mark.skipif(
+    not MICROBAN_XML.exists(),
+    reason=f"no Microban at {MICROBAN_XML}: run `git submodule update --init`",
+)
 
 
 def test_grid_and_hold_follow_the_rules():

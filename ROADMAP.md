@@ -16,7 +16,7 @@ Each decision is a `decision` issue. The issue closes with the choice and a one-
 
 | ID | Decision | Module | Decide by | Why then |
 |---|---|---|---|---|
-| D1 | Where Microban sits: submodule / fork / copy | robot | **Mon 19 Oct** | the sim needs Microban's MJCF and servo model |
+| D1 | Where Microban sits: submodule / fork / copy (**submodule** in this branch, see robot README) | robot | **Mon 19 Oct** | the sim needs Microban's MJCF and servo model |
 | D2 | Planner method | planner | **Tue 20 Oct** | Phase 2 builds on it; informed by the P1 v0 |
 | D3 | Optimiser method (and what feasibility checks) | optimiser | **Tue 20 Oct** | same |
 | D4 | Controller method | controller | **Tue 20 Oct** | same; must fit 20 ms on a Pi Zero 2W |

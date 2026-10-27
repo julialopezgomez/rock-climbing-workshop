@@ -46,7 +46,9 @@ HOLD_STL = REPO / "data" / "holds" / "hold.stl"  # the organisers' hold, in mm [
 HOLD_STL_SCALE = 0.001  # [m/mm]
 HOLD_MESH_OFFSET = (0.0, -0.026, -0.014)  # [m] socket centre (the mesh origin) from Hold.position
 SOCKET_RADIUS = 0.0127  # [m] the hold's spherical socket, measured on hold.stl (rcr.sim CupHold)
-PIECES_CACHE = REPO / "build" / "holds"  # the convex pieces, keyed by the STL's sha256
+# The convex pieces, keyed by the STL's sha256, kept with the mesh in the repository: CoACD gives
+# slightly different pieces on another machine, and so slightly different solutions [Ours].
+PIECES_CACHE = REPO / "data" / "holds"
 COACD_THRESHOLD = 0.02  # CoACD concavity: 106 pieces, swelling < ~0.4 mm into the socket [Ours]
 TOUCHING = 5e-5  # [m] the exact mesh reports a ball resting in its socket as -4e-6 m
 # [m] how far a hook may press into the hold its ball rests in for a whole interval [Ours]: that is
@@ -182,8 +184,9 @@ def read_stl(path: Path, scale: float) -> tuple[np.ndarray, np.ndarray]:
 
 
 def convex_pieces(vertices: np.ndarray, triangles: np.ndarray) -> list[tuple]:
-    """The hold cut into convex pieces (CoACD), as (vertices, triangles), cached under build/holds
-    by the STL's sha256: computed once (~20 s), again only if the organisers change the mesh."""
+    """The hold cut into convex pieces (CoACD), as (vertices, triangles), stored in data/holds by
+    the STL's sha256 and kept in git, so every machine uses the same pieces. Computed (~20 s) only
+    if the organisers change the mesh: then commit the new file, for the same reason."""
     digest = hashlib.sha256(HOLD_STL.read_bytes()).hexdigest()[:16]
     cache = PIECES_CACHE / f"hold_pieces_{digest}_{COACD_THRESHOLD}.npz"
     if cache.exists():

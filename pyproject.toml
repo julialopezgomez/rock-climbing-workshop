@@ -14,6 +14,7 @@ dev = ["pytest", "ruff"]
 optimiser = [
     "casadi>=3.8.1",
     "coacd>=1.0.14",
+    "coal>=3.0.3",
     "pin>=4.1.0",
 ]  # pin: only to check our CasADi kinematics in tests
 
@@ -24,6 +25,7 @@ build-backend = "uv_build"
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+extend-exclude = ["third_party"]  # Microban, the submodule: not our code
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]

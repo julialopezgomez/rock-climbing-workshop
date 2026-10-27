@@ -135,7 +135,7 @@ It is the only example wall. An earlier regular wall, rows every 0.075 m, was re
   ]
 }
 ```
-(Excerpt: the [full example](data/examples/contact_plan_hard.json) climbs in 35 moves, in an irregular order, until
+(Excerpt: the [full example](data/examples/contact_plan_hard.json) climbs in 38 moves, in an irregular order, until
 the hands are at 1.27 m. Above 0.70 m each move was kept only once the full trajectory optimisation had solved it.)
 
 ### Trajectory: `trajectory/2`
