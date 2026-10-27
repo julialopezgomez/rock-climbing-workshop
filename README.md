@@ -33,9 +33,11 @@ CLAUDE.md                rules for us and for Claude Code
 CONTRIBUTING.md          branches, PRs, reviews
 data/examples/           tiny L1 wall, 2-move contact plan, tiny trajectory
 scripts/run_pipeline.py  --check: examples through every stage's signature
+scripts/make_wall.py     random L1/L2/L3 walls (show, save to data/walls/), or --check a wall file
 tests/                   format round-trips, Pi-safe imports, planner boundary
 src/rcr/
   types.py  io.py        contracts and save/load (Pi-safe)
+  walls.py               seeded random walls per level, and the rule checks a wall must pass
   perception/            laptop: camera images -> wall model + robot pose
   planner/               laptop: wall model -> contact plan
   optimiser/             laptop: contact plan -> trajectory; owns feasibility
@@ -70,3 +72,9 @@ uv run ruff check . && uv run ruff format --check .
 
 `--check` prints one line per stage, either `stub` or `ok`. A stage counts as done for Phase 1 when it says `ok`.
 CI runs all of the above on every push and PR.
+
+Random walls for testing (`rcr.walls`, see its docstring for what each level means):
+
+```bash
+uv run scripts/make_wall.py --level 3 --seed 0 --show    # or --save, or --check data/examples/wall_hard.json
+```
