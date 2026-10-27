@@ -20,7 +20,7 @@ Each decision is a `decision` issue. The issue closes with the choice and a one-
 | D2 | Planner method | planner | **Tue 20 Oct** | Phase 2 builds on it; informed by the P1 v0 |
 | D3 | Optimiser method (and what feasibility checks) | optimiser | **Tue 20 Oct** | same |
 | D4 | Controller method | controller | **Tue 20 Oct** | same; must fit 20 ms on a Pi Zero 2W |
-| D5 | Link: transport, format, rates; physical link (Wi-Fi / USB-Ethernet) | link | **Sat 24 Oct** | Phase 3 implements it |
+| D5 | Link: transport, format, rates; physical link (Wi-Fi / USB-Ethernet) (**TCP + UDP over Wi-Fi** in this branch, see link README) | link | **Sat 24 Oct** | Phase 3 implements it |
 
 ## Phase 1: each module's v0 alone (Fri 16 – Tue 20 Oct)
 

@@ -104,7 +104,8 @@ the choice must make switching to it easy.
 
 - These files need **no new dependencies on the Pi**: they use the stdlib and numpy, which Microban's venv already has.
 - They run with Microban's `.venv/bin/python`, with our `src/` added to `PYTHONPATH`.
-- Deploy with an rsync of exactly these paths, like Microban's `make sync`. The Pi-safe test in `tests/` keeps these imports honest.
+- Deploy with an rsync of exactly these paths, like Microban's `make sync`: `uv run scripts/link_pi.py deploy user@<pi>`
+  does it (to `~/rcr/src` on the Pi). The Pi-safe test in `tests/` keeps these imports honest.
 
 ## Physical link
 | | Wi-Fi 2.4 GHz | USB-Ethernet adapter (OTG) | USB gadget mode |

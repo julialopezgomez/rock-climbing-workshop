@@ -42,7 +42,8 @@ PI_ALLOWED = {"rcr", "numpy", "placo", "onnxruntime"}
 PI_IMPORT_PROBE = """
 import sys
 before = set(sys.modules)
-import rcr.types, rcr.io, rcr.controller, rcr.link, rcr.robot, rcr.robot.microban
+import rcr.types, rcr.io, rcr.controller, rcr.robot, rcr.robot.microban
+import rcr.link, rcr.link.raspberry_pi
 new = {m.split(".")[0] for m in set(sys.modules) - before}
 print("\\n".join(sorted(new - set(sys.stdlib_module_names))))
 """

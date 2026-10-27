@@ -15,6 +15,8 @@ Solving runs in a separate process, so the next transition is solved while the c
 stops part way keeps what it solved: `positions` is what the robot executes, and the planned
 angles and trunk poses in it are what --replay plays. The playback is kinematic: the robot follows
 the optimiser's poses exactly, at the planned times, no physics. Add --headless for no window.
+--send PI also sends each solved move to the robot at PI (rcr.link) as the trajectory's next
+segment, so it can climb while the rest is solved (start it: bash scripts/pi.sh PI --start).
 Solved moves are kept in the move cache (build/move_cache, rcr.optimiser.move_cache), so a move
 solved once is taken from there next time: the whole example then takes about a second a move.
 macOS needs `mjpython` for the window (Linux: python). Without the optimiser group or
@@ -708,10 +710,16 @@ def planned_pose(traj: Trajectory, t: float) -> np.ndarray:
     return q
 
 
-def run_plan(wall: WallModel, plan: ContactPlan, view: bool = True, save: bool = False):
+def run_plan(
+    wall: WallModel, plan: ContactPlan, view: bool = True, save: bool = False, send: str = ""
+):
     """Solve the plan in a worker process and play each transition in the sim as it arrives.
-    save: write TRAJECTORY after every solved transition (what is solved so far)."""
+    save: write TRAJECTORY after every solved transition (what is solved so far).
+    send: the robot's address; each solved transition goes to it as the trajectory's next
+    segment (rcr.link), so it can climb while the rest is solved. It is not started here."""
     import multiprocessing
+
+    from rcr import link
 
     context = multiprocessing.get_context("spawn")
     messages, worker_end = context.Pipe(duplex=False)
@@ -723,15 +731,40 @@ def run_plan(wall: WallModel, plan: ContactPlan, view: bool = True, save: bool =
     print(f"plan for wall {wall.id!r}: {count} transitions; solving the start pose ...")
     cfg, results = tr.TransitionConfig(), []
     player = PlanPlayer(cfg, count)
+    robot, sent = (link.LaptopLink(send) if send else None), 0
+
+    def to_robot(message) -> None:
+        """The new samples to the robot: a segment per transition, then the end of it."""
+        nonlocal robot, sent
+        try:
+            if message[0] == "transition":
+                full = to_trajectory(results, cfg)
+                if sent == 0:
+                    robot.send_trajectory(full, final=False)
+                else:
+                    robot.append_segment(link.segment(full, sent))
+                print(f"  sent to {send}: up to {full.times[-1]:.1f} s", flush=True)
+                if sent == 0:
+                    print(f"  start it: bash scripts/pi.sh {send} --start", flush=True)
+                sent = len(full.times)
+            elif sent:
+                robot.finish()  # done, or stopped: nothing more will come
+        except link.LinkError as e:
+            print(f"  not sent, and no more will be: {e}", flush=True)
+            robot.close()
+            robot = None
 
     def pose(now: float):
         while not player.finished and messages.poll():
             message = messages.recv()
             player.receive(message)
-            if message[0] == "transition" and save:
+            if message[0] == "transition":
                 results.append(message[2])
+            if message[0] == "transition" and save:
                 io.save_trajectory(to_trajectory(results, cfg), TRAJECTORY)
                 print(f"  saved {len(results)} of {count} transitions in {TRAJECTORY}", flush=True)
+            if robot is not None and message[0] != "start":
+                to_robot(message)
         player.update(now)
         return player.pose
 
@@ -740,6 +773,8 @@ def run_plan(wall: WallModel, plan: ContactPlan, view: bool = True, save: bool =
     finally:
         worker.terminate()
         worker.join()
+        if robot is not None:
+            robot.close()
     print(f"{player.played} of {player.transitions} transitions played")
 
 
@@ -793,19 +828,30 @@ def play(wall: WallModel, pose, done, view: bool) -> None:
             time.sleep(0.02)
 
 
-USAGE = """usage: tests/test_optimiser.py --hard [--save | --replay] [--headless]
+USAGE = """usage: tests/test_optimiser.py --hard [--save | --replay] [--send PI] [--headless]
     --hard            solve the example plan (contact_plan_hard.json) and play it as it comes
     --hard --save     the same, and save it in data/examples/trajectory.json
-    --hard --replay   play data/examples/trajectory.json, without solving"""
+    --hard --replay   play data/examples/trajectory.json, without solving
+    --send PI         also send each solved move to the robot at PI (rcr.link), move by move"""
 
 if __name__ == "__main__":
-    flags = set(sys.argv[1:])
+    args = sys.argv[1:]
+    send = ""
+    if "--send" in args:
+        i = args.index("--send")
+        if i + 1 >= len(args) or args[i + 1].startswith("--"):
+            sys.exit("--send needs the robot's address\n" + USAGE)
+        send = args.pop(i + 1).split("@")[-1]  # pi@172.20.10.8 as for scripts/pi.sh: the address
+        args.pop(i)
+    flags = set(args)
     if "--hard" not in flags or not flags <= {"--hard", "--save", "--replay", "--headless"}:
         sys.exit(USAGE)
+    if send and "--replay" in flags:
+        sys.exit("--send sends what is solved; to send a saved one: scripts/link_pi.py stream")
     if {"--save", "--replay"} <= flags:
         sys.exit("--save solves and saves, --replay plays what was saved: pick one\n" + USAGE)
     wall, view = io.load_wall(WALL), "--headless" not in flags
     if "--replay" in flags:
         replay(wall, view)
     else:
-        run_plan(wall, io.load_contact_plan(PLAN), view, save="--save" in flags)
+        run_plan(wall, io.load_contact_plan(PLAN), view, save="--save" in flags, send=send)
