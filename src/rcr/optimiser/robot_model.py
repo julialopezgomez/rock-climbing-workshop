@@ -65,8 +65,13 @@ class Urdf:
 
 
 def urdf_path() -> Path:
-    """Microban's URDF, from MICROBAN_URDF. Raises FileNotFoundError with what to do."""
-    value = os.environ.get("MICROBAN_URDF")
+    """Microban's URDF, from MICROBAN_URDF, or next to MICROBAN_XML in the same checkout
+    (src/model/mjcf/robot.xml -> src/model/urdf/robot.urdf), so either variable is enough.
+    Raises FileNotFoundError with what to do."""
+    value, name = os.environ.get("MICROBAN_URDF"), "MICROBAN_URDF"
+    if not value and os.environ.get("MICROBAN_XML"):
+        value, name = str(Path(os.environ["MICROBAN_XML"]).expanduser().parent.parent / "urdf"
+                          / "robot.urdf"), "MICROBAN_XML"  # fmt: skip
     if not value:
         raise FileNotFoundError(
             "MICROBAN_URDF is not set: clone github.com/Rhoban/microban (tested at commit "
@@ -74,7 +79,7 @@ def urdf_path() -> Path:
         )
     path = Path(value).expanduser()
     if not path.exists():
-        raise FileNotFoundError(f"MICROBAN_URDF points to {path}, which does not exist")
+        raise FileNotFoundError(f"{name} leads to {path}, which does not exist")
     return path
 
 

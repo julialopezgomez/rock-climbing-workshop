@@ -31,8 +31,8 @@ import numpy as np
 import pytest
 
 ca = pytest.importorskip("casadi")
-if not os.environ.get("MICROBAN_URDF"):
-    pytest.skip("MICROBAN_URDF is not set", allow_module_level=True)
+if not (os.environ.get("MICROBAN_URDF") or os.environ.get("MICROBAN_XML")):
+    pytest.skip("MICROBAN_URDF (or MICROBAN_XML) is not set", allow_module_level=True)
 
 from rcr import io  # noqa: E402
 from rcr.optimiser import (  # noqa: E402
