@@ -4,7 +4,10 @@ version = "0.1.0"
 description = "Rock Climbing Robots hackathon: team pipeline skeleton"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = ["numpy"]
+dependencies = [
+    "numpy",
+    "scipy>=1.18.1",
+]
 
 [dependency-groups]
 # Filled in when the module that needs them gets a v0.

@@ -1,0 +1,510 @@
+{
+  "schema": "wall/1",
+  "id": "gen_l3_s1",
+  "level": 3,
+  "holds": [
+    {
+      "id": "L0",
+      "position": [
+        0.3025,
+        0.0,
+        0.13
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R0",
+      "position": [
+        0.4525,
+        0.0,
+        0.13
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L1",
+      "position": [
+        0.3025,
+        0.0,
+        0.205
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "M0",
+      "position": [
+        0.3625,
+        0.0,
+        0.205
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R1",
+      "position": [
+        0.4525,
+        0.0,
+        0.205
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "M1",
+      "position": [
+        0.5425,
+        0.0,
+        0.205
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L2",
+      "position": [
+        0.3025,
+        0.0,
+        0.28
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R2",
+      "position": [
+        0.4525,
+        0.0,
+        0.28
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "M2",
+      "position": [
+        0.4975,
+        0.0,
+        0.28
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "M3",
+      "position": [
+        0.2125,
+        0.0,
+        0.355
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L3",
+      "position": [
+        0.3025,
+        0.0,
+        0.355
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "M4",
+      "position": [
+        0.3925,
+        0.0,
+        0.355
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R3",
+      "position": [
+        0.4525,
+        0.0,
+        0.355
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "M5",
+      "position": [
+        0.2575,
+        0.0,
+        0.43
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L4",
+      "position": [
+        0.3025,
+        0.0,
+        0.43
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R4",
+      "position": [
+        0.4525,
+        0.0,
+        0.43
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L5",
+      "position": [
+        0.3625,
+        0.0,
+        0.46
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L6",
+      "position": [
+        0.4075,
+        0.0,
+        0.46
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R5",
+      "position": [
+        0.5125,
+        0.0,
+        0.46
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R6",
+      "position": [
+        0.5575,
+        0.0,
+        0.46
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "M6",
+      "position": [
+        0.6025,
+        0.0,
+        0.46
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L7",
+      "position": [
+        0.4825,
+        0.0,
+        0.52
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R7",
+      "position": [
+        0.6325,
+        0.0,
+        0.52
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L8",
+      "position": [
+        0.4825,
+        0.0,
+        0.595
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "M7",
+      "position": [
+        0.5275,
+        0.0,
+        0.595
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "M8",
+      "position": [
+        0.5725,
+        0.0,
+        0.595
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R8",
+      "position": [
+        0.6325,
+        0.0,
+        0.595
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L9",
+      "position": [
+        0.4825,
+        0.0,
+        0.67
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R9",
+      "position": [
+        0.6325,
+        0.0,
+        0.67
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L10",
+      "position": [
+        0.4825,
+        0.0,
+        0.745
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R10",
+      "position": [
+        0.6325,
+        0.0,
+        0.745
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L11",
+      "position": [
+        0.4375,
+        0.0,
+        0.76
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R11",
+      "position": [
+        0.5875,
+        0.0,
+        0.76
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L12",
+      "position": [
+        0.3775,
+        0.0,
+        0.79
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R12",
+      "position": [
+        0.5275,
+        0.0,
+        0.79
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L13",
+      "position": [
+        0.3025,
+        0.0,
+        0.82
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R13",
+      "position": [
+        0.4525,
+        0.0,
+        0.82
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "M9",
+      "position": [
+        0.1975,
+        0.0,
+        0.85
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L14",
+      "position": [
+        0.2425,
+        0.0,
+        0.85
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R14",
+      "position": [
+        0.3925,
+        0.0,
+        0.85
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L15",
+      "position": [
+        0.2425,
+        0.0,
+        0.925
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R15",
+      "position": [
+        0.3925,
+        0.0,
+        0.925
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "M10",
+      "position": [
+        0.1825,
+        0.0,
+        1.0
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L16",
+      "position": [
+        0.2425,
+        0.0,
+        1.0
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R16",
+      "position": [
+        0.3925,
+        0.0,
+        1.0
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L17",
+      "position": [
+        0.2425,
+        0.0,
+        1.075
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "M11",
+      "position": [
+        0.3325,
+        0.0,
+        1.075
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R17",
+      "position": [
+        0.3925,
+        0.0,
+        1.075
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "M12",
+      "position": [
+        0.4825,
+        0.0,
+        1.075
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L18",
+      "position": [
+        0.2425,
+        0.0,
+        1.15
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "M13",
+      "position": [
+        0.3175,
+        0.0,
+        1.15
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R18",
+      "position": [
+        0.3925,
+        0.0,
+        1.15
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L19",
+      "position": [
+        0.2425,
+        0.0,
+        1.225
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "M14",
+      "position": [
+        0.3325,
+        0.0,
+        1.225
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R19",
+      "position": [
+        0.3925,
+        0.0,
+        1.225
+      ],
+      "kind": "unknown"
+    }
+  ],
+  "start": {
+    "contacts": {
+      "right_hand": "R3",
+      "left_hand": "L3",
+      "right_foot": "R0",
+      "left_foot": "L0"
+    }
+  }
+}
