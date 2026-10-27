@@ -1,6 +1,7 @@
 #!/bin/sh
 # Everything with the Raspberry Pi, from the laptop [Ours]. TARGET is user@address, e.g.
-# pi@172.20.10.8 (pi on our test Pi, user on Microban's image). Works from any folder.
+# pi@172.20.10.8 (pi on our test Pi, user on Microban's image). Works from any folder, and
+# TARGET may come before or after the option.
 #
 #   sh scripts/pi.sh --install TARGET          copy our code to ~/rcr on the Pi (after code changes)
 #   sh scripts/pi.sh --install TARGET --run    ... and (re)start the receiver there, in this window
@@ -16,12 +17,14 @@
 set -e
 
 usage() {
-    sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'
+    awk 'NR > 1 && !/^#/ { exit } NR > 1 { sub(/^# ?/, ""); print }' "$0"  # the comment above
     exit 1
 }
 [ $# -ge 2 ] || usage
-ACTION="$1"
-TARGET="$2"
+case "$1" in
+--*) ACTION="$1" TARGET="$2" ;;
+*) TARGET="$1" ACTION="$2" ;;  # TARGET first: pi@172.20.10.8 --install
+esac
 shift 2
 ADDRESS="${TARGET#*@}"  # what the link connects to: the address without the user
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"  # the repository, wherever this is run from
