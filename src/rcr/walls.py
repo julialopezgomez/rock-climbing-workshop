@@ -7,17 +7,24 @@
 
 The rulebook says only: L1 "regularly spaced holds", L2 "a ladder with missing holds", L3 "the robot
 needs to move to the right or to the left" [Rules §3]. Our reading [Ours]:
-  L1  a ladder: two columns, one hold every `rise` pitches on each, the right column optionally
-      staggered by half a rise. Rise, column spacing and position vary with the seed.
-  L2  an L1 ladder with rise 4 (60 mm), with holds missing: never two in a row on one side, so no
-      side has a gap over 120 mm.
-  L3  an L1 ladder whose columns drift sideways together, at most 2 pitches per rung, by 8 to 14
-      pitches (0.12-0.21 m) in all, in one or two legs.
-The start copies the example wall the optimiser has solved: feet on the lowest hold of each side,
-hands on the hold closest to 0.225 m above them [Ours, data/examples/wall_hard.json].
+  L1  a ladder, the route: two columns, a rung every 60 or 75 mm, the right column optionally
+      staggered by half a rise; plus up to two more columns with the same rows, so the robot has
+      holds to choose from and the wall stays regular. Rise, spacing and columns vary with the seed.
+  L2  the same with a 60 mm rise and holds missing: one or two whole rungs (both sides at the same
+      height) and single holds, never two in a row on a side, so every gap is at most 120 mm. The
+      extra columns have no hold within a rise of a missing one, so the gaps stay gaps.
+  L3  vertical ladder segments joined by one or two traverses: rungs moving 45-75 mm sideways and
+      at most 30 mm up each, 0.15-0.25 m sideways in all (the second one back the other way); plus
+      0-2 holds scattered on each row around the route, as on the organisers' own wall.
+Holds are named as on the example wall: the route's `L<k>` and `R<k>` (k the rung, so a missing hold
+leaves a gap in k), the other holds `M<n>` from the bottom up. The start copies the example wall the
+optimiser has solved: feet on `L0` and `R0`, hands on the rung closest to 0.225 m above them
+[Ours, data/examples/wall_hard.json].
 
-(level, seed) reproduces a wall exactly; `scripts/make_wall.py --save` writes one to a file. Wall
-ids are `gen_l<level>_s<seed>`, apart from those of `rcr.sim.levels` (an earlier, separate one).
+Every hold is placed only where it keeps the rules and the crowding rule (`_fits`), and the wall is
+checked again at the end. (level, seed) reproduces a wall exactly; `scripts/make_wall.py --save`
+writes one to a file. Wall ids are `gen_l<level>_s<seed>`, apart from those of `rcr.sim.levels` (an
+earlier, separate generator).
 
 Pi-safe: stdlib only. Independent of `rcr.sim` (which needs mujoco).
 """
@@ -58,13 +65,24 @@ FEET_ROWS = (8, 10)  # z = 0.13 .. 0.16 m, the start feet; the example wall's ar
 HANDS_ABOVE = 15  # 0.225 m, start hands above the feet, as on the example wall
 TOP_ROW = 84  # z = 1.27 m, no hold above it, as on the example wall
 RISES = (4, 5)  # 60 or 75 mm between rungs on a side; the optimiser solved 75 mm
-L2_RISE = 4  # L2 drops holds, so its rungs are close: a gap is at most 2 rises, 120 mm
-L2_DROP = 0.4  # chance to drop a hold (if the one below on its side was kept)
-SPACING = (10, 12)  # between the two columns: 0.15 .. 0.18 m; the example wall's is 0.165 m
-LEFT_COL = (18, 22)  # the left column at the start: x = 0.29 .. 0.35 m
-DRIFT = (8, 14)  # L3: net sideways move of a leg, 0.12 .. 0.21 m
-DRIFT_STEP = 2  # L3: at most 30 mm sideways per rung
-COLS = (10, 41)  # L3: columns stay here, so the top rungs clear the top ArUco plates
+SPACING = (10, 12)  # between the two route columns: 0.15 .. 0.18 m; the example wall's is 0.165 m
+LEFT_COL = (18, 22)  # the left route column at the start: x = 0.29 .. 0.35 m
+COLS = (10, 41)  # every column stays here, so the top and bottom rows clear the ArUco plates
+EXTRA_COLS = (0, 2)  # L1, L2: columns besides the route's
+EXTRA_APART = 4  # an extra column is at least 60 mm from every other column
+# L2: a gap is at most 2 rises, 120 mm. The optimiser found a hand could not reach up 150 mm rows
+# at 70 % torque; raise L2_RISE to 5 only once feasibility() passes 150 mm gaps.
+L2_RISE = 4
+L2_RUNGS = (1, 2)  # whole rungs missing
+L2_DROP = 0.3  # chance to drop a single hold (if its neighbours on its side are kept)
+TRAVERSES = (1, 2)  # L3
+TRAVERSE = (10, 17)  # L3: sideways in one traverse, 0.15 .. 0.255 m
+TRAVERSE_DX = (3, 5)  # L3: sideways per rung in a traverse, 45 .. 75 mm (3 clears the hold beside)
+TRAVERSE_DZ = (0, 2)  # L3: up per rung in a traverse, 0 .. 30 mm, if that fits; else up to a rise
+LADDER_BETWEEN = (2, 4)  # L3: ladder rungs between traverses (and at least 2 before the top)
+SCATTER = (0, 2)  # L3: extra holds per row
+SCATTER_BAND = 6  # L3: up to 90 mm outside the route on their row
+ATTEMPTS = 100  # L3: routes drawn before giving up (one fails if it runs out of height)
 KIND = "unknown"  # CHANGE: hold kinds are not published [Rules §4]
 
 
@@ -83,10 +101,6 @@ def grid_index(hold: Hold) -> tuple[int, int] | None:
     if abs(i - round(i)) > 1e-6 or abs(j - round(j)) > 1e-6:
         return None
     return round(i), round(j)
-
-
-def hold_id(i: int, j: int) -> str:
-    return f"h{j:02d}_{i:02d}"
 
 
 # --- Checks -------------------------------------------------------------------------------------
@@ -109,12 +123,56 @@ PLATES = [
 ]
 
 
+def _misplaced(h: Hold) -> str:
+    """Why the hold cannot go where it is on its own, or "": on a grid hole [Rules §3] with both
+    bolts on the grid [Rules §4], on the board, off the ArUco plates [Rules §5.2]."""
+    if h.position[1] != 0.0:
+        return f"{h.id}: y = {h.position[1]}, not on the wall face (y = 0)"
+    cell = grid_index(h)
+    if cell is None:
+        return f"{h.id}: {h.position} is not on a grid hole"
+    i, j = cell
+    if not (1 <= i <= N_COLS - 2 and 0 <= j < N_ROWS):
+        return f"{h.id}: bolts at holes ({i - 1}, {j}), ({i + 1}, {j}), off the grid"
+    box = _footprint(h)
+    if box[0] < 0 or box[1] > WALL_WIDTH or box[2] < 0 or box[3] > WALL_HEIGHT:
+        return f"{h.id}: sticks out of the board"
+    if any(_overlap(box, plate) for plate in PLATES):
+        return f"{h.id}: on an ArUco plate"
+    return ""
+
+
+def _clash(a: Hold, b: Hold) -> str:
+    """Why two holds cannot both be on the wall, or "": a shared bolt hole, or overlapping
+    (the provided hold's footprint) [Rules §4]."""
+    ca, cb = grid_index(a), grid_index(b)
+    if ca and cb and ca[1] == cb[1] and abs(ca[0] - cb[0]) in (0, 2):
+        return f"{a.id} and {b.id}: share a bolt hole"
+    if _overlap(_footprint(a), _footprint(b)):
+        return f"{a.id} and {b.id}: overlap"
+    return ""
+
+
+def _crowded(a: Hold, b: Hold) -> str:
+    """Why a ball cannot leave the lower hold's socket upwards, or "": the other hold is within a
+    hold's width sideways and less than CLEAR_ABOVE above it [Ours]."""
+    (xa, _, za), (xb, _, zb) = a.position, b.position
+    if abs(xa - xb) < 2 * HOLD_HALF_WIDTH and 1e-9 < abs(za - zb) < CLEAR_ABOVE - 1e-9:
+        low, high = (a, b) if za < zb else (b, a)
+        return f"{high.id} is {abs(za - zb) * 1e3:.0f} mm above {low.id}"
+    return ""
+
+
+def _fits(h: Hold, placed: list[Hold]) -> bool:
+    """Can h join the holds placed so far, keeping the rules and the crowding rule?"""
+    return not _misplaced(h) and not any(_clash(h, p) or _crowded(h, p) for p in placed)
+
+
 def violations(wall: WallModel) -> list[str]:
     """Why the wall could not be built as the rules say, one line per problem; [] if it can.
 
-    Every hold on the grid [Rules §3] with both bolts in it [Rules §4], on the board, off the ArUco
-    plates [Rules §5.2], clear of every other hold (the provided hold's footprint); unique ids;
-    a start stance with every limb on its own hold, hands not below feet [Ours, as the optimiser].
+    Every hold placed as `_misplaced` says, clear of every other hold (`_clash`); unique ids; a
+    start stance with every limb on its own hold, hands not below feet [Ours, as the optimiser].
     """
     out = []
     if wall.level not in (1, 2, 3):
@@ -123,29 +181,8 @@ def violations(wall: WallModel) -> list[str]:
     repeated = sorted({i for i in ids if ids.count(i) > 1})
     if repeated:
         out.append(f"repeated hold ids: {repeated}")
-    placed = []
-    for h in wall.holds:
-        cell = grid_index(h)
-        if h.position[1] != 0.0:
-            out.append(f"{h.id}: y = {h.position[1]}, not on the wall face (y = 0)")
-        if cell is None:
-            out.append(f"{h.id}: {h.position} is not on a grid hole")
-            continue
-        i, j = cell
-        if not (1 <= i <= N_COLS - 2 and 0 <= j < N_ROWS):
-            out.append(f"{h.id}: bolts at holes ({i - 1}, {j}), ({i + 1}, {j}), off the grid")
-            continue
-        box = _footprint(h)
-        if box[0] < 0 or box[1] > WALL_WIDTH or box[2] < 0 or box[3] > WALL_HEIGHT:
-            out.append(f"{h.id}: sticks out of the board")
-        if any(_overlap(box, plate) for plate in PLATES):
-            out.append(f"{h.id}: on an ArUco plate")
-        placed.append((h, cell, box))
-    for (a, (ia, ja), box_a), (b, (ib, jb), box_b) in itertools.combinations(placed, 2):
-        if ja == jb and abs(ia - ib) in (0, 2):
-            out.append(f"{a.id} and {b.id}: share a bolt hole")
-        elif _overlap(box_a, box_b):
-            out.append(f"{a.id} and {b.id}: overlap")
+    out += [why for h in wall.holds if (why := _misplaced(h))]
+    out += [why for a, b in itertools.combinations(wall.holds, 2) if (why := _clash(a, b))]
     out += _start_violations(wall)
     return out
 
@@ -170,14 +207,8 @@ def _start_violations(wall: WallModel) -> list[str]:
 
 def crowding(wall: WallModel) -> list[str]:
     """Pairs of holds where one sits so close above the other that a ball cannot leave the lower
-    socket upwards (CLEAR_ABOVE) [Ours]. Legal, but our generator never does it."""
-    out = []
-    for a, b in itertools.combinations(wall.holds, 2):
-        (xa, _, za), (xb, _, zb) = a.position, b.position
-        if abs(xa - xb) < 2 * HOLD_HALF_WIDTH and 1e-9 < abs(za - zb) < CLEAR_ABOVE - 1e-9:
-            low, high = (a, b) if za < zb else (b, a)
-            out.append(f"{high.id} is {abs(za - zb) * 1e3:.0f} mm above {low.id}")
-    return out
+    socket upwards (`_crowded`) [Ours]. Legal, but our generator never does it."""
+    return [why for a, b in itertools.combinations(wall.holds, 2) if (why := _crowded(a, b))]
 
 
 # --- Generator ----------------------------------------------------------------------------------
@@ -188,90 +219,192 @@ def generate(level: int, seed: int = 0) -> WallModel:
     if level not in (1, 2, 3):
         raise ValueError(f"level must be 1, 2 or 3; got {level}")
     rng = random.Random(f"{level}/{seed}")
-    rise = L2_RISE if level == 2 else rng.choice(RISES)
-    left = rng.randint(*LEFT_COL)
-    right = left + rng.randint(*SPACING)
-    stagger = rng.choice((0, rise // 2))
-    feet = rng.randint(*FEET_ROWS)
-    sides = [
-        list(range(feet, TOP_ROW + 1, rise)),  # left column rows
-        list(range(feet + stagger, TOP_ROW + 1, rise)),  # right column rows
+    for _ in range(ATTEMPTS):
+        if route := _route(level, rng):
+            break
+    else:
+        raise AssertionError(f"level {level}, seed {seed}: no route in {ATTEMPTS} attempts")
+    cells, hands, rise = route
+    dropped = _drops(rng, len(cells), hands) if level == 2 else set()
+    ladder = [
+        Hold(id=f"{'LR'[s]}{k}", position=position(*cells[k][s]), kind=KIND)
+        for k in range(len(cells))
+        for s in (0, 1)
+        if (s, k) not in dropped
     ]
-    hands = [_hands_rung(rows) for rows in sides]
-    drift = None
-    if level == 3:  # over the rungs both columns have; a staggered one may have one more on top
-        drift = _drift(rng, min(map(len, sides)), hands, left, right)
-        drift += [drift[-1]] * (max(map(len, sides)) - len(drift))
-    holds = {}
-    for side, (rows, col) in enumerate(zip(sides, (left, right), strict=True)):
-        kept = _drop(rng, rows, hands[side]) if level == 2 else range(len(rows))
-        for k in kept:
-            i = col + (drift[k] if drift else 0)
-            holds[(i, rows[k])] = Hold(
-                id=hold_id(i, rows[k]), position=position(i, rows[k]), kind=KIND
-            )
-
-    def at(side: int, k: int) -> str:
-        i = (left, right)[side] + (drift[k] if drift else 0)
-        return hold_id(i, sides[side][k])
-
+    if level == 3:
+        extras = _scatter(rng, ladder)
+    else:
+        missing = [position(*cells[k][s])[2] for s, k in dropped]
+        extras = _extra_columns(rng, cells, ladder, missing, rise)
+    extras.sort(key=lambda h: (h.position[2], h.position[0]))
+    extras = [Hold(id=f"M{n}", position=h.position, kind=KIND) for n, h in enumerate(extras)]
     start = Stance(
         contacts={
-            "right_hand": at(1, hands[1]),
-            "left_hand": at(0, hands[0]),
-            "right_foot": at(1, 0),
-            "left_foot": at(0, 0),
+            "right_hand": f"R{hands}",
+            "left_hand": f"L{hands}",
+            "right_foot": "R0",
+            "left_foot": "L0",
         }
     )
-    ordered = sorted(holds.values(), key=lambda h: (h.position[2], h.position[0]))
-    wall = WallModel(id=f"gen_l{level}_s{seed}", level=level, holds=ordered, start=start)
+    holds = sorted(ladder + extras, key=lambda h: (h.position[2], h.position[0]))
+    wall = WallModel(id=f"gen_l{level}_s{seed}", level=level, holds=holds, start=start)
     problems = violations(wall) + crowding(wall)
     if problems:  # the construction rules these out; a failure here is a bug in this file
         raise AssertionError(f"{wall.id}: {problems}")
     return wall
 
 
-def _hands_rung(rows: list[int]) -> int:
-    """Index of the rung closest to HANDS_ABOVE above the side's first one (the lower if tied)."""
-    return min(range(1, len(rows)), key=lambda k: abs(rows[k] - rows[0] - HANDS_ABOVE))
+def _route(level: int, rng: random.Random) -> tuple[list, int, int] | None:
+    """The route's grid cells, rung by rung ([[(i, j) left, (i, j) right], ...]), the start
+    hands' rung and the rise; or None if an L3 traverse ran out of height or room."""
+    rise = L2_RISE if level == 2 else rng.choice(RISES)
+    left = rng.randint(*LEFT_COL)
+    right = left + rng.randint(*SPACING)
+    # L3: no stagger, as a staggered column would sit just under the other one's holds once a
+    # traverse has moved it by the spacing [Ours]
+    stagger = 0 if level == 3 else rng.choice((0, rise // 2))
+    feet = rng.randint(*FEET_ROWS)
+    hands = min(range(1, 6), key=lambda k: abs(k * rise - HANDS_ABOVE))
+    cells, placed = [], []
 
+    def step(di: int, dj: int) -> bool:
+        """Add a rung (di, dj) pitches from the last one, if it fits; False otherwise."""
+        rung = (
+            [(i + di, j + dj) for i, j in cells[-1]]
+            if cells
+            else [(left, feet), (right, feet + stagger)]
+        )
+        new = [
+            Hold(f"{s}{len(cells)}", position(i, j), KIND)
+            for s, (i, j) in zip("LR", rung, strict=True)
+        ]
+        inside = all(COLS[0] <= i <= COLS[1] and j <= TOP_ROW for i, j in rung)
+        if not (inside and all(_fits(h, placed) for h in new)):
+            return False
+        cells.append(rung)
+        placed.extend(new)
+        return True
 
-def _drop(rng: random.Random, rows: list[int], hands: int) -> list[int]:
-    """L2: indices of the rungs kept on one side. The start rungs and below, and the top rung,
-    stay; no two dropped in a row; at least one dropped."""
-    kept, last_dropped = [], False
-    droppable = range(hands + 1, len(rows) - 1)
-    for k in range(len(rows)):
-        if k in droppable and not last_dropped and rng.random() < L2_DROP:
-            last_dropped = True
-            continue
-        kept.append(k)
-        last_dropped = False
-    if len(kept) == len(rows) and droppable:
-        kept.remove(rng.choice(droppable))
-    return kept
-
-
-def _drift(rng: random.Random, n: int, hands: list[int], left: int, right: int) -> list[int]:
-    """L3: the columns' sideways offset at each of n rungs, in pitches. None up to the start
-    hands; then one or two legs (the second back the other way) of DRIFT pitches, at most
-    DRIFT_STEP per rung, the columns staying within COLS."""
-    first = max(hands) + 1
-    legs = 2 if rng.random() < 0.5 and n - first >= 2 * DRIFT[1] // DRIFT_STEP else 1
-    bounds = [first + (n - first) * leg // legs for leg in range(legs + 1)]
-    direction, offset, steps = rng.choice((1, -1)), 0, [0] * n
-    for leg in range(legs):
-        room = {1: COLS[1] - right - offset, -1: left + offset - COLS[0]}
-        if leg == 0 and room[direction] < DRIFT[0]:
+    step(0, 0)
+    if level != 3:
+        while step(0, rise):
+            pass
+        return cells, hands, rise
+    for _ in range(hands + rng.randint(0, 2)):
+        if not step(0, rise):
+            return None
+    direction = rng.choice((1, -1))
+    for t in range(rng.randint(*TRAVERSES)):
+        if t and not all(step(0, rise) for _ in range(rng.randint(*LADDER_BETWEEN))):
+            return None
+        (i_left, _), (i_right, _) = cells[-1]
+        room = {1: COLS[1] - i_right, -1: i_left - COLS[0]}
+        if room[direction] < TRAVERSE[0]:
             direction = -direction
-        rungs = list(range(bounds[leg], bounds[leg + 1]))
-        size = min(rng.randint(*DRIFT), room[direction], DRIFT_STEP * len(rungs))
-        for _ in range(size):  # one pitch at a time, on a random rung with room for it
-            k = rng.choice([k for k in rungs if abs(steps[k]) < DRIFT_STEP])
-            steps[k] += direction
-        offset += direction * size
+        if not _traverse(rng, step, direction, min(rng.randint(*TRAVERSE), room[direction]), rise):
+            return None
         direction = -direction
-    return list(itertools.accumulate(steps))
+    top = 0
+    while step(0, rise):
+        top += 1
+    return (cells, hands, rise) if top >= LADDER_BETWEEN[0] else None
+
+
+def _traverse(rng: random.Random, step, direction: int, size: int, rise: int) -> bool:
+    """Move the route `size` pitches sideways, TRAVERSE_DX per rung, rising TRAVERSE_DZ per rung
+    where that fits (more, up to a rise, where not). False if a rung fits nowhere, or if the
+    traverse rose more than it moved sideways."""
+    moved = risen = 0
+    while moved < size:
+        left = size - moved
+        # each width leaves either nothing or at least a whole step
+        widths = [
+            d
+            for d in range(TRAVERSE_DX[0], min(TRAVERSE_DX[1], left) + 1)
+            if left - d == 0 or left - d >= TRAVERSE_DX[0]
+        ]
+        low = list(range(TRAVERSE_DZ[0], TRAVERSE_DZ[1] + 1))
+        rng.shuffle(widths)
+        rng.shuffle(low)
+        tries = [(d, dz) for dz in low + list(range(TRAVERSE_DZ[1] + 1, rise + 1)) for d in widths]
+        for d, dz in tries:
+            if step(direction * d, dz):
+                moved, risen = moved + d, risen + dz
+                break
+        else:
+            return False
+    return risen <= moved
+
+
+def _drops(rng: random.Random, n: int, hands: int) -> set[tuple[int, int]]:
+    """L2: the (side, rung) dropped from n rungs: L2_RUNGS whole rungs, then single holds (one
+    side of a rung only, so the whole rungs stay L2_RUNGS). Never the start rungs or below, nor
+    the top rung, nor two in a row on one side."""
+    droppable = range(hands + 1, n - 1)
+    whole: list[int] = []
+    for _ in range(rng.randint(*L2_RUNGS)):
+        options = [k for k in droppable if all(abs(k - w) >= 2 for w in whole)]
+        if options:
+            whole.append(rng.choice(options))
+    dropped = {(s, k) for k in whole for s in (0, 1)}
+    for k in droppable:
+        for s in (0, 1):
+            free = not ({(s, k - 1), (s, k), (s, k + 1), (1 - s, k)} & dropped)
+            if free and rng.random() < L2_DROP:
+                dropped.add((s, k))
+    return dropped
+
+
+def _extra_columns(
+    rng: random.Random, cells: list, ladder: list[Hold], missing: list[float], rise: int
+) -> list[Hold]:
+    """L1, L2: EXTRA_COLS more columns, each with the rows of the left or the right route column
+    and EXTRA_APART from every other column; none within a rise of a missing hold's height."""
+    taken = [cells[0][0][0], cells[0][1][0]]
+    placed, out = list(ladder), []
+    columns = list(range(COLS[0], COLS[1] + 1))
+    rng.shuffle(columns)
+    want = rng.randint(*EXTRA_COLS)
+    for i in columns:
+        if len(taken) - 2 == want:
+            break
+        if any(abs(i - c) < EXTRA_APART for c in taken):
+            continue
+        side = rng.randrange(2)
+        for rung in cells:
+            h = Hold("M", position(i, rung[side][1]), KIND)
+            near_gap = any(abs(h.position[2] - z) < rise * GRID_PITCH - 1e-9 for z in missing)
+            if not near_gap and _fits(h, placed):
+                placed.append(h)
+                out.append(h)
+        taken.append(i)
+    return out
+
+
+def _scatter(rng: random.Random, ladder: list[Hold]) -> list[Hold]:
+    """L3: on each row of the route, SCATTER holds at random columns up to SCATTER_BAND outside
+    the route's holds on that row, where they fit."""
+    rows: dict[int, list[int]] = {}
+    for h in ladder:
+        i, j = grid_index(h)
+        rows.setdefault(j, []).append(i)
+    placed, out = list(ladder), []
+    for j in sorted(rows):
+        lo = max(COLS[0], min(rows[j]) - SCATTER_BAND)
+        hi = min(COLS[1], max(rows[j]) + SCATTER_BAND)
+        columns = list(range(lo, hi + 1))
+        rng.shuffle(columns)
+        want, got = rng.randint(*SCATTER), 0
+        for i in columns:
+            if got == want:
+                break
+            h = Hold("M", position(i, j), KIND)
+            if _fits(h, placed):
+                placed.append(h)
+                out.append(h)
+                got += 1
+    return out
 
 
 # --- Drawing ------------------------------------------------------------------------------------
