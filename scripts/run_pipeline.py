@@ -111,15 +111,23 @@ def check() -> int:
     first_move = ContactPlan(plan.wall_id, plan.stances[:2])
     traj, s = stage("optimiser.optimise", optimiser.optimise, Trajectory, traj_ex, wall, first_move)
     results.append(s)
-    laptop = link.LaptopLink("microban")
-    _, s = stage("link.LaptopLink.send_trajectory", laptop.send_trajectory, NoneType, None, traj)
-    results.append(s)
+    # Both ends of the link on this machine, over loopback: the real code, without the Pi
+    robot_end = link.RobotLink(port=0, pose_port=0, host="127.0.0.1")
+    laptop = link.LaptopLink("127.0.0.1", robot_end.port)
+    try:
+        _, s = stage(
+            "link.LaptopLink.send_trajectory", laptop.send_trajectory, NoneType, None, traj
+        )
+        results.append(s)
 
-    print("robot (or sim):")
-    received, s = stage(
-        "link.RobotLink.trajectory", link.RobotLink().trajectory, Trajectory | None, traj
-    )
-    results.append(s)
+        print("robot (or sim):")
+        received, s = stage(
+            "link.RobotLink.trajectory", robot_end.trajectory, Trajectory | None, traj
+        )
+        results.append(s)
+    finally:
+        laptop.close()
+        robot_end.close()
     ctrl = controller.Controller(received)
     targets_ex = JointTargets(positions=first)
     targets, s = stage("controller.Controller.step", ctrl.step, JointTargets, targets_ex, state_ex)

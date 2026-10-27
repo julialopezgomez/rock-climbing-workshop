@@ -91,7 +91,7 @@ format. They are a subset of Microban's `observer.RobotState` and `MotorCommand`
 | perception | laptop | `wall_model(images) -> WallModel`, `robot_pose(images) -> Pose` |
 | planner | laptop | `plan(wall, feasible: FeasibilityFn) -> ContactPlan` |
 | optimiser | laptop | `optimise(wall, plan) -> Trajectory`, `feasibility(wall, a, b) -> Feasibility` |
-| link | both | `LaptopLink`: `send_trajectory`, `start`, `stop`, `send_pose`, `robot_state`; `RobotLink`: `trajectory`, `run_requested`, `pose`, `send_state` |
+| link | both | `send_trajectory(trajectory or file, robot)`; `LaptopLink(robot)`: `send_trajectory`, `start`, `stop`, `send_pose`, `robot_state`, `ping`, `close`; `RobotLink()`: `trajectory`, `run_requested`, `pose`, `send_state`, `close`. Wire format: [link/protocol.py](src/rcr/link/protocol.py) |
 | controller | robot | `Controller(trajectory).step(state: RobotState) -> JointTargets` |
 | sim | laptop | `Sim(wall).reset() -> RobotState`, `.step(targets: JointTargets) -> RobotState` |
 
