@@ -80,8 +80,11 @@ PYTHONPATH=src exec "$PYTHON" -m rcr.link.raspberry_pi "$@"
 BUNDLE_README = """Our code for the Raspberry Pi: the link's receiver (rcr.link.raspberry_pi).
 Built by `uv run scripts/link_pi.py bundle` from commit {commit}, {date}.
 
-1. Copy this folder to the Pi, e.g. to ~/rcr:
-       scp -r raspberry_pi pi@<pi-address>:rcr        (or unzip raspberry_pi.zip there)
+1. Copy what is in this folder to ~/rcr on the Pi, from the laptop (asks the Pi's password):
+       rsync -a dist/raspberry_pi/ pi@<pi-address>:rcr/
+   (the user may be another one: `user` on Microban's image). The "/" after raspberry_pi
+   copies the contents. Or put raspberry_pi.zip on the Pi and there: unzip it, then
+   mv raspberry_pi ~/rcr (if ~/rcr is not there yet).
 2. On the Pi:
        sh ~/rcr/run.sh
    It prints "listening on <address>:5005". Needs Python 3.9 or newer, nothing to install.
@@ -116,7 +119,7 @@ def bundle(out: Path) -> int:
     archive = shutil.make_archive(str(out), "zip", out.parent, out.name)
     files = sum(1 for f in out.rglob("*") if f.is_file())
     print(f"{files} files in {out}, and {archive}")
-    print(f"on a Pi: copy the folder (e.g. scp -r {out} pi@<pi>:rcr), then sh ~/rcr/run.sh")
+    print(f"to a Pi: rsync -a {out}/ pi@<pi-address>:rcr/   then on the Pi: sh ~/rcr/run.sh")
     return 0
 
 

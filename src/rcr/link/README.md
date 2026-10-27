@@ -25,8 +25,9 @@
    This copies `rcr/{__init__,types,io}.py`, `controller/` and `link/` to `~/rcr/src` on the Pi.
 
    **Without ssh access from here** (another Pi on the day, say): `uv run scripts/link_pi.py bundle` puts the same
-   files, a `run.sh` and a README into `dist/raspberry_pi/` and `dist/raspberry_pi.zip`. Copy that folder or zip to
-   the Pi any way you like, then run `sh run.sh` there.
+   files, a `run.sh` and a README into `dist/raspberry_pi/` and `dist/raspberry_pi.zip`. Copy the folder's contents
+   with `rsync -a dist/raspberry_pi/ pi@<pi-address>:rcr/` (or the zip any way you like), then on the Pi
+   `sh ~/rcr/run.sh`.
 
 2. **Start the receiver on the Pi:**
    ```bash
