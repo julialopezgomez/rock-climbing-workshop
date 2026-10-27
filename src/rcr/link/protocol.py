@@ -5,7 +5,7 @@ sends messages; the robot answers each one with an ack. A message is a 4-byte bi
 then that many bytes of UTF-8 JSON, an object with a "type":
 
     laptop -> robot                          robot's ack (always "type": "ack", "ok", "error")
-    hello       {"state_port": int}          {"pose_port": int}
+    hello       {}                           {"pose_port": int}
     trajectory  {"trajectory": rcr.io JSON}  {"samples": int, "duration": float [s]}
     start, stop, ping                        {}
 
@@ -13,8 +13,14 @@ UDP, for what streams and where only the newest counts (a lost one is replaced b
 JSON object per datagram, {"type", "seq", "session", and the payload}. "seq" counts up from 1 in
 each "session" (one per start of the sender), so gaps show losses.
 
-    state  robot -> laptop, to the laptop's address and the state_port it sent in hello
-    pose   laptop -> robot, to the robot's address and the pose_port it sent back
+    subscribe  laptop -> robot's pose_port, on connecting and then every SUBSCRIBE_EVERY seconds
+    pose       laptop -> robot's pose_port (counts as a subscribe too)
+    state      robot -> laptop, from the pose_port to wherever the last subscribe came from
+
+The laptop speaks first, from the socket it receives the state on, so the state comes back as a
+reply: a firewall on the laptop that blocks incoming connections (macOS's does, for an unknown
+Python) lets it through, and so does a router that translates addresses. The repeats keep that
+open, and tell a restarted robot where the laptop is.
 """
 
 from __future__ import annotations
@@ -27,6 +33,7 @@ from rcr.types import Pose, RobotState
 
 COMMAND_PORT = 5005  # [Ours] TCP, on the robot
 POSE_PORT = 5006  # [Ours] UDP, on the robot (the laptop picks any free port for the state)
+SUBSCRIBE_EVERY = 1.0  # [s] [Ours]
 MAX_MESSAGE = 64 * 2**20  # [bytes] a trajectory is ~1 MB; anything this big is a broken stream
 _LENGTH = struct.Struct(">I")
 

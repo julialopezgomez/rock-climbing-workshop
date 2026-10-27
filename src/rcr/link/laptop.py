@@ -26,11 +26,10 @@ class LaptopLink:
         self._tcp: socket.socket | None = None
         self._pose_port: int | None = None
         self._lock = threading.Lock()  # one command at a time
-        # The robot's state, over UDP on any free port; the robot learns it in "hello"
+        # The robot's state, over UDP, as replies to our subscribes from this socket (protocol.py)
         self._udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._udp.bind(("", 0))
         self._udp.settimeout(0.2)
-        self.state_port = self._udp.getsockname()[1]
         self._state: RobotState | None = None
         self.states_received = 0
         self.states_lost = 0  # gaps in the robot's sequence numbers
@@ -138,7 +137,7 @@ class LaptopLink:
                 "`python -m rcr.link.raspberry_pi` running on the Pi, on the same network?"
             ) from e
         tcp.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-        pr.send_message(tcp, {"type": "hello", "state_port": self.state_port})
+        pr.send_message(tcp, {"type": "hello"})
         answer = pr.recv_message(tcp)
         if not answer or not answer.get("ok"):
             tcp.close()
@@ -147,12 +146,24 @@ class LaptopLink:
             )
         self._pose_port = answer["pose_port"]
         self._tcp = tcp
+        self._subscribe()
+
+    def _subscribe(self) -> None:
+        """Tell the robot where to send the state: wherever this datagram comes from."""
+        try:
+            self._udp.sendto(pr.datagram("subscribe", 0, {}), (self.robot, self._pose_port))
+        except OSError:
+            pass  # the next one, a second later
 
     def _receive_states(self) -> None:
+        subscribed = 0.0
         while not self._closed.is_set():
+            if self._pose_port is not None and time.monotonic() - subscribed > pr.SUBSCRIBE_EVERY:
+                self._subscribe()
+                subscribed = time.monotonic()
             try:
                 data = self._udp.recv(65536)
-            except TimeoutError:
+            except socket.timeout:  # noqa: UP041 (TimeoutError from Python 3.10; the Pi may have 3.9)
                 continue
             except OSError:
                 return

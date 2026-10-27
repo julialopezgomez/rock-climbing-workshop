@@ -20,13 +20,13 @@
 
 1. **Put our code on the Pi, once and after every change:**
    ```bash
-   uv run scripts/link_pi.py deploy user@172.20.10.8     # rsync over ssh: asks for the Pi's password
+   uv run scripts/link_pi.py deploy pi@172.20.10.8       # rsync over ssh: asks for the Pi's password
    ```
    This copies `rcr/{__init__,types,io}.py`, `controller/` and `link/` to `~/rcr/src` on the Pi.
 
 2. **Start the receiver on the Pi:**
    ```bash
-   cd ~/rcr && PYTHONPATH=src python3 -m rcr.link.raspberry_pi     # on the Pi (ssh user@172.20.10.8)
+   cd ~/rcr && PYTHONPATH=src python3 -m rcr.link.raspberry_pi     # on the Pi (ssh pi@172.20.10.8)
    ```
    Or `deploy ... --run` does steps 1 and 2 in one command, using Microban's Python if it is there.
    - It prints `listening on <address>:5005`.
@@ -82,17 +82,21 @@ robot_link.send_state(state)  # to the laptop, if one connected
   - Only the newest one matters, so a lost one is just replaced by the next. The sender never waits.
   - Each datagram carries a sequence number, so the laptop counts losses (`states_lost`).
   - Each also carries a session: a restarted Pi starts a new one.
-- **Ports:**
-  - TCP 5005 on the Pi;
-  - UDP 5006 on the Pi;
-  - the laptop's state port is any free one, which it tells the Pi when it connects.
+- **The laptop speaks first, also over UDP:**
+  - it sends a small "subscribe" to the Pi's UDP port when it connects, then every second;
+  - the Pi sends the state back to wherever that came from, from the same port, so it arrives as a reply;
+  - so the laptop needs no open port: the macOS firewall, which blocks incoming connections for our Python, lets it
+    through, and so does a router that translates addresses;
+  - found on the real Pi: before this, the state was blocked.
+- **Ports:** TCP 5005 and UDP 5006 on the Pi. The laptop listens on nothing.
 - **Safety:**
   - start is refused before a trajectory has arrived;
   - a new trajectory is refused while running, so stop first;
   - a bad message is refused, never fatal;
   - the laptop reconnects once by itself if the Pi restarted.
 - **Pi-safe:** `socket`, `threading`, `json` and `struct` from the stdlib, plus `rcr.types` and `rcr.io`. It runs on
-  Python 3.11 (system) and 3.12 (Microban's).
+  Python 3.9 or newer: our test Pi has 3.9 (Debian 11), Microban's image 3.12. That is why `types.py` and `io.py`
+  start with `from __future__ import annotations`, and the Pi's files avoid `zip(strict=)` and catch `socket.timeout`.
 - **Nothing time-critical crosses the link.** The 50 Hz loop lives on the robot. `RobotLink`'s methods only read
   what its background threads received, so a late or lost message never stalls a tick.
 - **Tests:** `tests/test_link.py` runs both ends over loopback (127.0.0.1): the protocol, the receiver and the `check`
@@ -102,7 +106,7 @@ robot_link.send_state(state)  # to the laptop, if one connected
 | Where | Round trip (median) | Trajectory (1.15 MB) | State back |
 |---|---|---|---|
 | Loopback, one MacBook | 0.2 ms | 0.02 s | 50 per second, 0 lost |
-| Laptop ↔ Pi over Wi-Fi | *run `check` and write it here* | | |
+| MacBook ↔ Raspberry Pi (Debian 11, Python 3.9) over a phone hotspot, 27 Oct | 4.8 ms (4.4–8.4) | 0.35 s | 51 per second, 0 of 507 lost |
 
 ## Design points
 - **Microban provides SSH/rsync before a run, but nothing during it** [Microban Makefile]. So the run-time link is ours.
@@ -114,7 +118,7 @@ robot_link.send_state(state)  # to the laptop, if one connected
 - **Allowed links:** any wireless link or the Ethernet tether along the safety rope is allowed [Rules §2.4, §5.3].
 - **Networks that block it:** many venue networks block traffic between devices ("client isolation"). A phone hotspot
   works (172.20.10.x is an iPhone's), as does our own 2.4 GHz router, the robot README's recommendation.
-- **macOS firewall:** it may ask once to allow incoming connections for Python. Allow it, or no state comes back.
+- **macOS firewall:** nothing to allow; the state comes back as replies to the laptop's subscribes.
 
 ## Still open
 - What happens on link loss mid-climb: continue the trajectory, or stop? The robot keeps `run_requested()` as it

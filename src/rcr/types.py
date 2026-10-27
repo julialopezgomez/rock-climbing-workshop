@@ -6,8 +6,10 @@ x to the right, z up (seen from the front), y into the wall: the robot is at y <
 Fields marked CHANGE are expected to change; change them only together with INTERFACES.md,
 the examples in data/examples/ and the tests (see CLAUDE.md).
 
-Pi-safe: stdlib only.
+Pi-safe: stdlib only, Python 3.9 or newer (the annotations are not evaluated at run time).
 """
+
+from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass

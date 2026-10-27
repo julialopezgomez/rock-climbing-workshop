@@ -25,7 +25,7 @@ class RobotLink:
         self._trajectory: Trajectory | None = None
         self._run = False
         self._pose: Pose | None = None
-        self._laptop: tuple[str, int] | None = None  # where to send the state (UDP)
+        self._laptop: tuple[str, int] | None = None  # where the last subscribe came from
         self._seq = 0
         self._session = time.time_ns() // 1_000_000  # tells the laptop when the robot restarted
         self._closed = threading.Event()
@@ -40,7 +40,7 @@ class RobotLink:
         self.pose_port = self._udp.getsockname()[1]
         self._threads = [
             threading.Thread(target=self._accept, daemon=True),
-            threading.Thread(target=self._receive_poses, daemon=True),
+            threading.Thread(target=self._receive_datagrams, daemon=True),
         ]
         for thread in self._threads:
             thread.start()
@@ -60,13 +60,13 @@ class RobotLink:
         return self._pose
 
     def laptop(self) -> tuple[str, int] | None:
-        """(address, state port) of the laptop connected last, or None."""
+        """(address, port) the state goes to: where the laptop's last subscribe came from."""
         return self._laptop
 
     # --- set: robot -> laptop (never waits) ----------------------------------------------------
 
     def send_state(self, state: RobotState) -> None:
-        """Send the state to the laptop over UDP, if one has connected. Never waits; a lost one
+        """Send the state to the laptop over UDP, if one has subscribed. Never waits; a lost one
         is replaced by the next."""
         laptop = self._laptop
         if laptop is None:
@@ -104,7 +104,7 @@ class RobotLink:
         while not self._closed.is_set():
             try:
                 connection, address = self._server.accept()
-            except TimeoutError:
+            except socket.timeout:  # noqa: UP041 (TimeoutError from Python 3.10; the Pi may have 3.9)
                 continue
             except OSError:
                 return
@@ -149,7 +149,6 @@ class RobotLink:
     def _handle(self, message: dict, address: tuple) -> dict:
         kind = message.get("type")
         if kind == "hello":
-            self._laptop = (address[0], int(message["state_port"]))
             return {"pose_port": self.pose_port}
         if kind == "trajectory":
             trajectory = io.trajectory_from_dict(message["trajectory"])
@@ -173,16 +172,20 @@ class RobotLink:
             return {}
         raise ValueError(f"unknown message type {kind!r}")
 
-    def _receive_poses(self) -> None:
+    def _receive_datagrams(self) -> None:
+        """The laptop's subscribes and poses."""
         while not self._closed.is_set():
             try:
-                data = self._udp.recv(65536)
-            except TimeoutError:
+                data, sender = self._udp.recvfrom(65536)
+            except socket.timeout:  # noqa: UP041 (TimeoutError from Python 3.10; the Pi may have 3.9)
                 continue
             except OSError:
                 return
             message = pr.parse_datagram(data)
-            if message is not None and message["type"] == "pose":
+            if message is None or message["type"] not in ("subscribe", "pose"):
+                continue
+            self._laptop = sender  # the state goes back there, as a reply (protocol.py)
+            if message["type"] == "pose":
                 try:
                     self._pose = pr.pose_from_dict(message["pose"])
                 except (KeyError, TypeError, ValueError):
@@ -194,7 +197,7 @@ def _check(trajectory: Trajectory) -> None:
     times, rows = trajectory.times, trajectory.positions
     if not times:
         raise ValueError("empty trajectory")
-    if any(b <= a for a, b in zip(times, times[1:], strict=False)):
+    if any(times[i + 1] <= times[i] for i in range(len(times) - 1)):
         raise ValueError("times must increase")
     if len(rows) != len(times) or any(len(r) != len(trajectory.joint_names) for r in rows):
         raise ValueError("one row of positions per time, one value per joint")

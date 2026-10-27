@@ -1,7 +1,7 @@
 """Talk to the Raspberry Pi over the link (rcr.link), from the laptop.
 
-    uv run scripts/link_pi.py deploy user@172.20.10.8         # copy our Pi code there (ssh)
-    uv run scripts/link_pi.py deploy user@172.20.10.8 --run   # ... and start the receiver there
+    uv run scripts/link_pi.py deploy pi@172.20.10.8         # copy our Pi code there (ssh)
+    uv run scripts/link_pi.py deploy pi@172.20.10.8 --run   # ... and start the receiver there
     uv run scripts/link_pi.py check --pi 172.20.10.8          # evaluate the link
     uv run scripts/link_pi.py send --pi 172.20.10.8 [FILE]    # send a trajectory (or the example)
     uv run scripts/link_pi.py start --pi 172.20.10.8
@@ -46,6 +46,7 @@ def deploy(host: str, run: bool) -> int:
         "--delete",
         "--exclude",
         "__pycache__",
+        f"--rsync-path=mkdir -p {PI_DIR}/src && rsync",  # the folder on a fresh Pi, same login
         *PI_FILES,  # -R, run from src/: each keeps its path from rcr/ on
         f"{host}:{PI_DIR}/src/",
     ]
@@ -135,7 +136,7 @@ def main() -> int:
     target.add_argument("--port", type=int, default=COMMAND_PORT)
 
     p = sub.add_parser("deploy", help="copy our Pi code to the Pi (rsync over ssh)")
-    p.add_argument("host", help="user@address, e.g. user@172.20.10.8")
+    p.add_argument("host", help="user@address, e.g. pi@172.20.10.8")
     p.add_argument("--run", action="store_true", help="then start the receiver there")
     p = sub.add_parser("check", parents=[target], help="evaluate the link")
     p.add_argument("file", nargs="?", type=Path, default=EXAMPLE)

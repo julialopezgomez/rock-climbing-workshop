@@ -39,7 +39,7 @@ def main() -> None:
             while True:
                 if link.laptop() != laptop:
                     laptop = link.laptop()
-                    print(f"laptop connected: {laptop[0]} (state to UDP {laptop[1]})", flush=True)
+                    print(f"laptop subscribed: state to {laptop[0]}:{laptop[1]} (UDP)", flush=True)
                 if link.trajectories_received != seen:
                     seen = link.trajectories_received
                     trajectory = link.trajectory()
@@ -70,7 +70,8 @@ def _state(trajectory: Trajectory | None, elapsed: float) -> RobotState:
         i = 0
         while i + 1 < len(trajectory.times) and trajectory.times[i + 1] <= elapsed:
             i += 1
-        positions = dict(zip(trajectory.joint_names, trajectory.positions[i], strict=True))
+        row = trajectory.positions[i]
+        positions = {name: row[j] for j, name in enumerate(trajectory.joint_names)}
     return RobotState(
         time=elapsed,
         joint_positions=positions,

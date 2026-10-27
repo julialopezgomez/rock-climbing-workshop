@@ -8,10 +8,10 @@ The Pi's side of the link. See [../README.md](../README.md).
 | [\_\_main\_\_.py](__main__.py) | the receiver: `python -m rcr.link.raspberry_pi`. It saves each trajectory, prints start and stop, and sends state back. It drives no motors |
 
 ## Putting it on the Pi
-From the laptop, in this repository:
+From the laptop, in this repository. The user is `pi` on our test Pi and `user` on Microban's image:
 ```bash
-uv run scripts/link_pi.py deploy user@172.20.10.8        # copies ~/rcr/src/rcr/... (asks for the password)
-uv run scripts/link_pi.py deploy user@172.20.10.8 --run  # ... and starts the receiver
+uv run scripts/link_pi.py deploy pi@172.20.10.8        # copies ~/rcr/src/rcr/... (asks for the password)
+uv run scripts/link_pi.py deploy pi@172.20.10.8 --run  # ... and starts the receiver
 ```
 
 On the Pi, by hand:
@@ -22,7 +22,7 @@ cd ~/rcr && PYTHONPATH=src python3 -m rcr.link.raspberry_pi
 #   --port N     TCP port (default 5005; UDP pose port 5006)
 ```
 
-**What it needs:** our `rcr/__init__.py`, `types.py`, `io.py` and `link/`, on Python 3.11 or newer. It uses the stdlib
+**What it needs:** our `rcr/__init__.py`, `types.py`, `io.py` and `link/`, on Python 3.9 or newer. It uses the stdlib
 only: nothing to install.
 
 **Copying by hand instead of `deploy`:** keep the folder layout, `~/rcr/src/rcr/link/raspberry_pi/...`. These files

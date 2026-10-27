@@ -70,7 +70,7 @@ def test_a_broken_trajectory_is_refused(robot, laptop):
 
 
 def test_state_comes_back_and_pose_goes_out(robot, laptop):
-    laptop.ping()  # connected: the robot now knows where to send the state
+    laptop.ping()  # connected: subscribes, so the robot learns where to send the state
     state = RobotState(
         time=1.5,
         joint_positions={"head_yaw": 0.1},
@@ -79,9 +79,12 @@ def test_state_comes_back_and_pose_goes_out(robot, laptop):
         gyro=(0.0, 0.0, 0.1),
         base_pose=Pose((0.5, -0.1, 0.4), (1.0, 0.0, 0.0, 0.0)),
     )
-    for _ in range(5):
-        robot.send_state(state)
-    assert eventually(lambda: laptop.robot_state() == state)
+
+    def arrived():
+        robot.send_state(state)  # as the 50 Hz loop would, until the subscribe has come
+        return laptop.robot_state() == state
+
+    assert eventually(arrived)
     pose = Pose((0.6, -0.1, 0.5), (1.0, 0.0, 0.0, 0.0))
     laptop.send_pose(pose)
     assert eventually(lambda: robot.pose() == pose)

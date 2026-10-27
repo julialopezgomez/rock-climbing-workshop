@@ -1,8 +1,10 @@
 """Save/load for the files that cross module boundaries. Formats are documented in INTERFACES.md.
 
 Every file is JSON with a "schema" field; loading a file with another schema raises ValueError.
-Pi-safe: stdlib only (the robot may decode a trajectory).
+Pi-safe: stdlib only, Python 3.9 or newer (the robot may decode a trajectory).
 """
+
+from __future__ import annotations
 
 import json
 from dataclasses import asdict
