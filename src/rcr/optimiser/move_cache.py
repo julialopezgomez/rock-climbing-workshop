@@ -21,6 +21,8 @@ cache starts empty for it. On reuse the stored motion is checked again for colli
 actual wall before it is trusted (verify), as a hold outside the box could still be in the way.
 
 Storage: DIR/<version>/<key>.npz, one small file per move, written whole (safe to stop at any time).
+Every run uses it unless told otherwise (default_cache): optimise, solve_plan and the runner store
+and reuse solved moves; feasibility() answers stored moves at once and stores its rejections.
 """
 
 from __future__ import annotations
@@ -43,6 +45,18 @@ CACHE_VERSION = 2  # bump when the solver or the key changes what a stored move 
 NEAR_SIDE = 0.12  # [m]
 NEAR_ABOVE = 0.15  # [m]
 DEFAULT_DIR = Path(__file__).resolve().parents[3] / "build" / "move_cache"
+
+
+def default_cache() -> MoveCache | None:
+    """The cache every run uses unless told otherwise: DEFAULT_DIR, or the folder in the
+    environment variable RCR_MOVE_CACHE; None if that is "off" (the tests set it, so they
+    always solve)."""
+    import os
+
+    where = os.environ.get("RCR_MOVE_CACHE", "")
+    if where.lower() == "off":
+        return None
+    return MoveCache(where or DEFAULT_DIR)
 
 
 @dataclass
@@ -196,7 +210,7 @@ def solve_move_cached(wall, a, b, cfg, cache: MoveCache, index: int = 0):
     try:
         result = tr.solve_move(wall, a, b, cfg, index)
     except tr.OptimisationError as e:
-        reason = str(e).split(": ", 1)[-1]
+        reason = f"full solve: {str(e).split(': ', 1)[-1]}"
         cache.put(wall, a, b, cfg, reason=reason, solve_time=time.perf_counter() - start)
         raise
     cache.put(wall, a, b, cfg, result, solve_time=time.perf_counter() - start)

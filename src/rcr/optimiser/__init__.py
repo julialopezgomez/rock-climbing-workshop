@@ -28,14 +28,18 @@ def optimise(wall: WallModel, plan: ContactPlan) -> Trajectory:
     return to_trajectory(solve_plan(wall, plan, cfg), cfg)
 
 
+DEFAULT = "default"  # cache argument: the move cache every run uses (move_cache.default_cache)
+
+
 def solve_plan(
-    wall: WallModel, plan: ContactPlan, cfg: TransitionConfig | None = None
+    wall: WallModel, plan: ContactPlan, cfg: TransitionConfig | None = None, cache=DEFAULT
 ) -> list[TransitionResult]:
-    """Solve every transition of the plan in order, each starting where the previous ended."""
+    """Solve every transition of the plan in order, each starting where the previous ended
+    (with cfg.settle: each from its stance's own pose; stored moves come from the cache)."""
     from rcr.optimiser import transition as tr
 
     cfg = cfg or tr.TransitionConfig()
-    return list(iter_plan(wall, plan, start_pose(wall, plan, cfg), cfg))
+    return list(iter_plan(wall, plan, start_pose(wall, plan, cfg), cfg, cache))
 
 
 def start_pose(wall: WallModel, plan: ContactPlan, cfg: TransitionConfig | None = None):
@@ -48,19 +52,23 @@ def start_pose(wall: WallModel, plan: ContactPlan, cfg: TransitionConfig | None 
 
 
 def iter_plan(
-    wall: WallModel, plan: ContactPlan, q, cfg: TransitionConfig | None = None, cache=None
+    wall: WallModel, plan: ContactPlan, q, cfg: TransitionConfig | None = None, cache=DEFAULT
 ):
     """Yield each transition of the plan as it is solved, the first starting at q, each next one
     where the previous ended. A move starts from the same limb's last solved motion when the holds
     are laid out alike (tr.same_layout): on a regular wall, most moves repeat a row up [Ours].
     With cfg.settle, each move is tr.solve_move instead: from stance a's own pose to stance b's,
-    the same every run (q, from start_pose, is stance 0's pose); with a `cache`
-    (move_cache.MoveCache), stored moves are reused and new ones stored."""
+    the same every run (q, from start_pose, is stance 0's pose). Moves are reused from and
+    stored in `cache`: by default the move cache every run uses (move_cache.default_cache);
+    None for none."""
     from rcr.optimiser import transition as tr
 
     cfg = cfg or tr.TransitionConfig()
     if cfg.settle:  # each move from stance a's own pose to stance b's: q is stance 0's pose
-        from rcr.optimiser.move_cache import solve_move_cached
+        from rcr.optimiser.move_cache import default_cache, solve_move_cached
+
+        if cache == DEFAULT:
+            cache = default_cache()
 
         for i, (a, b) in enumerate(zip(plan.stances, plan.stances[1:], strict=False)):
             if cache is None:

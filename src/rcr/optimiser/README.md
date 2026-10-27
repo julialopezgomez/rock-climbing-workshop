@@ -55,7 +55,14 @@ never on the moves before it.
   A new version (real limbs, other settings) starts with an empty cache.
 - **Filling it:** `scripts/fill_cache.py` climbs generated walls (levels 1–3) and stores every move it asks for,
   feasible or not. It resumes where it stopped. `--no-store` measures how many moves the cache already answers.
-  The runner (`tests/test_optimiser.py --hard`) uses the cache too (`build/move_cache/`).
+- **Every run uses it, with no setting:**
+  - `optimise`, `solve_plan` and the runner (`tests/test_optimiser.py --hard`) take stored moves from
+    `build/move_cache/` and add each new one;
+  - `feasibility()` answers a stored move at once and stores its own rejections;
+  - `RCR_MOVE_CACHE=<folder>` uses another cache, and `RCR_MOVE_CACHE=off` none (the tests set it, so they always
+    solve).
+
+  The example plan then takes 23 s through `optimise()`, against about 24 minutes to solve it.
 - **Measured:**
   - *Example plan:* move 32 (right foot to R10) cannot be done this way, so it was replaced by right foot to R11. All
     35 moves then solve, in 24 minutes the first time, and the dense re-check finds them all clear. Re-solving from

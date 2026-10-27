@@ -18,6 +18,7 @@ the new version starts with an empty cache.
 from __future__ import annotations
 
 import argparse
+import os
 import time
 from dataclasses import replace
 
@@ -72,12 +73,10 @@ def climb(wall, cfg, cache, stats, height, deadline, store=True):
         moving = tr.moving_limb(st, nxt, 0)
         entry = cache.get(wall, st, nxt, cfg)
         if entry is None:
-            verdict = fe.feasibility(wall, st, nxt, cfg)
+            verdict = fe.feasibility(wall, st, nxt, cfg)  # stores its rejections (when storing)
             stats["checks"] += 1
             if not verdict.feasible:
                 stats["rejected"] += 1
-                if store:
-                    cache.put(wall, st, nxt, cfg, reason=f"feasibility: {verdict.reason}")
                 continue
         try:
             _, hit = mc.solve_move_cached(
@@ -129,6 +128,8 @@ def main() -> None:
 
     cfg = replace(tr.TransitionConfig(), settle=True)
     cache = mc.MoveCache(args.cache)
+    # the cache feasibility() reads and adds to: this one, or none when only measuring
+    os.environ["RCR_MOVE_CACHE"] = "off" if args.no_store else str(cache.directory)
     end = time.time() + args.hours * 3600
     print(f"cache {cache.directory / cache.version(cfg)}: {cache.size(cfg)} (feasible, infeasible)")
     for level in args.levels:

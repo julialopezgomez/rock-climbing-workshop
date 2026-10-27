@@ -74,6 +74,18 @@ FIRST_MOVES = 4  # the example plan's first transitions, solved once for the tes
 DENSE = col.Clearance(step=0.0005)  # independent re-checks: 4x denser than the solver's
 
 
+@pytest.fixture(scope="module", autouse=True)
+def solve_for_real():
+    """The tests solve every move: no move cache (move_cache.default_cache), unless one sets it."""
+    before = os.environ.get("RCR_MOVE_CACHE")
+    os.environ["RCR_MOVE_CACHE"] = "off"
+    yield
+    if before is None:
+        os.environ.pop("RCR_MOVE_CACHE")
+    else:
+        os.environ["RCR_MOVE_CACHE"] = before
+
+
 @pytest.fixture(scope="module")
 def model():
     return rm.load_robot_model()
@@ -545,6 +557,21 @@ def test_the_move_cache_keys_on_the_layout_not_on_the_wall(wall, results, tmp_pa
     assert cache.size(cfg) == (1, 1)
 
 
+def test_feasibility_answers_from_the_cache_and_stores_its_rejections(wall, tmp_path):
+    a = first_row(wall).stances[0]
+    far = Stance({**a.contacts, "right_hand": "R6"})  # rejected by the checks (a 0.225 m reach)
+    cfg = tr.TransitionConfig()
+    os.environ["RCR_MOVE_CACHE"] = str(tmp_path)
+    try:
+        first, ran = fe.trace(wall, a, far)
+        assert not first.feasible and "cache" in [n for n, _ in ran]
+        again, ran = fe.trace(wall, a, far)  # now from the cache: no check runs
+        assert again.reason == f"{first.reason} (cached)" and ran[-1][0] == "cache"
+        assert mc.MoveCache(tmp_path).size(cfg) == (0, 1)
+    finally:
+        os.environ["RCR_MOVE_CACHE"] = "off"
+
+
 def test_targets_are_preloaded_against_sag(results, wall):
     from rcr.optimiser import to_trajectory
 
@@ -589,8 +616,7 @@ def solve_in_background(wall: WallModel, plan: ContactPlan, out) -> None:
         q = start_pose(wall, plan, cfg)
         out.send(("start", q))
         start = time.perf_counter()
-        cache = mc.MoveCache()  # build/move_cache: a move solved once is not solved again
-        for i, result in enumerate(iter_plan(wall, plan, q, cfg, cache)):
+        for i, result in enumerate(iter_plan(wall, plan, q, cfg)):  # with the move cache
             out.send(("transition", i, result, time.perf_counter() - start))
             start = time.perf_counter()
         out.send(("done",))
