@@ -24,7 +24,14 @@
    ```
    This copies `rcr/{__init__,types,io}.py`, `controller/` and `link/` to `~/rcr/src` on the Pi.
 
-   **Or, in one go** (builds the bundle below, copies it, `--run` starts it): `sh scripts/to_pi.sh pi@172.20.10.8 [--run]`.
+   **Or all of it with one script, `scripts/pi.sh`** (from any folder):
+   ```bash
+   sh scripts/pi.sh --install pi@172.20.10.8 [--run]   # copy the code; --run (re)starts the receiver
+   sh scripts/pi.sh --check   pi@172.20.10.8           # test the link
+   sh scripts/pi.sh --send    pi@172.20.10.8 [FILE]    # the whole trajectory, once
+   sh scripts/pi.sh --stream  pi@172.20.10.8 [FILE]    # move by move (4 s every 3 s), and starts
+   sh scripts/pi.sh --start / --stop pi@172.20.10.8
+   ```
 
    **Without ssh access from here** (another Pi on the day, say): `uv run scripts/link_pi.py bundle` puts the same
    files, a `run.sh` and a README into `dist/raspberry_pi/` and `dist/raspberry_pi.zip`. Copy the folder's contents
