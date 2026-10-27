@@ -248,8 +248,8 @@ contact point (`contact_offset`) follows the hook's ball radius.
 
 ## How to run
 ```bash
-uv sync --group optimiser                      # casadi (IPOPT), coacd (hold pieces), pin (tests)
-export MICROBAN_URDF=/path/to/microban/src/model/urdf/robot.urdf    # Rhoban/microban, tested at d0a128d
+git submodule update --init                    # Microban, in third_party/microban (once)
+uv sync --group optimiser --group sim          # casadi (IPOPT), coacd, coal, pin (tests); mujoco for the runner
 uv run pytest tests/test_optimiser.py                     # solves the example plan's first moves, checks them
 uv run mjpython tests/test_optimiser.py --hard            # solves the example plan, plays it in the sim
 uv run mjpython tests/test_optimiser.py --hard --save     # the same, and saves data/examples/trajectory.json
@@ -276,7 +276,7 @@ traj = to_trajectory(results, TransitionConfig(tau_limit=0.5))
 ```
 Errors say what failed: `ValueError` for a bad plan (naming the stance or transition); `OptimisationError`, naming the
 transition, IPOPT's status and the largest constraint violation, when IPOPT finds no solution. Without the group or
-`MICROBAN_URDF`, `run_pipeline.py --check` reports the stage as `skip`.
+Microban, `run_pipeline.py --check` reports the stage as `skip`.
 
 ## Measured (MacBook, Apple silicon)
 On the earlier regular example (since removed: 12 moves, rows 75 mm apart), the whole plan, with collisions and midpoints, at 70 % torque: **116 s**. The first

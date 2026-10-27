@@ -1,8 +1,9 @@
 """The robot for the optimiser: Microban's URDF as published, plus our climbing hooks, as CasADi.
 
-Microban's URDF is read as is (never edited or copied: it is GPL-3.0 and decision D1, where
-Microban lives, is open) from the path in MICROBAN_URDF. Its climbing limbs are not published
-yet [Rules §2.5], so the four hooks are added to it here, from rcr.robot.hooks (as in the sim).
+Microban's URDF is read as is (never edited or copied: it is GPL-3.0) from its checkout, the
+submodule third_party/microban or the one MICROBAN_URDF names (rcr.robot.microban). Its climbing
+limbs are not published yet [Rules §2.5], so the four hooks are added to it here, from
+rcr.robot.hooks (as in the sim).
 The URDF has no collision shapes; Microban's own ones are in its MJCF, next to it in the same
 checkout (../mjcf/robot.xml), whose bodies are the URDF's links. They are read from there.
 
@@ -18,7 +19,6 @@ Wall frame (INTERFACES.md): x right, z up, y into the wall; the robot is at y < 
 
 from __future__ import annotations
 
-import os
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from functools import lru_cache
@@ -27,13 +27,13 @@ from pathlib import Path
 import casadi as ca
 import numpy as np
 
+from rcr.robot import microban
 from rcr.robot.hooks import HOOKS, ball_centre, masses
 from rcr.types import LIMBS, MICROBAN_JOINTS
 
 NQ, NV, NJ = 26, 25, len(MICROBAN_JOINTS)
 GRAVITY = 9.81  # [m/s^2], along -z of the wall frame
 ROOT_LINK = "trunk"  # the URDF link the free-flyer base is attached to [Microban]
-CHECKED_COMMIT = "d0a128d"  # Rhoban/microban commit this file was written and tested against
 
 # --- Reading Microban's files -------------------------------------------------------------------
 
@@ -65,30 +65,13 @@ class Urdf:
 
 
 def urdf_path() -> Path:
-    """Microban's URDF, from MICROBAN_URDF, or next to MICROBAN_XML in the same checkout
-    (src/model/mjcf/robot.xml -> src/model/urdf/robot.urdf), so either variable is enough.
-    Raises FileNotFoundError with what to do."""
-    value, name = os.environ.get("MICROBAN_URDF"), "MICROBAN_URDF"
-    if not value and os.environ.get("MICROBAN_XML"):
-        value, name = str(Path(os.environ["MICROBAN_XML"]).expanduser().parent.parent / "urdf"
-                          / "robot.urdf"), "MICROBAN_XML"  # fmt: skip
-    if not value:
-        raise FileNotFoundError(
-            "MICROBAN_URDF is not set: clone github.com/Rhoban/microban (tested at commit "
-            f"{CHECKED_COMMIT}) and set MICROBAN_URDF to its src/model/urdf/robot.urdf"
-        )
-    path = Path(value).expanduser()
-    if not path.exists():
-        raise FileNotFoundError(f"{name} leads to {path}, which does not exist")
-    return path
+    """Microban's URDF (rcr.robot.microban: the submodule, or MICROBAN_URDF / MICROBAN_XML)."""
+    return microban.urdf_path()
 
 
 def mjcf_path() -> Path:
     """Microban's MJCF, in the same checkout as the URDF (src/model/mjcf/robot.xml)."""
-    path = urdf_path().parent.parent / "mjcf" / "robot.xml"
-    if not path.exists():
-        raise FileNotFoundError(f"expected Microban's MJCF next to the URDF, at {path}")
-    return path
+    return microban.mjcf_path()
 
 
 @dataclass(frozen=True)
@@ -403,7 +386,7 @@ class RobotModel:
 
 @lru_cache(maxsize=1)
 def load_robot_model() -> RobotModel:
-    """Read the URDF at MICROBAN_URDF, add the hooks, build the CasADi functions (once)."""
+    """Read Microban's URDF, add the hooks, build the CasADi functions (once)."""
     urdf = read_urdf(urdf_path())
     revolute = {j.name: j for j in urdf.joints if j.revolute}
     if set(revolute) != set(MICROBAN_JOINTS):

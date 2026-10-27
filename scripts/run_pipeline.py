@@ -3,8 +3,9 @@
     uv run scripts/run_pipeline.py --check
 
 --check loads data/examples/, checks they are consistent, then passes them through every stage's
-signature in pipeline order. A stage that is still a stub (raises NotImplementedError) is reported
-as "stub" and the example output is used in its place, so the check exercises each v0 as it lands.
+signature in pipeline order (the optimiser on the plan's first move only, to keep it quick). A
+stage that is still a stub (raises NotImplementedError) is reported as "stub" and the example
+output is used in its place, so the check exercises each v0 as it lands.
 
 Later: --backend sim|robot runs the controller in a closed loop against rcr.sim.Sim or the robot.
 """
@@ -105,7 +106,10 @@ def check() -> int:
     results.append(s)
     plan, s = stage("planner.plan", planner.plan, ContactPlan, plan_ex, wall, optimiser.feasibility)
     results.append(s)
-    traj, s = stage("optimiser.optimise", optimiser.optimise, Trajectory, traj_ex, wall, plan)
+    # The plan's first move only: a check of the stage, not the climb (the whole example takes an
+    # hour on an empty move cache; tests/test_optimiser.py --hard solves and plays it) [Ours]
+    first_move = ContactPlan(plan.wall_id, plan.stances[:2])
+    traj, s = stage("optimiser.optimise", optimiser.optimise, Trajectory, traj_ex, wall, first_move)
     results.append(s)
     laptop = link.LaptopLink("microban")
     _, s = stage("link.LaptopLink.send_trajectory", laptop.send_trajectory, NoneType, None, traj)

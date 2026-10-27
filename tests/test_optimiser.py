@@ -1,7 +1,7 @@
 """Optimiser tests, and a runner that solves the example plan and plays it in the sim.
 
+    git submodule update --init                             # Microban, in third_party/microban
     uv sync --group optimiser --group sim
-    export MICROBAN_URDF=/path/to/microban/src/model/urdf/robot.urdf
     uv run pytest tests/test_optimiser.py                   # the checks
     uv run mjpython tests/test_optimiser.py --hard          # solve the plan, play it as it comes
     uv run mjpython tests/test_optimiser.py --hard --save   # the same, and save the trajectory
@@ -18,7 +18,7 @@ the optimiser's poses exactly, at the planned times, no physics. Add --headless 
 Solved moves are kept in the move cache (build/move_cache, rcr.optimiser.move_cache), so a move
 solved once is taken from there next time: the whole example then takes about a second a move.
 macOS needs `mjpython` for the window (Linux: python). Without the optimiser group or
-MICROBAN_URDF, pytest skips this file.
+Microban, pytest skips this file.
 """
 
 import os
@@ -30,9 +30,13 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from rcr.robot import microban
+
 ca = pytest.importorskip("casadi")
-if not (os.environ.get("MICROBAN_URDF") or os.environ.get("MICROBAN_XML")):
-    pytest.skip("MICROBAN_URDF (or MICROBAN_XML) is not set", allow_module_level=True)
+try:
+    microban.urdf_path()
+except FileNotFoundError as missing:
+    pytest.skip(str(missing), allow_module_level=True)
 
 from rcr import io  # noqa: E402
 from rcr.optimiser import (  # noqa: E402
@@ -124,7 +128,7 @@ def test_kinematics_match_pinocchio(model):
     """Our CasADi kinematics (written from the URDF) against Pinocchio on the same URDF, with
     the same hooks added as frames and point masses. Pinocchio's quaternion is (x, y, z, w)."""
     pin = pytest.importorskip("pinocchio")
-    pm = pin.buildModelFromUrdf(os.environ["MICROBAN_URDF"], pin.JointModelFreeFlyer())
+    pm = pin.buildModelFromUrdf(str(rm.urdf_path()), pin.JointModelFreeFlyer())
     balls = {}
     for limb, hook in hooks.HOOKS.items():
         link = pm.frames[pm.getFrameId(hook.link, pin.FrameType.BODY)]

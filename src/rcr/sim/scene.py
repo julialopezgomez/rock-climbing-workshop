@@ -1,21 +1,20 @@
 """Build the MuJoCo scene for a wall model.
 
 Assembled with MjSpec from the Microban model, so the upstream clone stays
-untouched and swapping in the organisers' simulator means changing MICROBAN_XML
+untouched and swapping in the organisers' simulator means setting MICROBAN_XML
 and the limb body names. The generated XML is written out for inspection and
 for placo, which needs a single kinematic tree.
 """
 
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
 import mujoco
 import numpy as np
 
-from rcr.robot import hooks
+from rcr.robot import hooks, microban
 from rcr.sim import markers as mk
 from rcr.sim.geometry import (
     HOLE_DIAMETER,
@@ -29,19 +28,8 @@ from rcr.sim.geometry import (
 from rcr.sim.meshes import HOLD_STL_SCALE
 from rcr.types import WALL_HEIGHT, WALL_WIDTH, WallModel
 
-
-def _microban_xml() -> Path:
-    """Microban's MJCF: MICROBAN_XML; else the one next to MICROBAN_URDF in the same checkout
-    (src/model/urdf/robot.urdf -> src/model/mjcf/robot.xml), so either variable is enough;
-    else ~/Code/rock-climbing/microban."""
-    if os.environ.get("MICROBAN_XML"):
-        return Path(os.environ["MICROBAN_XML"]).expanduser()
-    if os.environ.get("MICROBAN_URDF"):
-        return Path(os.environ["MICROBAN_URDF"]).expanduser().parent.parent / "mjcf" / "robot.xml"
-    return Path.home() / "Code/rock-climbing/microban/src/model/mjcf/robot.xml"
-
-
-MICROBAN_XML = _microban_xml()
+# Microban's MJCF: the submodule's, or the checkout MICROBAN_URDF / MICROBAN_XML names
+MICROBAN_XML = microban.checkout()[0] / microban.MJCF
 
 # Per limb: the Microban parent body, where the end-effector starts, and the
 # path of its finger as unit directions (each followed for one length from
@@ -169,12 +157,7 @@ def _add_cup(board, hold_id: str, x: float, z: float, cup: CupHold) -> None:
 
 
 def _robot_spec(cfg: SceneConfig) -> mujoco.MjSpec:
-    if not MICROBAN_XML.exists():
-        raise FileNotFoundError(
-            f"Microban model not found at {MICROBAN_XML}: clone github.com/Rhoban/microban and "
-            "set MICROBAN_URDF to its src/model/urdf/robot.urdf, or MICROBAN_XML to its "
-            "src/model/mjcf/robot.xml (see src/rcr/sim/README.md)"
-        )
+    microban.mjcf_path()  # raises, saying what to do, if Microban is missing
     spec = mujoco.MjSpec.from_file(str(MICROBAN_XML))
     spec.meshdir = str((MICROBAN_XML.parent / "assets").resolve())
     grey = [0.62, 0.63, 0.66, 1.0]

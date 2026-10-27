@@ -42,7 +42,8 @@ src/rcr/
   controller/            ROBOT:  trajectory + robot state -> joint targets (Pi-safe)
   link/                  both:   trajectory, start/stop, pose ->; <- robot state
   sim/                   laptop: backend with the robot's role
-  robot/                 how our code meets Microban; our climbing hooks (hooks.py)
+  robot/                 how our code meets Microban: where it is (microban.py), our climbing hooks (hooks.py)
+third_party/microban/    Rhoban/microban, a git submodule (not our code, GPL-3.0)
 ```
 
 Each module has a `README.md` that covers purpose, input, output, where it runs, v0 ideas and open decisions.
@@ -50,11 +51,17 @@ Each module also has an `__init__.py`, which is its public interface; implementa
 
 ## Run
 
-Requires [uv](https://docs.astral.sh/uv/).
+Requires [uv](https://docs.astral.sh/uv/) and git.
 
 ```bash
-uv sync
+git clone --recursive https://github.com/julialopezgomez/rock-climbing-workshop.git   # with Microban
+cd rock-climbing-workshop
+uv sync                                    # base; add --group sim --group optimiser for those
 ```
+
+Microban ([Rhoban/microban](https://github.com/Rhoban/microban), GPL-3.0) is a git submodule in `third_party/microban`,
+pinned to the commit we test against; the optimiser and the sim find it there with no setting. Cloned without
+`--recursive`? Run `git submodule update --init`. After a `git pull` that moves the pin, run it again.
 
 ```bash
 uv run scripts/run_pipeline.py --check
