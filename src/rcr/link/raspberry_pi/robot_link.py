@@ -23,13 +23,14 @@ class RobotLink:
     ) -> None:
         self._lock = threading.Lock()
         self._trajectory: Trajectory | None = None
+        self._complete = False  # no more segments will come
         self._run = False
         self._pose: Pose | None = None
         self._laptop: tuple[str, int] | None = None  # where the last subscribe came from
         self._seq = 0
         self._session = time.time_ns() // 1_000_000  # tells the laptop when the robot restarted
         self._closed = threading.Event()
-        self.trajectories_received = 0  # counts, so a loop can see that a new one came
+        self.trajectories_received = 0  # counts every new or longer one, so a loop sees it came
         self._connections: set[socket.socket] = set()
         self._server = socket.create_server((host, port))  # SO_REUSEADDR: restarts at once
         self._server.settimeout(0.2)
@@ -48,8 +49,14 @@ class RobotLink:
     # --- get: laptop -> robot (never waits) ----------------------------------------------------
 
     def trajectory(self) -> Trajectory | None:
-        """The trajectory received from the laptop, or None if none yet."""
+        """The trajectory received from the laptop, or None if none yet. Sent move by move, it
+        grows: it holds every segment so far (see trajectory_complete)."""
         return self._trajectory
+
+    def trajectory_complete(self) -> bool:
+        """True once no more segments will come: the trajectory ends where it ends now. Until
+        then, a controller past its last sample holds there and waits for the next one."""
+        return self._complete
 
     def run_requested(self) -> bool:
         """True between the laptop's start() and stop()."""
@@ -150,15 +157,27 @@ class RobotLink:
         kind = message.get("type")
         if kind == "hello":
             return {"pose_port": self.pose_port}
-        if kind == "trajectory":
+        if kind == "trajectory":  # a new one, replacing any before
             trajectory = io.trajectory_from_dict(message["trajectory"])
             _check(trajectory)
             with self._lock:
                 if self._run:
                     raise RuntimeError("running: stop before sending a new trajectory")
                 self._trajectory = trajectory
+                self._complete = bool(message.get("final", True))
                 self.trajectories_received += 1
             return {"samples": len(trajectory.times), "duration": trajectory.times[-1]}
+        if kind == "append":  # the next segment, also while running
+            segment = io.trajectory_from_dict(message["trajectory"])
+            _check(segment)
+            with self._lock:
+                self._trajectory = _joined(self._trajectory, self._complete, segment)
+                self._complete = bool(message.get("final", False))
+                self.trajectories_received += 1
+            return {"samples": len(segment.times), "duration": self._trajectory.times[-1]}
+        if kind == "finish":  # nothing more will come
+            self._complete = True
+            return {}
         if kind == "start":
             with self._lock:
                 if self._trajectory is None:
@@ -190,6 +209,33 @@ class RobotLink:
                     self._pose = pr.pose_from_dict(message["pose"])
                 except (KeyError, TypeError, ValueError):
                     pass
+
+
+def _joined(trajectory: Trajectory | None, complete: bool, segment: Trajectory) -> Trajectory:
+    """The trajectory with the segment after it, as a new object (the loop may be reading the
+    old one). The segment's times go on from the trajectory's: from the climb's start."""
+    if trajectory is None:
+        raise RuntimeError("no trajectory to append to: send the first segment as a trajectory")
+    if complete:
+        raise RuntimeError("the trajectory is complete: send a new one to start again")
+    if segment.joint_names != trajectory.joint_names:
+        raise ValueError("the segment's joints differ from the trajectory's")
+    if segment.times[0] <= trajectory.times[-1]:
+        raise ValueError(
+            f"the segment starts at {segment.times[0]} s, not after the trajectory's end "
+            f"({trajectory.times[-1]} s)"
+        )
+
+    def both(a, b):
+        return None if a is None or b is None else a + b
+
+    return Trajectory(
+        joint_names=trajectory.joint_names,
+        times=trajectory.times + segment.times,
+        positions=trajectory.positions + segment.positions,
+        planned_positions=both(trajectory.planned_positions, segment.planned_positions),
+        trunk_poses=both(trajectory.trunk_poses, segment.trunk_poses),
+    )
 
 
 def _check(trajectory: Trajectory) -> None:

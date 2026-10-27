@@ -53,7 +53,8 @@ def stage(name: str, fn, expected, example, *args):
     or if this machine lacks what the stage needs (an optional dependency group or Microban)."""
     hints = typing.get_type_hints(fn)
     returns = hints.pop("return", None)
-    for (param, hint), arg in zip(hints.items(), args, strict=True):
+    given = list(hints.items())[: len(args)]  # the rest have defaults
+    for (param, hint), arg in zip(given, args, strict=True):
         if isinstance(hint, type):
             assert isinstance(arg, hint), f"{name}: {param} should be {hint.__name__}"
     assert returns == expected, f"{name}: returns {_name(returns)}, expected {_name(expected)}"

@@ -3,9 +3,11 @@
     PYTHONPATH=src python3 -m rcr.link.raspberry_pi [--save FILE] [--rate HZ] [--port N]
 
 It drives no motors. It stands in for our Move until that exists (it will hold a RobotLink the same
-way): to check the link from the laptop (scripts/link_pi.py check) and to put trajectories on the
-Pi. As state it sends the trajectory's own positions at the time since start (a dry run), so the
-laptop sees them come back. Stop it with Ctrl-C.
+way): to check the link from the laptop (scripts/link_pi.py check, stream) and to put
+trajectories on the Pi. After start it plays the trajectory on its own clock (a dry run) and sends
+those positions back as the state, so the laptop sees them. Sent move by move, the trajectory
+grows while it plays; at the end of what it has, the clock holds there until the next segment
+comes, as a controller must [Ours]. Stop it with Ctrl-C.
 """
 
 from __future__ import annotations
@@ -30,10 +32,17 @@ def main() -> None:
     args = ap.parse_args()
     save = Path(args.save).expanduser()
 
-    with RobotLink(args.port, args.pose_port) as link:
+    try:
+        robot_link = RobotLink(args.port, args.pose_port)
+    except OSError as e:
+        raise SystemExit(
+            f"cannot listen on port {args.port} or {args.pose_port}: {e}. Is the receiver already "
+            "running? Stop it with: pkill -f rcr.link.raspberry_pi"
+        ) from None
+    with robot_link as link:
         print(f"listening on {_address()}:{link.port} (TCP), poses on {link.pose_port} (UDP)")
         print("drives no motors. Ctrl-C to stop.", flush=True)
-        seen, running, laptop, started = 0, False, None, 0.0
+        seen, running, laptop, clock, waiting, ended = 0, False, None, 0.0, False, False
         tick, next_tick = 1.0 / args.rate, time.monotonic()
         try:
             while True:
@@ -45,18 +54,33 @@ def main() -> None:
                     trajectory = link.trajectory()
                     save.parent.mkdir(parents=True, exist_ok=True)
                     io.save_trajectory(trajectory, save)
+                    more = "" if link.trajectory_complete() else ", more to come"
                     print(
                         f"trajectory {seen}: {len(trajectory.times)} samples, "
-                        f"{trajectory.times[-1]:.1f} s, {len(trajectory.joint_names)} joints; "
-                        f"saved to {save}",
+                        f"{trajectory.times[-1]:.1f} s, {len(trajectory.joint_names)} joints"
+                        f"{more}; saved to {save}",
                         flush=True,
                     )
                 if link.run_requested() != running:
                     running = link.run_requested()
-                    started = time.monotonic()
-                    print("start" if running else "stop", flush=True)
-                elapsed = time.monotonic() - started if running else 0.0
-                link.send_state(_state(link.trajectory(), elapsed))
+                    if running:
+                        clock, waiting, ended = 0.0, False, False
+                    print("start" if running else f"stop at {clock:.2f} s", flush=True)
+                trajectory = link.trajectory()
+                if running and trajectory is not None:
+                    end = trajectory.times[-1]
+                    if clock + tick <= end:
+                        clock += tick
+                        if waiting:
+                            print(f"next segment here: going on from {clock:.2f} s", flush=True)
+                            waiting = False
+                    elif not link.trajectory_complete() and not waiting:
+                        print(f"waiting at {end:.2f} s for the next segment (holding)", flush=True)
+                        waiting = True
+                    elif link.trajectory_complete() and not ended:
+                        print(f"end of the trajectory at {end:.2f} s (holding)", flush=True)
+                        ended = True
+                link.send_state(_state(trajectory, clock))
                 next_tick += tick  # on schedule, whatever the work took
                 time.sleep(max(0.0, next_tick - time.monotonic()))
         except KeyboardInterrupt:

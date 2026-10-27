@@ -142,3 +142,91 @@ def test_the_receiver_and_the_check_script(tmp_path):
     finally:
         receiver.terminate()
         receiver.wait(timeout=10)
+
+
+# --- Move by move: segments appended while the robot runs --------------------------------------
+
+
+def cut(lo: int, hi: int):
+    """Samples lo..hi-1 of the example: one segment of it."""
+    part = link.segment(TRAJECTORY, lo)
+    n = hi - lo
+    part.times, part.positions = part.times[:n], part.positions[:n]
+    part.planned_positions, part.trunk_poses = part.planned_positions[:n], part.trunk_poses[:n]
+    return part
+
+
+def test_segments_grow_the_trajectory_while_it_runs(robot, laptop):
+    cuts = [0, 300, 600, len(TRAJECTORY.times)]
+    laptop.send_trajectory(cut(0, 300), final=False)
+    assert not robot.trajectory_complete()
+    laptop.start()  # runs what it has; more comes
+    for lo, hi in zip(cuts[1:-1], cuts[2:], strict=True):
+        laptop.append_segment(cut(lo, hi), final=hi == cuts[-1])
+    assert robot.trajectory() == TRAJECTORY  # the segments, joined, are the whole
+    assert robot.trajectory_complete()
+    with pytest.raises(link.LinkError, match="complete"):
+        laptop.append_segment(cut(len(TRAJECTORY.times) - 1, len(TRAJECTORY.times)))
+
+
+def test_a_segment_must_go_on_from_the_end(robot, laptop):
+    with pytest.raises(link.LinkError, match="no trajectory"):
+        laptop.append_segment(TRAJECTORY)
+    laptop.send_trajectory(TRAJECTORY, final=False)
+    with pytest.raises(link.LinkError, match="not after the trajectory's end"):
+        laptop.append_segment(cut(10, 20))  # overlaps what it has
+    laptop.finish()
+    assert robot.trajectory_complete()
+
+
+def test_stream_with_the_receiver(tmp_path):
+    """scripts/link_pi.py stream against the receiver: a 3 s trajectory in 1 s segments, one
+    every 1.5 s, so the robot must hold at the end of each and still reach the end."""
+    n = 31
+    short = TRAJECTORY.__class__(
+        joint_names=TRAJECTORY.joint_names,
+        times=[0.1 * i for i in range(n)],
+        positions=TRAJECTORY.positions[:n],
+    )
+    file = tmp_path / "short.json"
+    io.save_trajectory(short, file)
+    env = {**os.environ, "PYTHONPATH": str(ROOT / "src")}
+    with link.RobotLink(port=0, pose_port=0, host="127.0.0.1") as probe:  # two free ports
+        port, pose_port = probe.port, probe.pose_port
+    receiver = subprocess.Popen(
+        [sys.executable, "-m", "rcr.link.raspberry_pi", "--port", str(port),
+         "--pose-port", str(pose_port), "--save", str(tmp_path / "received.json")],
+        env=env, stdout=subprocess.PIPE, text=True,
+    )  # fmt: skip
+    try:
+        assert "listening" in receiver.stdout.readline()
+        run = subprocess.run(
+            [sys.executable, str(ROOT / "scripts" / "link_pi.py"), "stream", str(file),
+             "--pi", "127.0.0.1", "--port", str(port), "--segment", "1", "--every", "1.5"],
+            env=env, capture_output=True, text=True, timeout=60,
+        )  # fmt: skip
+        assert run.returncode == 0, run.stdout + run.stderr
+        assert "robot reached the end" in run.stdout
+        held = float(run.stdout.split("it held ")[1].split(" s")[0])
+        assert held > 0.5  # segments came slower than it played them: it waited, then went on
+        assert io.load_trajectory(tmp_path / "received.json").times == short.times
+    finally:
+        receiver.terminate()
+        output = receiver.communicate(timeout=10)[0]
+    assert "waiting at" in output and "going on from" in output
+
+
+def test_the_bundle_runs_on_its_own(tmp_path):
+    """scripts/link_pi.py bundle: the folder alone (no repository) holds all the Pi needs."""
+    out = tmp_path / "raspberry_pi"
+    subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "link_pi.py"), "bundle", "--out", str(out)],
+        check=True, capture_output=True,
+    )  # fmt: skip
+    assert (out / "run.sh").exists() and (tmp_path / "raspberry_pi.zip").exists()
+    probe = "import rcr.link.raspberry_pi, rcr.controller; print(rcr.link.raspberry_pi.__file__)"
+    where = subprocess.run(
+        [sys.executable, "-c", probe], cwd=out, env={**os.environ, "PYTHONPATH": str(out / "src")},
+        capture_output=True, text=True, check=True,
+    ).stdout  # fmt: skip
+    assert where.startswith(str(out))  # the bundle's own files, not the repository's

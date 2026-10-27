@@ -24,6 +24,10 @@
    ```
    This copies `rcr/{__init__,types,io}.py`, `controller/` and `link/` to `~/rcr/src` on the Pi.
 
+   **Without ssh access from here** (another Pi on the day, say): `uv run scripts/link_pi.py bundle` puts the same
+   files, a `run.sh` and a README into `dist/raspberry_pi/` and `dist/raspberry_pi.zip`. Copy that folder or zip to
+   the Pi any way you like, then run `sh run.sh` there.
+
 2. **Start the receiver on the Pi:**
    ```bash
    cd ~/rcr && PYTHONPATH=src python3 -m rcr.link.raspberry_pi     # on the Pi (ssh pi@172.20.10.8)
@@ -58,13 +62,35 @@
        robot.stop()
    ```
 
+**Move by move**, so the robot climbs while the rest is still being solved:
+```python
+with link.LaptopLink("172.20.10.8") as robot:
+    robot.send_trajectory(first_move, final=False)  # more will follow
+    robot.start()
+    robot.append_segment(next_move)  # also while it runs; times go on from the end
+    robot.append_segment(last_move, final=True)  # or robot.finish()
+```
+- **The optimiser runner does this by itself:** `uv run mjpython tests/test_optimiser.py --hard --send 172.20.10.8`
+  sends each move as soon as it is solved, while the sim plays it. Then start the robot with `link_pi.py start`.
+- **`link.segment(trajectory, n)`** cuts the new samples off a growing trajectory.
+- **To try it with a saved file:** `uv run scripts/link_pi.py stream --pi 172.20.10.8 [FILE] --segment 4 --every 3`
+  sends 4 s of motion every 3 s, and reports how long the robot had to wait.
+- **On the robot:** the trajectory grows segment by segment.
+  - `trajectory_complete()` says whether more will come.
+  - A controller that reaches the end of what it has while more is coming **holds there**: all limbs on their holds,
+    the clock stopped. It goes on when the next segment arrives [Ours; the controller's call, D4].
+  - The receiver's dry run does exactly this.
+- **Only whole moves cross the link, never single 20 ms ticks:** nothing time-critical crosses it. A late segment
+  only makes the robot wait. It never makes it miss a tick.
+
 **On the robot side** (our Move, later):
 ```python
 from rcr.link import RobotLink
 
 robot_link = RobotLink()  # listens on 5005 (TCP) and 5006 (UDP)
 # each 50 Hz tick, none of these waits:
-robot_link.trajectory()  # the newest trajectory, or None
+robot_link.trajectory()  # the trajectory so far, or None
+robot_link.trajectory_complete()  # False while more segments will come
 robot_link.run_requested()  # between the laptop's start and stop
 robot_link.pose()  # the newest camera pose, or None
 robot_link.send_state(state)  # to the laptop, if one connected
@@ -108,6 +134,12 @@ robot_link.send_state(state)  # to the laptop, if one connected
 | Loopback, one MacBook | 0.2 ms | 0.02 s | 50 per second, 0 lost |
 | MacBook ↔ Raspberry Pi (Debian 11, Python 3.9) over a phone hotspot, 27 Oct | 4.8 ms (4.4–8.4) | 0.35 s | 51 per second, 0 of 507 lost |
 
+Move by move over the same Wi-Fi:
+- `stream`, 4 s segments every 3 s: the robot never waited, and reached the end in 19.9 s of 20.0 s.
+- 2 s segments every 4 s: it held at the end of each, went on when the next came, and reached the end, waiting 8.2 s.
+- On loopback, the optimiser runner (`--send`) sent all 38 moves: the robot's trajectory then equals the saved
+  `trajectory.json`, sample for sample.
+
 ## Design points
 - **Microban provides SSH/rsync before a run, but nothing during it** [Microban Makefile]. So the run-time link is ours.
 - **On the Pi it plugs in as a Microban input source and/or inside our Move:**
@@ -125,3 +157,5 @@ robot_link.send_state(state)  # to the laptop, if one connected
   was, and the Move decides. That decision is for the controller and robot (D4 / P3).
 - The state rate during a real climb: the receiver sends 50 per second, but the Move may send fewer.
 - USB-Ethernet as a backup: the same code works over it (the address changes).
+- One laptop process at a time gets the state: the one that subscribed last. Two `LaptopLink`s open at once, say the
+  runner and a `check`, make it switch between them every second.

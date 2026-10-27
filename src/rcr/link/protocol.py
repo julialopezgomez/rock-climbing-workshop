@@ -6,8 +6,10 @@ then that many bytes of UTF-8 JSON, an object with a "type":
 
     laptop -> robot                          robot's ack (always "type": "ack", "ok", "error")
     hello       {}                           {"pose_port": int}
-    trajectory  {"trajectory": rcr.io JSON}  {"samples": int, "duration": float [s]}
-    start, stop, ping                        {}
+    trajectory  {"trajectory": rcr.io JSON,  {"samples": int, "duration": float [s]}
+                 "final": bool}               a new one; final=False: more segments follow
+    append      {"trajectory": ..., "final"}  the same; the next segment, its times after the end
+    finish, start, stop, ping                {}
 
 UDP, for what streams and where only the newest counts (a lost one is replaced by the next): one
 JSON object per datagram, {"type", "seq", "session", and the payload}. "seq" counts up from 1 in

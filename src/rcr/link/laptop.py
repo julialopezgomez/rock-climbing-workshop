@@ -42,16 +42,23 @@ class LaptopLink:
 
     # --- set: laptop -> robot ------------------------------------------------------------------
 
-    def send_trajectory(self, trajectory: Trajectory) -> None:
-        """Send the trajectory; returns once the robot has it whole and checked (LinkError if
-        not, e.g. while it is running one)."""
-        answer = self._command(
-            {"type": "trajectory", "trajectory": io.trajectory_to_dict(trajectory)}
-        )
-        if answer.get("samples") != len(trajectory.times):
-            raise pr.LinkError(
-                f"robot got {answer.get('samples')} samples of {len(trajectory.times)}"
-            )
+    def send_trajectory(self, trajectory: Trajectory, final: bool = True) -> None:
+        """Send a new trajectory, replacing any before; returns once the robot has it whole and
+        checked (LinkError if not, e.g. while it is running one). final=False: it is the first
+        segment of one sent move by move, and more will follow (append_segment)."""
+        message = {"type": "trajectory", "trajectory": io.trajectory_to_dict(trajectory)}
+        self._sent(self._command({**message, "final": final}), trajectory)
+
+    def append_segment(self, segment: Trajectory, final: bool = False) -> None:
+        """Add the next segment to the trajectory, also while the robot runs it; its times go on
+        from the trajectory's end (link.segment cuts one off a growing trajectory). Returns once
+        the robot has it. final=True: the last one (or call finish)."""
+        message = {"type": "append", "trajectory": io.trajectory_to_dict(segment)}
+        self._sent(self._command({**message, "final": final}), segment)
+
+    def finish(self) -> None:
+        """No more segments will come: the trajectory ends where it ends now."""
+        self._command({"type": "finish"})
 
     def start(self) -> None:
         """Start the climb (the robot runs its trajectory). Returns once the robot has it."""
@@ -77,6 +84,12 @@ class LaptopLink:
     def robot_state(self) -> RobotState | None:
         """The newest state received from the robot, or None."""
         return self._state
+
+    def _sent(self, answer: dict, trajectory: Trajectory) -> None:
+        if answer.get("samples") != len(trajectory.times):
+            raise pr.LinkError(
+                f"robot got {answer.get('samples')} samples of {len(trajectory.times)}"
+            )
 
     def ping(self) -> float:
         """[s] the time for a command to reach the robot and its answer to come back."""

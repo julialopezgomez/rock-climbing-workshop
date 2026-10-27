@@ -1,9 +1,11 @@
 """Talk to the Raspberry Pi over the link (rcr.link), from the laptop.
 
+    uv run scripts/link_pi.py bundle                          # the Pi's files in dist/raspberry_pi
     uv run scripts/link_pi.py deploy pi@172.20.10.8         # copy our Pi code there (ssh)
     uv run scripts/link_pi.py deploy pi@172.20.10.8 --run   # ... and start the receiver there
     uv run scripts/link_pi.py check --pi 172.20.10.8          # evaluate the link
     uv run scripts/link_pi.py send --pi 172.20.10.8 [FILE]    # send a trajectory (or the example)
+    uv run scripts/link_pi.py stream --pi 172.20.10.8 [FILE]  # send it in segments, move by move
     uv run scripts/link_pi.py start --pi 172.20.10.8
     uv run scripts/link_pi.py stop --pi 172.20.10.8
 
@@ -13,12 +15,17 @@
 
 check measures what the link README asks for: the round trip of a command, the time to send the
 trajectory, and the rate and losses of the state coming back, during a dry run (no motors move).
+stream sends a trajectory as the optimiser would, segment by segment while the robot plays it:
+it reports how long the robot held, waiting for the next segment.
+bundle writes the Pi's files (what deploy copies), a run.sh and a README into one folder and a
+.zip, to copy to any Pi by hand (scp, a USB stick) without this repository.
 """
 
 from __future__ import annotations
 
 import argparse
 import os
+import shutil
 import statistics
 import subprocess
 import sys
@@ -27,6 +34,7 @@ from pathlib import Path
 
 from rcr import io
 from rcr.link import COMMAND_PORT, LaptopLink, LinkError
+from rcr.types import Trajectory
 
 ROOT = Path(__file__).resolve().parent.parent
 EXAMPLE = ROOT / "data" / "examples" / "trajectory.json"
@@ -59,6 +67,112 @@ def deploy(host: str, run: bool) -> int:
         return 0
     remote = f"cd ~/{PI_DIR} && PYTHONPATH=src {PI_PYTHON} -m rcr.link.raspberry_pi"
     return subprocess.run(["ssh", "-tt", host, remote]).returncode
+
+
+RUN_SH = """#!/bin/sh
+# Start the link receiver on this Pi (it drives no motors). Ctrl-C to stop. Options: --help.
+cd "$(dirname "$0")" || exit 1
+PYTHON=python3
+[ -x "$HOME/microban/.venv/bin/python" ] && PYTHON="$HOME/microban/.venv/bin/python"
+PYTHONPATH=src exec "$PYTHON" -m rcr.link.raspberry_pi "$@"
+"""
+
+BUNDLE_README = """Our code for the Raspberry Pi: the link's receiver (rcr.link.raspberry_pi).
+Built by `uv run scripts/link_pi.py bundle` from commit {commit}, {date}.
+
+1. Copy this folder to the Pi, e.g. to ~/rcr:
+       scp -r raspberry_pi pi@<pi-address>:rcr        (or unzip raspberry_pi.zip there)
+2. On the Pi:
+       sh ~/rcr/run.sh
+   It prints "listening on <address>:5005". Needs Python 3.9 or newer, nothing to install.
+3. On the laptop, in our repository:
+       uv run scripts/link_pi.py check --pi <pi-address>
+       uv run scripts/link_pi.py send --pi <pi-address> [trajectory.json]
+
+Trajectories it receives are saved to ~/rcr/trajectory.json (run.sh --save FILE for another).
+src/rcr/link/README.md has the rest.
+"""
+
+
+def bundle(out: Path) -> int:
+    """The Pi's files in `out` (replaced) and out.zip: copy either to any Pi by hand."""
+    if out.exists():
+        shutil.rmtree(out)
+    for path in PI_FILES:
+        source, target = ROOT / "src" / path, out / "src" / path
+        if source.is_dir():
+            shutil.copytree(source, target, ignore=shutil.ignore_patterns("__pycache__"))
+        else:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, target)
+    (out / "run.sh").write_text(RUN_SH)
+    (out / "run.sh").chmod(0o755)
+    commit = subprocess.run(
+        ["git", "describe", "--always", "--dirty"], cwd=ROOT, capture_output=True, text=True
+    ).stdout.strip()
+    (out / "README.txt").write_text(
+        BUNDLE_README.format(commit=commit, date=time.strftime("%d %b %Y"))
+    )
+    archive = shutil.make_archive(str(out), "zip", out.parent, out.name)
+    files = sum(1 for f in out.rglob("*") if f.is_file())
+    print(f"{files} files in {out}, and {archive}")
+    print(f"on a Pi: copy the folder (e.g. scp -r {out} pi@<pi>:rcr), then sh ~/rcr/run.sh")
+    return 0
+
+
+def stream(pi: str, port: int, file: Path, seconds: float, every: float) -> int:
+    """Send the trajectory in segments of `seconds`, one every `every` s, while the robot plays
+    it: as the optimiser would send each move once solved."""
+    trajectory = io.load_trajectory(file)
+    times, end = trajectory.times, trajectory.times[-1]
+    cuts = [0]  # the index each segment starts at
+    for i, t in enumerate(times):
+        if t >= times[cuts[-1]] + seconds:
+            cuts.append(i)
+    cuts.append(len(times))
+    count = len(cuts) - 1
+
+    def part(k: int) -> Trajectory:  # segment k: what the robot executes, positions only
+        lo, hi = cuts[k], cuts[k + 1]
+        return Trajectory(trajectory.joint_names, times[lo:hi], trajectory.positions[lo:hi])
+
+    print(
+        f"{file.name}: {end:.1f} s in {count} segments of ~{seconds:.0f} s, one every {every:.1f} s"
+    )
+    try:
+        with LaptopLink(pi, port) as robot:
+            robot.stop()
+            robot.send_trajectory(part(0), final=count == 1)
+            robot.start()
+            began = time.monotonic()
+            print(f"  segment 1 of {count}: to {times[cuts[1] - 1]:.1f} s; started", flush=True)
+            for k in range(1, count):
+                time.sleep(every)
+                robot.append_segment(part(k), final=k == count - 1)
+                state = robot.robot_state()
+                at = f"robot at {state.time:.1f} s" if state else "no state yet"
+                print(
+                    f"  segment {k + 1} of {count}: to {times[cuts[k + 1] - 1]:.1f} s ({at})",
+                    flush=True,
+                )
+            deadline = time.monotonic() + end + 10
+            while time.monotonic() < deadline:
+                state = robot.robot_state()
+                if state is not None and state.time >= end - 0.05:
+                    break
+                time.sleep(0.1)
+            took = time.monotonic() - began
+            robot.stop()
+    except LinkError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+    reached = state is not None and state.time >= end - 0.05
+    held = max(0.0, took - end)
+    print(
+        f"robot {'reached' if reached else 'did NOT reach'} the end ({end:.1f} s) in {took:.1f} s: "
+        f"it held {held:.1f} s in all, waiting for segments"
+    )
+    return 0 if reached else 1
 
 
 def check(pi: str, port: int, file: Path, seconds: float, pings: int) -> int:
@@ -135,6 +249,8 @@ def main() -> int:
     target.add_argument("--pi", default=os.environ.get("RCR_PI", "microban.local"))
     target.add_argument("--port", type=int, default=COMMAND_PORT)
 
+    p = sub.add_parser("bundle", help="the Pi's files in one folder (and a .zip)")
+    p.add_argument("--out", type=Path, default=ROOT / "dist" / "raspberry_pi")
     p = sub.add_parser("deploy", help="copy our Pi code to the Pi (rsync over ssh)")
     p.add_argument("host", help="user@address, e.g. pi@172.20.10.8")
     p.add_argument("--run", action="store_true", help="then start the receiver there")
@@ -144,10 +260,18 @@ def main() -> int:
     p.add_argument("--pings", type=int, default=20)
     p = sub.add_parser("send", parents=[target], help="send a trajectory")
     p.add_argument("file", nargs="?", type=Path, default=EXAMPLE)
+    p = sub.add_parser("stream", parents=[target], help="send a trajectory in segments")
+    p.add_argument("file", nargs="?", type=Path, default=EXAMPLE)
+    p.add_argument("--segment", type=float, default=5.0, help="[s] of motion per segment")
+    p.add_argument("--every", type=float, default=3.0, help="[s] between segments (solve time)")
     sub.add_parser("start", parents=[target], help="start the climb")
     sub.add_parser("stop", parents=[target], help="stop the climb")
     args = ap.parse_args()
 
+    if args.command == "bundle":
+        return bundle(args.out)
+    if args.command == "stream":
+        return stream(args.pi, args.port, args.file, args.segment, args.every)
     if args.command == "deploy":
         return deploy(args.host, args.run)
     if args.command == "check":

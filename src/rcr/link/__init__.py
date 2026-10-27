@@ -6,6 +6,9 @@ start, stop: they arrive whole or raise), UDP for the live state and pose (newes
     from rcr import link
     link.send_trajectory("data/examples/trajectory.json", "172.20.10.8")   # one call
 
+Move by move: LaptopLink.send_trajectory(first, final=False), then append_segment(next) for each
+next one, also while the robot runs; it holds at the end of what it has until more comes.
+
 Laptop: LaptopLink (laptop.py). Robot: RobotLink (raspberry_pi/), Pi-safe, every method
 non-blocking (it is called from the 50 Hz loop). The wire format: protocol.py.
 """
@@ -26,6 +29,7 @@ __all__ = [
     "LaptopLink",
     "LinkError",
     "RobotLink",
+    "segment",
     "send_trajectory",
 ]
 
@@ -39,3 +43,19 @@ def send_trajectory(
         trajectory = io.load_trajectory(trajectory)
     with LaptopLink(robot, port) as link:
         link.send_trajectory(trajectory)
+
+
+def segment(trajectory: Trajectory, start: int) -> Trajectory:
+    """The samples from index `start` on: what is new in a trajectory that grew since `start`
+    samples were sent, to send with LaptopLink.append_segment."""
+
+    def tail(rows):
+        return None if rows is None else rows[start:]
+
+    return Trajectory(
+        joint_names=trajectory.joint_names,
+        times=trajectory.times[start:],
+        positions=trajectory.positions[start:],
+        planned_positions=tail(trajectory.planned_positions),
+        trunk_poses=tail(trajectory.trunk_poses),
+    )
