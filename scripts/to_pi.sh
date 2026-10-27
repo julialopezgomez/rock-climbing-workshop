@@ -2,7 +2,7 @@
 # Put our Pi code on a Raspberry Pi, from the laptop, and optionally start it there [Ours].
 #
 #   sh scripts/to_pi.sh pi@172.20.10.8          # build the bundle, copy it to ~/rcr on the Pi
-#   sh scripts/to_pi.sh pi@172.20.10.8 --run    # ... and start the receiver there (Ctrl-C stops it)
+#   sh scripts/to_pi.sh pi@172.20.10.8 --run    # ... and (re)start the receiver there (Ctrl-C stops it)
 #
 # The user before @ is the Pi's: pi on our test Pi, user on Microban's image. It asks for the
 # Pi's password (once to copy, once more with --run). Works from any folder. Then, on the laptop:
@@ -27,6 +27,7 @@ rsync -av "$ROOT/dist/raspberry_pi/" "$HOST:rcr/" || {
 echo "copied. On the Pi: sh ~/rcr/run.sh"
 
 if [ "$2" = "--run" ]; then
-    echo "3. starting the receiver on $HOST (Ctrl-C to stop)"
-    ssh -t "$HOST" "sh ~/rcr/run.sh"
+    echo "3. starting the receiver on $HOST, replacing one already running (Ctrl-C to stop)"
+    # [.] so that the pattern does not match this command line itself, only the receiver
+    ssh -t "$HOST" 'pkill -f "rcr[.]link[.]raspberry_pi" && sleep 1; sh ~/rcr/run.sh'
 fi
