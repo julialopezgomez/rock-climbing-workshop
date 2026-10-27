@@ -83,8 +83,11 @@ It draws on (see Julia's notes):
    - Its version is a hash of the optimiser's code, the hooks and the hold mesh.
 
 ## Files
+New to the planner? Start with [GUIDE.md](GUIDE.md) and its interactive companion `playground.html` (open it in a browser).
+
 | File | What |
 |---|---|
+| `GUIDE.md`, `playground.html` | starter guide; the planner rebuilt in JavaScript on a 2D wall, one tab per step |
 | `__init__.py` | `plan(wall, feasible)` → `astar.solve(...).plan` |
 | `reach.py` | loads the reach sets; trunk regions (`region`, `maybe_nonempty`, `centre`: the Chebyshev LP) |
 | `astar.py` | `posture`, `Graph` (the reach graph), `search` (A\*), `Banned`, `solve` (LazySP) |
@@ -116,7 +119,25 @@ uv run scripts/make_reach.py                                      # rebuild the 
 ```
 
 ## Measured
-MEASURED
+With the reach graph alone (every move accepted), it plans the generated walls (L1–L3, seeds 0–9) and `wall_hard.json`
+to the top in 0.1–2 s per wall. In tests: 9 walls plus a small ladder, where weight 1 matches a breadth-first search.
+
+With the real optimiser (`scripts/plan_eval.py`, MacBook, 27 Oct), on moves sampled at random from the reach graph:
+
+| Reach graph | Accepted | Rejected at | Mean check |
+|---|---|---|---|
+| kinematics only | 2 of 72 | `stance` 58, `start` 6, `release` 5, `path` 1 | 2.6 s |
+| + `ENVELOPE` | 18 of 63 (29 %) | `stance` 17, `path` 16, `start` 8, `release` 3, `arrival` 1 | 17 s |
+
+**Open problem: the lazy loop doesn't converge fast enough.**
+- On `gen_l1_s0`, with the real optimiser, there was still no plan after 40 min and about 80 checks.
+- The cause, reproduced with the playground's toy optimiser (tab 5):
+  - the fewest-moves path picks the boldest moves (stances at the envelope's edge), which a stricter check rejects;
+  - a `stance` ban removes one stance but not its near-twins, and a `path` ban removes one move while the same hold blocks
+    many others.
+- On the toy, a CASSR-style safety cost (β = 3) cuts `stance` rejections from 18–148 per wall to 0–16, but `path`
+  rejections remain.
+- GUIDE.md §5 lists the fixes to decide on.
 
 ## Open items
 - **A stance model learned from the optimiser's static poses**, to replace `ENVELOPE`. This is the main one, see
