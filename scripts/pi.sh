@@ -55,7 +55,7 @@ case "$ACTION" in
 --check) link check --pi "$ADDRESS" "$@" ;;
 --send) link send --pi "$ADDRESS" "$@" ;;
 --stream) link stream --pi "$ADDRESS" "$@" ;;
---start) link start --pi "$ADDRESS" ;;
---stop) link stop --pi "$ADDRESS" ;;
+--start) link start --pi "$ADDRESS" "$@" ;;
+--stop) link stop --pi "$ADDRESS" "$@" ;;
 *) usage ;;
 esac

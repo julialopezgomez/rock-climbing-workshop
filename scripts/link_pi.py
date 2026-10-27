@@ -27,6 +27,7 @@ bundle writes the Pi's files (what deploy copies), a run.sh and a README into on
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import shutil
 import signal
@@ -297,7 +298,8 @@ def check(pi: str, port: int, file: Path, seconds: float, pings: int) -> int:
             f"min {min(times) * 1e3:.1f}, max {max(times) * 1e3:.1f}",
         )
 
-        size = len(file.read_bytes())
+        robot_part = Trajectory(trajectory.joint_names, trajectory.times, trajectory.positions)
+        size = len(json.dumps(io.trajectory_to_dict(robot_part), separators=(",", ":")))  # sent
         start = time.perf_counter()
         try:
             link.stop()  # in case a previous check left it running

@@ -11,10 +11,12 @@ from pathlib import Path
 import pytest
 
 from rcr import io, link
-from rcr.types import Pose, RobotState
+from rcr.types import Pose, RobotState, Trajectory
 
 ROOT = Path(__file__).resolve().parent.parent
 TRAJECTORY = io.load_trajectory(ROOT / "data" / "examples" / "trajectory.json")
+# What the robot gets: its part only (the planned angles and trunk poses stay on the laptop)
+ROBOT_PART = Trajectory(TRAJECTORY.joint_names, TRAJECTORY.times, TRAJECTORY.positions)
 
 
 @pytest.fixture
@@ -41,13 +43,13 @@ def eventually(condition, seconds=2.0):
 def test_the_trajectory_arrives_whole(robot, laptop):
     assert robot.trajectory() is None
     laptop.send_trajectory(TRAJECTORY)  # returns once the robot has it
-    assert robot.trajectory() == TRAJECTORY
+    assert robot.trajectory() == ROBOT_PART
     assert robot.trajectories_received == 1
 
 
 def test_one_call_sends_a_trajectory_file(robot):
     link.send_trajectory(ROOT / "data" / "examples" / "trajectory.json", "127.0.0.1", robot.port)
-    assert robot.trajectory() == TRAJECTORY
+    assert robot.trajectory() == ROBOT_PART
 
 
 def test_start_and_stop(robot, laptop):
@@ -107,7 +109,7 @@ def test_the_laptop_reconnects_after_the_robot_restarts():
         laptop.ping()
     with link.RobotLink(port=port, pose_port=0, host="127.0.0.1") as second:
         laptop.send_trajectory(TRAJECTORY)  # the old connection is gone: reconnects once
-        assert second.trajectory() == TRAJECTORY
+        assert second.trajectory() == ROBOT_PART
     laptop.close()
 
 
@@ -139,7 +141,7 @@ def test_the_receiver_and_the_check_script(tmp_path):
         )  # fmt: skip
         assert check.returncode == 0, check.stdout + check.stderr
         assert "link check passed" in check.stdout
-        assert io.load_trajectory(saved) == TRAJECTORY
+        assert io.load_trajectory(saved) == ROBOT_PART
     finally:
         receiver.terminate()
         receiver.wait(timeout=10)
@@ -164,7 +166,7 @@ def test_segments_grow_the_trajectory_while_it_runs(robot, laptop):
     laptop.start()  # runs what it has; more comes
     for lo, hi in zip(cuts[1:-1], cuts[2:], strict=True):
         laptop.append_segment(cut(lo, hi), final=hi == cuts[-1])
-    assert robot.trajectory() == TRAJECTORY  # the segments, joined, are the whole
+    assert robot.trajectory() == ROBOT_PART  # the segments, joined, are the whole
     assert robot.trajectory_complete()
     with pytest.raises(link.LinkError, match="complete"):
         laptop.append_segment(cut(len(TRAJECTORY.times) - 1, len(TRAJECTORY.times)))

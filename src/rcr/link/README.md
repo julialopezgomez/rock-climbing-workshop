@@ -158,6 +158,8 @@ robot_link.send_state(state)  # to the laptop, if one connected
 | Loopback, one MacBook | 0.2 ms | 0.02 s | 50 per second, 0 lost |
 | MacBook ↔ Raspberry Pi (Debian 11, Python 3.9) over a phone hotspot, 27 Oct | 4.8 ms (4.4–8.4) | 0.35 s | 51 per second, 0 of 507 lost |
 
+| Same, sending only the robot's part (`times`, `positions`), 27 Oct | 4.6 ms | 0.36 MB in 0.14 s | 49 per second, 6 of 152 lost |
+
 Move by move over the same Wi-Fi:
 - `replay`, 4 s segments every 3 s: the robot never waited, and reached the end in 19.9 s of 20.0 s.
 - 2 s segments every 4 s: it held at the end of each, went on when the next came, and reached the end, waiting 8.2 s.
@@ -175,6 +177,24 @@ Move by move over the same Wi-Fi:
 - **Networks that block it:** many venue networks block traffic between devices ("client isolation"). A phone hotspot
   works (172.20.10.x is an iPhone's), as does our own 2.4 GHz router, the robot README's recommendation.
 - **macOS firewall:** nothing to allow; the state comes back as replies to the laptop's subscribes.
+
+## Addresses, ports, and the Pi Zero 2W
+- **No address is fixed in the code.** The Pi's address always comes from you:
+  - `pi.sh <user@address>`;
+  - `--pi <address>` (default `$RCR_PI`, else `microban.local`);
+  - `--send <address>`.
+  `172.20.10.8` appears only in examples. The receiver prints the address it listens on.
+- **Ports:** 5005 (TCP) and 5006 (UDP) on the Pi are defaults ([protocol.py](protocol.py)).
+  - To change them: `run.sh --port N --pose-port M` on the Pi, and `--port N` on the laptop (`pi.sh ... --port N`).
+  - The laptop learns the UDP port from the Pi and listens on none itself.
+- **Microban's Pi is a Raspberry Pi Zero 2W** (4× Cortex-A53 at 1 GHz, 512 MB):
+  - **Wi-Fi 2.4 GHz only.** A phone hotspot must be on 2.4 GHz: on an iPhone, turn on *Maximize Compatibility*,
+    or the Zero does not even see the network.
+  - **Reading a trajectory takes time.** Measured on a Pi 3B+ (same cores, 1.4 GHz): the whole example file, 99 ms;
+    the robot's part only (what the laptop sends), 40 ms; one move, ~1 ms. A Zero 2W should take ~1.4× that.
+  - With our controller in the same Python process, a long read holds up the 50 Hz loop (one thread runs at a
+    time). So send whole trajectories before `start`, and during a climb send move by move (`--stream`, or the
+    optimiser's `--send`).
 
 ## Still open
 - What happens on link loss mid-climb: continue the trajectory, or stop? The robot keeps `run_requested()` as it
