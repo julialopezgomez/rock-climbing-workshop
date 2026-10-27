@@ -76,7 +76,14 @@ class LinkInputSource(InputSource):
 6. `make sync` rsyncs Microban's repo only, so our files need their own sync (see below).
 7. Always `make shutdown` before cutting power, or the SD card can be corrupted [Microban usage.md].
 
-## Where Microban sits (D1, decide by Mon 19 Oct, **not decided**)
+## Where Microban sits (D1): a submodule [Ours]
+**Chosen: the submodule** `third_party/microban`, pinned to `d0a128d` (27 Oct). Every clone reads the same files,
+nothing of Microban is copied into our history, and the climbing variant will be a pin bump. The optimiser and the sim
+find it through `rcr/robot/microban.py`; `MICROBAN_URDF` or `MICROBAN_XML` still points them at another checkout.
+Still open: where `ClimbMove` and our entry point sit on the Pi (next to Microban on its `PYTHONPATH`, see below).
+
+The options, as compared before choosing:
+
 Microban's software is **GPL-3.0**, and its `pyproject.toml` has **no build system**, so it is not pip-installable. In
 every option, it is used via `PYTHONPATH=src`. The organisers' climbing variant will probably come as Microban changes, so
 the choice must make switching to it easy.
@@ -97,7 +104,8 @@ the choice must make switching to it easy.
 
 - These files need **no new dependencies on the Pi**: they use the stdlib and numpy, which Microban's venv already has.
 - They run with Microban's `.venv/bin/python`, with our `src/` added to `PYTHONPATH`.
-- Deploy with an rsync of exactly these paths, like Microban's `make sync`. The Pi-safe test in `tests/` keeps these imports honest.
+- Deploy with an rsync of exactly these paths, like Microban's `make sync`: `uv run scripts/link_pi.py deploy user@<pi>`
+  does it (to `~/rcr/src` on the Pi). The Pi-safe test in `tests/` keeps these imports honest.
 
 ## Physical link
 | | Wi-Fi 2.4 GHz | USB-Ethernet adapter (OTG) | USB gadget mode |

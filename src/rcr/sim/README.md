@@ -98,11 +98,10 @@ welds carry tens of newtons internally, a servo pulls with about six), and so is
 
 ### Setup
 ```bash
+git submodule update --init               # Microban, in third_party/microban (once)
 uv sync --group sim                       # mujoco + opencv
-git clone https://github.com/Rhoban/microban.git ~/Code/rock-climbing/microban   # until D1 decides
-export MICROBAN_XML=/path/to/microban/src/model/mjcf/robot.xml                    # if cloned elsewhere
 ```
-Without either, `run_pipeline.py --check` reports the sim as `skip` and `tests/test_sim.py` skips (as on CI).
+`MICROBAN_XML` (or `MICROBAN_URDF`) points it at another Microban checkout instead. Without Microban, `run_pipeline.py --check` reports the sim as `skip` and `tests/test_sim.py` skips (as on CI).
 
 ### Using it
 ```python

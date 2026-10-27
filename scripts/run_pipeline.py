@@ -3,8 +3,9 @@
     uv run scripts/run_pipeline.py --check
 
 --check loads data/examples/, checks they are consistent, then passes them through every stage's
-signature in pipeline order. A stage that is still a stub (raises NotImplementedError) is reported
-as "stub" and the example output is used in its place, so the check exercises each v0 as it lands.
+signature in pipeline order (the optimiser on the plan's first move only, to keep it quick). A
+stage that is still a stub (raises NotImplementedError) is reported as "stub" and the example
+output is used in its place, so the check exercises each v0 as it lands.
 
 Later: --backend sim|robot runs the controller in a closed loop against rcr.sim.Sim or the robot.
 """
@@ -52,7 +53,8 @@ def stage(name: str, fn, expected, example, *args):
     or if this machine lacks what the stage needs (an optional dependency group or Microban)."""
     hints = typing.get_type_hints(fn)
     returns = hints.pop("return", None)
-    for (param, hint), arg in zip(hints.items(), args, strict=True):
+    given = list(hints.items())[: len(args)]  # the rest have defaults
+    for (param, hint), arg in zip(given, args, strict=True):
         if isinstance(hint, type):
             assert isinstance(arg, hint), f"{name}: {param} should be {hint.__name__}"
     assert returns == expected, f"{name}: returns {_name(returns)}, expected {_name(expected)}"
@@ -105,17 +107,28 @@ def check() -> int:
     results.append(s)
     plan, s = stage("planner.plan", planner.plan, ContactPlan, plan_ex, wall, optimiser.feasibility)
     results.append(s)
-    traj, s = stage("optimiser.optimise", optimiser.optimise, Trajectory, traj_ex, wall, plan)
+    # The plan's first move only: a check of the stage, not the climb (the whole example takes an
+    # hour on an empty move cache; tests/test_optimiser.py --hard solves and plays it) [Ours]
+    first_move = ContactPlan(plan.wall_id, plan.stances[:2])
+    traj, s = stage("optimiser.optimise", optimiser.optimise, Trajectory, traj_ex, wall, first_move)
     results.append(s)
-    laptop = link.LaptopLink("microban")
-    _, s = stage("link.LaptopLink.send_trajectory", laptop.send_trajectory, NoneType, None, traj)
-    results.append(s)
+    # Both ends of the link on this machine, over loopback: the real code, without the Pi
+    robot_end = link.RobotLink(port=0, pose_port=0, host="127.0.0.1")
+    laptop = link.LaptopLink("127.0.0.1", robot_end.port)
+    try:
+        _, s = stage(
+            "link.LaptopLink.send_trajectory", laptop.send_trajectory, NoneType, None, traj
+        )
+        results.append(s)
 
-    print("robot (or sim):")
-    received, s = stage(
-        "link.RobotLink.trajectory", link.RobotLink().trajectory, Trajectory | None, traj
-    )
-    results.append(s)
+        print("robot (or sim):")
+        received, s = stage(
+            "link.RobotLink.trajectory", robot_end.trajectory, Trajectory | None, traj
+        )
+        results.append(s)
+    finally:
+        laptop.close()
+        robot_end.close()
     ctrl = controller.Controller(received)
     targets_ex = JointTargets(positions=first)
     targets, s = stage("controller.Controller.step", ctrl.step, JointTargets, targets_ex, state_ex)

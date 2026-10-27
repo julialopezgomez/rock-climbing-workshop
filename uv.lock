@@ -585,6 +585,7 @@ dev = [
 optimiser = [
     { name = "casadi" },
     { name = "coacd" },
+    { name = "coal" },
     { name = "pin" },
 ]
 sim = [
@@ -606,6 +607,7 @@ dev = [
 optimiser = [
     { name = "casadi", specifier = ">=3.8.1" },
     { name = "coacd", specifier = ">=1.0.14" },
+    { name = "coal", specifier = ">=3.0.3" },
     { name = "pin", specifier = ">=4.1.0" },
 ]
 perception = []

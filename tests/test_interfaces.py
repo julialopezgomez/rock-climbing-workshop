@@ -42,7 +42,8 @@ PI_ALLOWED = {"rcr", "numpy", "placo", "onnxruntime"}
 PI_IMPORT_PROBE = """
 import sys
 before = set(sys.modules)
-import rcr.types, rcr.io, rcr.controller, rcr.link, rcr.robot
+import rcr.types, rcr.io, rcr.controller, rcr.robot, rcr.robot.microban
+import rcr.link, rcr.link.raspberry_pi
 new = {m.split(".")[0] for m in set(sys.modules) - before}
 print("\\n".join(sorted(new - set(sys.stdlib_module_names))))
 """
@@ -70,3 +71,17 @@ def test_planner_never_imports_optimiser_or_controller():
                 assert not name.startswith(("rcr.optimiser", "rcr.controller")), (
                     f"{path.name} imports {name}"
                 )
+
+
+def test_microban_is_the_submodule_unless_a_variable_says_otherwise(monkeypatch, tmp_path):
+    from rcr.robot import microban
+
+    monkeypatch.delenv("MICROBAN_URDF", raising=False)
+    monkeypatch.delenv("MICROBAN_XML", raising=False)
+    assert microban.checkout()[0] == ROOT / "third_party" / "microban"
+    for name, inside in (("MICROBAN_URDF", microban.URDF), ("MICROBAN_XML", microban.MJCF)):
+        monkeypatch.setenv(name, str(tmp_path / "elsewhere" / inside))
+        assert microban.checkout()[0] == (tmp_path / "elsewhere").resolve()
+        with pytest.raises(FileNotFoundError, match="elsewhere"):
+            microban.urdf_path()
+        monkeypatch.delenv(name)

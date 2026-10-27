@@ -8,6 +8,9 @@ first, cheapest first, stopping at the first that fails:
     reach     no two holds of b further apart than their limbs can span: each limb's
               reach from its shoulder or hip, plus the distance between those on the trunk
               (robot_model.limb_reach, an upper bound from the URDF). Microseconds, no solve.
+    cache     answered before (move_cache, on this wall or any with the same holds around the
+              move): a stored move is feasible, a stored rejection is not, at once. Every
+              rejection below is stored there, so it is never checked again.
     stance    b can be held: four contacts, balance, torque limit, clear of the holds and wall
     release   the moving ball still in its socket of a but carrying nothing: the other three
               hold the robot (a hand reaching up a 0.15 m row fails here, on torque)
@@ -41,9 +44,20 @@ import numpy as np
 
 from rcr.optimiser import robot_model as rm
 from rcr.optimiser import transition as tr
+from rcr.optimiser.move_cache import default_cache
 from rcr.types import LIMBS, Feasibility, Stance, WallModel
 
-CHECKS = ("rules", "reach", "stance", "start", "release", "arrival", "lift", "path")  # in order
+CHECKS = (
+    "rules",
+    "reach",
+    "cache",
+    "stance",
+    "start",
+    "release",
+    "arrival",
+    "lift",
+    "path",
+)  # in order
 # Ways out of the socket for the lift pose [m, wall frame]: straight up, then up and out from the
 # wall, all inside its ~60 deg opening cone. Straight up alone rejected a foot whose next hold is
 # 75 mm above, which the transition solves by leaving up and out [Ours].
@@ -77,6 +91,21 @@ def trace(
         why = f"reach: {why}"
     if why:
         return Feasibility(False, reason=why), ran
+    cache = default_cache() if cfg.settle else None
+    if cache is not None:  # answered before, on this wall or one with the same holds
+        entry = timed_check("cache", cache.get, wall, a, b, cfg)
+        if entry is not None and not entry.feasible:
+            return Feasibility(False, reason=f"{entry.reason} (cached)"), ran
+        if entry is not None:
+            return Feasibility(True, cost=np.abs(entry.result.tau).max() / cfg.tau_limit), ran
+    verdict = _checks(wall, a, b, cfg, timed_check)
+    if cache is not None and not verdict.feasible:
+        cache.put(wall, a, b, cfg, reason=verdict.reason)  # never checked again
+    return verdict, ran
+
+
+def _checks(wall, a, b, cfg, timed_check) -> Feasibility:
+    """The edge poses, then the coarse path (the module docstring)."""
     moving = tr.moving_limb(a, b, 0)
     # (name, stance, unloaded limb, lift, the edge whose pose is tried first as the start)
     edges = (
@@ -92,12 +121,12 @@ def trace(
             name, _edge_any, wall, name, stance, unloaded, aways, poses.get(near), cfg
         )
         if not ok:
-            return Feasibility(False, reason=f"{name}: {why}"), ran
+            return Feasibility(False, reason=f"{name}: {why}")
         peak, poses[name] = max(peak, torque), q
     ok, torque, why = timed_check("path", _path, wall, a, b, poses["start"], cfg)
     if not ok:
-        return Feasibility(False, reason=f"path: {why}"), ran
-    return Feasibility(True, cost=max(peak, torque) / cfg.tau_limit), ran
+        return Feasibility(False, reason=f"path: {why}")
+    return Feasibility(True, cost=max(peak, torque) / cfg.tau_limit)
 
 
 def rules(wall: WallModel, a: Stance, b: Stance) -> str:

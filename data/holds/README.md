@@ -10,3 +10,8 @@ bolt holes at x = ±15, z = +14. The spherical socket has a 12.7 mm radius (meas
 
 If the organisers update it, copy the new file over this one and update the commit above. The official simulator
 (rock-climbing-robots/simulator) should ship the same mesh.
+
+`hold_pieces_<sha>_<threshold>.npz`: the same hold cut into convex pieces (CoACD), which the optimiser's collision
+check uses inside the hold [Ours]. It is kept here, not rebuilt on each machine, because CoACD gives slightly different
+pieces on another machine, and with them slightly different solutions. If `hold.stl` changes, the optimiser makes a new
+one here on its first run (~20 s): commit it.

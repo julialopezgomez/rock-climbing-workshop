@@ -247,31 +247,47 @@
         "right_hand": "R12",
         "left_hand": "L11",
         "right_foot": "R9",
+        "left_foot": "L9"
+      }
+    },
+    {
+      "contacts": {
+        "right_hand": "R13",
+        "left_hand": "L11",
+        "right_foot": "R9",
+        "left_foot": "L9"
+      }
+    },
+    {
+      "contacts": {
+        "right_hand": "R13",
+        "left_hand": "L12",
+        "right_foot": "R9",
+        "left_foot": "L9"
+      }
+    },
+    {
+      "contacts": {
+        "right_hand": "R13",
+        "left_hand": "L12",
+        "right_foot": "R10",
+        "left_foot": "L9"
+      }
+    },
+    {
+      "contacts": {
+        "right_hand": "R13",
+        "left_hand": "L12",
+        "right_foot": "R10",
         "left_foot": "L10"
       }
     },
     {
       "contacts": {
-        "right_hand": "R12",
-        "left_hand": "L14",
-        "right_foot": "R9",
-        "left_foot": "L10"
-      }
-    },
-    {
-      "contacts": {
-        "right_hand": "R12",
-        "left_hand": "L14",
-        "right_foot": "R9",
-        "left_foot": "L11"
-      }
-    },
-    {
-      "contacts": {
-        "right_hand": "R12",
+        "right_hand": "R13",
         "left_hand": "L14",
         "right_foot": "R10",
-        "left_foot": "L11"
+        "left_foot": "L10"
       }
     },
     {
@@ -279,7 +295,15 @@
         "right_hand": "R14",
         "left_hand": "L14",
         "right_foot": "R10",
-        "left_foot": "L11"
+        "left_foot": "L10"
+      }
+    },
+    {
+      "contacts": {
+        "right_hand": "R14",
+        "left_hand": "L14",
+        "right_foot": "R10",
+        "left_foot": "L12"
       }
     },
     {
@@ -287,7 +311,7 @@
         "right_hand": "R14",
         "left_hand": "L15",
         "right_foot": "R10",
-        "left_foot": "L11"
+        "left_foot": "L12"
       }
     }
   ]

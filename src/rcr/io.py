@@ -1,8 +1,10 @@
 """Save/load for the files that cross module boundaries. Formats are documented in INTERFACES.md.
 
 Every file is JSON with a "schema" field; loading a file with another schema raises ValueError.
-Pi-safe: stdlib only (the robot may decode a trajectory).
+Pi-safe: stdlib only, Python 3.9 or newer (the robot may decode a trajectory).
 """
+
+from __future__ import annotations
 
 import json
 from dataclasses import asdict
@@ -16,15 +18,24 @@ TRAJECTORY_SCHEMA = "trajectory/2"
 
 
 def _save(obj: object, schema: str, path: Path | str) -> None:
+    """Written whole or not at all (to a temporary file, then renamed over it): a reader, say
+    scripts/link_pi.py stream following a trajectory file as it is saved, never sees half."""
     data = {"schema": schema, **asdict(obj)}
-    Path(path).write_text(json.dumps(data, indent=2) + "\n")
+    path = Path(path)
+    temporary = path.with_name(path.name + ".tmp")
+    temporary.write_text(json.dumps(data, indent=2) + "\n")
+    temporary.replace(path)
 
 
 def _load(schema: str, path: Path | str) -> dict:
-    data = json.loads(Path(path).read_text())
+    return _checked(schema, json.loads(Path(path).read_text()), path)
+
+
+def _checked(schema: str, data: dict, where: object) -> dict:
+    data = dict(data)
     found = data.pop("schema", None)
     if found != schema:
-        raise ValueError(f"{path}: expected schema {schema!r}, found {found!r}")
+        raise ValueError(f"{where}: expected schema {schema!r}, found {found!r}")
     return data
 
 
@@ -60,7 +71,17 @@ def save_trajectory(trajectory: Trajectory, path: Path | str) -> None:
 
 
 def load_trajectory(path: Path | str) -> Trajectory:
-    d = _load(TRAJECTORY_SCHEMA, path)
+    return trajectory_from_dict(json.loads(Path(path).read_text()), path)
+
+
+def trajectory_to_dict(trajectory: Trajectory) -> dict:
+    """The trajectory as its file's JSON object (schema included), e.g. to send over the link."""
+    return {"schema": TRAJECTORY_SCHEMA, **asdict(trajectory)}
+
+
+def trajectory_from_dict(data: dict, where: object = "trajectory") -> Trajectory:
+    """The inverse of trajectory_to_dict; ValueError if the schema is another one."""
+    d = _checked(TRAJECTORY_SCHEMA, data, where)
     return Trajectory(
         joint_names=d["joint_names"],
         times=d["times"],

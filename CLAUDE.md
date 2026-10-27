@@ -5,7 +5,8 @@ This is the team project for the Rock Climbing Robots hackathon (Bordeaux, 29 Oc
 
 ## Layout
 - `src/rcr/types.py` holds the contracts and `src/rcr/io.py` holds the file formats. Both are Pi-safe.
-- `src/rcr/<module>/`: `perception`, `planner`, `optimiser`, `controller`, `link`, `sim`, plus `robot` (our climbing hooks, `hooks.py`; the rest is README only).
+- `src/rcr/<module>/`: `perception`, `planner`, `optimiser`, `controller`, `link`, `sim`, plus `robot` (where Microban is, `microban.py`, and our climbing hooks, `hooks.py`; the rest is README only).
+- `third_party/microban` is Rhoban/microban as a git submodule, pinned. Never edit or copy its files (GPL-3.0).
   - Each module's `__init__.py` is its public interface. Put implementations in files next to it and have `__init__`
     delegate to them, so that swapping a method never changes callers.
   - Each module's `README.md` covers purpose, input, output, where it runs and open decisions. Update it when you change the module.
@@ -14,7 +15,8 @@ This is the team project for the Rock Climbing Robots hackathon (Bordeaux, 29 Oc
 
 ## Commands
 ```bash
-uv sync                                   # base + dev deps; add --group sim / --group perception
+git submodule update --init               # Microban in third_party/microban (or clone with --recursive)
+uv sync                                   # base + dev deps; add --group sim / --group optimiser / --group perception
 uv run scripts/run_pipeline.py --check    # examples through every stage (stub/ok per stage)
 uv run pytest
 uv run ruff check . && uv run ruff format --check .

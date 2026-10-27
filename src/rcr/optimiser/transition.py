@@ -152,6 +152,16 @@ class TransitionConfig:
     # How far a held ball may be from its hold at a midpoint: interpolated joints cannot keep a
     # closed chain exactly on four points, and the ball has 2.7 mm of play in its socket [Ours].
     midpoint_play: float = 0.001  # [m]
+    # Every move starts at stance a's own pose and ends at stance b's (stance_pose: balanced,
+    # clear, solved from a fresh guess): the move itself ends freely, then a settle with all four
+    # balls held brings the robot to stance b's pose (solve_move). A move then depends on its
+    # stances and the wall only, never on the moves before it, so its result is the same every
+    # run and can be reused and cached [Ours, after FARO's per-mode poses]. On the example plan:
+    # 34 of 35 moves, against 21 of 35 when the move itself had to end at stance b's pose.
+    # Off: each move starts where the previous one ended, and depends on how the robot got there
+    # (the example plan's full re-solve then failed at move 9 after a far hold changed).
+    settle: bool = True
+    settle_duration: float = 1.0  # [s] for the settle, after phases A and B [Ours]
     phase_a_duration: float = 1.0  # [s] for phase A, chosen after solving (quasi-static) [Ours]
     phase_b_duration: float = 2.0  # [s] for phase B [Ours]
     ipopt: dict = field(
@@ -171,10 +181,11 @@ class TransitionConfig:
 
 @dataclass
 class TransitionResult:
-    q: np.ndarray  # (N+1) x NQ configurations
-    dq: np.ndarray  # NV x (N+1) the tangent vectors at the start: q[k] = integrate(q[0], dq[:, k])
-    tau: np.ndarray  # (N+1) x 19 motor torques [N·m]
-    forces: dict[str, np.ndarray]  # limb -> (N+1) x 3 hold forces [N]; 0 where not in contact
+    # S samples: N + 1, or 2N + 1 with its settle (solve_move); times from sample_time
+    q: np.ndarray  # S x NQ configurations
+    dq: np.ndarray  # NV x S the tangent vectors at the start: q[k] = integrate(q[0], dq[:, k])
+    tau: np.ndarray  # S x 19 motor torques [N·m]
+    forces: dict[str, np.ndarray]  # limb -> S x 3 hold forces [N]; 0 where not in contact
     moving: str  # the limb that changed hold
     solve_time: float  # [s] IPOPT wall time
     iterations: int
@@ -300,6 +311,8 @@ class _Problem:
     # static pose only: parameter 4, 1 if that limb's hold carries load, 0 if its force is zero
     loaded: ca.MX | None = None
     free_neck: tuple = ()  # limbs whose hook is not in a socket: no neck bound for them
+    end_dq: ca.MX | None = None  # parameter NV: a settle's last sample's dq
+    end_q: np.ndarray | None = None  # the pose end_dq leads to (NQ), for the neck bounds
 
 
 _problems: dict[tuple, _Problem] = {}
@@ -344,11 +357,17 @@ def neck_from_above(opti: ca.Opti, model: RobotModel, q_ref, dq, limb: str, neck
 
 
 def _neck_bounds(
-    model: RobotModel, q_ref: np.ndarray, seeding: bool, fixed_start: bool, free: tuple = ()
+    model: RobotModel,
+    q_ref: np.ndarray,
+    seeding: bool,
+    fixed_start: bool,
+    free: tuple = (),
+    end: np.ndarray | None = None,
 ):
     """neck_min for each limb. Seeding: within NECK_CONE of up, or as far as the fixed start
-    already is if it is beyond (a transition cannot move its first sample). Otherwise, and for
-    the `free` limbs (hooks not in a socket), no bound."""
+    already is if it is beyond (a transition cannot move its first sample), and as far as a
+    fixed end pose (`end`) is. Otherwise, and for the `free` limbs (hooks not in a socket), no
+    bound."""
     if not seeding:
         return np.full(len(LIMBS), -NECK_PROBE)
     want = np.cos(NECK_CONE) * NECK_PROBE
@@ -357,6 +376,9 @@ def _neck_bounds(
     else:
         now = [float(neck_rise(model, q_ref, np.zeros(NV), limb)) for limb in LIMBS]
         bounds = np.minimum(want, np.array(now) - 1e-6)
+    if end is not None:  # nor can it move a pinned last sample
+        at_end = [float(neck_rise(model, end, np.zeros(NV), limb)) for limb in LIMBS]
+        bounds = np.minimum(bounds, np.array(at_end) - 1e-6)
     bounds[[LIMBS.index(limb) for limb in free]] = -NECK_PROBE
     return bounds
 
@@ -481,7 +503,104 @@ def transition_problem(moving: Limb, cfg: TransitionConfig) -> _Problem:
     return _cached(("transition", moving, repr(cfg)), build)
 
 
-def midpoint_poses(opti: ca.Opti, model: RobotModel, dq, q0, holds, moving: Limb, cfg):
+# [rad, m] how far a settle's last sample may be from its end pose, per component of dq: a bound,
+# not an equality, as the pose also meets the balls' equalities (to IPOPT's tolerance) [Ours]
+END_POSE_BAND = 1e-4
+_stance_poses: dict[tuple, np.ndarray] = {}
+
+
+def stance_pose(wall: WallModel, stance: Stance, cfg: TransitionConfig, index: int = 0):
+    """The stance's own pose (NQ): balanced, clear, solved from a fresh guess (initial_guess),
+    so it depends on the stance and the wall only. The plan starts at stance 0's; with
+    cfg.settle every move starts at its stance a's and ends at its stance b's. Cached per wall,
+    stance and settings."""
+    cfg = replace(cfg, settle=False)  # the pose itself does not depend on it
+    key = (
+        tuple((h.id, tuple(h.position)) for h in wall.holds),
+        tuple(stance.contacts[limb] for limb in LIMBS),
+        repr(cfg),
+    )
+    if key not in _stance_poses:
+        guess = initial_guess(wall, stance, cfg)
+        _stance_poses[key] = static_pose(wall, stance, guess, cfg, index).q[0]
+    return _stance_poses[key].copy()
+
+
+def settle_problem(cfg: TransitionConfig) -> _Problem:
+    """A settle: all four balls stay on their holds while the robot moves from its start to a
+    given end pose (end_dq), balanced at every sample and midpoint [Ours, after FARO]. Used to
+    bring a move's free end to stance b's own pose (stance_pose)."""
+    n = cfg.n_samples
+
+    def build() -> _Problem:
+        model, opti = load_robot_model(), ca.Opti()
+        q0, holds, end_dq = opti.parameter(NQ), opti.parameter(3, len(LIMBS)), opti.parameter(NV)
+        dq = opti.variable(NV, n + 1)
+        forces = {limb: opti.variable(3, n + 1) for limb in LIMBS}
+        opti.subject_to(dq[:, 0] == 0)
+        opti.subject_to(opti.bounded(end_dq - END_POSE_BAND, dq[:, n], end_dq + END_POSE_BAND))
+        neck_min = opti.parameter(len(LIMBS))
+        qs, taus = [], []
+        for k in range(n + 1):
+            sample = {limb: forces[limb][:, k] for limb in LIMBS}
+            q, tau = balanced_pose(opti, model, dq[:, k], q0, sample, cfg)
+            opti.subject_to(model.limb_positions(q) == holds)
+            for limb in LIMBS:
+                neck_from_above(opti, model, q0, dq[:, k], limb, neck_min)
+                friction_pyramid(opti, sample[limb], cfg.normals[limb], cfg.mu[limb])
+            qs.append(q)
+            taus.append(tau)
+        mid_forces, mid_taus, mid_qs = midpoint_poses(opti, model, dq, q0, holds, None, cfg)
+        smooth = sum(ca.sumsqr(dq[:, k + 1] - dq[:, k]) for k in range(n))
+        torque = sum(ca.sumsqr(t) for t in taus + mid_taus)
+        stance = sum(posture(q, cfg) for q in qs + mid_qs)
+        objective = cfg.w_tau * torque + cfg.w_smooth * smooth + stance
+        slots, penalty, centre, radius = clearance_slots(opti, dq, cfg)
+        opti.minimize(objective + penalty)
+        _set_solver(opti, cfg)
+        return _Problem(
+            opti, dq, forces, qs, taus, objective, neck_min, q0, holds, slots, centre, radius,
+            mid_forces=mid_forces, end_dq=end_dq,
+        )  # fmt: skip
+
+    return _cached(("settle", repr(cfg)), build)
+
+
+def solve_settle(
+    wall: WallModel,
+    stance: Stance,
+    q0: np.ndarray,
+    q_end: np.ndarray,
+    cfg: TransitionConfig,
+    index: int = 0,
+) -> TransitionResult:
+    """Move from q0 to q_end with all four balls on the holds of `stance` (settle_problem),
+    clear of the holds, the wall and itself. OptimisationError if it cannot."""
+    p = settle_problem(cfg)
+    n = cfg.n_samples
+    p.opti.set_value(p.q_ref, q0)
+    p.opti.set_value(p.holds, contact_points(wall, stance, cfg))
+    end = rm.difference(q0, q_end)
+    p.opti.set_value(p.end_dq, end)
+    p.end_q = q_end
+    _fresh(p)
+    for k in range(n + 1):
+        p.opti.set_initial(p.dq[:, k], end * k / n)
+        for limb in LIMBS:
+            p.opti.set_initial(p.forces[limb][:, k], weight_share(len(LIMBS)))
+    if p.mid_forces is not None:
+        for limb in LIMBS:
+            p.opti.set_initial(p.mid_forces[limb], np.tile(weight_share(len(LIMBS)), (n, 1)).T)
+    own = {limb: {stance.contacts[limb]} for limb in LIMBS}
+    check = _checker(wall, q0, [dict(stance.contacts)] * (n + 1), own, cfg)
+    s = _solve_clear(p, f"settle into stance {index}", cfg, check)
+    return TransitionResult(
+        q=s.q, dq=s.dq, tau=s.tau, forces=s.forces, moving="",
+        solve_time=s.solve_time, iterations=s.iterations,
+    )  # fmt: skip
+
+
+def midpoint_poses(opti: ca.Opti, model: RobotModel, dq, q0, holds, moving: Limb | None, cfg):
     """The pose halfway between consecutive samples (dq interpolated, as the controller will),
     held to the same rules as a sample: balance, friction, torque and joint limits, each midpoint
     with its own hold forces; held balls within cfg.midpoint_play of their holds. A limb counts as
@@ -498,7 +617,9 @@ def midpoint_poses(opti: ca.Opti, model: RobotModel, dq, q0, holds, moving: Limb
         balls = model.limb_positions(q)
         for i, limb in enumerate(LIMBS):
             if limb != moving or k + 1 <= k_release:
-                opti.subject_to(ca.sumsqr(balls[:, i] - holds[:, i]) <= cfg.midpoint_play**2)
+                # relative to the play: in m^2, IPOPT's tolerance alone allowed 3 mm, not 1 mm
+                drift = (balls[:, i] - holds[:, i]) / cfg.midpoint_play
+                opti.subject_to(ca.sumsqr(drift) <= 1)
                 friction_pyramid(opti, at[limb], cfg.normals[limb], cfg.mu[limb])
             else:
                 opti.subject_to(at[limb] == 0)  # in the air
@@ -644,13 +765,17 @@ def _solve_clear(
         _linearise(p, [], np.zeros((NV, len(p.q))), cfg)  # no clearances yet
         p.opti.set_value(p.centre, np.zeros((NV, len(p.q))))
         p.opti.set_value(p.radius, OPEN_TRUST_REGION)
-    p.opti.set_value(p.neck_min, _neck_bounds(model, q_ref, steer, fixed_start, p.free_neck))
+    p.opti.set_value(
+        p.neck_min, _neck_bounds(model, q_ref, steer, fixed_start, p.free_neck, p.end_q)
+    )
     if p.approach is not None:
         p.opti.set_value(p.approach, 1.0 if steer else 0.0)
     best = _read(p, *solve_opti(p.opti, what, FIRST_SOLVE_PATIENCE))
     if not cfg.avoid_collisions:
         return best
-    p.opti.set_value(p.neck_min, _neck_bounds(model, q_ref, False, fixed_start, p.free_neck))
+    p.opti.set_value(
+        p.neck_min, _neck_bounds(model, q_ref, False, fixed_start, p.free_neck, p.end_q)
+    )
     if p.approach is not None:
         p.opti.set_value(p.approach, 0.0)
     checks = check(best.dq)
@@ -786,7 +911,8 @@ def solve_transition(
     """Move the one limb that changes from its hold in `a` to its hold in `b`, starting at q0.
 
     q0 must have every ball on its hold of `a` (e.g. from solve_static_pose or the previous
-    transition). Only the moving limb's final point is fixed, not the final configuration.
+    transition). Only the moving limb's final point is fixed, not the final configuration
+    (solve_move adds the settle into stance b's own pose).
     The motion stays clear of the holds and the wall throughout (cfg.avoid_collisions).
     seed: a solved transition's dq (NV x samples) to start from, e.g. the same limb's last move
     on holds laid out alike (see same_layout); if that fails, the usual start is tried.
@@ -829,6 +955,36 @@ def solve_transition(
         q=s.q, dq=s.dq, tau=s.tau, forces=s.forces, moving=moving,
         solve_time=s.solve_time, iterations=s.iterations,
     )  # fmt: skip
+
+
+def solve_move(
+    wall: WallModel, a: Stance, b: Stance, cfg: TransitionConfig, index: int = 0
+) -> TransitionResult:
+    """One move of a plan with cfg.settle: from stance a's own pose (stance_pose), the move
+    (solve_transition, free end, no reused seed), then the settle into stance b's own pose
+    (solve_settle). Depends on the stances and the wall only. Returns both as one result: the
+    move's samples, then the settle's; the last sample is stance b's pose exactly (the settle
+    ends within END_POSE_BAND of it), so the next move starts where this one ends."""
+    moving = moving_limb(a, b, index)
+    q0 = stance_pose(wall, a, cfg, index)
+    try:
+        q_end = stance_pose(wall, b, cfg, index + 1)
+    except OptimisationError as e:
+        what = f"transition {index} ({moving} to {b.contacts[moving]})"
+        raise OptimisationError(f"{what}: the robot cannot hold stance {index + 1} ({e})") from e
+    move = solve_transition(wall, a, b, q0, cfg, index)
+    settle = solve_settle(wall, b, move.q[-1], q_end, cfg, index + 1)
+    q = np.vstack([move.q, settle.q[1:]])
+    q[-1] = q_end
+    return TransitionResult(
+        q=q,
+        dq=np.column_stack([rm.difference(q0, qk) for qk in q]),
+        tau=np.vstack([move.tau, settle.tau[1:]]),
+        forces={limb: np.vstack([move.forces[limb], settle.forces[limb][1:]]) for limb in LIMBS},
+        moving=move.moving,
+        solve_time=move.solve_time + settle.solve_time,
+        iterations=move.iterations + settle.iterations,
+    )
 
 
 def layout(wall: WallModel, a: Stance, b: Stance, cfg: TransitionConfig) -> np.ndarray:

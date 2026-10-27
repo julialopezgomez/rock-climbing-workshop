@@ -91,7 +91,7 @@ format. They are a subset of Microban's `observer.RobotState` and `MotorCommand`
 | perception | laptop | `wall_model(images) -> WallModel`, `robot_pose(images) -> Pose` |
 | planner | laptop | `plan(wall, feasible: FeasibilityFn) -> ContactPlan` |
 | optimiser | laptop | `optimise(wall, plan) -> Trajectory`, `feasibility(wall, a, b) -> Feasibility` |
-| link | both | `LaptopLink`: `send_trajectory`, `start`, `stop`, `send_pose`, `robot_state`; `RobotLink`: `trajectory`, `run_requested`, `pose`, `send_state` |
+| link | both | `send_trajectory(trajectory or file, robot)`; `segment(trajectory, start)`; `LaptopLink(robot)`: `send_trajectory(final=True)`, `append_segment`, `finish`, `start`, `stop`, `send_pose`, `robot_state`, `ping`, `close`; `RobotLink()`: `trajectory`, `trajectory_complete`, `run_requested`, `pose`, `send_state`, `close`. Wire format: [link/protocol.py](src/rcr/link/protocol.py) |
 | controller | robot | `Controller(trajectory).step(state: RobotState) -> JointTargets` |
 | sim | laptop | `Sim(wall).reset() -> RobotState`, `.step(targets: JointTargets) -> RobotState` |
 
@@ -135,7 +135,7 @@ It is the only example wall. An earlier regular wall, rows every 0.075 m, was re
   ]
 }
 ```
-(Excerpt: the [full example](data/examples/contact_plan_hard.json) climbs in 35 moves, in an irregular order, until
+(Excerpt: the [full example](data/examples/contact_plan_hard.json) climbs in 38 moves, in an irregular order, until
 the hands are at 1.27 m. Above 0.70 m each move was kept only once the full trajectory optimisation had solved it.)
 
 ### Trajectory: `trajectory/2`
