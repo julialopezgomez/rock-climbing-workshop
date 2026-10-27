@@ -16,7 +16,7 @@ stops part way keeps what it solved: `positions` is what the robot executes, and
 angles and trunk poses in it are what --replay plays. The playback is kinematic: the robot follows
 the optimiser's poses exactly, at the planned times, no physics. Add --headless for no window.
 --send PI also sends each solved move to the robot at PI (rcr.link) as the trajectory's next
-segment, so it can climb while the rest is solved (start it with scripts/link_pi.py start).
+segment, so it can climb while the rest is solved (start it: bash scripts/pi.sh PI --start).
 Solved moves are kept in the move cache (build/move_cache, rcr.optimiser.move_cache), so a move
 solved once is taken from there next time: the whole example then takes about a second a move.
 macOS needs `mjpython` for the window (Linux: python). Without the optimiser group or
@@ -745,7 +745,7 @@ def run_plan(
                     robot.append_segment(link.segment(full, sent))
                 print(f"  sent to {send}: up to {full.times[-1]:.1f} s", flush=True)
                 if sent == 0:
-                    print(f"  start it: uv run scripts/link_pi.py start --pi {send}", flush=True)
+                    print(f"  start it: bash scripts/pi.sh {send} --start", flush=True)
                 sent = len(full.times)
             elif sent:
                 robot.finish()  # done, or stopped: nothing more will come
@@ -841,7 +841,7 @@ if __name__ == "__main__":
         i = args.index("--send")
         if i + 1 >= len(args) or args[i + 1].startswith("--"):
             sys.exit("--send needs the robot's address\n" + USAGE)
-        send = args.pop(i + 1)
+        send = args.pop(i + 1).split("@")[-1]  # pi@172.20.10.8 as for scripts/pi.sh: the address
         args.pop(i)
     flags = set(args)
     if "--hard" not in flags or not flags <= {"--hard", "--save", "--replay", "--headless"}:
