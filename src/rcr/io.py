@@ -18,8 +18,13 @@ TRAJECTORY_SCHEMA = "trajectory/2"
 
 
 def _save(obj: object, schema: str, path: Path | str) -> None:
+    """Written whole or not at all (to a temporary file, then renamed over it): a reader, say
+    scripts/link_pi.py stream following a trajectory file as it is saved, never sees half."""
     data = {"schema": schema, **asdict(obj)}
-    Path(path).write_text(json.dumps(data, indent=2) + "\n")
+    path = Path(path)
+    temporary = path.with_name(path.name + ".tmp")
+    temporary.write_text(json.dumps(data, indent=2) + "\n")
+    temporary.replace(path)
 
 
 def _load(schema: str, path: Path | str) -> dict:

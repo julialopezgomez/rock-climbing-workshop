@@ -2,6 +2,7 @@
 over Wi-Fi, without them. scripts/link_pi.py check does the same with the real Pi."""
 
 import os
+import signal
 import subprocess
 import sys
 import time
@@ -179,8 +180,61 @@ def test_a_segment_must_go_on_from_the_end(robot, laptop):
     assert robot.trajectory_complete()
 
 
-def test_stream_with_the_receiver(tmp_path):
-    """scripts/link_pi.py stream against the receiver: a 3 s trajectory in 1 s segments, one
+def short_trajectory(seconds: float):
+    """The example's first `seconds`, the robot's part only."""
+    n = sum(1 for t in TRAJECTORY.times if t <= seconds)
+    return TRAJECTORY.__class__(
+        TRAJECTORY.joint_names, TRAJECTORY.times[:n], TRAJECTORY.positions[:n]
+    )
+
+
+@pytest.fixture
+def receiver(tmp_path):
+    """The receiver (python -m rcr.link.raspberry_pi) in its own process: (port, its output)."""
+    env = {**os.environ, "PYTHONPATH": str(ROOT / "src")}
+    with link.RobotLink(port=0, pose_port=0, host="127.0.0.1") as probe:  # two free ports
+        port, pose_port = probe.port, probe.pose_port
+    process = subprocess.Popen(
+        [sys.executable, "-m", "rcr.link.raspberry_pi", "--port", str(port),
+         "--pose-port", str(pose_port), "--save", str(tmp_path / "received.json")],
+        env=env, stdout=subprocess.PIPE, text=True,
+    )  # fmt: skip
+    assert "listening" in process.stdout.readline()
+    output = []
+    yield port, output
+    process.terminate()
+    output.append(process.communicate(timeout=10)[0])
+
+
+def link_pi(*args, **kwargs):
+    env = {**os.environ, "PYTHONPATH": str(ROOT / "src")}
+    command = [sys.executable, str(ROOT / "scripts" / "link_pi.py"), *map(str, args)]
+    return subprocess.Popen(command, env=env, stdout=subprocess.PIPE, text=True, **kwargs)
+
+
+def test_stream_follows_the_file_as_the_optimiser_saves_it(tmp_path, receiver):
+    """stream sends the file, then each time it has grown (as after each solved move with
+    --save) what is new; Ctrl-C ends it, and the robot has the whole of it."""
+    port, _ = receiver
+    file = tmp_path / "trajectory.json"
+    io.save_trajectory(short_trajectory(4.0), file)  # one move so far
+    stream = link_pi("stream", file, "--pi", "127.0.0.1", "--port", port)
+    try:
+        assert "following" in stream.stdout.readline()
+        assert "started" in stream.stdout.readline()
+        for seconds in (8.0, 12.0):  # two more moves solved and saved
+            time.sleep(0.3)
+            io.save_trajectory(short_trajectory(seconds), file)
+            assert "more, to" in stream.stdout.readline()
+    finally:
+        stream.send_signal(signal.SIGINT)
+        out = stream.communicate(timeout=10)[0]
+    assert "ended: the robot has all" in out
+    assert io.load_trajectory(tmp_path / "received.json") == short_trajectory(12.0)
+
+
+def test_replay_with_the_receiver(tmp_path):
+    """scripts/link_pi.py replay against the receiver: a 3 s trajectory in 1 s segments, one
     every 1.5 s, so the robot must hold at the end of each and still reach the end."""
     n = 31
     short = TRAJECTORY.__class__(
@@ -201,7 +255,7 @@ def test_stream_with_the_receiver(tmp_path):
     try:
         assert "listening" in receiver.stdout.readline()
         run = subprocess.run(
-            [sys.executable, str(ROOT / "scripts" / "link_pi.py"), "stream", str(file),
+            [sys.executable, str(ROOT / "scripts" / "link_pi.py"), "replay", str(file),
              "--pi", "127.0.0.1", "--port", str(port), "--segment", "1", "--every", "1.5"],
             env=env, capture_output=True, text=True, timeout=60,
         )  # fmt: skip

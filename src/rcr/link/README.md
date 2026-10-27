@@ -29,7 +29,7 @@
    sh scripts/pi.sh --install pi@172.20.10.8 [--run]   # copy the code; --run (re)starts the receiver
    sh scripts/pi.sh --check   pi@172.20.10.8           # test the link
    sh scripts/pi.sh --send    pi@172.20.10.8 [FILE]    # the whole trajectory, once
-   sh scripts/pi.sh --stream  pi@172.20.10.8 [FILE]    # move by move (4 s every 3 s), and starts
+   sh scripts/pi.sh --stream  pi@172.20.10.8 [FILE]    # send it, start, then each move saved into it
    sh scripts/pi.sh --start / --stop pi@172.20.10.8
    ```
 
@@ -83,8 +83,22 @@ with link.LaptopLink("172.20.10.8") as robot:
 - **The optimiser runner does this by itself:** `uv run mjpython tests/test_optimiser.py --hard --send 172.20.10.8`
   sends each move as soon as it is solved, while the sim plays it. Then start the robot: `bash scripts/pi.sh pi@172.20.10.8 --start`.
 - **`link.segment(trajectory, n)`** cuts the new samples off a growing trajectory.
-- **To try it with a saved file:** `uv run scripts/link_pi.py stream --pi 172.20.10.8 [FILE] --segment 4 --every 3`
-  sends 4 s of motion every 3 s, and reports how long the robot had to wait.
+- **`stream` follows the trajectory file**, so the optimiser and the link run side by side:
+  ```bash
+  uv run mjpython tests/test_optimiser.py --hard --save     # terminal 1: solves, saves after each move
+  bash scripts/pi.sh pi@172.20.10.8 --stream                # terminal 2: sends the file, starts, then each new move
+  ```
+  - It sends what the file holds and starts the robot, then checks the file twice a second. Whenever it has grown,
+    it sends the new samples as the next segment.
+  - Ctrl-C ends it and tells the robot nothing more will come. The robot plays to the end and holds there.
+  - **Start the optimiser first.** `stream` sends whatever the file holds when it starts, so started first it would
+    send the last run's trajectory.
+  - If the file starts over (a new run) and does not go on from what was sent, `stream` waits and says so. The
+    solver is deterministic, so a re-run of the same plan carries on once it has grown past what was sent.
+  - `io.save_*` write atomically, so a half-written file is never read.
+- **To test the robot holding with a saved file:** `uv run scripts/link_pi.py replay --pi 172.20.10.8 [FILE]
+  --segment 4 --every 3` sends 4 s of motion every 3 s, as if each were solved just then, and reports how long the
+  robot had to wait.
 - **On the robot:** the trajectory grows segment by segment.
   - `trajectory_complete()` says whether more will come.
   - A controller that reaches the end of what it has while more is coming **holds there**: all limbs on their holds,
@@ -145,7 +159,7 @@ robot_link.send_state(state)  # to the laptop, if one connected
 | MacBook ↔ Raspberry Pi (Debian 11, Python 3.9) over a phone hotspot, 27 Oct | 4.8 ms (4.4–8.4) | 0.35 s | 51 per second, 0 of 507 lost |
 
 Move by move over the same Wi-Fi:
-- `stream`, 4 s segments every 3 s: the robot never waited, and reached the end in 19.9 s of 20.0 s.
+- `replay`, 4 s segments every 3 s: the robot never waited, and reached the end in 19.9 s of 20.0 s.
 - 2 s segments every 4 s: it held at the end of each, went on when the next came, and reached the end, waiting 8.2 s.
 - On loopback, the optimiser runner (`--send`) sent all 38 moves: the robot's trajectory then equals the saved
   `trajectory.json`, sample for sample.

@@ -5,7 +5,8 @@
     uv run scripts/link_pi.py deploy pi@172.20.10.8 --run   # ... and start the receiver there
     uv run scripts/link_pi.py check --pi 172.20.10.8          # evaluate the link
     uv run scripts/link_pi.py send --pi 172.20.10.8 [FILE]    # send a trajectory (or the example)
-    uv run scripts/link_pi.py stream --pi 172.20.10.8 [FILE]  # send it in segments, move by move
+    uv run scripts/link_pi.py stream --pi 172.20.10.8 [FILE]  # send it, then each move added to it
+    uv run scripts/link_pi.py replay --pi 172.20.10.8 [FILE]  # a saved one, in timed segments
     uv run scripts/link_pi.py start --pi 172.20.10.8
     uv run scripts/link_pi.py stop --pi 172.20.10.8
 
@@ -15,8 +16,10 @@
 
 check measures what the link README asks for: the round trip of a command, the time to send the
 trajectory, and the rate and losses of the state coming back, during a dry run (no motors move).
-stream sends a trajectory as the optimiser would, segment by segment while the robot plays it:
-it reports how long the robot held, waiting for the next segment.
+stream sends the file and starts the robot, then follows the file: each move the optimiser saves
+into it (tests/test_optimiser.py --hard --save) goes to the robot as the next segment, until
+Ctrl-C. replay sends a saved file in timed segments, as if solved live, and reports how long the
+robot held waiting for them.
 bundle writes the Pi's files (what deploy copies), a run.sh and a README into one folder and a
 .zip, to copy to any Pi by hand (scp, a USB stick) without this repository.
 """
@@ -26,13 +29,14 @@ from __future__ import annotations
 import argparse
 import os
 import shutil
+import signal
 import statistics
 import subprocess
 import sys
 import time
 from pathlib import Path
 
-from rcr import io
+from rcr import io, link
 from rcr.link import COMMAND_PORT, LaptopLink, LinkError
 from rcr.types import Trajectory
 
@@ -123,9 +127,9 @@ def bundle(out: Path) -> int:
     return 0
 
 
-def stream(pi: str, port: int, file: Path, seconds: float, every: float) -> int:
-    """Send the trajectory in segments of `seconds`, one every `every` s, while the robot plays
-    it: as the optimiser would send each move once solved."""
+def replay(pi: str, port: int, file: Path, seconds: float, every: float) -> int:
+    """Send a saved trajectory in segments of `seconds`, one every `every` s, while the robot
+    plays it: as if each were solved just then (to see the robot hold when they come late)."""
     trajectory = io.load_trajectory(file)
     times, end = trajectory.times, trajectory.times[-1]
     cuts = [0]  # the index each segment starts at
@@ -176,6 +180,96 @@ def stream(pi: str, port: int, file: Path, seconds: float, every: float) -> int:
         f"it held {held:.1f} s in all, waiting for segments"
     )
     return 0 if reached else 1
+
+
+def stream(pi: str, port: int, file: Path, poll: float = 0.5) -> int:
+    """Send the trajectory file and start the robot, then follow the file: each time it has grown
+    (the optimiser saves it after every move: tests/test_optimiser.py --hard --save), send what
+    is new as the next segment. Until Ctrl-C, which tells the robot nothing more will come."""
+
+    def read() -> tuple[float, Trajectory | str] | None:
+        """(when it was saved, the trajectory or why it cannot be read), or None if not there."""
+        try:
+            saved = file.stat().st_mtime
+        except OSError:
+            return None
+        try:
+            return saved, io.load_trajectory(file)
+        except (ValueError, KeyError, TypeError) as e:  # bad JSON, or not a trajectory
+            return saved, f"{type(e).__name__}: {e}"
+
+    def interrupt(*_):
+        raise KeyboardInterrupt
+
+    signal.signal(signal.SIGTERM, interrupt)  # a plain kill ends it as Ctrl-C does
+    print(f"following {file} (Ctrl-C to end)", flush=True)
+    while (found := read()) is None or isinstance(found[1], str):
+        time.sleep(poll)
+    seen, sent = found
+    try:
+        with LaptopLink(pi, port) as robot:
+            robot.stop()
+            robot.send_trajectory(sent, final=False)
+            robot.start()
+            print(f"  sent {_moves(sent)}, to {sent.times[-1]:.1f} s; started", flush=True)
+            warned = None
+            try:
+                while True:
+                    time.sleep(poll)
+                    found = read()
+                    if found is None or found[0] in (seen, warned):
+                        continue
+                    if isinstance(found[1], str):  # said once per save; read again if it changes
+                        print(f"  {file.name} changed but cannot be read: {found[1]}", flush=True)
+                        warned = found[0]
+                        continue
+                    seen, now = found
+                    n = len(sent.times)
+                    same = now.times[:n] == sent.times and now.positions[:n] == sent.positions
+                    if same and len(now.times) > n:
+                        try:
+                            robot.append_segment(link.segment(now, n))
+                        except LinkError as e:
+                            print(f"  the new samples were not sent: {e}", flush=True)
+                            continue
+                        state = robot.robot_state()
+                        at = f"robot at {state.time:.1f} s" if state else "no state yet"
+                        print(
+                            f"  sent {_moves(now, n)} more, to {now.times[-1]:.1f} s ({at})",
+                            flush=True,
+                        )
+                        sent, warned = now, None
+                    elif same:
+                        print(
+                            f"  {file.name} changed, but `times` and `positions` (what the robot "
+                            f"runs) have no new samples ({n}): nothing to send",
+                            flush=True,
+                        )
+                    else:
+                        print(
+                            f"  {file.name} changed but does not go on from what was sent "
+                            f"({len(now.times)} samples now, {n} sent): waiting for it to grow "
+                            "past that. A different plan? Then --stop, and stream again.",
+                            flush=True,
+                        )
+            except KeyboardInterrupt:
+                robot.finish()
+                print(
+                    f"\nended: the robot has all {len(sent.times)} samples "
+                    f"({sent.times[-1]:.1f} s); it plays to the end and holds there. "
+                    "To stop it: --stop"
+                )
+    except LinkError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+    return 0
+
+
+def _moves(trajectory: Trajectory, start: int = 0) -> str:
+    """'N samples (~M moves)': a move is 24 samples with the optimiser's TransitionConfig."""
+    count = len(trajectory.times) - start
+    moves = f" (~{count / 24:.0f} moves)" if count >= 24 else ""
+    return f"{count} sample{'s' if count != 1 else ''}{moves}"
 
 
 def check(pi: str, port: int, file: Path, seconds: float, pings: int) -> int:
@@ -263,7 +357,9 @@ def main() -> int:
     p.add_argument("--pings", type=int, default=20)
     p = sub.add_parser("send", parents=[target], help="send a trajectory")
     p.add_argument("file", nargs="?", type=Path, default=EXAMPLE)
-    p = sub.add_parser("stream", parents=[target], help="send a trajectory in segments")
+    p = sub.add_parser("stream", parents=[target], help="send a file, then what is added to it")
+    p.add_argument("file", nargs="?", type=Path, default=EXAMPLE)
+    p = sub.add_parser("replay", parents=[target], help="send a saved file in timed segments")
     p.add_argument("file", nargs="?", type=Path, default=EXAMPLE)
     # 4 s: one move with the optimiser's TransitionConfig (1 + 2 s, then a 1 s settle)
     p.add_argument("--segment", type=float, default=4.0, help="[s] of motion per segment")
@@ -275,7 +371,9 @@ def main() -> int:
     if args.command == "bundle":
         return bundle(args.out)
     if args.command == "stream":
-        return stream(args.pi, args.port, args.file, args.segment, args.every)
+        return stream(args.pi, args.port, args.file)
+    if args.command == "replay":
+        return replay(args.pi, args.port, args.file, args.segment, args.every)
     if args.command == "deploy":
         return deploy(args.host, args.run)
     if args.command == "check":

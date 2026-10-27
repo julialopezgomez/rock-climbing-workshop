@@ -7,13 +7,14 @@
 #   sh scripts/pi.sh --install TARGET --run    ... and (re)start the receiver there, in this window
 #   sh scripts/pi.sh --check   TARGET          test the link (round trip, upload, state back)
 #   sh scripts/pi.sh --send    TARGET [FILE]   send a whole trajectory once (default: the example)
-#   sh scripts/pi.sh --stream  TARGET [FILE]   send it move by move while the robot plays it
+#   sh scripts/pi.sh --stream  TARGET [FILE]   send it, start, then each move saved into it (Ctrl-C)
 #   sh scripts/pi.sh --start   TARGET          start / stop the climb
 #   sh scripts/pi.sh --stop    TARGET
 #
 # --check, --send, --stream, --start and --stop need the receiver running on the Pi: there,
-# sh ~/rcr/run.sh (or --install TARGET --run here). --stream sends one move (4 s) every 3 s and
-# starts the dry run; add --segment S / --every S to change that. More in src/rcr/link/README.md.
+# sh ~/rcr/run.sh (or --install TARGET --run here). --stream follows the file: run the optimiser
+# with --save (tests/test_optimiser.py --hard --save) and each move it saves goes to the robot.
+# More in src/rcr/link/README.md.
 set -e
 
 usage() {
