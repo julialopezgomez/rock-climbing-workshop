@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.12"
 
 [[package]]
@@ -358,6 +358,11 @@ wheels = [
 ]
 
 [[package]]
+name = "microban-model"
+version = "2.0.0"
+source = { git = "https://github.com/Rhoban/microban_model?lfs=true&rev=8e42ef70673b5747dbdca3efaf60bc0f8ec7ea6d#8e42ef70673b5747dbdca3efaf60bc0f8ec7ea6d" }
+
+[[package]]
 name = "mujoco"
 version = "3.16.0"
 source = { registry = "https://pypi.org/simple" }
@@ -586,9 +591,11 @@ optimiser = [
     { name = "casadi" },
     { name = "coacd" },
     { name = "coal" },
+    { name = "microban-model" },
     { name = "pin" },
 ]
 sim = [
+    { name = "microban-model" },
     { name = "mujoco" },
     { name = "opencv-python" },
 ]
@@ -608,10 +615,12 @@ optimiser = [
     { name = "casadi", specifier = ">=3.8.1" },
     { name = "coacd", specifier = ">=1.0.14" },
     { name = "coal", specifier = ">=3.0.3" },
+    { name = "microban-model", git = "https://github.com/Rhoban/microban_model?lfs=true&rev=8e42ef70673b5747dbdca3efaf60bc0f8ec7ea6d" },
     { name = "pin", specifier = ">=4.1.0" },
 ]
 perception = []
 sim = [
+    { name = "microban-model", git = "https://github.com/Rhoban/microban_model?lfs=true&rev=8e42ef70673b5747dbdca3efaf60bc0f8ec7ea6d" },
     { name = "mujoco", specifier = ">=3.16.0" },
     { name = "opencv-python", specifier = ">=5.0.0.93" },
 ]

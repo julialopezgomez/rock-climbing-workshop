@@ -52,7 +52,7 @@ PIECES_CACHE = REPO / "data" / "holds"
 COACD_THRESHOLD = 0.02  # CoACD concavity: 106 pieces, swelling < ~0.4 mm into the socket [Ours]
 TOUCHING = 5e-5  # [m] the exact mesh reports a ball resting in its socket as -4e-6 m
 # [m] how far a hook may press into the hold its ball rests in for a whole interval [Ours]: that is
-# the contact itself (and the hooks are placeholders). At a touch the exact mesh gives no direction
+# the contact itself. At a touch the exact mesh gives no direction
 # out, so with -TOUCHING alone a loaded foot's finger at 0.13 mm in could not be moved out, and the
 # move failed (example plan, move 9).
 RESTING_PLAY = 5e-4
@@ -113,27 +113,16 @@ def _z_to(direction: np.ndarray) -> np.ndarray:
 
 @lru_cache(maxsize=1)
 def robot_shapes() -> tuple[RobotShape, ...]:
-    """The convex hulls of Microban's visual meshes, plus our hooks (hooks.HOOKS)."""
-    shapes = [
-        _hull_shape(f"{s.link}_{i}", s) for i, s in enumerate(rm.read_visual_shapes(rm.mjcf_path()))
-    ]
+    """The robot's shapes: the convex hull of each visual mesh of the model, except on the
+    climbing forearms and feet (the hooks' links), which take the model's own convex pieces of
+    their collision meshes (coll_*): a hull of the hooked forearm would fill the inside of the
+    hook, where the hold goes. Plus each ball (hooks.HOOKS), a sphere [Microban]."""
+    path = rm.mjcf_path()
+    hooked = {hook.link for hook in hooks.HOOKS.values()}
+    meshes = [s for s in rm.read_visual_shapes(path) if s.link not in hooked]
+    meshes += [s for s in rm.read_visual_shapes(path, collision=True) if s.link in hooked]
+    shapes = [_hull_shape(f"{s.link}_{i}", s) for i, s in enumerate(meshes)]
     for limb, hook in hooks.HOOKS.items():
-        point = np.array(hook.start, dtype=float)
-        for k, (direction, length) in enumerate(hook.segments):
-            end = point + np.array(direction, dtype=float) * length
-            shapes.append(
-                RobotShape(
-                    f"{limb}_finger{k}",
-                    hook.link,
-                    coal.Capsule(hooks.FINGER_RADIUS, length),
-                    (point + end) / 2,
-                    _z_to(np.array(direction, dtype=float)),
-                    length / 2 + hooks.FINGER_RADIUS,
-                    hooks.FINGER_RADIUS,
-                    limb,
-                )
-            )
-            point = end
         shapes.append(
             RobotShape(
                 f"{limb}_ball",

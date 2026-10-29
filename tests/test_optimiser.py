@@ -126,9 +126,31 @@ def random_configuration(model, rng):
 # --- The robot model ----------------------------------------------------------------------------
 
 
+def test_the_balls_are_the_models():
+    """rcr.robot.hooks against the climbing model: each ball on its link, at its place and size
+    (URDF: the fixed frames <limb>_ball_frame; MJCF: the geoms <limb>_ball_coll)."""
+    import xml.etree.ElementTree as ET
+
+    urdf = ET.parse(rm.urdf_path()).getroot()
+    frames = {j.get("name"): j for j in urdf.iter("joint")}
+    mjcf = ET.parse(rm.mjcf_path()).getroot()
+    geoms = {
+        g.get("name"): (b.get("name"), g) for b in mjcf.iter("body") for g in b.findall("geom")
+    }
+    for limb, hook in hooks.HOOKS.items():
+        joint = frames[f"{limb}_ball_frame"]
+        assert joint.find("parent").get("link") == hook.link, limb
+        xyz = [float(v) for v in joint.find("origin").get("xyz").split()]
+        assert np.allclose(xyz, hook.ball, atol=1e-6), limb
+        body, geom = geoms[f"{limb}_ball_coll"]
+        assert body == hook.link, limb
+        assert np.allclose([float(v) for v in geom.get("pos").split()], hook.ball, atol=1e-6)
+        assert float(geom.get("size")) == pytest.approx(hooks.BALL_RADIUS), limb
+
+
 def test_kinematics_match_pinocchio(model):
     """Our CasADi kinematics (written from the URDF) against Pinocchio on the same URDF, with
-    the same hooks added as frames and point masses. Pinocchio's quaternion is (x, y, z, w)."""
+    the balls (rcr.robot.hooks) added as frames. Pinocchio's quaternion is (x, y, z, w)."""
     pin = pytest.importorskip("pinocchio")
     pm = pin.buildModelFromUrdf(str(rm.urdf_path()), pin.JointModelFreeFlyer())
     balls = {}
@@ -138,10 +160,6 @@ def test_kinematics_match_pinocchio(model):
         balls[limb] = pm.addFrame(
             pin.Frame(f"{limb}_ball", link.parentJoint, placement, pin.FrameType.OP_FRAME)
         )
-        for mass, point in hooks.masses(hook):
-            pm.inertias[link.parentJoint] += pin.Inertia(
-                mass, link.placement * point, np.zeros((3, 3))
-            )
     pd = pm.createData()
     qi = [pm.joints[pm.getJointId(n)].idx_q for n in MICROBAN_JOINTS]
     vi = [pm.joints[pm.getJointId(n)].idx_v for n in MICROBAN_JOINTS]
@@ -213,7 +231,9 @@ def test_collision_points_match_microbans_mjcf(model):
     mujoco = pytest.importorskip("mujoco")
     mm = mujoco.MjModel.from_xml_path(str(rm.mjcf_path()))
     md = mujoco.MjData(mm)
-    shapes = [g for g in range(mm.ngeom) if mm.geom_group[g] == 3]  # Microban's collision group
+    # the model's boxes and cylinders: its mesh pieces are not points (collision.robot_shapes)
+    kinds = (int(mujoco.mjtGeom.mjGEOM_BOX), int(mujoco.mjtGeom.mjGEOM_CYLINDER))
+    shapes = [g for g in range(mm.ngeom) if int(mm.geom_type[g]) in kinds]
     q = random_configuration(model, np.random.default_rng(2))
     md.qpos[:7] = q[:7]  # MuJoCo's free joint is also (position, w, x, y, z)
     for i, name in enumerate(MICROBAN_JOINTS):
@@ -230,7 +250,9 @@ def test_collision_points_match_microbans_mjcf(model):
 
 
 def test_what_the_sim_draws_is_inside_the_checked_hulls(model):
-    """Every vertex of Microban's visual meshes lies in the convex hull checked on its link."""
+    """Every vertex of the model's visual meshes lies in a shape checked on its link: one of its
+    hulls, or on the climbing forearms and feet one of the model's pieces or the ball. The
+    pieces are a decomposition, a little inside the drawn mesh: 0.21 mm at most [Microban]."""
     mujoco = pytest.importorskip("mujoco")
     mm = mujoco.MjModel.from_xml_path(str(rm.mjcf_path()))
     md = mujoco.MjData(mm)
@@ -242,23 +264,29 @@ def test_what_the_sim_draws_is_inside_the_checked_hulls(model):
     positions, rotations = (np.array(m) for m in model.link_frames(q))
     index = {name: i for i, name in enumerate(model.link_names)}
     hulls: dict[str, list] = {}
+    balls: dict[str, np.ndarray] = {}
     for shape in col.robot_shapes():
-        if shape.limb is None:
-            i = index[shape.link]
-            r = rotations[:, 3 * i : 3 * i + 3]
-            normals = np.asarray(shape.geometry.normals()) @ r.T  # world
-            offsets = np.asarray(shape.geometry.offsets()).ravel()
-            centre = positions[:, i] + r @ shape.offset
-            hulls.setdefault(shape.link, []).append((normals, offsets - normals @ centre))
+        i = index[shape.link]
+        r = rotations[:, 3 * i : 3 * i + 3]
+        centre = positions[:, i] + r @ shape.offset
+        if shape.limb is not None:  # a ball, a sphere
+            balls[shape.link] = centre
+            continue
+        normals = np.asarray(shape.geometry.normals()) @ r.T  # world
+        offsets = np.asarray(shape.geometry.offsets()).ravel()
+        hulls.setdefault(shape.link, []).append((normals, offsets - normals @ centre))
     visual = [g for g in range(mm.ngeom) if mm.geom_group[g] == 2 and mm.geom_dataid[g] >= 0]
-    assert len(visual) == sum(len(h) for h in hulls.values())
     for g in visual:
         mesh = mm.geom_dataid[g]
         start, n = mm.mesh_vertadr[mesh], mm.mesh_vertnum[mesh]
         world = mm.mesh_vert[start : start + n] @ md.geom_xmat[g].reshape(3, 3).T + md.geom_xpos[g]
         link = mujoco.mj_id2name(mm, mujoco.mjtObj.mjOBJ_BODY, mm.geom_bodyid[g])
         outside = np.min([(world @ nrm.T + off).max(1) for nrm, off in hulls[link]], axis=0)
-        assert outside.max() < 1e-5, link  # inside one of its link's hulls (6-digit files)
+        if link in balls:  # a climbing forearm or foot: its pieces, or its ball
+            ball = np.linalg.norm(world - balls[link], axis=1) - hooks.BALL_RADIUS
+            assert np.minimum(outside, ball).max() < 3e-4, link
+        else:
+            assert outside.max() < 1e-5, link  # inside one of its link's hulls (6-digit files)
 
 
 # --- Collision geometry ------------------------------------------------------------------------
@@ -284,10 +312,10 @@ def test_hold_distance_is_exact_outside_and_signed_inside():
         pose = coal.Transform3s(np.eye(3), np.array(centre, dtype=float))
         return col.hold_distance(ball, pose, hold, np.zeros(3))
 
-    assert distance([0, 0, 0]).value == pytest.approx(0.00266, abs=5e-5)  # 12.66 - 10 mm
-    assert abs(distance([0, 0, -0.0027]).value) < col.TOUCHING  # resting: touching
-    assert distance([0, 0, -0.0057]).value == pytest.approx(-0.003, abs=5e-4)  # 3 mm in
-    assert distance([0, -0.05, 0]).value == pytest.approx(0.023, abs=1e-6)  # 5 cm out
+    assert distance([0, 0, 0]).value == pytest.approx(0.00016, abs=5e-5)  # 12.66 - 12.5 mm
+    assert abs(distance([0, 0, -0.00016]).value) < col.TOUCHING  # resting: touching
+    assert distance([0, 0, -0.0032]).value == pytest.approx(-0.003, abs=5e-4)  # 3 mm in
+    assert distance([0, -0.05, 0]).value == pytest.approx(0.0205, abs=1e-6)  # 5 cm out
     rng = np.random.default_rng(0)
     for _ in range(50):  # the direction `away` is the distance's gradient, outside and inside
         centre = rng.uniform([-0.03, -0.045, -0.03], [0.03, 0.03, 0.03])
@@ -330,10 +358,8 @@ def test_the_robot_is_kept_clear_of_itself(model):
         and parent.get(shapes[j].link) != shapes[i].link
     }
     assert left_out == {  # beyond one link or one joint: only the shapes that always overlap
-        ("hip_20", "femur__configuration_right_28"),
-        ("tibia__configuration_right_30", "foot_38"),
-        ("hip_2_46", "femur__configuration_left_54"),
-        ("tibia__configuration_left_56", "foot_2_64"),
+        ("hip_21", "femur__configuration_right_29"),
+        ("hip_2_43", "femur__configuration_left_51"),
     }
     crossed = np.zeros(rm.NV)  # legs swung in, across each other
     crossed[6 + MICROBAN_JOINTS.index("right_hip_roll")] = 0.3

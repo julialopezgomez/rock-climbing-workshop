@@ -11,10 +11,13 @@ dependencies = [
 
 [dependency-groups]
 # Filled in when the module that needs them gets a v0.
-sim = ["mujoco>=3.16.0", "opencv-python>=5.0.0.93"]  # opencv: wall texture + ArUco plates
+# microban-model: the robot (Rhoban/microban_model, its URDF and MJCF, meshes in Git LFS), what
+# Microban dev_v2 and the organisers' simulator use; pinned below to the same commit [Microban]
+sim = ["mujoco>=3.16.0", "opencv-python>=5.0.0.93", "microban-model"]  # opencv: wall texture + ArUco
 perception = [] # e.g. opencv (ArUco)
 dev = ["pytest", "ruff"]
 optimiser = [
+    "microban-model",
     "casadi>=3.8.1",
     "coacd>=1.0.14",
     "coal>=3.0.3",
@@ -35,3 +38,7 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.uv.sources]
+# the organisers' simulator's commit (third_party/simulator/uv.lock); needs git-lfs installed
+microban-model = { git = "https://github.com/Rhoban/microban_model", rev = "8e42ef70673b5747dbdca3efaf60bc0f8ec7ea6d", lfs = true }

@@ -106,22 +106,7 @@ class CupHold:
 
 @dataclass(frozen=True)
 class LimbTip:
-    """The climbing end-effector on each hand and foot, from their video.
+    """The climbing end of each hand and foot: the climbing model's ball (rcr.robot.hooks), which
+    sits in a hold's cup [Microban]."""
 
-    Side-on (frames 880-940) each forearm ends in a short bent finger with a
-    grey ball on the end, a J-hook pointing at the wall when the arm is
-    raised. The feet carry the same hook past the toe, bent down out of the
-    sole, so the plate stays above the cup [Ours]. The ball is what sits in a
-    cup. Dimensions [Ours], read against the
-    forearm (~0.020 m wide), and kept parametric until the climbing limbs are
-    published [Rules §2.5].
-    """
-
-    # Defaults from rcr.robot.hooks, where the hooks are defined (change them there).
     ball_radius: float = hooks.BALL_RADIUS
-    finger_radius: float = hooks.FINGER_RADIUS
-    reach: float = hooks.HOOKS["right_hand"].segments[0][1]  # straight on past the end of the link
-    hook: float = hooks.HOOKS["right_hand"].segments[1][1]  # then bent towards the wall
-    toe: float = hooks.HOOKS["right_foot"].segments[0][1]  # foot: straight on past the toe
-    toe_hook: float = hooks.HOOKS["right_foot"].segments[1][1]  # then bent down, out of the sole
-    mass: float = hooks.MASS

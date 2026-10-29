@@ -24,9 +24,10 @@ and holds, and robots relying on rendered camera images [Rules §7]. Until then,
   - DICT_4X4_50 textures at the corner positions in INTERFACES.md;
   - two cameras, one on each side, both seeing the whole wall (placement is a guess until the official sim);
   - rendered RGB images feed `perception` later.
-- **Microban with placeholder climbing limbs:**
-  - start from Microban's MJCF (`src/model/mjcf/`) [Microban];
-  - the climbing limbs are not published, so we add simple hooks/grippers and document their joint names.
+- **Microban with its climbing limbs:**
+  - the climbing model's MJCF (`microban_model`, `robot_climb.xml`) [Microban];
+  - each limb's ball marked by a body named after the limb and a site `<limb>_tip` (`rcr.robot.hooks`);
+  - the model lets only the climbing forearms' and feet's collision pieces collide with the rest of the robot.
 - **A swappable grip model:** how a limb holds a hold is chosen in one place, e.g. v0 "weld when close, release on command",
   later friction-only contact, so it can be changed when the real holds and limbs are known.
 - **Servo limits and delays** [Microban sim]:

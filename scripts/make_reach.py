@@ -1,7 +1,6 @@
 """Sample each limb's reach and write data/robot/reach.json, the planner's reach sets (reach/1).
 
-uv sync --group optimiser
-export MICROBAN_URDF=/path/to/microban/src/model/urdf/robot.urdf
+uv sync --group optimiser                    # the robot model: microban_model, climbing variant
 uv run scripts/make_reach.py                 # 20000 samples per limb
 uv run scripts/make_reach.py --samples 5000 --out /tmp/reach.json
 
@@ -26,6 +25,7 @@ import numpy as np
 from rcr import io
 from rcr.optimiser import robot_model as rm
 from rcr.optimiser.transition import TransitionConfig
+from rcr.robot import microban
 from rcr.robot.hooks import HOOKS, ball_centre
 from rcr.types import LIMBS, MICROBAN_JOINTS
 
@@ -138,7 +138,7 @@ def main() -> None:
     data = {
         "schema": "reach/1",
         "source": {
-            "microban_commit": rm.CHECKED_COMMIT,
+            "microban_commit": f"microban_model {microban.MODEL_COMMIT}",  # the robot model
             "urdf_sha256": hashlib.sha256(rm.urdf_path().read_bytes()).hexdigest(),
             "samples_per_limb": args.samples,
             "trunk_orientations": len(quats),

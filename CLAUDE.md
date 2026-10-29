@@ -5,8 +5,9 @@ This is the team project for the Rock Climbing Robots hackathon (Bordeaux, 29 Oc
 
 ## Layout
 - `src/rcr/types.py` holds the contracts and `src/rcr/io.py` holds the file formats. Both are Pi-safe.
-- `src/rcr/<module>/`: `perception`, `planner`, `optimiser`, `controller`, `link`, `sim`, plus `robot` (where Microban is, `microban.py`, and our climbing hooks, `hooks.py`; the rest is README only).
-- `third_party/microban` is Rhoban/microban as a git submodule, pinned. Never edit or copy its files (GPL-3.0).
+- `src/rcr/<module>/`: `perception`, `planner`, `optimiser`, `controller`, `link`, `sim`, plus `robot` (where Microban and its robot model are, `microban.py`, and the climbing model's balls, `hooks.py`; the rest is README only).
+- `third_party/microban` is Rhoban/microban as a git submodule, on branch `dev_v2` (the competition's). Never edit or copy its files (GPL-3.0).
+  The robot model is the `microban-model` package (climbing variant), pinned in `pyproject.toml`.
 - `third_party/simulator` is the organisers' simulator (rock-climbing-robots/simulator) as a git submodule, pinned.
   - Each module's `__init__.py` is its public interface. Put implementations in files next to it and have `__init__`
     delegate to them, so that swapping a method never changes callers.

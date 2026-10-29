@@ -28,17 +28,22 @@ from rcr.sim.geometry import (
 from rcr.sim.meshes import HOLD_STL_SCALE
 from rcr.types import WALL_HEIGHT, WALL_WIDTH, WallModel
 
-# Microban's MJCF: the submodule's, or the checkout MICROBAN_URDF / MICROBAN_XML names
-MICROBAN_XML = microban.checkout()[0] / microban.MJCF
 
-# Per limb: the Microban parent body, where the end-effector starts, and the
-# path of its finger as unit directions (each followed for one length from
-# LimbTip), all in the parent's frame. The ball sits at the end. The hooks
-# themselves, and why they are shaped so, are in rcr.robot.hooks [Ours].
-LIMB_PARENTS = {
-    limb: (hook.link, hook.start, tuple(direction for direction, _ in hook.segments))
-    for limb, hook in hooks.HOOKS.items()
-}
+def _model_xml() -> Path:
+    """The robot's MJCF, climbing variant (rcr.robot.microban); a path that does not exist if the
+    model is not installed (then the sim's tests skip)."""
+    try:
+        return microban.mjcf_path()
+    except FileNotFoundError:
+        return Path("microban_model-not-installed")
+
+
+MICROBAN_XML = _model_xml()
+
+# Per limb: the model's body its ball is on, and the ball's centre there (rcr.robot.hooks). The
+# sim marks each ball with a body named after the limb (what the grip welds) and a site
+# <limb>_tip; the ball itself, the forearm and the foot are the model's [Microban].
+LIMB_PARENTS = {limb: (hook.link, hook.ball) for limb, hook in hooks.HOOKS.items()}
 
 SERVO_TORQUE_LIMIT = 0.64  # [N.m] 1.75 A x 0.366 N.m/A [Microban constants.py]
 ROBOT_PREFIX = "rob_"
@@ -128,8 +133,8 @@ def _add_wall(spec: mujoco.MjSpec, wall: WallModel, cfg: SceneConfig, asset_dir:
 def _add_cup(board, hold_id: str, x: float, z: float, cup: CupHold) -> None:
     """One hold — the organisers' mesh, moved only: its frame is the wall's — plus its bolts.
 
-    Holds live on contype/conaffinity 2 so they do not collide with the robot:
-    the weld in attach.py is the grip model (see sim/README.md).
+    Holds live on contype/conaffinity 4 so they do not collide with the robot (whose geoms are on
+    3 / 2 in the model): the weld in attach.py is the grip model (see sim/README.md).
     """
     off_wall = 0.0004  # clear of the board face, or the plate z-fights with it
     dx, dy, dz = cup.mesh_pos
@@ -140,8 +145,8 @@ def _add_cup(board, hold_id: str, x: float, z: float, cup: CupHold) -> None:
         pos=[x + dx, dy - off_wall, z + dz],
         material="cup_mat",
         friction=[cup.friction, 0.005, 0.0001],
-        contype=2,
-        conaffinity=2,
+        contype=4,
+        conaffinity=4,
     )
     for sign in (-1, +1):
         board.add_geom(
@@ -151,8 +156,8 @@ def _add_cup(board, hold_id: str, x: float, z: float, cup: CupHold) -> None:
             size=[cup.bolt_radius, 0.0001, 0],
             euler=[np.pi / 2, 0, 0],
             rgba=[0.20, 0.20, 0.22, 1.0],
-            contype=2,
-            conaffinity=2,
+            contype=4,
+            conaffinity=4,
         )
 
 
@@ -160,38 +165,12 @@ def _robot_spec(cfg: SceneConfig) -> mujoco.MjSpec:
     microban.mjcf_path()  # raises, saying what to do, if Microban is missing
     spec = mujoco.MjSpec.from_file(str(MICROBAN_XML))
     spec.meshdir = str((MICROBAN_XML.parent / "assets").resolve())
-    grey = [0.62, 0.63, 0.66, 1.0]
-    tip = cfg.limb
-    for limb, (parent_name, start, path) in LIMB_PARENTS.items():
+    for limb, (parent_name, ball) in LIMB_PARENTS.items():
         parent = spec.body(parent_name)
         if parent is None:
-            raise ValueError(f"{parent_name} missing from {MICROBAN_XML}")
-        body = parent.add_body(name=limb, pos=start)
-        lengths = (tip.reach, tip.hook) if "hand" in limb else (tip.toe, tip.toe_hook)
-        points = [np.zeros(3)]
-        for direction, length in zip(path, lengths, strict=True):
-            points.append(points[-1] + np.array(direction) * length)
-        for k, (a, b) in enumerate(zip(points, points[1:], strict=False)):
-            body.add_geom(
-                name=f"{limb}_finger{k}",
-                type=mujoco.mjtGeom.mjGEOM_CAPSULE,
-                fromto=[*a, *b],
-                size=[tip.finger_radius, 0, 0],
-                mass=tip.mass * hooks.SEGMENT_MASS_SHARE,
-                group=2,  # Microban's visible group; 3 is its hidden collision group
-                rgba=grey,
-            )
-        ball = points[-1] + np.array(path[-1]) * tip.ball_radius * hooks.BALL_INSET
-        body.add_geom(
-            name=f"{limb}_ball",
-            type=mujoco.mjtGeom.mjGEOM_SPHERE,
-            pos=list(ball),
-            size=[tip.ball_radius, 0, 0],
-            mass=tip.mass * (1 - hooks.SEGMENT_MASS_SHARE * len(path)),
-            group=2,
-            rgba=grey,
-        )
-        body.add_site(name=f"{limb}_tip", pos=list(ball), size=[0.003] * 3, group=4)
+            raise ValueError(f"{parent_name} missing from {MICROBAN_XML}: not the climbing model?")
+        body = parent.add_body(name=limb, pos=list(ball))  # massless, fixed: marks the ball
+        body.add_site(name=f"{limb}_tip", pos=[0, 0, 0], size=[0.003] * 3, group=4)
 
     for act in spec.actuators:
         act.forcerange = [-cfg.torque_limit, cfg.torque_limit]
