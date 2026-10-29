@@ -1,0 +1,447 @@
+{
+  "schema": "wall/1",
+  "id": "gen_l3_s0",
+  "level": 3,
+  "holds": [
+    {
+      "id": "L0",
+      "position": [
+        0.3475,
+        0.0,
+        0.13
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R0",
+      "position": [
+        0.4975,
+        0.0,
+        0.13
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "M0",
+      "position": [
+        0.2725,
+        0.0,
+        0.205
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L1",
+      "position": [
+        0.3475,
+        0.0,
+        0.205
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R1",
+      "position": [
+        0.4975,
+        0.0,
+        0.205
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "M1",
+      "position": [
+        0.5725,
+        0.0,
+        0.205
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L2",
+      "position": [
+        0.3475,
+        0.0,
+        0.28
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "M2",
+      "position": [
+        0.4375,
+        0.0,
+        0.28
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R2",
+      "position": [
+        0.4975,
+        0.0,
+        0.28
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L3",
+      "position": [
+        0.3475,
+        0.0,
+        0.355
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R3",
+      "position": [
+        0.4975,
+        0.0,
+        0.355
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L4",
+      "position": [
+        0.3025,
+        0.0,
+        0.37
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R4",
+      "position": [
+        0.4525,
+        0.0,
+        0.37
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L5",
+      "position": [
+        0.2425,
+        0.0,
+        0.4
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R5",
+      "position": [
+        0.3925,
+        0.0,
+        0.4
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L6",
+      "position": [
+        0.1675,
+        0.0,
+        0.43
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R6",
+      "position": [
+        0.3175,
+        0.0,
+        0.43
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L7",
+      "position": [
+        0.1675,
+        0.0,
+        0.505
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "M3",
+      "position": [
+        0.2275,
+        0.0,
+        0.505
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R7",
+      "position": [
+        0.3175,
+        0.0,
+        0.505
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L8",
+      "position": [
+        0.1675,
+        0.0,
+        0.58
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R8",
+      "position": [
+        0.3175,
+        0.0,
+        0.58
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L9",
+      "position": [
+        0.1675,
+        0.0,
+        0.655
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R9",
+      "position": [
+        0.3175,
+        0.0,
+        0.655
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L10",
+      "position": [
+        0.1675,
+        0.0,
+        0.73
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R10",
+      "position": [
+        0.3175,
+        0.0,
+        0.73
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L11",
+      "position": [
+        0.1675,
+        0.0,
+        0.805
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R11",
+      "position": [
+        0.3175,
+        0.0,
+        0.805
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "M4",
+      "position": [
+        0.3775,
+        0.0,
+        0.805
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L12",
+      "position": [
+        0.1675,
+        0.0,
+        0.88
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R12",
+      "position": [
+        0.3175,
+        0.0,
+        0.88
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "M5",
+      "position": [
+        0.4075,
+        0.0,
+        0.88
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L13",
+      "position": [
+        0.1675,
+        0.0,
+        0.955
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R13",
+      "position": [
+        0.3175,
+        0.0,
+        0.955
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "M6",
+      "position": [
+        0.3625,
+        0.0,
+        0.955
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L14",
+      "position": [
+        0.1675,
+        0.0,
+        1.03
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "M7",
+      "position": [
+        0.2725,
+        0.0,
+        1.03
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R14",
+      "position": [
+        0.3175,
+        0.0,
+        1.03
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L15",
+      "position": [
+        0.1675,
+        0.0,
+        1.105
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "M8",
+      "position": [
+        0.2275,
+        0.0,
+        1.105
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "M9",
+      "position": [
+        0.2725,
+        0.0,
+        1.105
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R15",
+      "position": [
+        0.3175,
+        0.0,
+        1.105
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L16",
+      "position": [
+        0.1675,
+        0.0,
+        1.18
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R16",
+      "position": [
+        0.3175,
+        0.0,
+        1.18
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "L17",
+      "position": [
+        0.1675,
+        0.0,
+        1.255
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "M10",
+      "position": [
+        0.2275,
+        0.0,
+        1.255
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "M11",
+      "position": [
+        0.2725,
+        0.0,
+        1.255
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "R17",
+      "position": [
+        0.3175,
+        0.0,
+        1.255
+      ],
+      "kind": "unknown"
+    }
+  ],
+  "start": {
+    "contacts": {
+      "right_hand": "R3",
+      "left_hand": "L3",
+      "right_foot": "R0",
+      "left_foot": "L0"
+    }
+  }
+}

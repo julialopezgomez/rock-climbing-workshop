@@ -1,0 +1,528 @@
+{
+  "schema": "wall/1",
+  "id": "l2_s3",
+  "level": 2,
+  "holds": [
+    {
+      "id": "h04_20",
+      "position": [
+        0.3175,
+        0.0,
+        0.07
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h04_24",
+      "position": [
+        0.3775,
+        0.0,
+        0.07
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h04_31",
+      "position": [
+        0.4825,
+        0.0,
+        0.07
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h04_36",
+      "position": [
+        0.5575,
+        0.0,
+        0.07
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h08_19",
+      "position": [
+        0.3025,
+        0.0,
+        0.13
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h08_28",
+      "position": [
+        0.4375,
+        0.0,
+        0.13
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h08_34",
+      "position": [
+        0.5275,
+        0.0,
+        0.13
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h11_17",
+      "position": [
+        0.2725,
+        0.0,
+        0.175
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h11_25",
+      "position": [
+        0.3925,
+        0.0,
+        0.175
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h11_29",
+      "position": [
+        0.4525,
+        0.0,
+        0.175
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h11_32",
+      "position": [
+        0.4975,
+        0.0,
+        0.175
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h15_20",
+      "position": [
+        0.3175,
+        0.0,
+        0.235
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h15_31",
+      "position": [
+        0.4825,
+        0.0,
+        0.235
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h18_17",
+      "position": [
+        0.2725,
+        0.0,
+        0.28
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h18_21",
+      "position": [
+        0.3325,
+        0.0,
+        0.28
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h18_30",
+      "position": [
+        0.4675,
+        0.0,
+        0.28
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h22_15",
+      "position": [
+        0.2425,
+        0.0,
+        0.34
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h22_18",
+      "position": [
+        0.2875,
+        0.0,
+        0.34
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h22_21",
+      "position": [
+        0.3325,
+        0.0,
+        0.34
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h22_30",
+      "position": [
+        0.4675,
+        0.0,
+        0.34
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h25_16",
+      "position": [
+        0.2575,
+        0.0,
+        0.385
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h25_27",
+      "position": [
+        0.4225,
+        0.0,
+        0.385
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h29_18",
+      "position": [
+        0.2875,
+        0.0,
+        0.445
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h29_34",
+      "position": [
+        0.5275,
+        0.0,
+        0.445
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h32_15",
+      "position": [
+        0.2425,
+        0.0,
+        0.49
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h32_26",
+      "position": [
+        0.4075,
+        0.0,
+        0.49
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h32_35",
+      "position": [
+        0.5425,
+        0.0,
+        0.49
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h36_16",
+      "position": [
+        0.2575,
+        0.0,
+        0.55
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h36_25",
+      "position": [
+        0.3925,
+        0.0,
+        0.55
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h36_28",
+      "position": [
+        0.4375,
+        0.0,
+        0.55
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h50_16",
+      "position": [
+        0.2575,
+        0.0,
+        0.76
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h50_22",
+      "position": [
+        0.3475,
+        0.0,
+        0.76
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h60_21",
+      "position": [
+        0.3325,
+        0.0,
+        0.91
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h60_30",
+      "position": [
+        0.4675,
+        0.0,
+        0.91
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h64_18",
+      "position": [
+        0.2875,
+        0.0,
+        0.97
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h64_21",
+      "position": [
+        0.3325,
+        0.0,
+        0.97
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h64_26",
+      "position": [
+        0.4075,
+        0.0,
+        0.97
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h64_32",
+      "position": [
+        0.4975,
+        0.0,
+        0.97
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h67_16",
+      "position": [
+        0.2575,
+        0.0,
+        1.015
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h67_33",
+      "position": [
+        0.5125,
+        0.0,
+        1.015
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h71_15",
+      "position": [
+        0.2425,
+        0.0,
+        1.075
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h71_36",
+      "position": [
+        0.5575,
+        0.0,
+        1.075
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h74_19",
+      "position": [
+        0.3025,
+        0.0,
+        1.12
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h74_29",
+      "position": [
+        0.4525,
+        0.0,
+        1.12
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h74_36",
+      "position": [
+        0.5575,
+        0.0,
+        1.12
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h78_16",
+      "position": [
+        0.2575,
+        0.0,
+        1.18
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h78_24",
+      "position": [
+        0.3775,
+        0.0,
+        1.18
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h78_27",
+      "position": [
+        0.4225,
+        0.0,
+        1.18
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h78_35",
+      "position": [
+        0.5425,
+        0.0,
+        1.18
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h81_17",
+      "position": [
+        0.2725,
+        0.0,
+        1.225
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h81_22",
+      "position": [
+        0.3475,
+        0.0,
+        1.225
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h81_26",
+      "position": [
+        0.4075,
+        0.0,
+        1.225
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h81_31",
+      "position": [
+        0.4825,
+        0.0,
+        1.225
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h85_18",
+      "position": [
+        0.2875,
+        0.0,
+        1.285
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h85_27",
+      "position": [
+        0.4225,
+        0.0,
+        1.285
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h85_32",
+      "position": [
+        0.4975,
+        0.0,
+        1.285
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "h85_36",
+      "position": [
+        0.5575,
+        0.0,
+        1.285
+      ],
+      "kind": "unknown"
+    }
+  ],
+  "start": {
+    "contacts": {
+      "right_hand": "h15_31",
+      "left_hand": "h15_20",
+      "right_foot": "h04_31",
+      "left_foot": "h04_20"
+    }
+  }
+}
