@@ -44,7 +44,7 @@ src/rcr/
   controller/            ROBOT:  trajectory + robot state -> joint targets (Pi-safe)
   link/                  both:   trajectory, start/stop, pose ->; <- robot state
   sim/                   laptop: backend with the robot's role
-  robot/                 how our code meets Microban: where it is (microban.py), our climbing hooks (hooks.py)
+  robot/                 how our code meets Microban: where it is (microban.py), the climbing balls (hooks.py)
 third_party/microban/    Rhoban/microban, a git submodule (not our code, GPL-3.0)
 third_party/simulator/   the organisers' simulator, rock-climbing-robots/simulator, a git submodule
 ```

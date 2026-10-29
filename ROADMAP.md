@@ -41,10 +41,10 @@ Each decision is a `decision` issue. The issue closes with the choice and a one-
 |---|---|---|---|
 | P2.1 | Placeholder climbing limbs on the Microban model | sim | limbs reach holds in the scene; joint names documented in INTERFACES.md |
 | P2.2 | Swappable grip model v0 | sim | a limb can attach to and release a hold; the model is selected in one place |
-| P2.3 | Servo limits and delays: XL330 servo model, 1.75 A current limit, Microban's delay defaults | sim | a pose needing more than 0.64 N·m sags or fails in sim |
+| P2.3 | Servo limits and delays: XL330 servo model, 1.75 A current limit, Microban's delay defaults | sim | a pose needing more than 0.605 N·m sags or fails in sim |
 | P2.4 | Scoring emulation: highest hold touched and timer [Rules §8] | sim | each sim run prints height climbed and time |
 | P2.5 | `run_pipeline.py --backend sim`: closed loop Controller ↔ Sim through the link | integration | the loop runs at 50 Hz sim time, and the controller code is unchanged from P1.6 |
-| P2.6 | Feasibility accounts for torque (0.64 N·m limit, margin) | optimiser | infeasible transitions in sim are rejected by `feasibility` |
+| P2.6 | Feasibility accounts for torque (0.605 N·m limit, margin) | optimiser | infeasible transitions in sim are rejected by `feasibility` |
 | P2.7 | **Gate: L1 climb end to end in sim** | integration | the L1 wall is climbed to the top hold from `wall.start`, with no manual help |
 
 ## Phase 3: real robot, robustness, L2/L3 (freeze Wed 28 Oct)
