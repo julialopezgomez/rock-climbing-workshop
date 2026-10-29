@@ -111,7 +111,6 @@ New to the planner? Start with [GUIDE.md](GUIDE.md) and its interactive companio
 ```bash
 uv run scripts/plan_wall.py --level 1 --seed 0                    # reach graph only, < 1 s
 uv sync --group optimiser --group sim     # both: syncing one group uninstalls the other
-export MICROBAN_URDF=<your Rhoban/microban checkout>/src/model/urdf/robot.urdf
 uv run scripts/plan_wall.py --level 1 --seed 0 --feasibility optimiser --save build/plan.json
 uv run scripts/plan_eval.py moves --per-bin 6                     # what the optimiser accepts
 uv run scripts/plan_eval.py plans --seeds 3 --solve               # plan walls, then optimise the plans

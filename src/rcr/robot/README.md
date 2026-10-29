@@ -3,20 +3,15 @@
 **Purpose:** the real-robot backend, which is Microban ([Rhoban/microban](https://github.com/Rhoban/microban)). This
 README explains how our code meets Microban. The only code here is what we add to Microban's robot.
 
-## What we add to Microban: the climbing hooks [Ours]
-Microban as published has no climbing limbs, and the organisers will publish theirs [Rules §2.5]. Until then each hand
-and foot carries a hook: a short bent finger, fixed to a Microban link, ending in a ball that rests in a hold's socket.
-They are defined once, in [`hooks.py`](hooks.py), and the optimiser's model and the sim both take them from there.
+## The climbing limbs: the model's balls [Microban]
+The robot model (`microban_model`, climbing variant: see [`microban.py`](microban.py)) has climbing forearms and feet,
+each ending in a ball that rests in a hold's socket. [`hooks.py`](hooks.py) says where each ball is (its link, its
+centre, its 12.5 mm radius) and the direction its finger comes into it (`neck`, measured on the model). The optimiser and
+the sim both take them from there. A test (`test_the_balls_are_the_models`) checks them against the model.
 
-When the real limbs are known, change [`hooks.py`](hooks.py) and nothing else:
-- **the shape:** `HOOKS`, which link each hook is fixed to, where on it, and its finger segments;
-- **the size:** `BALL_RADIUS`, `FINGER_RADIUS`, `BALL_INSET`;
-- **the mass:** `MASS`, `SEGMENT_MASS_SHARE`.
-
-Then run the tests, which check that the optimiser and the sim agree, and solve the plan again: the motions depend on the
-hooks. The contact point on a hold follows the ball's radius. Two other guesses also depend on the real limbs and holds:
-the hold's push direction and friction (`normals`, `mu` in `rcr.optimiser.transition.TransitionConfig`), and the hold's
-socket (`SOCKET_RADIUS` in `rcr.optimiser.collision`, `CupHold` in `rcr.sim`).
+These replaced our placeholder hooks (29 Oct). Guesses that still depend on the real limbs and holds: the hold's push
+direction and friction (`normals`, `mu` in `rcr.optimiser.transition.TransitionConfig`), and the hold's socket
+(`SOCKET_RADIUS` in `rcr.optimiser.collision`, `CupHold` in `rcr.sim`).
 
 ## What Microban gives us [Microban]
 - **Hardware:**
@@ -77,9 +72,10 @@ class LinkInputSource(InputSource):
 7. Always `make shutdown` before cutting power, or the SD card can be corrupted [Microban usage.md].
 
 ## Where Microban sits (D1): a submodule [Ours]
-**Chosen: the submodule** `third_party/microban`, pinned to `d0a128d` (27 Oct). Every clone reads the same files,
-nothing of Microban is copied into our history, and the climbing variant will be a pin bump. The optimiser and the sim
-find it through `rcr/robot/microban.py`; `MICROBAN_URDF` or `MICROBAN_XML` still points them at another checkout.
+**Chosen: the submodule** `third_party/microban`, on branch `dev_v2` (29 Oct), what the competition robot runs. Every
+clone reads the same files, and nothing of Microban is copied into our history. On `dev_v2` the robot model moved out of
+Microban into the package `microban_model`, which `rcr/robot/microban.py` finds (`MICROBAN_URDF` or `MICROBAN_XML`
+still point at another file).
 Still open: where `ClimbMove` and our entry point sit on the Pi (next to Microban on its `PYTHONPATH`, see below).
 
 The options, as compared before choosing:

@@ -28,7 +28,7 @@ import casadi as ca
 import numpy as np
 
 from rcr.robot import microban
-from rcr.robot.hooks import HOOKS, ball_centre, masses
+from rcr.robot.hooks import HOOKS, ball_centre
 from rcr.types import LIMBS, MICROBAN_JOINTS
 
 NQ, NV, NJ = 26, 25, len(MICROBAN_JOINTS)
@@ -70,7 +70,7 @@ def urdf_path() -> Path:
 
 
 def mjcf_path() -> Path:
-    """Microban's MJCF, in the same checkout as the URDF (src/model/mjcf/robot.xml)."""
+    """The robot's MJCF (rcr.robot.microban: microban_model's climbing variant)."""
     return microban.mjcf_path()
 
 
@@ -86,7 +86,8 @@ class CollisionShape:
 
 
 def read_collision_shapes(path: Path) -> list[CollisionShape]:
-    """Microban's collision shapes (MJCF geoms of class "collision"), on the URDF's links."""
+    """The model's box and cylinder collision shapes (MJCF geoms of class "collision"), on the
+    URDF's links. Its mesh pieces are left to the collision check (collision.robot_shapes)."""
     shapes = []
     for body in ET.parse(path).getroot().iter("body"):
         for geom in body.findall("geom"):
@@ -94,7 +95,7 @@ def read_collision_shapes(path: Path) -> list[CollisionShape]:
                 continue
             kind = geom.get("type")
             if kind not in ("box", "cylinder"):
-                raise ValueError(f"{path}: collision geom of type {kind!r} is not handled")
+                continue
             shapes.append(
                 CollisionShape(
                     link=body.get("name"),
@@ -117,8 +118,9 @@ class VisualShape:
     rotation: np.ndarray  # 3x3, the mesh frame's axes in the link frame
 
 
-def read_visual_shapes(path: Path) -> list[VisualShape]:
-    """Microban's visual meshes (MJCF geoms of class "visual"), on the URDF's links."""
+def read_visual_shapes(path: Path, collision: bool = False) -> list[VisualShape]:
+    """The model's visual meshes (MJCF geoms of class "visual"), on the URDF's links; with
+    collision, its collision meshes instead (every other mesh geom: convex pieces, as coll_*)."""
     root = ET.parse(path).getroot()
     meshdir = path.parent / root.find("compiler").get("meshdir", ".")
     files = {}
@@ -128,7 +130,8 @@ def read_visual_shapes(path: Path) -> list[VisualShape]:
     shapes = []
     for body in root.iter("body"):
         for geom in body.findall("geom"):
-            if geom.get("class") == "visual" and geom.get("type") == "mesh":
+            # a mesh geom: its type may come from its class, but it always names its mesh
+            if geom.get("mesh") and (geom.get("class") == "visual") != collision:
                 shapes.append(
                     VisualShape(
                         link=body.get("name"),
@@ -386,7 +389,7 @@ class RobotModel:
 
 @lru_cache(maxsize=1)
 def load_robot_model() -> RobotModel:
-    """Read Microban's URDF, add the hooks, build the CasADi functions (once)."""
+    """Read the robot's URDF (climbing model), find the balls, build the CasADi functions (once)."""
     urdf = read_urdf(urdf_path())
     revolute = {j.name: j for j in urdf.joints if j.revolute}
     if set(revolute) != set(MICROBAN_JOINTS):
@@ -403,8 +406,8 @@ def load_robot_model() -> RobotModel:
     balls = [poses[h.link][0] + poses[h.link][1] @ ball_centre(h) for h in HOOKS.values()]
     limb_positions = ca.horzcat(*[balls[LIMBS.index(limb)] for limb in LIMBS])
 
+    # every link's mass, the climbing forearms and feet with their balls included [Microban]
     point_masses = [(link.mass, link.com, link.name) for link in urdf.links.values()]
-    point_masses += [(m, p, h.link) for h in HOOKS.values() for m, p in masses(h)]
     mass = sum(m for m, _, _ in point_masses)
     com = sum(m * (poses[n][0] + poses[n][1] @ p) for m, p, n in point_masses) / mass
 

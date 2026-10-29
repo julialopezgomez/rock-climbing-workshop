@@ -71,7 +71,7 @@ never on the moves before it.
     repair search replaced each by another limb first. The plan now has 38 moves (72 minutes to solve, failures
     included). The dense re-check (0.5 mm steps) finds one spot: in move 36, just before the left foot's ball lands
     in L12, a finger edge is 0.13 mm into L12 for an instant (0.05 mm allowed). The solver's 2 mm steps miss it.
-    Left as is for now: it is a tenth of a millimetre on a placeholder hook.
+    Left as is for now: it is a tenth of a millimetre.
   - *Level 1 ladder* (rules' generator, rungs 0.09 m apart): 13 moves were solved up to 0.82 m. The next 14, to 1.27 m,
     all came from the cache: the same layout one rung higher. In all, the cache answered 85 of the 99 moves the climb
     asked about.
@@ -319,17 +319,21 @@ can't replace them. The remaining cost is the path tier.
   - XL330 limit ≈ **0.64 N·m** (Microban's firmware current limit 1.75 A × kt 0.366 N·m/A) [Microban constants.py].
 - **Servos sag under load.** The servo runs its own P loop: `KP_DEFAULT` = 400 ≈ 0.88 N·m/rad, so the position
   error is roughly τ / kp, about **0.34 rad (19°) at 0.3 N·m**. Hence the pre-load above.
-- The robot weighs 0.819 kg [Microban], 0.851 kg with our hooks; the rules allow up to 2 kg [Rules §2.2].
+- The climbing model weighs 0.808 kg [Microban]; the rules allow up to 2 kg [Rules §2.2].
 
 ## Known limitations
 - **Two rungs at once is too far for a hand.** Both level 2 walls generated with gaps (rules' `level2`, seeds 0 and
   1) stopped the climb: one missing hold left a hand 0.18 m short of the next, which fails the checks at 70 % torque
-  with our placeholder hooks. The real limbs may change this.
+  with our former placeholder hooks; not measured again with the real limbs yet.
 - **The cache only helps with layouts it has seen.** A gap or a drift is a new layout, solved once (30 s – 3 min).
-- **Placeholder hands and holds:** the hooks, the contact normals and mu are ours until the climbing limbs and holds
-  are published. Hands are supported only along +z; the real socket may hold more.
-- **The robot's shapes are convex hulls** of Microban's meshes: exact where a part is convex, a little larger where it
-  is not (conservative). Plus our placeholder hooks.
+- **The climbing model (29 Oct):** the balls are the model's (`rcr.robot.hooks`), but the contact normals and mu are
+  still ours. Hands are supported only along +z; the real socket may hold more. **The measurements above, the example
+  trajectory and the planner's reach table (`data/robot/reach.json`) are from the old model and placeholder hooks: solve
+  the example again (`tests/test_optimiser.py --hard --save`) and rerun `scripts/make_reach.py`.** The move cache
+  starts empty by itself (its version covers the model).
+- **The robot's shapes** are convex hulls of the model's meshes, exact where a part is convex, a little larger where it
+  is not (conservative). The climbing forearms and feet use the model's own convex pieces instead (a hull would fill the
+  hook) and the ball spheres: the drawn mesh lies within 0.21 mm of them.
 - **SCP is local:** it needs the steered first solve. A plan whose moves can't be started that way may fail, with an
   error naming the pair; a sampling planner (RRT in the same `coal` scene) for the first path is the next remedy.
 - **The first move of each limb is slow** (11–41 s, see Measured): nothing to reuse yet, and the NLP is built then.

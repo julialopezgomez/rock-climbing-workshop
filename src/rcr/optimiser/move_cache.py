@@ -83,8 +83,7 @@ class MoveCache:
 
         parts = [
             f"cache {CACHE_VERSION}",
-            repr((hooks.HOOKS, hooks.BALL_RADIUS, hooks.FINGER_RADIUS, hooks.BALL_INSET,
-                  hooks.MASS, hooks.SEGMENT_MASS_SHARE)),
+            repr((hooks.HOOKS, hooks.BALL_RADIUS)),
             _sha(rm.urdf_path()),
             _sha(rm.mjcf_path()),
             _sha(col.HOLD_STL),

@@ -58,7 +58,7 @@ FACING_WALL = (np.cos(np.pi / 4), 0.0, 0.0, np.sin(np.pi / 4))  # (w,x,y,z): tru
 # straight up (measured on hold.stl). The first solve keeps each hook's neck within NECK_CONE of
 # up, so it starts with the hooks lowered in from above; the exact clearances then decide [Ours].
 NECK_CONE = np.radians(45.0)
-NECK_PROBE = 0.01  # [m] how far back along the hook's last segment its direction is measured
+NECK_PROBE = 0.01  # [m] how far back from the ball along its neck (hooks.Hook.neck) it is measured
 # Likewise the moving ball starts its path above its sockets: on the sample after it lets go and
 # the one before it arrives, at least LIFT above its resting point, inside the opening cone [Ours].
 LIFT = 0.035  # [m]: the hold's top is 20.7 mm above the resting ball, + its 10 mm radius + 4 mm
@@ -108,8 +108,8 @@ class TransitionConfig:
     wall_points: bool = False
     # Ball centre relative to Hold.position (the bolt midpoint on the wall face): the bottom of
     # the hold's spherical socket, 26 mm out and 14 mm below the bolts [Rules Figure 3], lowered
-    # by the socket/ball clearance (12.7 - 10 mm). The same point as rcr.sim's grasp point.
-    # Follows the hook's ball (rcr.robot.hooks.BALL_RADIUS): (0, -0.026, -0.0167) today.
+    # by the socket/ball clearance (12.7 - 12.5 mm). The same point as rcr.sim's grasp point.
+    # Follows the model's ball (rcr.robot.hooks.BALL_RADIUS): (0, -0.026, -0.0142) today.
     contact_offset: tuple[float, float, float] = (
         HOLD_MESH_OFFSET[0],
         HOLD_MESH_OFFSET[1],
@@ -346,7 +346,8 @@ def neck_rise(model: RobotModel, q_ref, dq, limb: str):
     ball: NECK_PROBE when it points straight up, cos(angle) * NECK_PROBE in general."""
     hook = hooks.HOOKS[limb]
     ball = hooks.ball_centre(hook)
-    back = ball - np.array(hook.segments[-1][0], dtype=float) * NECK_PROBE
+    neck = np.array(hook.neck, dtype=float)
+    back = ball - neck / np.linalg.norm(neck) * NECK_PROBE
     point = model.point_jacobian[hook.link]
     return point(q_ref, dq, back)[0][2] - point(q_ref, dq, ball)[0][2]
 

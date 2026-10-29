@@ -73,15 +73,23 @@ def test_planner_never_imports_optimiser_or_controller():
                 )
 
 
-def test_microban_is_the_submodule_unless_a_variable_says_otherwise(monkeypatch, tmp_path):
+def test_the_model_comes_from_microban_model_unless_a_variable_says_otherwise(
+    monkeypatch, tmp_path
+):
     from rcr.robot import microban
 
-    monkeypatch.delenv("MICROBAN_URDF", raising=False)
-    monkeypatch.delenv("MICROBAN_XML", raising=False)
-    assert microban.checkout()[0] == ROOT / "third_party" / "microban"
-    for name, inside in (("MICROBAN_URDF", microban.URDF), ("MICROBAN_XML", microban.MJCF)):
-        monkeypatch.setenv(name, str(tmp_path / "elsewhere" / inside))
-        assert microban.checkout()[0] == (tmp_path / "elsewhere").resolve()
-        with pytest.raises(FileNotFoundError, match="elsewhere"):
-            microban.urdf_path()
-        monkeypatch.delenv(name)
+    for name, find in (("MICROBAN_URDF", microban.urdf_path), ("MICROBAN_XML", microban.mjcf_path)):
+        monkeypatch.delenv("MICROBAN_URDF", raising=False)
+        monkeypatch.delenv("MICROBAN_XML", raising=False)
+        try:
+            default = find()  # the package's climbing model, if installed
+        except FileNotFoundError as missing:
+            assert "uv sync" in str(missing)  # says what to do
+        else:
+            assert "microban_model" in str(default) and "climb" in default.name
+        other = tmp_path / f"{name}.file"
+        monkeypatch.setenv(name, str(other))
+        with pytest.raises(FileNotFoundError, match=name):
+            find()  # it names the variable that leads nowhere
+        other.write_text("")
+        assert find() == other
