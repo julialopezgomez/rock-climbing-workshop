@@ -150,11 +150,13 @@ def test_bad_level():
 
 
 def test_the_hold_footprint_is_the_meshs():
-    """HOLD_* bound hold.stl as the sim places it: socket centre 26 mm out, 14 mm below."""
-    raw = (ROOT / "data" / "holds" / "hold.stl").read_bytes()
+    """HOLD_* bound the organisers' simulator's hold mesh as it places it: socket centre 26 mm
+    out, 14 mm below the bolts."""
+    scene = pytest.importorskip("climbing_sim.scene")
+    raw = scene.HOLD_VISUAL.read_bytes()
     n = int.from_bytes(raw[80:84], "little")
     tri = np.dtype([("normal", "<f4", 3), ("v", "<f4", (3, 3)), ("attr", "<u2")])
-    v = np.frombuffer(raw, dtype=tri, count=n, offset=84)["v"].reshape(-1, 3) * 0.001
+    v = np.frombuffer(raw, dtype=tri, count=n, offset=84)["v"].reshape(-1, 3)  # in m
     x, z = v[:, 0], v[:, 2] - 0.014
     eps = 1e-6  # the STL is float32
     assert walls.HOLD_HALF_WIDTH - 2e-4 < np.abs(x).max() <= walls.HOLD_HALF_WIDTH + eps
@@ -162,8 +164,9 @@ def test_the_hold_footprint_is_the_meshs():
     assert walls.HOLD_ABOVE - 2e-4 < z.max() <= walls.HOLD_ABOVE + eps
 
 
-def test_the_example_wall_keeps_the_rules():
-    assert walls.violations(io.load_wall(ROOT / "data" / "examples" / "wall_hard.json")) == []
+@pytest.mark.parametrize("name", ["N1", "N2", "N3"])
+def test_the_organisers_walls_keep_the_rules(name):
+    assert walls.violations(io.load_wall(ROOT / "data" / "examples" / f"{name}.json")) == []
 
 
 def broken(wall, hold_id: str, **change):

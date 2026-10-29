@@ -1,8 +1,8 @@
 """Exact clearances of the robot from the holds, the wall and itself, with their gradients (coal).
 
 Obstacles:
-    each hold   the organisers' mesh (data/holds/hold.stl [Rules v1.1 Figure 3]), placed as the
-                sim does: at Hold.position + HOLD_MESH_OFFSET, not rotated (its frame is the wall's)
+    each hold   the organisers' simulator's mesh (climbing_sim assets/hold/hold_visual.stl), placed
+                as it places it: at Hold.position + HOLD_MESH_OFFSET, not rotated
     the wall    the half-space y >= 0 (its face is y = 0; the robot is at y < 0)
 Robot: the convex hull of each of the climbing model's visual meshes [Microban MJCF], so what the
 sim draws is inside what is checked (its own collision boxes are smaller than the thighs and
@@ -36,18 +36,24 @@ from pathlib import Path
 
 import coal
 import numpy as np
+from climbing_sim import scene as sim_scene
+from climbing_sim import wall as sim_wall
 
 from rcr.optimiser import robot_model as rm
 from rcr.robot import hooks
 from rcr.types import Hold
 
 REPO = Path(__file__).resolve().parents[3]
-HOLD_STL = REPO / "data" / "holds" / "hold.stl"  # the organisers' hold, in mm [Rules v1.1 §4]
-HOLD_STL_SCALE = 0.001  # [m/mm]
-HOLD_MESH_OFFSET = (0.0, -0.026, -0.014)  # [m] socket centre (the mesh origin) from Hold.position
-# [m] the hold's spherical socket, measured on hold.stl (rcr.sim CupHold); the organisers' sim's
-# socket spheres (cup_spheres.json) give the same
-SOCKET_RADIUS = 0.0127
+# The hold, from the organisers' simulator (climbing_sim) [simulator]: the mesh it draws (in m,
+# origin at the socket centre, the wall frame's axes), placed as it places it (Hold.socket: the
+# socket centre SOCKET_OUT out of the wall and SOCKET_BELOW below the bolts' midpoint)
+HOLD_STL = Path(sim_scene.HOLD_VISUAL)
+HOLD_STL_SCALE = 1.0  # [m] the file is in metres
+HOLD_MESH_OFFSET = (0.0, -sim_wall.SOCKET_OUT, -sim_wall.SOCKET_BELOW)  # [m] from Hold.position
+# [m] the socket's radius: the inner surface of the sim's socket spheres (12.7 mm) [simulator]
+SOCKET_RADIUS = round(
+    min(np.linalg.norm(s["pos"]) - s["r"] for s in sim_scene.HOLD_SPHERES if s["pos"][2] < 0), 6
+)
 # The convex pieces, keyed by the STL's sha256, kept with the mesh in the repository: CoACD gives
 # slightly different pieces on another machine, and so slightly different solutions [Ours].
 PIECES_CACHE = REPO / "data" / "holds"
@@ -59,9 +65,10 @@ TOUCHING = 5e-5  # [m] the exact mesh reports a ball resting in its socket as -4
 # move failed (example plan, move 9).
 RESTING_PLAY = 5e-4
 SWELL = 1e-3  # [m] how far the pieces may swell past the mesh: deeper means truly inside
-# The deepest point inside the hold's material: 7.2 mm from its surface, measured on hold.stl
-# (sha256 8c8df8c6...) by sampling, +1 mm for the sampling. A shape of half-thickness r lying
-# wholly inside is at most HOLD_MAX_DEPTH - r from the surface, so beyond that it is outside.
+# The deepest point inside the hold's material: 7.5 mm from its surface, measured on the sim's
+# hold_visual.stl on a 0.5 mm grid (so at most ~7.9 mm) [Ours, measured]. A shape of
+# half-thickness r lying wholly inside is at most HOLD_MAX_DEPTH - r from the surface, so beyond
+# that it is outside.
 HOLD_MAX_DEPTH = 0.0082  # [m]
 
 

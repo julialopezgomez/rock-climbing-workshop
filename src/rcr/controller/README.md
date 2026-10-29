@@ -6,7 +6,7 @@
 |---|---|
 | Input | `Trajectory` (once, at construction); `RobotState` every tick |
 | Output | `JointTargets` every tick, i.e. every 20 ms (50 Hz) |
-| Runs on | **the robot** (Raspberry Pi Zero 2W), inside Microban's Scheduler; on the laptop when driven by `rcr.sim.Sim` |
+| Runs on | **the robot** (Raspberry Pi Zero 2W), inside Microban's Scheduler; on the laptop when driven by the organisers' sim |
 
 - `Controller.step(state) -> JointTargets` mirrors Microban's `Move.step(obs, command)`: state in, joint targets out.
 - The servos run their own P loop on the targets [Microban].

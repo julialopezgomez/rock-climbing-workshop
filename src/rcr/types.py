@@ -145,5 +145,5 @@ class RobotState:
 @dataclass
 class JointTargets:
     # [rad] motor name -> position target; the servos run their own P loop [Microban MotorCommand].
-    # Joints absent from the dict go to Microban's neutral pose. CHANGE: per-joint kp.
+    # Joints absent from the dict keep their last target [Microban dev_v2]. CHANGE: per-joint kp.
     positions: dict[str, float]
