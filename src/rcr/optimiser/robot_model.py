@@ -1,11 +1,10 @@
-"""The robot for the optimiser: Microban's URDF as published, plus our climbing hooks, as CasADi.
+"""The robot for the optimiser: the climbing model's URDF as published, as CasADi.
 
-Microban's URDF is read as is (never edited or copied: it is GPL-3.0) from its checkout, the
-submodule third_party/microban or the one MICROBAN_URDF names (rcr.robot.microban). Its climbing
-limbs are not published yet [Rules §2.5], so the four hooks are added to it here, from
+The URDF (microban_model, climbing variant: rcr.robot.microban) is read as is, never edited or
+copied. Its climbing forearms and feet end in balls, the limbs' contact points, found from
 rcr.robot.hooks (as in the sim).
-The URDF has no collision shapes; Microban's own ones are in its MJCF, next to it in the same
-checkout (../mjcf/robot.xml), whose bodies are the URDF's links. They are read from there.
+The URDF has no collision shapes; they are in the model's MJCF, whose bodies are the URDF's
+links. They are read from there.
 
 Configuration q (NQ = 26), the same layout as the sim's MuJoCo qpos:
     q[0:3]   trunk position in the wall frame [m]
@@ -65,7 +64,7 @@ class Urdf:
 
 
 def urdf_path() -> Path:
-    """Microban's URDF (rcr.robot.microban: the submodule, or MICROBAN_URDF / MICROBAN_XML)."""
+    """The climbing model's URDF (rcr.robot.microban: microban_model, or MICROBAN_URDF)."""
     return microban.urdf_path()
 
 
@@ -377,7 +376,7 @@ class RobotModel:
     # at q = integrate(q0, dq), and its 3xNV Jacobian w.r.t. dq, for collision gradients
     point_jacobian: dict[str, ca.Function] = field(repr=False)
     link_names: tuple[str, ...] = field(repr=False)
-    mass: float  # [kg] Microban plus the hooks
+    mass: float  # [kg] the whole climbing model
     lower: np.ndarray = field(repr=False)  # [rad] motor limits from the URDF, MICROBAN_JOINTS order
     upper: np.ndarray = field(repr=False)
 

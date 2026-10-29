@@ -3,15 +3,13 @@
 **Purpose:** the real-robot backend, which is Microban ([Rhoban/microban](https://github.com/Rhoban/microban)). This
 README explains how our code meets Microban. The only code here is what we add to Microban's robot.
 
-## The climbing limbs: the model's balls [Microban]
-The robot model (`microban_model`, climbing variant: see [`microban.py`](microban.py)) has climbing forearms and feet,
-each ending in a ball that rests in a hold's socket. [`hooks.py`](hooks.py) says where each ball is (its link, its
-centre, its 12.5 mm radius) and the direction its finger comes into it (`neck`, measured on the model). The optimiser and
-the sim both take them from there. A test (`test_the_balls_are_the_models`) checks them against the model.
-
-These replaced our placeholder hooks (29 Oct). Guesses that still depend on the real limbs and holds: the hold's push
-direction and friction (`normals`, `mu` in `rcr.optimiser.transition.TransitionConfig`), and the hold's socket
-(`SOCKET_RADIUS` in `rcr.optimiser.collision`, `CupHold` in `rcr.sim`).
+## The robot model and its climbing limbs [Microban]
+- **Model:** the `microban_model` package, climbing variant (`robot_climb.urdf` / `robot_climb.xml`), pinned in
+  `pyproject.toml` to the organisers' simulator's version. [`microban.py`](microban.py) finds it.
+- **Limbs:** the climbing forearms and feet each end in a **12.5 mm ball** that sits in a hold's socket.
+  [`hooks.py`](hooks.py) gives each ball's link, centre and finger direction (`neck`). The optimiser and the sim read
+  them from there, and `test_the_balls_are_the_models` checks them against the model.
+- **Still our guesses [Ours]:** how a hold pushes on a ball (`normals`, `mu` in `TransitionConfig`).
 
 ## What Microban gives us [Microban]
 - **Hardware:**
@@ -72,23 +70,12 @@ class LinkInputSource(InputSource):
 7. Always `make shutdown` before cutting power, or the SD card can be corrupted [Microban usage.md].
 
 ## Where Microban sits (D1): a submodule [Ours]
-**Chosen: the submodule** `third_party/microban`, on branch `dev_v2` (29 Oct), what the competition robot runs. Every
-clone reads the same files, and nothing of Microban is copied into our history. On `dev_v2` the robot model moved out of
-Microban into the package `microban_model`, which `rcr/robot/microban.py` finds (`MICROBAN_URDF` or `MICROBAN_XML`
-still point at another file).
+**Chosen: the submodule** `third_party/microban`, on branch `dev_v2` (29 Oct), what the competition robot runs.
+- Every clone gets the same version, and no Microban code (GPL-3.0) enters our history.
+- Microban is not pip-installable: it is used via `PYTHONPATH=src`.
+- The robot model is no longer in Microban, but in `microban_model` (above).
+
 Still open: where `ClimbMove` and our entry point sit on the Pi (next to Microban on its `PYTHONPATH`, see below).
-
-The options, as compared before choosing:
-
-Microban's software is **GPL-3.0**, and its `pyproject.toml` has **no build system**, so it is not pip-installable. In
-every option, it is used via `PYTHONPATH=src`. The organisers' climbing variant will probably come as Microban changes, so
-the choice must make switching to it easy.
-
-| Option | For | Against |
-|---|---|---|
-| **Submodule** (`third_party/microban`, pinned commit) | exact version; upstream/climbing-variant updates are a commit bump; no Microban code in our history; the sim gets its MJCF and servo model | submodule friction (`clone --recursive`, bumps); our `ClimbMove` and entry point live in our repo and must be put on the Pi's `PYTHONPATH` next to Microban |
-| **Fork** (our fork of Rhoban/microban) | `ClimbMove` + entry point sit next to Microban's moves; Microban's `make run` / `make sim` workflow keeps working; upstream PRs possible | two repos to keep in step; merging upstream / the climbing variant into the fork |
-| **Copy** (vendor `src/` into our repo) | one repo; edit anything | loses upstream fixes; our repo becomes a GPL-3.0 combined work if we publish it (we have no licence yet); harder to switch to the climbing variant |
 
 ## What goes to the Pi
 | To the Pi | Stays on the laptop |

@@ -4,10 +4,10 @@ Obstacles:
     each hold   the organisers' mesh (data/holds/hold.stl [Rules v1.1 Figure 3]), placed as the
                 sim does: at Hold.position + HOLD_MESH_OFFSET, not rotated (its frame is the wall's)
     the wall    the half-space y >= 0 (its face is y = 0; the robot is at y < 0)
-Robot: the convex hull of each of Microban's visual meshes [Microban MJCF], so what the sim draws
-is inside what is checked (its own collision boxes are smaller than the thighs and shins), and our
-hooks (a capsule per finger segment and a sphere for the ball), each fixed on a link. The robot
-is also kept clear of itself: every pair of its shapes in self_pairs().
+Robot: the convex hull of each of the climbing model's visual meshes [Microban MJCF], so what the
+sim draws is inside what is checked (its own collision boxes are smaller than the thighs and
+shins); on the climbing forearms and feet, the model's own convex pieces, plus a sphere per ball
+(robot_shapes). The robot is also kept clear of itself: every pair of its shapes in self_pairs().
 
 Signed distance to a hold, from two forms of the same mesh:
     exact   the mesh itself (a BVH): exact outside, ~0 when touching, but no depth inside;
@@ -45,7 +45,9 @@ REPO = Path(__file__).resolve().parents[3]
 HOLD_STL = REPO / "data" / "holds" / "hold.stl"  # the organisers' hold, in mm [Rules v1.1 §4]
 HOLD_STL_SCALE = 0.001  # [m/mm]
 HOLD_MESH_OFFSET = (0.0, -0.026, -0.014)  # [m] socket centre (the mesh origin) from Hold.position
-SOCKET_RADIUS = 0.0127  # [m] the hold's spherical socket, measured on hold.stl (rcr.sim CupHold)
+# [m] the hold's spherical socket, measured on hold.stl (rcr.sim CupHold); the organisers' sim's
+# socket spheres (cup_spheres.json) give the same
+SOCKET_RADIUS = 0.0127
 # The convex pieces, keyed by the STL's sha256, kept with the mesh in the repository: CoACD gives
 # slightly different pieces on another machine, and so slightly different solutions [Ours].
 PIECES_CACHE = REPO / "data" / "holds"

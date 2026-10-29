@@ -92,7 +92,7 @@ New to the planner? Start with [GUIDE.md](GUIDE.md) and its interactive companio
 | `reach.py` | loads the reach sets; trunk regions (`region`, `maybe_nonempty`, `centre`: the Chebyshev LP) |
 | `astar.py` | `posture`, `Graph` (the reach graph), `search` (A\*), `Banned`, `solve` (LazySP) |
 | `cache.py` | `layout_key`, `Cache` |
-| `scripts/make_reach.py` | writes `data/robot/reach.json` (optimiser group + `MICROBAN_URDF`) |
+| `scripts/make_reach.py` | writes `data/robot/reach.json` (optimiser group) |
 | `scripts/plan_wall.py` | plans one wall (or `--warm N` walls), with the reach graph only or the optimiser |
 | `scripts/plan_eval.py` | `moves`: what the optimiser accepts, by rise; `plans`: plan walls, optionally `--solve` them |
 

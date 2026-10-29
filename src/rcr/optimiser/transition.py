@@ -51,17 +51,19 @@ from rcr.optimiser.robot_model import GRAVITY, NJ, NQ, NV, RobotModel, load_robo
 from rcr.robot import hooks
 from rcr.types import LIMBS, MICROBAN_JOINTS, Limb, Stance, WallModel
 
-SERVO_TORQUE_LIMIT = 0.64  # [N·m] 1.75 A x 0.366 N·m/A [Microban constants.py]
+# [N·m] the current limit times BAM's XL330 torque constant: 1.75 A x 0.346 N·m/A, where the
+# organisers' sim clips each motor [Microban constants.py BAM_MAX_CURRENT, microban_sim]
+SERVO_TORQUE_LIMIT = 0.605
 GUESS_STANDOFF = -0.10  # [m] trunk y in the first static pose's guess, in front of the wall [Ours]
 FACING_WALL = (np.cos(np.pi / 4), 0.0, 0.0, np.sin(np.pi / 4))  # (w,x,y,z): trunk front along +y
-# The hold's socket opens upwards: a 9 mm finger leaves the resting ball only within ~60 deg of
-# straight up (measured on hold.stl). The first solve keeps each hook's neck within NECK_CONE of
-# up, so it starts with the hooks lowered in from above; the exact clearances then decide [Ours].
+# The hold's socket opens upwards: a ball leaves it only near vertical (~10 deg, the organisers'
+# sim, wall.py). The first solve keeps each ball's neck within NECK_CONE of up, so it starts with
+# the balls lowered in from above; the exact clearances then decide [Ours].
 NECK_CONE = np.radians(45.0)
 NECK_PROBE = 0.01  # [m] how far back from the ball along its neck (hooks.Hook.neck) it is measured
 # Likewise the moving ball starts its path above its sockets: on the sample after it lets go and
 # the one before it arrives, at least LIFT above its resting point, inside the opening cone [Ours].
-LIFT = 0.035  # [m]: the hold's top is 20.7 mm above the resting ball, + its 10 mm radius + 4 mm
+LIFT = 0.035  # [m]: the hold's top is 18.2 mm above the resting ball, + its 12.5 mm radius + 4 mm
 
 # The reference posture's leg joints: from a hand-designed pose on the example's start stance
 # (legs mirrored, knees bent 20 deg, spine 25 deg, hips 100 mm off the wall, clear of the holds;
@@ -90,15 +92,17 @@ class TransitionConfig:
     # Friction pyramid per limb: contact normal (the direction the hold pushes the ball) and mu.
     # Up (+z) for all four: the hold's socket opens upwards and holds a resting ball up, a foot's
     # as much as a hand's [hold.stl]. (Feet pushed only out from the wall, -y, made the robot
-    # lean out and hang from its arms.) Placeholder until the climbing limbs are known [Ours].
+    # lean out and hang from its arms.) A simplification of the ball in its spherical socket,
+    # which can push in more directions [Ours].
     normals: dict[str, tuple[float, float, float]] = field(
         default_factory=lambda: dict.fromkeys(LIMBS, (0.0, 0.0, 1.0))
     )
-    mu: dict[str, float] = field(default_factory=lambda: dict.fromkeys(LIMBS, 0.8))  # [Ours]
+    # Below the organisers' sim, where ball on hold is max(ball 1.0, hold 0.5) = 1.0 [Ours]
+    mu: dict[str, float] = field(default_factory=lambda: dict.fromkeys(LIMBS, 0.8))
     # The moving limb keeps this far out from the wall face (y <= -clearance) in the middle of
     # phase B, i.e. on samples K+2..N-2, so it can leave and enter its cups [Ours].
-    # 0.06 m: the hold sticks out 43 mm [hold.stl], the ball is 10 mm in radius, + 7 mm, so the
-    # ball can pass in front of a hold (the task's first value, 0.04 m, could not).
+    # 0.06 m: the hold sticks out 43 mm [hold.stl], the ball is 12.5 mm in radius, + 4.5 mm, so
+    # the ball can pass in front of a hold (the task's first value, 0.04 m, could not).
     clearance: float = 0.06  # [m]
     # Every point of Microban's collision shapes stays this far out of the wall face, in every
     # sample (y <= -wall_margin). Without it the trunk can sink into the wall [Ours].
@@ -342,7 +346,7 @@ def posture(q, cfg: TransitionConfig):
 
 
 def neck_rise(model: RobotModel, q_ref, dq, limb: str):
-    """[m] how far the hook's neck rises over NECK_PROBE back along its last segment from the
+    """[m] how far the hook's neck rises over NECK_PROBE back along it from the
     ball: NECK_PROBE when it points straight up, cos(angle) * NECK_PROBE in general."""
     hook = hooks.HOOKS[limb]
     ball = hooks.ball_centre(hook)

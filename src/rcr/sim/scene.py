@@ -45,7 +45,7 @@ MICROBAN_XML = _model_xml()
 # <limb>_tip; the ball itself, the forearm and the foot are the model's [Microban].
 LIMB_PARENTS = {limb: (hook.link, hook.ball) for limb, hook in hooks.HOOKS.items()}
 
-SERVO_TORQUE_LIMIT = 0.64  # [N.m] 1.75 A x 0.366 N.m/A [Microban constants.py]
+SERVO_TORQUE_LIMIT = 0.605  # [N.m] 1.75 A x 0.346 N.m/A (BAM's XL330), as the organisers' sim
 ROBOT_PREFIX = "rob_"
 
 

@@ -14,8 +14,8 @@
   `MuJoCoController` [Microban].
 
 ## Our emulation of the official simulator
-The official simulator is **not released yet** (website: "T.B.D."). It will be MuJoCo (CPU), with models of the robot, walls
-and holds, and robots relying on rendered camera images [Rules §7]. Until then, we build our own emulation from the rules:
+The organisers' simulator is now in `third_party/simulator` (same robot model as ours). Our own sim, built from the
+rules [Rules §7], stays for our pipeline:
 
 - **Wall + holds from the `WallModel`** [Rules §3–4]:
   - a 0.800 × 1.400 × 0.010 m plywood board, vertical, with 52 × 93 holes (17.5 mm side margin) [Rules v1.1 Figure 2];
@@ -31,7 +31,7 @@ and holds, and robots relying on rendered camera images [Rules §7]. Until then,
 - **A swappable grip model:** how a limb holds a hold is chosen in one place, e.g. v0 "weld when close, release on command",
   later friction-only contact, so it can be changed when the real holds and limbs are known.
 - **Servo limits and delays** [Microban sim]:
-  - BAM XL330 servo model (`better-actuator-models`) with the 1.75 A current limit, i.e. ≈ 0.64 N·m;
+  - BAM XL330 servo model (`better-actuator-models`) with the 1.75 A current limit, i.e. ≈ 0.605 N·m;
   - kp as on the robot;
   - delays as in Microban's `sim_main.py` defaults: actuation 2 physics steps (10 ms), velocity 1 tick, gyro 3 ticks, orientation 4 ticks;
   - 5 ms physics step, 50 Hz control.
@@ -63,8 +63,8 @@ Built with `MjSpec` from the Microban model, so the clone stays untouched and th
   origin at the socket centre, **26 mm out and 14 mm below** the bolt midpoint (`Hold.position`) [Rules v1.1 Figure 3].
   A 3 mm back plate is bolted through holes **two pitches (0.030 m) apart**; the bucket has a **spherical socket of
   12.7 mm radius** that takes the robot's ball end. A ball rests at the bottom of the socket (`grasp_point`): on the
-  socket centre if it is as big as the socket, lower by the clearance if it is smaller. Ours is 10 mm until the limbs
-  are published, so it sits 2.7 mm below the centre. Holds sit on `contype/conaffinity 2` and never collide with the
+  socket centre if it is as big as the socket, lower by the clearance if it is smaller. The model's ball is 12.5 mm,
+  so it sits 0.2 mm below the centre. Holds sit on `contype/conaffinity 4` and never collide with the
   robot: the weld *is* the grip. The colour stays the orange of the organisers' render; green in Figure 3 is not a rule.
   **Rules v1.1, read together:** §4 says "side by side, 15 mm apart" (the grid pitch) and Figure 3 says "two pitches
   apart (30 mm)"; we read them as bolts in holes (i − 1, j) and (i + 1, j), so `Hold.position` is hole (i, j). Hold x
@@ -73,15 +73,10 @@ Built with `MjSpec` from the Microban model, so the clone stays untouched and th
   alternating (≈0.0525 m), one to four cups per row, scattered across columns 15–36
   (x ≈ 0.24–0.56 m). Rows below j≈22 were behind the robot in that frame and follow the same
   spacing and density. `levels.generate(1|2|3)` still gives the rulebook levels.
-- **Limbs** — `LimbTip`, read side-on from their video. Hands: past the end of the forearm, a
-  finger bent towards the wall *with the arm raised* (the climbing pose), ending in a grey ball
-  (frames 880–940). Feet: the same hook on the stock foot plate, past the toe and bent down out of
-  the sole, so the ball drops into the cup and the plate stays above the rim [Ours].
-  The ball is what sits in a cup; the sim's tip site is its centre. Dimensions [Ours], read against
-  the forearm, until the climbing limbs are published [Rules §2.5]. The hooks are defined once, in
-  `rcr.robot.hooks` (shared with the optimiser); `LimbTip` and `LIMB_PARENTS` take them from there.
+- **Limbs** — the model's own climbing forearms and feet, each ending in a 12.5 mm ball [Microban].
+  The sim's tip site is the ball centre, taken from `rcr.robot.hooks` (`LimbTip`, `LIMB_PARENTS`).
 - **Actuators** — Microban's are `<motor>`, i.e. **torque**, not position servos; `data.ctrl` is N·m.
-  The scene clamps them to **0.64 N·m** (1.75 A × 0.366 N·m/A), which the stock XML leaves unset.
+  The scene clamps them to **0.605 N·m** (1.75 A × 0.346 N·m/A, as the organisers' sim), which the stock XML leaves unset.
   `ServoGains` then runs the P loop the real servos run.
 
 ### Grip: `Sim.expect(stance)`
@@ -93,16 +88,14 @@ welds carry tens of newtons internally, a servo pulls with about six), and so is
 20 mm of the cup, slowly.
 
 ### Measured
-- Four-limb hang: all limbs held, trunk drifts ~9 mm over 5 s, grip forces sum to the robot's weight
-  (8.27 N), peak torque ~20 % of the limit at rest.
+- Four-limb hang: all limbs held; the trunk sags ~6.5 mm in the first 0.5 s, then stays still.
 - All four ArUco markers detect from both cameras.
 
 ### Setup
 ```bash
-git submodule update --init               # Microban, in third_party/microban (once)
-uv sync --group sim                       # mujoco + opencv
+uv sync --group sim                       # mujoco, opencv and the robot model (needs git-lfs)
 ```
-`MICROBAN_XML` (or `MICROBAN_URDF`) points it at another Microban checkout instead. Without Microban, `run_pipeline.py --check` reports the sim as `skip` and `tests/test_sim.py` skips (as on CI).
+`MICROBAN_XML` points it at another model file. Without the model, `run_pipeline.py --check` reports the sim as `skip` and `tests/test_sim.py` skips.
 
 ### Using it
 ```python
@@ -132,7 +125,7 @@ the right of marker 4, and `right_hand` on the robot's left).
 
 ### Worth knowing before writing the controller
 Playing joint angles open-loop will not place a limb accurately: the robot is a floating base in a
-closed chain, and with 0.64 N·m servos each limb sags ~15 mm, so the base ends up away from wherever
+closed chain, and with 0.6 N·m servos each limb sags ~15 mm, so the base ends up away from wherever
 the kinematics assumed. `RobotState.base_pose` is there for closing that loop.
 
 ### Open
@@ -140,5 +133,4 @@ the kinematics assumed. `RobotState.base_pose` is there for closing that loop.
   catch. Physics runs at 2 ms, not Microban's 5 ms.
 - Four 3-DOF welds over-constrain the robot, so reported grip forces include large internal
   components. Only the vertical sum is trustworthy.
-- A friction backend (ball resting in a cup, no weld) needs real limb geometry; it would also remove
-  the `contype 2` hack and `expect()`.
+- A friction backend (ball resting in a cup, no weld) would remove the holds' `contype 4` hack and `expect()`.
