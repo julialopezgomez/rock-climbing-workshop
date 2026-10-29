@@ -84,7 +84,7 @@ For teammates who know robotics but not planning.
 ## 3. Walkthrough, in order of execution
 
 ### Step 0 (offline, once): build the reach sets
-- **Command:** `uv run scripts/make_reach.py` (needs the optimiser group and `MICROBAN_URDF`). It takes about 3 s.
+- **Command:** `uv run scripts/make_reach.py` (needs the optimiser group). It takes about 3 s.
 - **What it does:**
   - Samples 20,000 random joint configurations per limb within the URDF's limits, with the trunk tilted as the optimiser
     tilted it on the example climb.

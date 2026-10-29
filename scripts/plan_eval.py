@@ -3,7 +3,7 @@
 uv run scripts/plan_eval.py moves --per-bin 10          # sample reach-graph moves, ask feasibility
 uv run scripts/plan_eval.py plans --seeds 3 --solve     # plan generated walls, then optimise them
 
-Both need `uv sync --group optimiser` and MICROBAN_URDF, and share build/feasibility_cache.json
+Both need `uv sync --group optimiser` and share build/feasibility_cache.json
 with scripts/plan_wall.py, so every verdict is computed once.
 
 moves: random walks on the reach graph of generated walls; moves are binned by how far the limb

@@ -5,7 +5,7 @@ uv run scripts/plan_wall.py --level 1 --seed 0 --feasibility optimiser --save bu
 uv run scripts/plan_wall.py --wall data/examples/wall_hard.json --feasibility optimiser
 uv run scripts/plan_wall.py --warm 5 --feasibility optimiser    # 5 walls a level: fill the cache
 
-`--feasibility optimiser` needs `uv sync --group optimiser` and MICROBAN_URDF (optimiser README).
+`--feasibility optimiser` needs `uv sync --group optimiser` (optimiser README).
 Its verdicts are kept in build/feasibility_cache.json, keyed by the move's layout
 (rcr.planner.cache): the same move anywhere, on any wall, is asked once. The cache's version is a
 hash of the optimiser's code, the hooks and the hold mesh, so changing any of them starts it again.
