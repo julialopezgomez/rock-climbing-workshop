@@ -21,8 +21,8 @@ stays inside its module.
   [src/rcr/types.py](src/rcr/types.py) and [src/rcr/io.py](src/rcr/io.py).
 - Planning and optimisation run on the laptop. The 50 Hz loop runs on the robot. Nothing time-critical crosses the
   [link](src/rcr/link/README.md).
-- The [sim](src/rcr/sim/README.md) plays the robot's role: joint targets in, robot state out. The controller does not
-  know which backend it is running on.
+- The sim is the organisers' own ([Simulation](#simulation)): it plays the robot's role, joint targets in, robot
+  state out. The controller does not know which backend it is running on.
 
 ## Layout
 
@@ -43,8 +43,8 @@ src/rcr/
   optimiser/             laptop: contact plan -> trajectory; owns feasibility
   controller/            ROBOT:  trajectory + robot state -> joint targets (Pi-safe)
   link/                  both:   trajectory, start/stop, pose ->; <- robot state
-  sim/                   laptop: backend with the robot's role
-  robot/                 how our code meets Microban: where it is (microban.py), our climbing hooks (hooks.py)
+  robot/                 how our code meets Microban: where it is (microban.py), the climbing balls (hooks.py),
+                         its observation <-> our types (observation.py)
 third_party/microban/    Rhoban/microban, a git submodule (not our code, GPL-3.0)
 third_party/simulator/   the organisers' simulator, rock-climbing-robots/simulator, a git submodule
 ```
@@ -63,14 +63,16 @@ uv sync                                    # base; add --group sim --group optim
 ```
 
 Microban ([Rhoban/microban](https://github.com/Rhoban/microban), GPL-3.0) is a git submodule in `third_party/microban`,
-pinned to the commit we test against; the optimiser and the sim find it there with no setting. Cloned without
+on branch **`dev_v2`**, what the competition robot runs. Cloned without
 `--recursive`? Run `git submodule update --init`. After a `git pull` that moves the pin, run it again.
 
 The organisers' simulator ([rock-climbing-robots/simulator](https://github.com/rock-climbing-robots/simulator)) is a
-second submodule, in `third_party/simulator`, next to Microban as its README asks. It is a project of its own: in
-that folder, `uv sync`, then `uv run python examples/view.py` (macOS: `mjpython`). It needs git-lfs for the robot's
-meshes (`brew install git-lfs && git lfs install`). Its README expects Microban on branch `dev_v2`; ours is pinned
-to `d0a128d` for the optimiser.
+second submodule, in `third_party/simulator`, next to Microban as its README asks: see [Simulation](#simulation).
+
+**The robot model** is the package `microban_model` ([Rhoban/microban_model](https://github.com/Rhoban/microban_model)),
+as for Microban `dev_v2` and the simulator: we use its climbing variant (climbing forearms and feet with ball ends).
+`uv sync --group optimiser` / `--group sim` installs it, pinned to the simulator's commit. It needs git-lfs for the
+meshes: `brew install git-lfs && git lfs install`, once.
 
 ```bash
 uv run scripts/run_pipeline.py --check
@@ -90,5 +92,24 @@ CI runs all of the above on every push and PR.
 Random walls for testing (`rcr.walls`, see its docstring for what each level means):
 
 ```bash
-uv run scripts/make_wall.py --level 3 --seed 0 --show    # or --save, or --check data/examples/wall_hard.json
+uv run scripts/make_wall.py --level 3 --seed 0 --show    # or --save, or --check data/examples/N1.json
+```
+
+## Simulation
+
+We use the organisers' simulator (`climbing_sim`, in `third_party/simulator`) as it is: we never edit it, and
+whatever does not fit is converted on our side. `uv sync --group sim` installs it from the submodule, with
+Rhoban's `microban_sim` (the robot, its servos, its sensors) pinned to the commit its lock file uses.
+
+| Theirs | Ours | Converted by |
+|---|---|---|
+| `Wall` (hold = left bolt hole `(col, row)`) | `WallModel` (hold id `c<col>_r<row>`, bolt midpoint), for the planner and the optimiser | `rcr.walls.from_organisers`; `scripts/wall_generator.py` saves `data/examples/N*.json` |
+| 19 angles in `JOINTS` order, the observation dict | `JointTargets`, `RobotState` | `rcr.robot.to_targets` / `to_state` |
+
+The wall frame is the same, and our optimiser's kinematics match theirs to 1e-9 m (a test checks it).
+
+```bash
+uv run mjpython tests/test_sim.py N2                      # the robot on their wall N2 (macOS: mjpython)
+uv run mjpython tests/test_optimiser.py --hard PLAN       # solve a contact plan, play it in their sim
+uv run scripts/wall_generator.py N1 N2 N3                 # their walls -> data/examples/N*.json
 ```

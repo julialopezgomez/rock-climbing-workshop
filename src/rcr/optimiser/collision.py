@@ -1,13 +1,13 @@
 """Exact clearances of the robot from the holds, the wall and itself, with their gradients (coal).
 
 Obstacles:
-    each hold   the organisers' mesh (data/holds/hold.stl [Rules v1.1 Figure 3]), placed as the
-                sim does: at Hold.position + HOLD_MESH_OFFSET, not rotated (its frame is the wall's)
+    each hold   the organisers' simulator's mesh (climbing_sim assets/hold/hold_visual.stl), placed
+                as it places it: at Hold.position + HOLD_MESH_OFFSET, not rotated
     the wall    the half-space y >= 0 (its face is y = 0; the robot is at y < 0)
-Robot: the convex hull of each of Microban's visual meshes [Microban MJCF], so what the sim draws
-is inside what is checked (its own collision boxes are smaller than the thighs and shins), and our
-hooks (a capsule per finger segment and a sphere for the ball), each fixed on a link. The robot
-is also kept clear of itself: every pair of its shapes in self_pairs().
+Robot: the convex hull of each of the climbing model's visual meshes [Microban MJCF], so what the
+sim draws is inside what is checked (its own collision boxes are smaller than the thighs and
+shins); on the climbing forearms and feet, the model's own convex pieces, plus a sphere per ball
+(robot_shapes). The robot is also kept clear of itself: every pair of its shapes in self_pairs().
 
 Signed distance to a hold, from two forms of the same mesh:
     exact   the mesh itself (a BVH): exact outside, ~0 when touching, but no depth inside;
@@ -36,30 +36,39 @@ from pathlib import Path
 
 import coal
 import numpy as np
+from climbing_sim import scene as sim_scene
+from climbing_sim import wall as sim_wall
 
 from rcr.optimiser import robot_model as rm
 from rcr.robot import hooks
 from rcr.types import Hold
 
 REPO = Path(__file__).resolve().parents[3]
-HOLD_STL = REPO / "data" / "holds" / "hold.stl"  # the organisers' hold, in mm [Rules v1.1 §4]
-HOLD_STL_SCALE = 0.001  # [m/mm]
-HOLD_MESH_OFFSET = (0.0, -0.026, -0.014)  # [m] socket centre (the mesh origin) from Hold.position
-SOCKET_RADIUS = 0.0127  # [m] the hold's spherical socket, measured on hold.stl (rcr.sim CupHold)
+# The hold, from the organisers' simulator (climbing_sim) [simulator]: the mesh it draws (in m,
+# origin at the socket centre, the wall frame's axes), placed as it places it (Hold.socket: the
+# socket centre SOCKET_OUT out of the wall and SOCKET_BELOW below the bolts' midpoint)
+HOLD_STL = Path(sim_scene.HOLD_VISUAL)
+HOLD_STL_SCALE = 1.0  # [m] the file is in metres
+HOLD_MESH_OFFSET = (0.0, -sim_wall.SOCKET_OUT, -sim_wall.SOCKET_BELOW)  # [m] from Hold.position
+# [m] the socket's radius: the inner surface of the sim's socket spheres (12.7 mm) [simulator]
+SOCKET_RADIUS = round(
+    min(np.linalg.norm(s["pos"]) - s["r"] for s in sim_scene.HOLD_SPHERES if s["pos"][2] < 0), 6
+)
 # The convex pieces, keyed by the STL's sha256, kept with the mesh in the repository: CoACD gives
 # slightly different pieces on another machine, and so slightly different solutions [Ours].
 PIECES_CACHE = REPO / "data" / "holds"
 COACD_THRESHOLD = 0.02  # CoACD concavity: 106 pieces, swelling < ~0.4 mm into the socket [Ours]
 TOUCHING = 5e-5  # [m] the exact mesh reports a ball resting in its socket as -4e-6 m
 # [m] how far a hook may press into the hold its ball rests in for a whole interval [Ours]: that is
-# the contact itself (and the hooks are placeholders). At a touch the exact mesh gives no direction
+# the contact itself. At a touch the exact mesh gives no direction
 # out, so with -TOUCHING alone a loaded foot's finger at 0.13 mm in could not be moved out, and the
 # move failed (example plan, move 9).
 RESTING_PLAY = 5e-4
 SWELL = 1e-3  # [m] how far the pieces may swell past the mesh: deeper means truly inside
-# The deepest point inside the hold's material: 7.2 mm from its surface, measured on hold.stl
-# (sha256 8c8df8c6...) by sampling, +1 mm for the sampling. A shape of half-thickness r lying
-# wholly inside is at most HOLD_MAX_DEPTH - r from the surface, so beyond that it is outside.
+# The deepest point inside the hold's material: 7.5 mm from its surface, measured on the sim's
+# hold_visual.stl on a 0.5 mm grid (so at most ~7.9 mm) [Ours, measured]. A shape of
+# half-thickness r lying wholly inside is at most HOLD_MAX_DEPTH - r from the surface, so beyond
+# that it is outside.
 HOLD_MAX_DEPTH = 0.0082  # [m]
 
 
@@ -113,27 +122,16 @@ def _z_to(direction: np.ndarray) -> np.ndarray:
 
 @lru_cache(maxsize=1)
 def robot_shapes() -> tuple[RobotShape, ...]:
-    """The convex hulls of Microban's visual meshes, plus our hooks (hooks.HOOKS)."""
-    shapes = [
-        _hull_shape(f"{s.link}_{i}", s) for i, s in enumerate(rm.read_visual_shapes(rm.mjcf_path()))
-    ]
+    """The robot's shapes: the convex hull of each visual mesh of the model, except on the
+    climbing forearms and feet (the hooks' links), which take the model's own convex pieces of
+    their collision meshes (coll_*): a hull of the hooked forearm would fill the inside of the
+    hook, where the hold goes. Plus each ball (hooks.HOOKS), a sphere [Microban]."""
+    path = rm.mjcf_path()
+    hooked = {hook.link for hook in hooks.HOOKS.values()}
+    meshes = [s for s in rm.read_visual_shapes(path) if s.link not in hooked]
+    meshes += [s for s in rm.read_visual_shapes(path, collision=True) if s.link in hooked]
+    shapes = [_hull_shape(f"{s.link}_{i}", s) for i, s in enumerate(meshes)]
     for limb, hook in hooks.HOOKS.items():
-        point = np.array(hook.start, dtype=float)
-        for k, (direction, length) in enumerate(hook.segments):
-            end = point + np.array(direction, dtype=float) * length
-            shapes.append(
-                RobotShape(
-                    f"{limb}_finger{k}",
-                    hook.link,
-                    coal.Capsule(hooks.FINGER_RADIUS, length),
-                    (point + end) / 2,
-                    _z_to(np.array(direction, dtype=float)),
-                    length / 2 + hooks.FINGER_RADIUS,
-                    hooks.FINGER_RADIUS,
-                    limb,
-                )
-            )
-            point = end
         shapes.append(
             RobotShape(
                 f"{limb}_ball",

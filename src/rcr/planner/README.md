@@ -92,7 +92,7 @@ New to the planner? Start with [GUIDE.md](GUIDE.md) and its interactive companio
 | `reach.py` | loads the reach sets; trunk regions (`region`, `maybe_nonempty`, `centre`: the Chebyshev LP) |
 | `astar.py` | `posture`, `Graph` (the reach graph), `search` (A\*), `Banned`, `solve` (LazySP) |
 | `cache.py` | `layout_key`, `Cache` |
-| `scripts/make_reach.py` | writes `data/robot/reach.json` (optimiser group + `MICROBAN_URDF`) |
+| `scripts/make_reach.py` | writes `data/robot/reach.json` (optimiser group) |
 | `scripts/plan_wall.py` | plans one wall (or `--warm N` walls), with the reach graph only or the optimiser |
 | `scripts/plan_eval.py` | `moves`: what the optimiser accepts, by rise; `plans`: plan walls, optionally `--solve` them |
 
@@ -111,7 +111,6 @@ New to the planner? Start with [GUIDE.md](GUIDE.md) and its interactive companio
 ```bash
 uv run scripts/plan_wall.py --level 1 --seed 0                    # reach graph only, < 1 s
 uv sync --group optimiser --group sim     # both: syncing one group uninstalls the other
-export MICROBAN_URDF=<your Rhoban/microban checkout>/src/model/urdf/robot.urdf
 uv run scripts/plan_wall.py --level 1 --seed 0 --feasibility optimiser --save build/plan.json
 uv run scripts/plan_eval.py moves --per-bin 6                     # what the optimiser accepts
 uv run scripts/plan_eval.py plans --seeds 3 --solve               # plan walls, then optimise the plans

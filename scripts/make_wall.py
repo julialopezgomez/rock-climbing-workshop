@@ -3,7 +3,7 @@
 uv run scripts/make_wall.py --level 2 --seed 3 --show     # print the layout, save nothing
 uv run scripts/make_wall.py --level 2 --seed 3 --save     # -> data/walls/gen_l2_s3.json
 uv run scripts/make_wall.py --level 3 --out x.json        # save to a given path
-uv run scripts/make_wall.py --check data/examples/wall_hard.json   # rule violations of a file
+uv run scripts/make_wall.py --check data/examples/N1.json   # rule violations of a file
 """
 
 import argparse

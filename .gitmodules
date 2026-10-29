@@ -1,6 +1,7 @@
 [submodule "third_party/microban"]
 	path = third_party/microban
 	url = https://github.com/Rhoban/microban.git
+	branch = dev_v2
 [submodule "third_party/simulator"]
 	path = third_party/simulator
 	url = git@github.com:rayruchira/simulator.git

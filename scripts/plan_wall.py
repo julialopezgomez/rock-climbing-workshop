@@ -2,7 +2,7 @@
 
 uv run scripts/plan_wall.py --level 1 --seed 0                      # reach graph only
 uv run scripts/plan_wall.py --level 1 --seed 0 --feasibility optimiser --save build/plan.json
-uv run scripts/plan_wall.py --wall data/examples/wall_hard.json --feasibility optimiser
+uv run scripts/plan_wall.py --wall data/examples/N1.json --feasibility optimiser
 uv run scripts/plan_wall.py --warm 5 --feasibility optimiser    # 5 walls a level: fill the cache
 
 `--feasibility optimiser` needs `uv sync --group optimiser` and MICROBAN_URDF (optimiser README).
@@ -28,13 +28,14 @@ CACHE = ROOT / "build" / "feasibility_cache.json"
 
 def optimiser_feasibility(path: Path = CACHE) -> Cache:
     """The optimiser's feasibility behind the layout cache in `path`."""
-    from rcr.optimiser import feasibility
+    from rcr.optimiser import collision, feasibility
+    from rcr.robot import hooks
 
     digest = hashlib.sha256()
     for f in sorted((ROOT / "src" / "rcr" / "optimiser").glob("*.py")):
         digest.update(f.read_bytes())
-    for f in (ROOT / "src" / "rcr" / "robot" / "hooks.py", ROOT / "data" / "holds" / "hold.stl"):
-        digest.update(f.read_bytes())
+    digest.update(repr((hooks.HOOKS, hooks.BALL_RADIUS)).encode())  # the balls, from the model
+    digest.update(collision.HOLD_STL.read_bytes())  # the hold, from the organisers' simulator
     return Cache(feasibility, path, version=digest.hexdigest()[:16])
 
 

@@ -1,15 +1,19 @@
-"""Optimiser tests, and a runner that solves the example plan and plays it in the sim.
+"""Optimiser tests, and a runner that solves a contact plan and plays it in the organisers' sim.
 
-    git submodule update --init                             # Microban, in third_party/microban
+    git submodule update --init                                  # Microban and their simulator
     uv sync --group optimiser --group sim
-    uv run pytest tests/test_optimiser.py                   # the checks
-    uv run mjpython tests/test_optimiser.py --hard          # solve the plan, play it as it comes
-    uv run mjpython tests/test_optimiser.py --hard --save   # the same, and save the trajectory
-    uv run mjpython tests/test_optimiser.py --hard --replay # play the saved trajectory, no solving
+    uv run pytest tests/test_optimiser.py                        # the checks
+    uv run mjpython tests/test_optimiser.py --hard PLAN          # solve PLAN, play it as it comes
+    uv run mjpython tests/test_optimiser.py --hard PLAN --save   # the same, and save it
+    uv run mjpython tests/test_optimiser.py --hard PLAN --replay # play the saved one, no solving
 
-The example is the one wall and plan in data/examples: wall_hard.json and contact_plan_hard.json.
---hard takes each two consecutive stances, solves that transition, and plays it in the sim (the
-same wall, holds and hooks); the robot then stays where it ended until the next one is ready.
+The wall is the organisers' N1 (data/examples/N1.json, from their simulator by
+scripts/wall_generator.py). A plan's wall is data/examples/<its wall_id>.json, and it is played on
+their wall of that name. There is no example contact plan yet: the tests that solve one skip until
+our planner's plan on N1 is saved as data/examples/contact_plan_N1.json.
+--hard takes each two consecutive stances, solves that transition, and plays it in the organisers'
+sim (the same wall, holds and balls); the robot then stays where it ended until the next one is
+ready.
 Solving runs in a separate process, so the next transition is solved while the current one plays.
 --save writes data/examples/trajectory.json (trajectory/2) after every transition, so a solve that
 stops part way keeps what it solved: `positions` is what the robot executes, and the planned
@@ -19,8 +23,8 @@ the optimiser's poses exactly, at the planned times, no physics. Add --headless 
 segment, so it can climb while the rest is solved (start it: bash scripts/pi.sh PI --start).
 Solved moves are kept in the move cache (build/move_cache, rcr.optimiser.move_cache), so a move
 solved once is taken from there next time: the whole example then takes about a second a move.
-macOS needs `mjpython` for the window (Linux: python). Without the optimiser group or
-Microban, pytest skips this file.
+macOS needs `mjpython` for the window (Linux: python). Without the optimiser group or the robot
+model, pytest skips this file; without the sim group, the test against their sim.
 """
 
 import os
@@ -71,12 +75,12 @@ from rcr.types import (  # noqa: E402
 
 EXAMPLES = Path(__file__).resolve().parent.parent / "data" / "examples"
 
-# The example (data/examples/wall_hard.json): 34 holds up to 1.27 m. Drifting columns with uneven
-# rows to 0.70 m, random holds to 0.90 m, a regular ladder above. Its plan: 38 moves until the hands
-# are at 1.27 m. The tests solve its first moves; the runner below plays all of it.
-WALL, PLAN = EXAMPLES / "wall_hard.json", EXAMPLES / "contact_plan_hard.json"
+# The organisers' N1: a ladder, rungs every 5 rows (75 mm), holds in columns 18, 21 (left) and 26,
+# 29 (right); start: feet c21_r2, c26_r2, hands c18_r22, c29_r22. The tests solve the first moves
+# of its plan, once there is one (PLAN).
+WALL, PLAN = EXAMPLES / "N1.json", EXAMPLES / "contact_plan_N1.json"
 TRAJECTORY = EXAMPLES / "trajectory.json"
-FIRST_MOVES = 4  # the example plan's first transitions, solved once for the tests below
+FIRST_MOVES = 4  # the plan's first transitions, solved once for the tests below
 DENSE = col.Clearance(step=0.0005)  # independent re-checks: 4x denser than the solver's
 
 
@@ -103,7 +107,9 @@ def wall():
 
 
 def first_row(wall: WallModel) -> ContactPlan:
-    """The example plan's first FIRST_MOVES transitions."""
+    """The plan's first FIRST_MOVES transitions (skips the test if there is no plan yet)."""
+    if not PLAN.exists():
+        pytest.skip(f"no contact plan on the organisers' wall yet ({PLAN.name})")
     plan = io.load_contact_plan(PLAN)
     assert plan.wall_id == wall.id
     return ContactPlan(plan.wall_id, plan.stances[: FIRST_MOVES + 1])
@@ -128,7 +134,7 @@ def random_configuration(model, rng):
 
 def test_kinematics_match_pinocchio(model):
     """Our CasADi kinematics (written from the URDF) against Pinocchio on the same URDF, with
-    the same hooks added as frames and point masses. Pinocchio's quaternion is (x, y, z, w)."""
+    the balls (rcr.robot.hooks) added as frames. Pinocchio's quaternion is (x, y, z, w)."""
     pin = pytest.importorskip("pinocchio")
     pm = pin.buildModelFromUrdf(str(rm.urdf_path()), pin.JointModelFreeFlyer())
     balls = {}
@@ -138,10 +144,6 @@ def test_kinematics_match_pinocchio(model):
         balls[limb] = pm.addFrame(
             pin.Frame(f"{limb}_ball", link.parentJoint, placement, pin.FrameType.OP_FRAME)
         )
-        for mass, point in hooks.masses(hook):
-            pm.inertias[link.parentJoint] += pin.Inertia(
-                mass, link.placement * point, np.zeros((3, 3))
-            )
     pd = pm.createData()
     qi = [pm.joints[pm.getJointId(n)].idx_q for n in MICROBAN_JOINTS]
     vi = [pm.joints[pm.getJointId(n)].idx_v for n in MICROBAN_JOINTS]
@@ -186,34 +188,35 @@ def test_difference_inverts_integrate(model):
         assert np.allclose(rm.difference(q0, q1), dq, atol=1e-9)
 
 
-def test_hooks_and_contact_point_match_the_sim(model):
-    """The hooks are ours (Microban has no climbing limbs yet): the optimiser and the sim must
-    put the balls in the same place, and agree on where a ball sits on a hold."""
-    pytest.importorskip("mujoco")
-    from rcr.sim import ROBOT_PREFIX, Sim
-    from rcr.sim.scene import MICROBAN_XML
+def test_balls_and_contact_point_match_the_organisers_sim(model):
+    """The optimiser and the organisers' sim (climbing_sim) put the balls in the same place, and
+    a ball resting in a socket sits on our contact point."""
+    climbing_sim = pytest.importorskip("climbing_sim")
 
-    if not MICROBAN_XML.exists():
-        pytest.skip(f"no Microban MJCF at {MICROBAN_XML}")
     wall = io.load_wall(WALL)
-    sim = Sim(wall, out=None)
+    sim = climbing_sim.ClimbingSim(climbing_sim.Wall.load(wall.id), cameras=[])
     rng = np.random.default_rng(1)
     for _ in range(5):
         q = random_configuration(model, rng)
-        sim.place(dict(zip(MICROBAN_JOINTS, q[7:], strict=True)), q[0:3], q[3:7])
+        by_name = dict(zip(MICROBAN_JOINTS, q[7:], strict=True))
+        theirs = sim.ball_positions_at([by_name[n] for n in climbing_sim.JOINTS], q[0:3], q[3:7])
         ours = np.array(model.limb_positions(q))
         for i, limb in enumerate(LIMBS):
-            assert np.allclose(ours[:, i], sim.site_pos(f"{ROBOT_PREFIX}{limb}_tip"), atol=1e-5)
+            assert np.allclose(ours[:, i], theirs[limb], atol=1e-6)
     cfg = tr.TransitionConfig()
-    for limb, point in sim.grasp_targets(wall.start).items():
-        assert np.allclose(point, tr.contact_point(wall, wall.start.contacts[limb], cfg))
+    sag = np.array([0.0, 0.0, col.SOCKET_RADIUS - hooks.BALL_RADIUS])  # the ball on the bottom
+    for limb, hold in sim.wall.start.items():
+        point = tr.contact_point(wall, wall.start.contacts[limb], cfg)
+        assert np.allclose(point, hold.socket - sag, atol=1e-9)
 
 
 def test_collision_points_match_microbans_mjcf(model):
     mujoco = pytest.importorskip("mujoco")
     mm = mujoco.MjModel.from_xml_path(str(rm.mjcf_path()))
     md = mujoco.MjData(mm)
-    shapes = [g for g in range(mm.ngeom) if mm.geom_group[g] == 3]  # Microban's collision group
+    # the model's boxes and cylinders: its mesh pieces are not points (collision.robot_shapes)
+    kinds = (int(mujoco.mjtGeom.mjGEOM_BOX), int(mujoco.mjtGeom.mjGEOM_CYLINDER))
+    shapes = [g for g in range(mm.ngeom) if int(mm.geom_type[g]) in kinds]
     q = random_configuration(model, np.random.default_rng(2))
     md.qpos[:7] = q[:7]  # MuJoCo's free joint is also (position, w, x, y, z)
     for i, name in enumerate(MICROBAN_JOINTS):
@@ -230,7 +233,9 @@ def test_collision_points_match_microbans_mjcf(model):
 
 
 def test_what_the_sim_draws_is_inside_the_checked_hulls(model):
-    """Every vertex of Microban's visual meshes lies in the convex hull checked on its link."""
+    """Every vertex of the model's visual meshes lies in a shape checked on its link: one of its
+    hulls, or on the climbing forearms and feet one of the model's pieces or the ball. The
+    pieces are a decomposition, a little inside the drawn mesh: 0.21 mm at most [Microban]."""
     mujoco = pytest.importorskip("mujoco")
     mm = mujoco.MjModel.from_xml_path(str(rm.mjcf_path()))
     md = mujoco.MjData(mm)
@@ -242,23 +247,29 @@ def test_what_the_sim_draws_is_inside_the_checked_hulls(model):
     positions, rotations = (np.array(m) for m in model.link_frames(q))
     index = {name: i for i, name in enumerate(model.link_names)}
     hulls: dict[str, list] = {}
+    balls: dict[str, np.ndarray] = {}
     for shape in col.robot_shapes():
-        if shape.limb is None:
-            i = index[shape.link]
-            r = rotations[:, 3 * i : 3 * i + 3]
-            normals = np.asarray(shape.geometry.normals()) @ r.T  # world
-            offsets = np.asarray(shape.geometry.offsets()).ravel()
-            centre = positions[:, i] + r @ shape.offset
-            hulls.setdefault(shape.link, []).append((normals, offsets - normals @ centre))
+        i = index[shape.link]
+        r = rotations[:, 3 * i : 3 * i + 3]
+        centre = positions[:, i] + r @ shape.offset
+        if shape.limb is not None:  # a ball, a sphere
+            balls[shape.link] = centre
+            continue
+        normals = np.asarray(shape.geometry.normals()) @ r.T  # world
+        offsets = np.asarray(shape.geometry.offsets()).ravel()
+        hulls.setdefault(shape.link, []).append((normals, offsets - normals @ centre))
     visual = [g for g in range(mm.ngeom) if mm.geom_group[g] == 2 and mm.geom_dataid[g] >= 0]
-    assert len(visual) == sum(len(h) for h in hulls.values())
     for g in visual:
         mesh = mm.geom_dataid[g]
         start, n = mm.mesh_vertadr[mesh], mm.mesh_vertnum[mesh]
         world = mm.mesh_vert[start : start + n] @ md.geom_xmat[g].reshape(3, 3).T + md.geom_xpos[g]
         link = mujoco.mj_id2name(mm, mujoco.mjtObj.mjOBJ_BODY, mm.geom_bodyid[g])
         outside = np.min([(world @ nrm.T + off).max(1) for nrm, off in hulls[link]], axis=0)
-        assert outside.max() < 1e-5, link  # inside one of its link's hulls (6-digit files)
+        if link in balls:  # a climbing forearm or foot: its pieces, or its ball
+            ball = np.linalg.norm(world - balls[link], axis=1) - hooks.BALL_RADIUS
+            assert np.minimum(outside, ball).max() < 3e-4, link
+        else:
+            assert outside.max() < 1e-5, link  # inside one of its link's hulls (6-digit files)
 
 
 # --- Collision geometry ------------------------------------------------------------------------
@@ -284,17 +295,17 @@ def test_hold_distance_is_exact_outside_and_signed_inside():
         pose = coal.Transform3s(np.eye(3), np.array(centre, dtype=float))
         return col.hold_distance(ball, pose, hold, np.zeros(3))
 
-    assert distance([0, 0, 0]).value == pytest.approx(0.00266, abs=5e-5)  # 12.66 - 10 mm
-    assert abs(distance([0, 0, -0.0027]).value) < col.TOUCHING  # resting: touching
-    assert distance([0, 0, -0.0057]).value == pytest.approx(-0.003, abs=5e-4)  # 3 mm in
-    assert distance([0, -0.05, 0]).value == pytest.approx(0.023, abs=1e-6)  # 5 cm out
+    assert distance([0, 0, 0]).value == pytest.approx(0.00016, abs=5e-5)  # 12.66 - 12.5 mm
+    assert abs(distance([0, 0, -0.00016]).value) < col.TOUCHING  # resting: touching
+    assert distance([0, 0, -0.0032]).value == pytest.approx(-0.003, abs=5e-4)  # 3 mm in
+    assert distance([0, -0.05, 0]).value == pytest.approx(0.0205, abs=1e-6)  # 5 cm out
     rng = np.random.default_rng(0)
     for _ in range(50):  # the direction `away` is the distance's gradient, outside and inside
         centre = rng.uniform([-0.03, -0.045, -0.03], [0.03, 0.03, 0.03])
         d = distance(centre)
         if abs(d.value) < 2e-4:
             continue
-        step = rng.normal(size=3) * 1e-6
+        step = rng.normal(size=3) * 1e-7  # small: no seam between two pieces within it
         change = distance(centre + step).value - d.value
         assert change == pytest.approx(d.away @ step, rel=0.02, abs=1e-10)
 
@@ -330,10 +341,8 @@ def test_the_robot_is_kept_clear_of_itself(model):
         and parent.get(shapes[j].link) != shapes[i].link
     }
     assert left_out == {  # beyond one link or one joint: only the shapes that always overlap
-        ("hip_20", "femur__configuration_right_28"),
-        ("tibia__configuration_right_30", "foot_38"),
-        ("hip_2_46", "femur__configuration_left_54"),
-        ("tibia__configuration_left_56", "foot_2_64"),
+        ("hip_21", "femur__configuration_right_29"),
+        ("hip_2_43", "femur__configuration_left_51"),
     }
     crossed = np.zeros(rm.NV)  # legs swung in, across each other
     crossed[6 + MICROBAN_JOINTS.index("right_hip_roll")] = 0.3
@@ -373,7 +382,7 @@ def test_limb_reach_bounds_every_pose(model):
 def test_two_limbs_changing_is_rejected(wall):
     start = wall.start.contacts
     plan = ContactPlan(
-        wall.id, [Stance(start), Stance({**start, "right_foot": "R1", "left_foot": "L1"})]
+        wall.id, [Stance(start), Stance({**start, "right_foot": "c26_r7", "left_foot": "c21_r7"})]
     )
     with pytest.raises(ValueError, match="transition 0: exactly one limb"):
         validate_plan(wall, plan)
@@ -382,14 +391,14 @@ def test_two_limbs_changing_is_rejected(wall):
 def test_a_repeated_hold_id_is_rejected(wall):
     twice = replace(wall, holds=[*wall.holds, Hold(wall.holds[0].id, (0.6, 0.0, 1.0))])
     with pytest.raises(ValueError, match="repeated hold ids"):
-        validate_plan(twice, ContactPlan(wall.id, first_row(wall).stances))
+        validate_plan(twice, ContactPlan(wall.id, [wall.start]))
 
 
 def test_unknown_hold_and_wrong_wall_are_rejected(wall):
     start = wall.start.contacts
-    with pytest.raises(ValueError, match="stance 1: right_foot is on 'R99'"):
+    with pytest.raises(ValueError, match="stance 1: right_foot is on 'c99_r99'"):
         validate_plan(
-            wall, ContactPlan(wall.id, [Stance(start), Stance({**start, "right_foot": "R99"})])
+            wall, ContactPlan(wall.id, [Stance(start), Stance({**start, "right_foot": "c99_r99"})])
         )
     with pytest.raises(ValueError, match="for wall 'other'"):
         validate_plan(wall, ContactPlan("other", [Stance(start), Stance(start)]))
@@ -443,9 +452,9 @@ def test_feasibility_passes_the_example_moves_and_says_why_not(wall):
         assert verdict.feasible, verdict.reason
         assert 0 < verdict.cost <= 1  # peak torque over the edge poses, as a fraction of the limit
     a = stances[0]
-    both = Stance({**a.contacts, "right_hand": "R4", "left_hand": "L4"})
+    both = Stance({**a.contacts, "right_hand": "c29_r27", "left_hand": "c18_r27"})
     assert "exactly one limb" in feasibility(wall, a, both).reason
-    too_high = Stance({**a.contacts, "right_hand": "R6"})  # a hand up 0.225 m: past the torque
+    too_high = Stance({**a.contacts, "right_hand": "c29_r37"})  # a hand up 0.225 m: past the torque
     verdict = feasibility(wall, a, too_high)
     assert not verdict.feasible and verdict.reason.split(":")[0] in fe.CHECKS
     high = Hold("HIGH", (0.5, 0.0, 1.0))  # a hand 0.8 m above the feet: no solve needed
@@ -455,15 +464,16 @@ def test_feasibility_passes_the_example_moves_and_says_why_not(wall):
 
 
 def test_a_transition_moves_one_limb_and_keeps_the_rules(wall, results, model):
-    cfg, result = tr.TransitionConfig(), results[2]  # right foot R0 -> R1, after the hands
-    assert result.moving == "right_foot"
-    m = LIMBS.index("right_foot")
+    plan, cfg = first_row(wall), tr.TransitionConfig()
+    i = next(i for i, r in enumerate(results) if r.moving.endswith("foot"))  # the first foot move
+    result, a, b = results[i], plan.stances[i], plan.stances[i + 1]
+    m = LIMBS.index(result.moving)
     balls = [np.array(model.limb_positions(q)) for q in result.q]
-    target = tr.contact_point(wall, "R1", cfg)
+    target = tr.contact_point(wall, b.contacts[result.moving], cfg)
     assert np.linalg.norm(balls[-1][:, m] - target) < 1e-3  # arrives
-    assert np.linalg.norm(result.forces["right_foot"][cfg.release_sample]) < 1e-6  # let go at K
+    assert np.linalg.norm(result.forces[result.moving][cfg.release_sample]) < 1e-6  # let go at K
     assert np.abs(result.tau).max() <= cfg.tau_limit + 1e-6
-    holds = tr.contact_points(wall, first_row(wall).stances[2], cfg)
+    holds = tr.contact_points(wall, a, cfg)
     for k, b in enumerate(balls):  # the other three never leave their holds
         others = [i for i in range(4) if i != m]
         assert np.abs(b[:, others] - holds[:, others]).max() < 1e-3, f"sample {k}"
@@ -522,7 +532,7 @@ def test_transitions_chain_and_every_hold_change_is_solved(wall, results):
 
 
 def test_optimise_returns_a_trajectory_that_round_trips(wall, tmp_path):
-    traj = optimise(wall, ContactPlan(wall.id, first_row(wall).stances[2:4]))  # a foot move
+    traj = optimise(wall, ContactPlan(wall.id, first_row(wall).stances[:2]))  # the first move
     assert traj.joint_names == list(MICROBAN_JOINTS)
     assert all(a < b for a, b in zip(traj.times, traj.times[1:], strict=False))
     assert len(traj.positions) == len(traj.times)
@@ -564,8 +574,8 @@ def test_the_move_cache_keys_on_the_layout_not_on_the_wall(wall, results, tmp_pa
 
 
 def test_feasibility_answers_from_the_cache_and_stores_its_rejections(wall, tmp_path):
-    a = first_row(wall).stances[0]
-    far = Stance({**a.contacts, "right_hand": "R6"})  # rejected by the checks (a 0.225 m reach)
+    a = wall.start
+    far = Stance({**a.contacts, "right_hand": "c29_r37"})  # rejected by the checks (0.225 m up)
     cfg = tr.TransitionConfig()
     os.environ["RCR_MOVE_CACHE"] = str(tmp_path)
     try:
@@ -593,7 +603,7 @@ def test_targets_are_preloaded_against_sag(results, wall):
 def test_an_impossible_transition_raises_naming_it():
     wall = io.load_wall(WALL)  # a hand up 0.225 m, the feet on the bottom row
     start = wall.start.contacts
-    plan = ContactPlan(wall.id, [Stance(start), Stance({**start, "right_hand": "R6"})])
+    plan = ContactPlan(wall.id, [Stance(start), Stance({**start, "right_hand": "c29_r37"})])
     with pytest.raises(tr.OptimisationError, match="transition 0 .*cannot hold stance 1"):
         solve_plan(wall, plan)
 
@@ -782,7 +792,7 @@ def replay(wall: WallModel, view: bool = True) -> None:
     """Play TRAJECTORY (saved by --save) in the sim, without solving anything."""
     traj = io.load_trajectory(TRAJECTORY)
     if traj.trunk_poses is None or traj.planned_positions is None:
-        sys.exit(f"{TRAJECTORY} has no planned motion to replay: solve it with --hard --save")
+        sys.exit(f"{TRAJECTORY} has no planned motion to replay: solve it with --hard PLAN --save")
     print(f"replaying {TRAJECTORY}: {traj.times[-1]:.0f} s, {len(traj.times)} samples")
     start = None
 
@@ -798,20 +808,19 @@ def replay(wall: WallModel, view: bool = True) -> None:
 
 
 def play(wall: WallModel, pose, done, view: bool) -> None:
-    """Show pose(now) in the sim, kinematically (None: nothing to show yet), until the window
-    closes or, without one, until done()."""
+    """Show pose(now) in the organisers' sim, kinematically (None: nothing to show yet), until the
+    window closes or, without one, until done()."""
     import mujoco
+    from climbing_sim import ClimbingSim, Wall
 
-    from rcr.sim import Sim
-
-    sim = Sim(wall, out=None)
+    sim = ClimbingSim(Wall.load(wall.id), cameras=[])  # their wall of that name
+    qpos = [sim.model.jnt_qposadr[sim.model.joint(name).id] for name in MICROBAN_JOINTS]
 
     def frame() -> None:
         q = pose(time.perf_counter())
         if q is not None:
             sim.data.qpos[0:7] = q[0:7]  # the optimiser's q is laid out as the sim's qpos
-            for i, name in enumerate(sim.joint_names):
-                sim.data.qpos[sim._act_qpos[i]] = q[7 + MICROBAN_JOINTS.index(name)]
+            sim.data.qpos[qpos] = q[7:]
             mujoco.mj_forward(sim.model, sim.data)
 
     if view:
@@ -828,10 +837,10 @@ def play(wall: WallModel, pose, done, view: bool) -> None:
             time.sleep(0.02)
 
 
-USAGE = """usage: tests/test_optimiser.py --hard [--save | --replay] [--send PI] [--headless]
-    --hard            solve the example plan (contact_plan_hard.json) and play it as it comes
-    --hard --save     the same, and save it in data/examples/trajectory.json
-    --hard --replay   play data/examples/trajectory.json, without solving
+USAGE = """usage: tests/test_optimiser.py --hard PLAN [--save | --replay] [--send PI] [--headless]
+    --hard PLAN           solve the contact plan PLAN (a contact_plan/1 file), play it as it comes
+    --hard PLAN --save    the same, and save it in data/examples/trajectory.json
+    --hard PLAN --replay  play data/examples/trajectory.json on PLAN's wall, without solving
     --send PI         also send each solved move to the robot at PI (rcr.link), move by move"""
 
 if __name__ == "__main__":
@@ -843,15 +852,18 @@ if __name__ == "__main__":
             sys.exit("--send needs the robot's address\n" + USAGE)
         send = args.pop(i + 1).split("@")[-1]  # pi@172.20.10.8 as for scripts/pi.sh: the address
         args.pop(i)
+    if "--hard" not in args or args.index("--hard") + 1 >= len(args):
+        sys.exit(USAGE)
+    plan = io.load_contact_plan(Path(args.pop(args.index("--hard") + 1)))
     flags = set(args)
-    if "--hard" not in flags or not flags <= {"--hard", "--save", "--replay", "--headless"}:
+    if not flags <= {"--hard", "--save", "--replay", "--headless"}:
         sys.exit(USAGE)
     if send and "--replay" in flags:
         sys.exit("--send sends what is solved; to send a saved one: scripts/link_pi.py stream")
     if {"--save", "--replay"} <= flags:
         sys.exit("--save solves and saves, --replay plays what was saved: pick one\n" + USAGE)
-    wall, view = io.load_wall(WALL), "--headless" not in flags
+    wall, view = io.load_wall(EXAMPLES / f"{plan.wall_id}.json"), "--headless" not in flags
     if "--replay" in flags:
         replay(wall, view)
     else:
-        run_plan(wall, io.load_contact_plan(PLAN), view, save="--save" in flags, send=send)
+        run_plan(wall, plan, view, save="--save" in flags, send=send)

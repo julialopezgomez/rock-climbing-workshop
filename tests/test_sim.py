@@ -1,217 +1,163 @@
-"""The sim in one place: watch the robot on the wall, and check that the sim works.
+"""The organisers' simulator (third_party/simulator, climbing_sim) on their walls, with our types:
+watch the robot on a wall, and check that our side fits their sim.
 
-    uv run mjpython tests/test_sim.py               # robot on the example wall, until closed
-    uv run mjpython tests/test_sim.py organisers    # or l1 | l2 | l3 | organisers | a wall/1 file
-    uv run mjpython tests/test_sim.py stances       # apply the STANCES below, one after another
-    uv run pytest tests/test_sim.py                 # the checks
+    uv run mjpython tests/test_sim.py                  # their wall N1
+    uv run mjpython tests/test_sim.py N2               # or N3, or a wall JSON file of theirs
+    uv run mjpython tests/test_sim.py stances          # apply the STANCES below, in turn (on N1)
+    uv run pytest tests/test_sim.py                    # the checks
 
-macOS needs `mjpython` for the viewer (Linux: plain `python`). Needs `uv sync --group sim` and
-Microban (src/rcr/sim/README.md); without them pytest skips this file.
+macOS needs `mjpython` for the viewer (Linux: plain `python`). Needs `uv sync --group sim` and the
+submodule (`git submodule update --init`); without them pytest skips this file. Their sim and walls
+are used as they are: our side converts (their wall to ours: rcr.walls.from_organisers; their
+observation and targets: rcr.robot.observation).
 
-`run()` is the loop the other parts connect to: today the targets just hold the start pose; later
-`targets = controller.step(state)`, and `sim.expect(stance)` when the plan moves on.
+`run()` is the loop the other parts connect to: today the targets hold the start pose; later
+`targets = controller.step(state)`.
 """
 
 import sys
-import time
 from pathlib import Path
 
-import numpy as np
 import pytest
 
-mujoco = pytest.importorskip("mujoco")
+climbing_sim = pytest.importorskip("climbing_sim")
 
-from rcr import io  # noqa: E402
-from rcr.sim import Sim, levels  # noqa: E402
-from rcr.sim.scene import MICROBAN_XML  # noqa: E402
-from rcr.sim.start import NEUTRAL_POSE  # noqa: E402
-from rcr.types import MICROBAN_JOINTS, JointTargets, Stance, WallModel  # noqa: E402
+from climbing_sim import JOINTS, ClimbingSim, Hold, Wall  # noqa: E402
 
-EXAMPLE_WALL = Path(__file__).resolve().parent.parent / "data" / "examples" / "wall_hard.json"
-WALLS = {"l1": levels.level1, "l2": levels.level2, "l3": levels.level3}
-WALLS["organisers"] = levels.organisers_wall
+from rcr import io, walls  # noqa: E402
+from rcr.robot import to_state, to_targets  # noqa: E402
+from rcr.types import MICROBAN_JOINTS, JointTargets, Pose  # noqa: E402
+
+EXAMPLES = Path(__file__).resolve().parent.parent / "data" / "examples"
 
 
-def load_wall(name: str | None = None) -> WallModel:
-    if name in WALLS:
-        return WALLS[name]()
-    return io.load_wall(Path(name) if name else EXAMPLE_WALL)
+def load_wall(name: str = "N1") -> Wall:
+    """One of their walls: a bundled name (N1, N2, N3) or a wall JSON file of theirs."""
+    return Wall.load(name)
 
 
-# --- Run: the robot in the sim, in the viewer -----------------------------------------------------
+def base_pose(sim: ClimbingSim) -> Pose:
+    """The trunk, ground truth: what the cameras would give."""
+    position, quat = sim.trunk_pose()
+    return Pose(tuple(position), tuple(quat))
 
 
-def run(wall: WallModel) -> None:
-    sim = Sim(wall)
-    state = sim.reset()  # hanging on wall.start, time = 0
+# --- Run: the robot in their sim, in the viewer ---------------------------------------------------
+
+
+def run(wall: Wall) -> None:
+    sim = ClimbingSim(wall)
+    obs = sim.reset_hanging()  # hanging on wall.start, settled
+    t0, last = obs["time"], list(sim.joint_positions())
+    state = to_state(obs, JOINTS, t0, base_pose(sim))
     hold = JointTargets(positions=dict(state.joint_positions))
-
-    import mujoco.viewer
-
-    with mujoco.viewer.launch_passive(sim.model, sim.data) as viewer:
-        while viewer.is_running():
-            tick = time.perf_counter()
-            targets = hold  # later: targets = controller.step(state)
-            state = sim.step(targets)  # one 20 ms tick
-            viewer.sync()
-            time.sleep(max(0.0, 0.02 - (time.perf_counter() - tick)))  # real time
-
-    print(f"t = {state.time:.1f} s, gripping: {', '.join(sim.attachment.attached_limbs())}")
-    print(f"score: height {sim.score.height:.3f} m, top reached at {sim.score.top_time}")
+    viewer = sim.view()  # every step shows, in real time
+    while viewer.is_running():
+        targets = hold  # later: targets = controller.step(state)
+        last = to_targets(targets, JOINTS, last)
+        obs = sim.step(last)  # one 20 ms tick
+        state = to_state(obs, JOINTS, t0, base_pose(sim))
+    print(f"t = {state.time:.1f} s, hooked: {sim.hooked()}")
 
 
 # --- Stances: define them here, apply them, look at them ----------------------------------------
-# A Stance (rcr.types) is a hold id or None (free) per limb. These use the example wall's holds
-# (data/examples/wall_hard.json): L0..L7 left, R0..R7 right, M2 and M5 in the middle.
+# A stance here is a hold of N1 per limb, as their (col, row): their sim hangs the robot on four
+# holds, so every limb has one. N1's rungs are 5 rows (75 mm) apart.
 
 STANCES = {
-    "start": Stance({"right_hand": "R3", "left_hand": "L3", "right_foot": "R0", "left_foot": "L0"}),
-    "right hand free": Stance(
-        {"right_hand": None, "left_hand": "L3", "right_foot": "R0", "left_foot": "L0"}
-    ),
-    "right hand up": Stance(
-        {"right_hand": "R4", "left_hand": "L3", "right_foot": "R0", "left_foot": "L0"}
-    ),
-    "one row higher": Stance(
-        {"right_hand": "R4", "left_hand": "L4", "right_foot": "R1", "left_foot": "L1"}
-    ),
-}
+    "start": {
+        "right_hand": (29, 22), "left_hand": (18, 22), "right_foot": (26, 2), "left_foot": (21, 2)
+    },
+    "right hand up": {
+        "right_hand": (29, 27), "left_hand": (18, 22), "right_foot": (26, 2), "left_foot": (21, 2)
+    },
+    "one rung higher": {
+        "right_hand": (29, 27), "left_hand": (18, 27), "right_foot": (26, 7), "left_foot": (21, 7)
+    },
+}  # fmt: skip
 
 
-def verify(sim: Sim, stance: Stance) -> str:
-    """Apply the stance: can every ball reach its cup without hitting the wall or itself?
-
-    Returns "" if it can, else the reason.
-    """
-    try:
-        sim.reset(stance)  # solves the joint angles for the stance, grips, settles
-    except ValueError as e:
-        return str(e)
-    if sim.wall_penetration() > 0.001:
-        return f"hits the wall by {sim.wall_penetration() * 1e3:.0f} mm"
-    if sim.self_penetration() > 0.001:
-        return f"hits itself by {sim.self_penetration() * 1e3:.0f} mm"
-    return ""
+def verify(sim: ClimbingSim, stance: dict) -> str:
+    """Hang the robot on the stance: does every ball stay in its hold? "" if so, else the reason."""
+    holds = {limb: Hold(*cell) for limb, cell in stance.items()}
+    sim.reset_hanging(holds)
+    wanted = {limb: sim.wall.holds.index(h) for limb, h in holds.items()}
+    missed = [limb for limb, k in sim.hooked().items() if k != wanted[limb]]
+    return f"not in their holds: {', '.join(missed)}" if missed else ""
 
 
-def show_stances(wall: WallModel, seconds: float = 3.0) -> None:
+def show_stances(seconds: float = 3.0) -> None:
     """Apply each stance in STANCES in the viewer, `seconds` each, round and round until closed."""
-    sim = Sim(wall)
-
-    import mujoco.viewer
-
-    with mujoco.viewer.launch_passive(sim.model, sim.data) as viewer:
-        while viewer.is_running():
-            for name, stance in STANCES.items():
-                problem = verify(sim, stance)
-                print(f"{name:<16} {'ok' if not problem else problem}")
-                if problem.startswith("stance not reachable") or not viewer.is_running():
-                    continue  # nothing to show
-                state = sim.state()
-                hold = JointTargets(positions=dict(state.joint_positions))
-                while viewer.is_running() and state.time < seconds:
-                    tick = time.perf_counter()
-                    state = sim.step(hold)
-                    viewer.sync()
-                    time.sleep(max(0.0, 0.02 - (time.perf_counter() - tick)))
+    sim = ClimbingSim(load_wall())
+    viewer = sim.view()
+    while viewer.is_running():
+        for name, stance in STANCES.items():
+            problem = verify(sim, stance)
+            print(f"{name:<16} {'ok' if not problem else problem}")
+            hold = sim.joint_positions()
+            for _ in range(round(seconds / sim.control_dt)):
+                if not viewer.is_running():
+                    return
+                sim.step(hold)
 
 
 # --- Checks (pytest) ------------------------------------------------------------------------------
 
-pytestmark = pytest.mark.skipif(
-    not MICROBAN_XML.exists(),
-    reason=f"no Microban at {MICROBAN_XML}: run `git submodule update --init`",
-)
+
+@pytest.fixture(scope="module")
+def sim():
+    return ClimbingSim(load_wall(), cameras=[])
 
 
-def test_grid_and_hold_follow_the_rules():
-    from rcr.sim.geometry import BOLT_SPACING, N_COLS, N_ROWS, CupHold, hold_position
-
-    assert (N_COLS, N_ROWS) == (52, 93)  # [Rules v1.1 Figure 2]
-    assert BOLT_SPACING == pytest.approx(0.030)  # [Rules v1.1 Figure 3]
-    assert hold_position(20, 10) == pytest.approx((0.3175, 0.0, 0.16))  # the bolt midpoint
-    for i in (0, N_COLS - 1):
-        with pytest.raises(ValueError, match="bolt off the grid"):
-            hold_position(i, 10)
-    hold = CupHold()  # the organisers' hold.stl
-    hold.validate()  # inside the Ø0.060 x 0.100 m envelope
-    v = hold.vertices()
-    assert -v[:, 1].min() == pytest.approx(0.043)  # depth [Rules Figure 3]
-    assert v[:, 1].max() == pytest.approx(0.0)  # back face on the wall
-    socket = np.linalg.norm(v - hold.mesh_pos, axis=1)  # distances from the socket centre
-    assert np.isclose(socket, hold.socket_radius, atol=1e-4).sum() > 1000  # the spherical socket
-    # a ball as big as the socket sits on its centre: 14 mm down, 26 mm out [Rules Figure 3]
-    assert hold.grasp_point((0.3, 0.0, 0.5), hold.socket_radius) == pytest.approx(
-        (0.3, -0.026, 0.486)
-    )
+def test_their_joints_are_ours():
+    assert sorted(JOINTS) == sorted(MICROBAN_JOINTS)
 
 
-@pytest.fixture
-def sim(tmp_path):
-    return Sim(load_wall(), out=tmp_path / "scene.xml")
+@pytest.mark.parametrize("name", ["N1", "N2", "N3"])
+def test_our_walls_are_theirs(name):
+    """data/examples/N*.json (scripts/wall_generator.py) are their walls: each hold is theirs,
+    named c<col>_r<row>, at their bolt midpoint, and the start is theirs."""
+    theirs = Wall.load(name)
+    ours = io.load_wall(EXAMPLES / f"{name}.json")
+    assert ours == walls.from_organisers(theirs, level=int(name[1]))
+    for hold, h in zip(ours.holds, theirs.holds, strict=True):
+        assert hold.id == f"c{h.col}_r{h.row}"
+        assert hold.position == pytest.approx(tuple(h.bolt_axis), abs=1e-9)
+    assert ours.start.contacts == {k: f"c{h.col}_r{h.row}" for k, h in theirs.start.items()}
 
 
-def test_reset_hangs_the_robot_on_the_start_stance(sim):
-    state = sim.reset()
-    assert state.time == 0.0
+def test_the_robot_hangs_on_the_example_start(sim):
+    obs = sim.reset_hanging()
+    for _ in range(50):  # 1 s more, holding the pose
+        obs = sim.step(sim.joint_positions())
+    start = {limb: sim.wall.holds.index(h) for limb, h in sim.wall.start.items()}
+    assert sim.hooked() == start
+    state = to_state(obs, JOINTS, base=base_pose(sim))
     assert set(state.joint_positions) == set(MICROBAN_JOINTS)
-    for limb, hold in sim.wall.start.contacts.items():
-        assert sim.attachment.held_hold(limb) == hold
-    right, left = (sim.site_pos(f"rob_{side}_hand_tip") for side in ("right", "left"))
-    assert right[0] > left[0]  # facing the wall: right hand at larger x
     assert state.base_pose.position[1] < 0  # in front of the wall
 
 
-def test_holding_the_start_pose_is_stable(sim):
-    state = sim.reset()
-    before = np.array(state.base_pose.position)
-    hold = JointTargets(positions=dict(state.joint_positions))
-    for _ in range(100):  # 2 s
-        state = sim.step(hold)
-    assert state.time == pytest.approx(2.0)
-    assert len(sim.attachment.attached_limbs()) == 4
-    assert np.linalg.norm(np.array(state.base_pose.position) - before) < 0.005
-    assert sim.wall_penetration() < 0.001
-
-
-def test_step_follows_the_joint_targets_contract(sim):
-    sim.reset()
-    sim.step(JointTargets(positions={"head": 0.3}))
-    assert sim._target[sim._index["head"]] == 0.3
-    assert sim._target[sim._index["left_knee"]] == NEUTRAL_POSE["left_knee"]  # absent: neutral
+def test_targets_follow_the_joint_targets_contract(sim):
+    sim.reset_hanging()
+    last = list(sim.joint_positions())
+    target = to_targets(JointTargets(positions={"head": 0.3}), JOINTS, last)
+    assert target[JOINTS.index("head")] == 0.3
+    knee = JOINTS.index("left_knee")
+    assert target[knee] == last[knee]  # absent: keeps its last target, as a Microban move
+    sim.step(target)
     with pytest.raises(KeyError, match="unknown joints"):
-        sim.step(JointTargets(positions={"tail": 0.0}))
+        to_targets(JointTargets(positions={"tail": 0.0}), JOINTS, last)
 
 
-def test_expect_releases_the_limb_that_moves_on(sim):
-    sim.reset()
-    sim.expect(Stance(contacts={**sim.wall.start.contacts, "right_hand": "R4"}))
-    assert not sim.attachment.is_attached("right_hand")
-    assert sim.attachment.is_attached("left_hand")
-    assert sim.score.height == pytest.approx(0.385)  # the start hands, R3/L3
-    assert sim.score.top_time is None
-
-
-@pytest.mark.parametrize("name", ["l1", "organisers"])
-def test_other_walls_have_a_start_pose(name, tmp_path):
-    Sim(load_wall(name), out=tmp_path / "scene.xml").reset()
-
-
-def test_verify_accepts_a_reachable_stance(sim):
-    assert verify(sim, sim.wall.start) == ""
-    assert verify(sim, Stance({**sim.wall.start.contacts, "right_hand": None})) == ""  # 3 limbs
-
-
-def test_verify_rejects_what_the_robot_cannot_do(sim):
-    too_far = {"right_hand": "R6", "left_hand": "L6", "right_foot": "R0", "left_foot": "L0"}
-    assert "not reachable" in verify(sim, Stance(too_far))  # a 0.45 m stretch
-    crossed = {"right_hand": None, "left_hand": "L2", "right_foot": "L0", "left_foot": "R0"}
-    assert "hits itself" in verify(sim, Stance(crossed))
+def test_verify_accepts_the_start_and_rejects_a_stretch(sim):
+    assert verify(sim, STANCES["start"]) == ""
+    too_far = {**STANCES["start"], "right_hand": (29, 42), "left_hand": (18, 42)}  # hands 0.6 m up
+    assert "not in their holds" in verify(sim, too_far)
 
 
 if __name__ == "__main__":
     args = sys.argv[1:]
     if args[:1] == ["stances"]:
-        show_stances(load_wall(args[1] if len(args) > 1 else None))
+        show_stances()
     else:
-        run(load_wall(args[0] if args else None))
+        run(load_wall(*args[:1]))

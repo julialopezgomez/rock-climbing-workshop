@@ -24,7 +24,7 @@ marked **CHANGE** below are the ones we expect to change.
     Its reference point (`Hold.position`) is the bolt midpoint, which is hole (i, j) itself:
     x = 0.0175 + 0.015·i, z = 0.010 + 0.015·j, y = 0, with i = 1..50.
   - A hold fits a Ø0.060 × 0.100 m cylinder whose axis is normal to the wall, centred between the bolts.
-  - The provided hold [Rules Figure 3; mesh in `data/holds/hold.stl`]: a bucket below the bolt line with a spherical
+  - The provided hold [Rules Figure 3; the organisers' simulator's mesh, `climbing_sim/assets/hold/hold_visual.stl`]: a bucket below the bolt line with a spherical
     socket (radius 0.0127 m) that takes the robot's ball end. The socket centre is 0.014 m below and 0.026 m out from
     `Hold.position` (wall frame offset (0, −0.026, −0.014)); the hold sticks out 0.043 m from the wall.
     `Hold.position` stays the bolt midpoint, so walls do not depend on the hold shape.
@@ -78,11 +78,11 @@ marked **CHANGE** below are the ones we expect to change.
 | | `imu_quat` | `(w, x, y, z)` | body orientation |
 | | `gyro` | `(x, y, z)` rad/s | body frame |
 | | `base_pose` | `Pose \| None` | from the cameras over the link, if used. **CHANGE** |
-| `JointTargets` | `positions` | `dict[str, float]` rad | position targets; the servos run their own P loop; absent joints go to neutral [Microban `MotorCommand`]. **CHANGE** per-joint kp |
+| `JointTargets` | `positions` | `dict[str, float]` rad | position targets; the servos run their own P loop; absent joints keep their last target [Microban dev_v2, docs/moves.md]. **CHANGE** per-joint kp |
 
 `RobotState` and `JointTargets` are the controller's per-tick input and output, so they stay in memory and have no file
-format. They are a subset of Microban's `observer.RobotState` and `MotorCommand`. The Move wrapper converts between ours and Microban's
-([src/rcr/robot/README.md](src/rcr/robot/README.md)).
+format. They are a subset of Microban's `observer.RobotState` and `MotorCommand`. `rcr.robot.to_state` / `to_targets` convert between
+ours and Microban's, for the robot and the organisers' sim alike ([src/rcr/robot/README.md](src/rcr/robot/README.md)).
 
 ## Module signatures
 
@@ -93,7 +93,7 @@ format. They are a subset of Microban's `observer.RobotState` and `MotorCommand`
 | optimiser | laptop | `optimise(wall, plan) -> Trajectory`, `feasibility(wall, a, b) -> Feasibility` |
 | link | both | `send_trajectory(trajectory or file, robot)`; `segment(trajectory, start)`; `LaptopLink(robot)`: `send_trajectory(final=True)`, `append_segment`, `finish`, `start`, `stop`, `send_pose`, `robot_state`, `ping`, `close`; `RobotLink()`: `trajectory`, `trajectory_complete`, `run_requested`, `pose`, `send_state`, `close`. Wire format: [link/protocol.py](src/rcr/link/protocol.py) |
 | controller | robot | `Controller(trajectory).step(state: RobotState) -> JointTargets` |
-| sim | laptop | `Sim(wall).reset() -> RobotState`, `.step(targets: JointTargets) -> RobotState` |
+| sim | laptop | the organisers' `climbing_sim.ClimbingSim` on their wall (`Wall.load(name)`), used as it is; their wall as ours: `walls.from_organisers(wall, level)`; `robot.to_targets(targets, JOINTS, last)` -> their `step()`; `robot.to_state(obs, JOINTS)` -> `RobotState` |
 
 ## File formats
 
@@ -106,37 +106,32 @@ layout is fine.
 ```json
 {
   "schema": "wall/1",
-  "id": "example_hard",
+  "id": "N1",
   "level": 1,
   "holds": [
-    {"id": "L0", "position": [0.3175, 0.0, 0.16], "kind": "unknown"},
-    {"id": "R0", "position": [0.4825, 0.0, 0.16], "kind": "unknown"}
+    {"id": "c26_r2", "position": [0.4225, 0.0, 0.04], "kind": "unknown"},
+    {"id": "c21_r2", "position": [0.3475, 0.0, 0.04], "kind": "unknown"}
   ],
-  "start": {"contacts": {"right_hand": "R3", "left_hand": "L3", "right_foot": "R0", "left_foot": "L0"}}
+  "start": {"contacts": {"right_hand": "c29_r22", "left_hand": "c18_r22", "right_foot": "c26_r2", "left_foot": "c21_r2"}}
 }
 ```
-(Excerpt: the [full example](data/examples/wall_hard.json) has 34 holds up to z = 1.27 m on the 1.4 m board.
-- Up to 0.70 m: the columns drift and the rows are uneven, 0.06–0.09 m apart.
-- 0.70–0.90 m: random holds, each at most 3 cm sideways from the one below it on its side.
-- Above 0.90 m: a regular ladder, rows every 0.075 m.
-
-It is the only example wall. An earlier regular wall, rows every 0.075 m, was removed.)
+(Excerpt: the example walls are the organisers' own, [N1](data/examples/N1.json), N2 and N3, converted from their
+simulator by `scripts/wall_generator.py`: hold id `c<col>_r<row>` (their hold's left bolt hole), position their bolt
+midpoint, start their start holds.)
 
 ### Contact plan: `contact_plan/1`
 
 ```json
 {
   "schema": "contact_plan/1",
-  "wall_id": "example_hard",
+  "wall_id": "N1",
   "stances": [
-    {"contacts": {"right_hand": "R3", "left_hand": "L3", "right_foot": "R0", "left_foot": "L0"}},
-    {"contacts": {"right_hand": "R3", "left_hand": "L4", "right_foot": "R0", "left_foot": "L0"}},
-    {"contacts": {"right_hand": "R3", "left_hand": "L4", "right_foot": "R0", "left_foot": "L1"}}
+    {"contacts": {"right_hand": "c29_r22", "left_hand": "c18_r22", "right_foot": "c26_r2", "left_foot": "c21_r2"}},
+    {"contacts": {"right_hand": "c29_r27", "left_hand": "c18_r22", "right_foot": "c26_r2", "left_foot": "c21_r2"}}
   ]
 }
 ```
-(Excerpt: the [full example](data/examples/contact_plan_hard.json) climbs in 38 moves, in an irregular order, until
-the hands are at 1.27 m. Above 0.70 m each move was kept only once the full trajectory optimisation had solved it.)
+(An illustration on N1. There is no example plan file yet: our planner's plan on the organisers' walls comes next.)
 
 ### Trajectory: `trajectory/2`
 
@@ -151,7 +146,6 @@ the hands are at 1.27 m. Above 0.70 m each move was kept only once the full traj
 }
 ```
 `trajectory/2` adds the two optional replay fields to `trajectory/1`; `null` when absent. The
-[example](data/examples/trajectory.json) is the optimiser's solution of the example plan, written by
-`tests/test_optimiser.py --hard --save`.
-
-The wall and the plan are made-up examples, valid against the types; the trajectory is solved from them.
+[example](data/examples/trajectory.json) is kept only as a sample file for the link and the Pi: it was solved
+for our former example wall and the old robot model, so it does not climb any current wall. A new one comes from
+`tests/test_optimiser.py --hard PLAN --save`, once there is a plan on the organisers' walls.

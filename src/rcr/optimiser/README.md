@@ -52,11 +52,11 @@ never on the moves before it.
 
   Moving all holds by whole grid holes moves the problem with them, so a move solved on one wall serves any wall where
   its holds are laid out alike. A stored motion is checked again for collisions on the actual wall before it is used.
-  A new version (real limbs, other settings) starts with an empty cache.
+  A new version (another model, other settings) starts with an empty cache.
 - **Filling it:** `scripts/fill_cache.py` climbs generated walls (levels 1–3) and stores every move it asks for,
   feasible or not. It resumes where it stopped. `--no-store` measures how many moves the cache already answers.
 - **Every run uses it, with no setting:**
-  - `optimise`, `solve_plan` and the runner (`tests/test_optimiser.py --hard`) take stored moves from
+  - `optimise`, `solve_plan` and the runner (`tests/test_optimiser.py --hard PLAN`) take stored moves from
     `build/move_cache/` and add each new one;
   - `feasibility()` answers a stored move at once and stores its own rejections;
   - `RCR_MOVE_CACHE=<folder>` uses another cache, and `RCR_MOVE_CACHE=off` none (the tests set it, so they always
@@ -71,20 +71,20 @@ never on the moves before it.
     repair search replaced each by another limb first. The plan now has 38 moves (72 minutes to solve, failures
     included). The dense re-check (0.5 mm steps) finds one spot: in move 36, just before the left foot's ball lands
     in L12, a finger edge is 0.13 mm into L12 for an instant (0.05 mm allowed). The solver's 2 mm steps miss it.
-    Left as is for now: it is a tenth of a millimetre on a placeholder hook.
+    Left as is for now: it is a tenth of a millimetre.
   - *Level 1 ladder* (rules' generator, rungs 0.09 m apart): 13 moves were solved up to 0.82 m. The next 14, to 1.27 m,
     all came from the cache: the same layout one rung higher. In all, the cache answered 85 of the 99 moves the climb
     asked about.
   - *Unseen walls, level 2 (gaps) and level 3 (drift):* a cache filled on level 1 answered only the first moves,
     where the walls are alike. Gaps and drift make new layouts, solved once each, so the cache has to be filled on
     many walls of all three levels.
-- **On competition day:** put the real limbs in `rcr.robot.hooks` and run the tests. The cache's version changes,
-  so it starts empty. Then run `scripts/fill_cache.py` on as many generated walls as there is time for.
+- **After a model change:** the cache's version changes, so it starts empty. Run `scripts/fill_cache.py` on as many
+  generated walls as there is time for.
 
 ## Files
 | File | What |
 |---|---|
-| `robot_model.py` | reads the URDF (never edited), and Microban's collision shapes and visual meshes from its MJCF; adds the hooks (from `rcr.robot.hooks`); builds the CasADi functions (`limb_positions`, `limb_jacobians`, `com`, `gravity_torques`, `body_points`, `integrate`, `link_frames`, `point_jacobian`) once |
+| `robot_model.py` | reads the climbing model's URDF (never edited), and its collision shapes and visual meshes from its MJCF; builds the CasADi functions (`limb_positions`, `limb_jacobians`, `com`, `gravity_torques`, `body_points`, `integrate`, `link_frames`, `point_jacobian`) once |
 | `transition.py` | `TransitionConfig`, `solve_static_pose`, `solve_transition`; the physics of one sample, each as a small function; the collision loop `_solve_clear` |
 | `collision.py` | the hold mesh and its convex pieces, the robot's convex shapes, exact signed distances and their gradients (`coal`), and `check_trajectory` along a motion |
 | `edge_checks.py` | `feasibility(wall, a, b)` and `trace`: the checks above, and their cache |
@@ -142,11 +142,10 @@ the plan.
 the ball resting in its own socket. Nothing about *how* a hook should move is imposed; the exact geometry decides.
 
 - **Geometry, from the sources:**
-  - the organisers' hold mesh `data/holds/hold.stl` [Rules v1.1 Figure 3], placed as the sim does;
-  - the convex hull of each of Microban's 65 visual meshes [Microban MJCF], so everything the sim draws is inside
-    what is checked (a test checks every drawn vertex). Microban's own collision boxes are smaller than the thighs
-    and shins: poses clear by those were 0.6–2.4 mm into the holds as drawn. Plus our hooks (a capsule per finger
-    segment, a sphere per ball);
+  - the organisers' simulator's hold mesh (`climbing_sim/assets/hold/hold_visual.stl`), placed as it places it (socket 26 mm out, 14 mm below the bolts; `SOCKET_OUT`, `SOCKET_BELOW` read from it);
+  - the robot: the convex hull of each of the model's visual meshes (its collision boxes are smaller than the
+    thighs and shins), except on the climbing forearms and feet, which use the model's own convex pieces, plus a
+    sphere per ball [Microban MJCF]. A test checks that every drawn vertex is inside;
   - the wall as the half-space y ≥ 0.
 
   The hold mesh is closed (every edge shared by two triangles), outward-oriented, and has genus 2 (the bolt holes).
@@ -180,14 +179,13 @@ the ball resting in its own socket. Nothing about *how* a hook should move is im
     promised;
   - stop when clear and no longer improving. If it can't get clear, it raises an error naming the worst pair.
 - **The first solve is steered [Ours], and only the first.** SCP is local, and from the collision-blind solution
-  (hands entering the socket sideways, as the L-shaped hook does by default) it cannot reach the right posture. The
-  hold's socket opens upwards: a 9 mm finger leaves the resting ball only within about 60° of vertical (measured on
-  `hold.stl`). So the first solve keeps every neck within 45° of up (`NECK_CONE`), and puts the moving ball 35 mm above
+  (hands entering the socket sideways) it cannot reach the right posture. The hold's socket opens upwards, so a finger
+  leaves the resting ball only near vertical. So the first solve keeps every neck within 45° of up (`NECK_CONE`), and puts the moving ball 35 mm above
   its old and new sockets one sample after leaving and one before arriving (`LIFT`: the hold's top plus the ball's
   radius). Both are switched off before the exact loop. The result must pass the exact check, which these hints have
   no part in.
 - **Numbers derived from the hold:** `clearance` (the moving ball's distance out from the wall mid-air) is now
-  **0.06 m**, not the task's 0.04 m. The hold sticks out 43 mm and the ball is 10 mm in radius, so 0.04 m could not
+  **0.06 m**, not the task's 0.04 m. The hold sticks out 43 mm and the ball is 12.5 mm in radius, so 0.04 m could not
   pass in front of a hold.
 
 **Cheaper exact checks:** a distance to the hold's convex hull (about 4 µs) bounds the distance to the hold, so shapes
@@ -224,8 +222,8 @@ fresh values (variables and multipliers at zero), so a move's result does not de
 | Parameter | Default | Tag |
 |---|---|---|
 | `n_samples` (N), `release_sample` (K) | 12, 4 | [Ours] |
-| `tau_limit` | 0.7 × 0.64 = 0.448 N·m | 0.64 N·m [Microban constants.py: 1.75 A × 0.366 N·m/A]; 70 % [Ours] |
-| `normals` | +z for all four limbs: the socket opens upwards and holds a resting ball up | from `hold.stl`; placeholder until the climbing limbs are known [Ours] |
+| `tau_limit` | 0.7 × 0.605 = 0.424 N·m | 0.605 N·m: 1.75 A × 0.346 N·m/A, as the organisers' sim clips the servos [Microban]; 70 % [Ours] |
+| `normals` | +z for all four limbs: the socket opens upwards and holds a resting ball up | from the sim's hold mesh [Ours] |
 | `mu` | 0.8 per limb | [Ours] |
 | `clearance` | 0.06 m, moving ball out from the wall on samples K+2..N−2 | from the hold's depth + ball [Ours] |
 | `avoid_collisions` | True | |
@@ -234,7 +232,7 @@ fresh values (variables and multipliers at zero), so a move's result does not de
 | `trust_radius`, `scp_iterations`, `scp_polish`, `retry_trust_radius` | 0.05, 30, 0, 0.02 (one more try from a smaller trust region) | [Ours] |
 | `midpoints`, `midpoint_play` | True, 1 mm | [Ours] |
 | `wall_margin`, `wall_points` | 0.002 m for every collision-box point; in transitions off (the exact check covers the wall) | [Ours] |
-| `contact_offset` | (0, −0.026, −0.0167) m from `Hold.position`: the bottom of the hold's socket | [Rules Figure 3], as the sim |
+| `contact_offset` | (0, −0.026, −0.0142) m from `Hold.position`: the ball at the bottom of the hold's socket | [Rules Figure 3], as the sim |
 | `max_trunk_shift`, `max_trunk_turn` | 0.3 m, 1.2 rad per transition | [Ours] |
 | `w_tau`, `w_smooth`, `w_stay` | 1, 1, 0.001 | [Ours] |
 | `nominal`, `w_nominal` | the twelve leg joints of a hand-designed pose on the example's start (legs mirrored, knees bent 20°, hips 100 mm off the wall, clear of the holds, 0.15 N·m); weight 0.3 per rad², which keeps the legs within a few degrees of it where the stance allows | [Ours] |
@@ -242,21 +240,20 @@ fresh values (variables and multipliers at zero), so a move's result does not de
 | `phase_a_duration`, `phase_b_duration` | 1 s, 2 s | [Ours] |
 | `ipopt` | `tol` 1e-6, `max_iter` 150, `mu_init` 1e-3 (rounds start next to their answer), silent; the static pose starts cold: IPOPT's own `mu_init` and 1000 iterations | [Ours] |
 
-The hooks are defined once, in `rcr.robot.hooks`, shared with the sim: the same balls (a test checks them to 0.01 mm)
-and the same 8 g each. Replace them there, in that one place, when the climbing limbs are published [Rules §2.5]. The
-contact point (`contact_offset`) follows the hook's ball radius.
+The balls come from `rcr.robot.hooks`, shared with the sim; `contact_offset` follows their radius.
 
 ## How to run
 ```bash
 git submodule update --init                    # Microban, in third_party/microban (once)
-uv sync --group optimiser --group sim          # casadi (IPOPT), coacd, coal, pin (tests); mujoco for the runner
+uv sync --group optimiser --group sim          # casadi (IPOPT), coacd, coal, pin (tests); their sim for the runner
 uv run pytest tests/test_optimiser.py                     # solves the example plan's first moves, checks them
-uv run mjpython tests/test_optimiser.py --hard            # solves the example plan, plays it in the sim
-uv run mjpython tests/test_optimiser.py --hard --save     # the same, and saves data/examples/trajectory.json
-uv run mjpython tests/test_optimiser.py --hard --replay   # plays the saved trajectory, without solving
+uv run mjpython tests/test_optimiser.py --hard PLAN           # solves the plan, plays it in the sim
+uv run mjpython tests/test_optimiser.py --hard PLAN --save    # the same, and saves data/examples/trajectory.json
+uv run mjpython tests/test_optimiser.py --hard PLAN --replay  # plays the saved trajectory, without solving
 ```
-The runner (`tests/test_optimiser.py`, run directly) reads the example plan and its wall (`contact_plan_hard.json`,
-`wall_hard.json`, the only ones). It solves each transition in a worker process and plays it in the sim as soon as
+The runner (`tests/test_optimiser.py`, run directly) reads a contact plan file and its wall, the organisers' wall
+named by the plan (`data/examples/<wall_id>.json`, played on their wall of that name in their sim). There is no
+example plan yet. It solves each transition in a worker process and plays it in the sim as soon as
 it's ready, while the next one is solved; between them the robot stays where it ended. The playback is kinematic:
 the robot follows the optimiser's poses exactly, with no physics. Add `--headless` to run without a window.
 
@@ -316,20 +313,22 @@ can't replace them. The remaining cost is the path tier.
   motion: a hand can move up from 225 mm above the feet (to 300 mm), but not from 300 mm (to 375 mm). So the climbing
   pattern that works is **both hands up, then both feet up**, and repeat. Moving the feet first doesn't help.
   `feasibility()` tells the planner this through the release pose.
-  - XL330 limit ≈ **0.64 N·m** (Microban's firmware current limit 1.75 A × kt 0.366 N·m/A) [Microban constants.py].
+  - XL330 limit ≈ **0.605 N·m** (the firmware current limit 1.75 A × BAM's kt 0.346 N·m/A) [Microban].
 - **Servos sag under load.** The servo runs its own P loop: `KP_DEFAULT` = 400 ≈ 0.88 N·m/rad, so the position
   error is roughly τ / kp, about **0.34 rad (19°) at 0.3 N·m**. Hence the pre-load above.
-- The robot weighs 0.819 kg [Microban], 0.851 kg with our hooks; the rules allow up to 2 kg [Rules §2.2].
+- The climbing model weighs 0.808 kg [Microban]; the rules allow up to 2 kg [Rules §2.2].
 
 ## Known limitations
 - **Two rungs at once is too far for a hand.** Both level 2 walls generated with gaps (rules' `level2`, seeds 0 and
   1) stopped the climb: one missing hold left a hand 0.18 m short of the next, which fails the checks at 70 % torque
-  with our placeholder hooks. The real limbs may change this.
+  with the old limbs; not measured again with the climbing model yet.
 - **The cache only helps with layouts it has seen.** A gap or a drift is a new layout, solved once (30 s – 3 min).
-- **Placeholder hands and holds:** the hooks, the contact normals and mu are ours until the climbing limbs and holds
-  are published. Hands are supported only along +z; the real socket may hold more.
-- **The robot's shapes are convex hulls** of Microban's meshes: exact where a part is convex, a little larger where it
-  is not (conservative). Plus our placeholder hooks.
+- **Not yet redone on the climbing model (29 Oct):** the measurements above, the example trajectory and the planner's
+  reach table (`data/robot/reach.json`) are from the old model. The example plan does not solve yet (a foot 2.6 mm
+  too close to its shin). Then: `tests/test_optimiser.py --hard PLAN --save` and `scripts/make_reach.py`.
+- **Contact normals and mu are ours:** hands are supported only along +z; the real socket may hold more.
+- **The robot's shapes** are convex hulls (a little larger where a part is not convex: conservative); the climbing
+  limbs' pieces and balls lie within 0.21 mm of the drawn mesh.
 - **SCP is local:** it needs the steered first solve. A plan whose moves can't be started that way may fail, with an
   error naming the pair; a sampling planner (RRT in the same `coal` scene) for the first path is the next remedy.
 - **The first move of each limb is slow** (11–41 s, see Measured): nothing to reuse yet, and the NLP is built then.

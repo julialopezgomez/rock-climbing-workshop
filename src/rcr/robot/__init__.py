@@ -1,31 +1,11 @@
 """Robot: the real-robot backend, Microban. See README.md.
 
-The only code here is our climbing hooks (hooks.py): what we add to Microban's robot, shared by
-the optimiser and the sim. Pi-safe.
+Where Microban and its robot model are (microban.py), the climbing model's balls, the limbs'
+contact points, read from the model (hooks.py: `from rcr.robot import hooks`), and Microban's
+observation and targets to and from our types (observation.py), for the sim and the robot.
+Pi-safe.
 """
 
-from rcr.robot.hooks import (
-    BALL_INSET,
-    BALL_RADIUS,
-    FINGER_RADIUS,
-    HOOKS,
-    MASS,
-    SEGMENT_MASS_SHARE,
-    Hook,
-    ball_centre,
-    finger_points,
-    masses,
-)
+from rcr.robot.observation import to_state, to_targets
 
-__all__ = [
-    "BALL_INSET",
-    "BALL_RADIUS",
-    "FINGER_RADIUS",
-    "HOOKS",
-    "MASS",
-    "SEGMENT_MASS_SHARE",
-    "Hook",
-    "ball_centre",
-    "finger_points",
-    "masses",
-]
+__all__ = ["to_state", "to_targets"]

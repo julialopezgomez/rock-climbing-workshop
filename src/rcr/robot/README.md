@@ -3,20 +3,15 @@
 **Purpose:** the real-robot backend, which is Microban ([Rhoban/microban](https://github.com/Rhoban/microban)). This
 README explains how our code meets Microban. The only code here is what we add to Microban's robot.
 
-## What we add to Microban: the climbing hooks [Ours]
-Microban as published has no climbing limbs, and the organisers will publish theirs [Rules §2.5]. Until then each hand
-and foot carries a hook: a short bent finger, fixed to a Microban link, ending in a ball that rests in a hold's socket.
-They are defined once, in [`hooks.py`](hooks.py), and the optimiser's model and the sim both take them from there.
-
-When the real limbs are known, change [`hooks.py`](hooks.py) and nothing else:
-- **the shape:** `HOOKS`, which link each hook is fixed to, where on it, and its finger segments;
-- **the size:** `BALL_RADIUS`, `FINGER_RADIUS`, `BALL_INSET`;
-- **the mass:** `MASS`, `SEGMENT_MASS_SHARE`.
-
-Then run the tests, which check that the optimiser and the sim agree, and solve the plan again: the motions depend on the
-hooks. The contact point on a hold follows the ball's radius. Two other guesses also depend on the real limbs and holds:
-the hold's push direction and friction (`normals`, `mu` in `rcr.optimiser.transition.TransitionConfig`), and the hold's
-socket (`SOCKET_RADIUS` in `rcr.optimiser.collision`, `CupHold` in `rcr.sim`).
+## The robot model and its climbing limbs [Microban]
+- **Model:** the `microban_model` package, climbing variant (`robot_climb.urdf` / `robot_climb.xml`), pinned in
+  `pyproject.toml` to the organisers' simulator's version. [`microban.py`](microban.py) finds it.
+- **Limbs:** the climbing forearms and feet each end in a **12.5 mm ball** that sits in a hold's socket.
+  [`hooks.py`](hooks.py) reads each ball's link, centre and radius from the model files (URDF `<limb>_ball_frame`,
+  MJCF `<limb>_ball_coll`); nothing is typed in. The optimiser takes them from there; a test checks they are where
+  the organisers' sim has them.
+- **Ours [Ours]:** only `hooks.NECK`, the direction the forearm or foot comes into each ball (measured on the model),
+  a hint for the optimiser's first solve. And `observation.py`, which converts, adds nothing.
 
 ## What Microban gives us [Microban]
 - **Hardware:**
@@ -38,27 +33,23 @@ socket (`SOCKET_RADIUS` in `rcr.optimiser.collision`, `CupHold` in `rcr.sim`).
 We wrap our controller in a thin Move and do **not** rewrite Microban's Move or Scheduler:
 
 ```python
-# Microban's Move; ~30 lines, location depends on D1
-class ClimbMove(Move):
-    def step(self, obs, command):
-        # Microban's RobotState -> rcr.types.RobotState
-        state = to_rcr_state(obs.robot_state, self.t0, self.link.pose())
-        command.target_angles.update(self.controller.step(state).positions)
+# a Microban move (dev_v2: a class with step(obs), docs/moves.md); location depends on D1
+from microban_model import JOINTS
+from rcr.robot import to_state
+
+
+class ClimbMove:
+    def start(self, obs):
+        self.t0 = obs["time"]
+
+    def step(self, obs):
+        state = to_state(obs, JOINTS, self.t0, self.link.pose())  # Microban's obs -> RobotState
         self.link.send_state(state)  # non-blocking
-
-
-# start/stop from the laptop instead of the keyboard
-class LinkInputSource(InputSource):
-    def read(self):
-        return UserInput(active_moves={"climb"} if self.link.run_requested() else set())
+        return self.controller.step(state).positions  # {joint: rad}; the others keep their target
 ```
 
-`to_rcr_state` maps the fields as follows:
-- `motor_positions` → `joint_positions`;
-- `motor_velocities` → `joint_velocities`;
-- `body_quat` → `imu_quat`;
-- `gyro` → `gyro`;
-- `time_s` − t0 → `time`.
+`to_state` ([observation.py](observation.py)) is the same conversion the sim uses: Microban's observation is the
+organisers' simulator's. Start/stop from the laptop instead of the keyboard is still to do.
 
 ### Pitfalls to handle in the wrapper (found in Microban's code)
 1. **`main.py` ramps all motors to `NEUTRAL_POSE` (standing) at start.** On the wall that is wrong: the start ramp must go
@@ -77,22 +68,12 @@ class LinkInputSource(InputSource):
 7. Always `make shutdown` before cutting power, or the SD card can be corrupted [Microban usage.md].
 
 ## Where Microban sits (D1): a submodule [Ours]
-**Chosen: the submodule** `third_party/microban`, pinned to `d0a128d` (27 Oct). Every clone reads the same files,
-nothing of Microban is copied into our history, and the climbing variant will be a pin bump. The optimiser and the sim
-find it through `rcr/robot/microban.py`; `MICROBAN_URDF` or `MICROBAN_XML` still points them at another checkout.
+**Chosen: the submodule** `third_party/microban`, on branch `dev_v2` (29 Oct), what the competition robot runs.
+- Every clone gets the same version, and no Microban code (GPL-3.0) enters our history.
+- Microban is not pip-installable: it is used via `PYTHONPATH=src`.
+- The robot model is no longer in Microban, but in `microban_model` (above).
+
 Still open: where `ClimbMove` and our entry point sit on the Pi (next to Microban on its `PYTHONPATH`, see below).
-
-The options, as compared before choosing:
-
-Microban's software is **GPL-3.0**, and its `pyproject.toml` has **no build system**, so it is not pip-installable. In
-every option, it is used via `PYTHONPATH=src`. The organisers' climbing variant will probably come as Microban changes, so
-the choice must make switching to it easy.
-
-| Option | For | Against |
-|---|---|---|
-| **Submodule** (`third_party/microban`, pinned commit) | exact version; upstream/climbing-variant updates are a commit bump; no Microban code in our history; the sim gets its MJCF and servo model | submodule friction (`clone --recursive`, bumps); our `ClimbMove` and entry point live in our repo and must be put on the Pi's `PYTHONPATH` next to Microban |
-| **Fork** (our fork of Rhoban/microban) | `ClimbMove` + entry point sit next to Microban's moves; Microban's `make run` / `make sim` workflow keeps working; upstream PRs possible | two repos to keep in step; merging upstream / the climbing variant into the fork |
-| **Copy** (vendor `src/` into our repo) | one repo; edit anything | loses upstream fixes; our repo becomes a GPL-3.0 combined work if we publish it (we have no licence yet); harder to switch to the climbing variant |
 
 ## What goes to the Pi
 | To the Pi | Stays on the laptop |
@@ -125,7 +106,7 @@ the choice must make switching to it easy.
 **At the team table**
 1. Power the robot. Check it is on our access point (`ping`, `ssh`). Deploy our Pi files.
 2. Get the wall model for this wall: hand-written from the hold layout (perception later). Check the hold positions.
-3. On the laptop: plan → optimise → trajectory. Dry-run it in our sim and confirm that it climbs.
+3. On the laptop: plan → optimise → trajectory. Dry-run it in the organisers' sim and confirm that it climbs.
 
 **At the wall**
 
