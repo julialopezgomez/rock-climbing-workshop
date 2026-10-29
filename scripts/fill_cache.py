@@ -3,16 +3,17 @@
     uv run python scripts/fill_cache.py --levels 1 2 3 --seeds 0-9 --height 0.8 --hours 8
     uv run python scripts/fill_cache.py --levels 2 --seeds 10-14 --no-store   # hit rate only
 
-For each wall (rcr.sim.levels: level 1 ladder, 2 ladder with gaps, 3 drifting [Rules §3]) it climbs
-from the start stance with a simple search: limbs in turn, each to the highest hold on its side
-first; every move through the cheap feasibility checks, then the full solve with settles through
-the cache; back up from a dead end. Every outcome is stored, feasible or not. It stops a wall at
+For each wall (the organisers' routes, climbing_sim.routes: level 1 ladder, 2 ladder with gaps,
+3 drifting [Rules §3]) it climbs from the start stance with a simple search: limbs in turn, each to
+the highest hold above it first, hands and feet never crossed; every move through the cheap
+feasibility checks, then the full solve with settles through the cache; back up from a dead end.
+Every outcome is stored, feasible or not. It stops a wall at
 --height (the hands) or after --wall-minutes, and everything after --hours. Safe to stop and
 rerun: the cache is on disk and solved moves are not solved again.
 
 This is a tool to fill the cache with the moves a climb asks for, not our planner (D2) [Ours].
-On competition day: put the real limbs in rcr.robot.hooks, run the tests, and run this again;
-the new version starts with an empty cache.
+Needs `uv sync --group optimiser --group sim`. After a model change the cache's version changes,
+so it starts empty: run this again.
 """
 
 from __future__ import annotations
@@ -23,11 +24,12 @@ import time
 from dataclasses import replace
 
 import numpy as np
+from climbing_sim.routes import generate_wall
 
+from rcr import walls
 from rcr.optimiser import edge_checks as fe
 from rcr.optimiser import move_cache as mc
 from rcr.optimiser import transition as tr
-from rcr.sim import levels
 from rcr.types import LIMBS, Stance, WallModel
 
 ORDER = ("right_hand", "left_hand", "right_foot", "left_foot")
@@ -35,20 +37,16 @@ HANDS = ("right_hand", "left_hand")
 
 
 def candidates(wall: WallModel, st: Stance, last: str | None) -> list[Stance]:
-    """Next stances: limbs in turn after the last one moved, each to the holds above it on its
-    side (feet also on middle holds), highest first, without crossing hands or feet."""
+    """Next stances: limbs in turn after the last one moved, each to the holds above it, highest
+    first, without crossing hands or feet."""
     pos = {h.id: np.array(h.position) for h in wall.holds}
     start = (ORDER.index(last) + 1) % 4 if last else 0
     out = []
     for limb in ORDER[start:] + ORDER[:start]:
-        side = "R" if limb.startswith("right") else "L"
-        sides = (side,) if limb in HANDS else (side, "M")
         above = [
             h
             for h in pos
-            if h[0] in sides
-            and pos[h][2] > pos[st.contacts[limb]][2]
-            and h not in st.contacts.values()
+            if pos[h][2] > pos[st.contacts[limb]][2] and h not in st.contacts.values()
         ]
         for h in sorted(above, key=lambda h: -pos[h][2]):
             nxt = Stance({**st.contacts, limb: h})
@@ -136,7 +134,7 @@ def main() -> None:
         for seed in seeds(args.seeds) if level != 1 else [0]:
             if time.time() >= end:
                 break
-            wall = levels.generate(level, seed)
+            wall = walls.from_organisers(generate_wall(level, seed), level)
             stats = dict.fromkeys(("checks", "rejected", "solved", "failed", "hit"), 0)
             started = time.time()
             deadline = min(end, started + args.wall_minutes * 60)

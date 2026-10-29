@@ -32,9 +32,12 @@ def moved(a: Stance, b: Stance) -> list[str]:
 def test_the_reach_sets_allow_every_stance_the_optimiser_solved():
     reach = rc.load()
     assert np.allclose(reach.directions[reach.opposite], -reach.directions)
-    wall = io.load_wall(EXAMPLES / "wall_hard.json")
+    plan = EXAMPLES / "contact_plan_N1.json"  # none yet: our plan on the organisers' N1, solved
+    if not plan.exists():
+        pytest.skip(f"no solved contact plan on the organisers' wall yet ({plan.name})")
+    wall = io.load_wall(EXAMPLES / "N1.json")
     points = rc.contact_points(wall, reach)
-    for s in io.load_contact_plan(EXAMPLES / "contact_plan_hard.json").stances:
+    for s in io.load_contact_plan(plan).stances:
         u = rc.region(reach, {limb: points[h] for limb, h in s.contacts.items()})
         assert rc.maybe_nonempty(reach, u)
         assert rc.centre(reach, u) is not None

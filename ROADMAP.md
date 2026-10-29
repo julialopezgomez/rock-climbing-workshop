@@ -70,7 +70,7 @@ Each decision is a `decision` issue. The issue closes with the choice and a one-
 - Markerless perception (time factor ×1 vs ×1.25 with markers) [Rules §8].
 - On-board vision.
 - Ground start (×1 vs ×1.1 at the bottom of the wall) [Rules §8]; `"ground"` is reserved in `Stance`.
-- Official simulator: when it is released, only `rcr.sim.Sim`'s internals change (sim/README).
+- Official simulator: done 29 Oct. Ours is removed; we use theirs as it is (README, Simulation).
 
 ## Questions for the organisers (P1.1)
 1. **Simulator:** release date and contents (robot model, walls, holds, cameras, grip/contact model)?

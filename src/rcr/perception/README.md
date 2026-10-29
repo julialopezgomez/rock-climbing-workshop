@@ -10,7 +10,7 @@
 
 ## For now
 Real perception is parked (see ROADMAP). The pipeline loads a **hand-written wall model** with `rcr.io.load_wall`
-(e.g. `data/examples/wall_hard.json`). Both functions stay stubs.
+(e.g. the organisers' `data/examples/N1.json`). Both functions stay stubs.
 
 ## Where real detection plugs in
 - Camera images go into `wall_model()` / `robot_pose()`. Implementation files go next to `__init__.py`, and `__init__`

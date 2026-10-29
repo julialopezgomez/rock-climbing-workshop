@@ -9,27 +9,42 @@ from pathlib import Path
 import pytest
 
 from rcr import io
+from rcr.types import ContactPlan, Stance
 
 ROOT = Path(__file__).resolve().parent.parent
 EXAMPLES = ROOT / "data" / "examples"
 
+
+@pytest.fixture(scope="module", autouse=True)
+def contact_plan_example(tmp_path_factory):
+    """No example contact plan is kept yet: a one-move plan on N1, for the format."""
+    wall = io.load_wall(EXAMPLES / "N1.json")
+    moved = Stance({**wall.start.contacts, "right_hand": "c29_r27"})
+    path = tmp_path_factory.mktemp("plan") / "contact_plan.json"
+    io.save_contact_plan(ContactPlan(wall.id, [wall.start, moved]), path)
+    FILES["contact_plan.json"] = path
+
+
+FILES = {name: EXAMPLES / name for name in ("N1.json", "N2.json", "N3.json", "trajectory.json")}
 FORMATS = [
-    ("wall_hard.json", io.load_wall, io.save_wall),
-    ("contact_plan_hard.json", io.load_contact_plan, io.save_contact_plan),
+    ("N1.json", io.load_wall, io.save_wall),
+    ("N2.json", io.load_wall, io.save_wall),
+    ("N3.json", io.load_wall, io.save_wall),
+    ("contact_plan.json", io.load_contact_plan, io.save_contact_plan),
     ("trajectory.json", io.load_trajectory, io.save_trajectory),
 ]
 
 
 @pytest.mark.parametrize(("name", "load", "save"), FORMATS)
 def test_example_round_trips(name, load, save, tmp_path):
-    obj = load(EXAMPLES / name)
+    obj = load(FILES[name])
     save(obj, tmp_path / name)
     assert load(tmp_path / name) == obj
 
 
 @pytest.mark.parametrize(("name", "load", "save"), FORMATS)
 def test_wrong_schema_is_rejected(name, load, save, tmp_path):
-    data = json.loads((EXAMPLES / name).read_text())
+    data = json.loads(FILES[name].read_text())
     data["schema"] = "something_else/1"
     (tmp_path / name).write_text(json.dumps(data))
     with pytest.raises(ValueError, match="schema"):
