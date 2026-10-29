@@ -7,7 +7,7 @@ uv run scripts/plan_wall.py --warm 5 --feasibility optimiser    # 5 walls a leve
 
 `--feasibility optimiser` needs `uv sync --group optimiser` (optimiser README).
 Its verdicts are kept in build/feasibility_cache.json, keyed by the move's layout
-(rcr.planner.cache): the same move anywhere, on any wall, is asked once. The cache's version is a
+(rcr.planner.v0.cache): the same move anywhere, on any wall, is asked once. The cache's version is a
 hash of the optimiser's code, the hooks and the hold mesh, so changing any of them starts it again.
 """
 
@@ -18,8 +18,8 @@ from collections import Counter
 from pathlib import Path
 
 from rcr import io, walls
-from rcr.planner import astar
-from rcr.planner.cache import Cache
+from rcr.planner.v0 import astar
+from rcr.planner.v0.cache import Cache
 from rcr.types import Feasibility
 
 ROOT = Path(__file__).resolve().parent.parent

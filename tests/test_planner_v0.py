@@ -12,9 +12,9 @@ import numpy as np
 import pytest
 
 from rcr import io, walls
-from rcr.planner import astar, plan
-from rcr.planner import reach as rc
-from rcr.planner.cache import Cache, layout_key
+from rcr.planner.v0 import astar, plan
+from rcr.planner.v0 import reach as rc
+from rcr.planner.v0.cache import Cache, layout_key
 from rcr.types import LIMBS, ContactPlan, Feasibility, Hold, Stance, WallModel
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -80,7 +80,7 @@ def test_rejected_moves_are_planned_around(monkeypatch):
     and no limb can arrive on the right hand's (a 'path' failure, of that move only). These
     rules name holds, so the same layout elsewhere on the wall gets another answer: no layout
     cache here."""
-    monkeypatch.setattr("rcr.planner.cache.layout_key", lambda *args: None)
+    monkeypatch.setattr("rcr.planner.v0.cache.layout_key", lambda *args: None)
     wall = walls.generate(1, 0)
     free = astar.solve(wall, always).plan.stances
     first = {}

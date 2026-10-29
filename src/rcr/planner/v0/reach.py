@@ -25,7 +25,7 @@ from scipy.optimize import linprog
 
 from rcr.types import LIMBS, WallModel
 
-REACH_FILE = Path(__file__).resolve().parents[3] / "data" / "robot" / "reach.json"
+REACH_FILE = Path(__file__).resolve().parents[4] / "data" / "robot" / "reach.json"
 EPS = 1e-9
 
 

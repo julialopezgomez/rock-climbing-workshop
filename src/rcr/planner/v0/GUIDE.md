@@ -2,7 +2,7 @@
 
 For teammates who know robotics but not planning.
 - Read §1 first (five minutes).
-- Then follow §3 with the playground open: `open src/rcr/planner/playground.html`. It is one offline file, and each step below
+- Then follow §3 with the playground open: `open src/rcr/planner/v0/playground.html`. It is one offline file, and each step below
   says which tab shows it.
 - For parameters and files, see [README.md](README.md).
 
@@ -200,7 +200,7 @@ For each limb, every hold on the wall goes through these filters, cheapest first
   - This works because holds are identical, on a 15 mm grid, under fixed gravity.
   - The scripts keep the cache on disk (`build/feasibility_cache.json`). Its version is a hash of the optimiser's code,
     the hooks and the hold mesh.
-- **`feasible()`** (the optimiser, [edge_checks.py](../optimiser/edge_checks.py)):
+- **`feasible()`** (the optimiser, [edge_checks.py](../../optimiser/edge_checks.py)):
   - It runs its own checks cheapest first: `rules → reach → stance → start → release → arrival → lift → path`.
   - It stops at the first one that fails, and its `reason` names that check.
 

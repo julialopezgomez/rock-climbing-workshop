@@ -12,7 +12,7 @@ For each limb, as SL1M samples its effector workspaces [Tonneau et al. 2020, §V
 The set K_limb is kept as its support function along DIRECTIONS shared by all limbs (outer
 approximation of the samples' convex hull, plus MARGIN): {o : n_k . o <= h_k}. Sharing the
 directions makes a stance's trunk region one small LP, whatever the number of limbs (see
-rcr.planner.reach). It is kinematics only: no torque, no collisions [Ours].
+rcr.planner.v0.reach). It is kinematics only: no torque, no collisions [Ours].
 """
 
 import argparse

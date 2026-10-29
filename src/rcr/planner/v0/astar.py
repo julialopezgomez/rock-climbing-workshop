@@ -21,8 +21,8 @@ from itertools import count
 
 import numpy as np
 
-from rcr.planner import reach as rc
-from rcr.planner.cache import Cache
+from rcr.planner.v0 import reach as rc
+from rcr.planner.v0.cache import Cache
 from rcr.types import LIMBS, ContactPlan, FeasibilityFn, Stance, WallModel
 
 HANDS = ("right_hand", "left_hand")

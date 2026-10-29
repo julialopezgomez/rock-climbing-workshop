@@ -24,7 +24,7 @@ from pathlib import Path
 from plan_wall import optimiser_feasibility
 
 from rcr import walls
-from rcr.planner import astar
+from rcr.planner.v0 import astar
 from rcr.types import LIMBS
 
 ROOT = Path(__file__).resolve().parent.parent
