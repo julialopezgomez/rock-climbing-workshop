@@ -64,6 +64,23 @@ class ArucoPoseTest(unittest.TestCase):
         self.assertLess(max(errors), 1e-6)
         self.assertGreater(max(initial_errors), 1)
 
+    def test_mujoco_pixel_conversion_preserves_supplied_calibration(self):
+        before = self.matrix.copy()
+        converted = pose.mujoco_pixel_intrinsics(self.matrix)
+        np.testing.assert_array_equal(self.matrix, before)
+        np.testing.assert_array_equal(converted[:2, 2], before[:2, 2] - 0.5)
+        np.testing.assert_array_equal(converted[:, :2], before[:, :2])
+
+    def test_mixed_detection_dtypes_work_in_stereo(self):
+        detections = [
+            self.detections[0],
+            {mid: corners.astype(np.float32) for mid, corners in self.detections[1].items()},
+        ]
+        with patch.object(pose, "detect_markers", side_effect=detections):
+            result = pose.estimate_robot_pose(self.images, [self.matrix] * 2, [self.distortion] * 2)
+        self.assertEqual(result["method"], "stereo")
+        np.testing.assert_allclose(result["position_m"], self.trunk_position, atol=1e-5)
+
     def test_full_estimation_recovers_trunk_frame_and_offset(self):
         with patch.object(pose, "detect_markers", side_effect=self.detections):
             result = pose.estimate_robot_pose(self.images, [self.matrix] * 2, [self.distortion] * 2)
@@ -151,6 +168,18 @@ class ArucoPoseTest(unittest.TestCase):
         gray = np.full((100, 100), 100, np.uint8)
         corners = np.array([[40.0, 40.0], [57.0, 40.0], [57.0, 57.0], [40.0, 57.0]])
         np.testing.assert_array_equal(pose.refine_corners(gray, corners), corners)
+
+    def test_weak_border_section_does_not_tilt_the_whole_edge(self):
+        gray = np.full((100, 100), 180, np.uint8)
+        gray[40:58, 40:58] = cv2.aruco.generateImageMarker(
+            cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50), 5, 18
+        )
+        # Simulate lost contrast along part of the top black border.
+        gray[40:42, 43:47] = 180
+        coarse = np.array([[40.0, 40.0], [57.0, 40.0], [57.0, 57.0], [40.0, 57.0]])
+        refined = pose.refine_corners(gray, coarse)
+        self.assertLess(abs(refined[0, 1] - refined[1, 1]), 0.1)
+        np.testing.assert_allclose(refined[:2, 1], [39.5, 39.5], atol=0.1)
 
 
 if __name__ == "__main__":

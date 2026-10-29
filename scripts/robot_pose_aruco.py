@@ -1,17 +1,13 @@
-"""Estimate the trunk pose from two RGB images and camera intrinsics.
+"""Find the robot's trunk position and orientation from two camera images.
 
 From the workshop root:
   MUJOCO_GL=egl third_party/simulator/.venv/bin/python scripts/robot_pose_aruco.py
-Add --check to measure error against simulator truth (used only for evaluation).
-Add --use-calibrated-extrinsics to use the simulator's configured camera poses
-as supplied calibration, rather than estimating them from the wall images.
+Use --use-calibrated-extrinsics for known camera poses, --require-stereo to
+require both cameras, and --check to compare the result with simulator truth.
 
-Import estimate_robot_pose(images, camera_matrices) to use your own RGB images.
-Only the demo imports the simulator. Estimation uses no simulator ground truth.
-Output frame: x right, y into the wall, z up; metres, quaternion (w,x,y,z).
-Detection refines corners on original pixels. Stereo estimation fits a fixed
-42 mm square to both images jointly; it does not change cameras or robot geometry.
-Real images require measured colour intrinsics, distortion and synchronised views.
+Call estimate_robot_pose() with your own images and calibration for real cameras.
+Position is in metres: x right, y into the wall, z up. The quaternion uses
+(w, x, y, z) and rotates trunk coordinates into this wall frame.
 """
 
 import argparse
@@ -26,19 +22,22 @@ MARKER_CENTRE = np.array([-0.033, 0.0, 0.05475])
 R_TRUNK_MARKER = np.array([[0.0, 0.0, -1.0], [-1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
 
 
-def _refine_small_marker_edges(gray, corners):
-    """Fit the outer black border, avoiding the internal bits of a tiny code.
+def mujoco_pixel_intrinsics(matrix):
+    """Account for MuJoCo's half-pixel offset. Do not use this on real cameras."""
+    converted = np.asarray(matrix, dtype=float).copy()
+    converted[:2, 2] -= 0.5
+    return converted
 
-    Dark-going intensity gradients locate each edge on original source pixels.
-    Intersections of robust line fits give the four subpixel outer corners.
-    """
+
+def _refine_small_marker_edges(gray, corners):
+    """Find each black border edge, then intersect the lines to get its corners."""
     lines = []
     offsets = np.linspace(-1.5, 1.5, 49)
     gradient_positions = (offsets[:-1] + offsets[1:]) / 2
-    for a, b in zip(corners, np.roll(corners, -1, axis=0), strict=True):
-        edge = b - a
+    for start, end in zip(corners, np.roll(corners, -1, axis=0), strict=True):
+        edge = end - start
         normal = np.array([-edge[1], edge[0]]) / np.linalg.norm(edge)
-        centres = a + np.linspace(0.15, 0.85, 16)[:, None] * edge
+        centres = start + np.linspace(0.15, 0.85, 16)[:, None] * edge
         coordinates = centres[:, None, :] + offsets[None, :, None] * normal
         intensities = cv2.remap(
             gray.astype(np.float32),
@@ -48,7 +47,8 @@ def _refine_small_marker_edges(gray, corners):
         )
         weights = np.maximum(-np.diff(intensities, axis=1), 0)
         contrast = weights.sum(axis=1)
-        valid = contrast > 15  # insufficient contrast: keep original corners
+        # Ignore faint or damaged sections of the black border.
+        valid = contrast > max(15, 0.75 * np.percentile(contrast, 90))
         if valid.sum() < 6:
             return corners.astype(float)
         shifts = (weights @ gradient_positions) / np.maximum(contrast, 1e-9)
@@ -62,14 +62,14 @@ def _refine_small_marker_edges(gray, corners):
         if abs(np.linalg.det(matrix)) < 0.1:
             return corners.astype(float)
         refined.append(np.linalg.solve(matrix, [lines[index - 1][1], lines[index][1]]))
-    refined = np.asarray(refined)
+    refined = np.asarray(refined, dtype=float)
     if np.max(np.linalg.norm(refined - corners, axis=1)) > 1.5:
         return corners.astype(float)
     return refined
 
 
 def refine_corners(gray, corners):
-    """Refine original pixels: border lines for tiny codes, subpixel windows otherwise."""
+    """Find corners more precisely without enlarging the original image."""
     corners = np.asarray(corners, dtype=np.float32).reshape(4, 2)
     edge = np.linalg.norm(np.roll(corners, -1, axis=0) - corners, axis=1).min()
     window = max(1, min(3, int(edge / 12)))
@@ -88,19 +88,14 @@ def refine_corners(gray, corners):
         (-1, -1),
         (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_MAX_ITER, 40, 0.001),
     )
-    # A refinement that jumps into the code is not a trustworthy outer corner.
+    # Keep the original corner if refinement moves it too far.
     if np.max(np.linalg.norm(refined - corners, axis=1)) > min(1.5, edge / 6):
         return corners.astype(float)
     return refined.astype(float)
 
 
 def _joint_pose_fit(local, initial_rotation, initial_centre, views):
-    """Fit one rigid square to both original images using damped least squares.
-
-    Camera calibration remains fixed. All six free parameters describe only the
-    marker's pose; no marker dimensions, robot geometry or camera poses are fitted.
-    Uses only NumPy/OpenCV, so the standalone simulator environment needs no SciPy.
-    """
+    """Adjust the marker pose until its corners line up in both camera images."""
     initial = np.r_[cv2.Rodrigues(initial_rotation)[0].ravel(), initial_centre]
 
     def residual(pose):
@@ -130,6 +125,7 @@ def _joint_pose_fit(local, initial_rotation, initial_centre, views):
     iterations = 0
     for iteration in range(1, 61):
         iterations = iteration
+        # Measure how each position or rotation change affects the image error.
         jacobian = np.empty((len(error), 6))
         for column in range(6):
             step = np.zeros(6)
@@ -150,6 +146,7 @@ def _joint_pose_fit(local, initial_rotation, initial_centre, views):
             if np.linalg.norm(delta) < 1e-9 or improvement < 1e-12:
                 break
         else:
+            # The last step did not help. Try a smaller step next time.
             damping *= 10
             if damping > 1e12:
                 break
@@ -163,11 +160,7 @@ def _joint_pose_fit(local, initial_rotation, initial_centre, views):
 
 
 def detect_markers(image):
-    """Detect RGB-image markers, retrying small codes at several image scales.
-
-    Enlargement helps OpenCV's threshold/contour stages; it cannot recover an
-    occluded code. Returned corners always use the original image coordinates.
-    """
+    """Detect markers, retry at larger scales, then refine on the original pixels."""
     gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
     dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
     detected = {}
@@ -227,21 +220,73 @@ def _quaternion(rotation):
     return np.r_[np.cos(angle / 2), rvec / angle * np.sin(angle / 2)].tolist()
 
 
-def estimate_robot_pose(images, camera_matrices, distortion_coeffs=None, camera_extrinsics=None):
-    """Estimate trunk pose, using stereo when possible or one camera as a fallback.
+def _trunk_pose(marker_rotation, marker_centre):
+    """Convert the marker pose to the trunk pose using its mounting offset."""
+    rotation = marker_rotation @ R_TRUNK_MARKER.T
+    position = marker_centre - rotation @ MARKER_CENTRE
+    return {
+        "position_m": position.tolist(),
+        "quaternion_wxyz": _quaternion(rotation),
+        "rotation_matrix": rotation.tolist(),
+    }
 
-    images: two RGB uint8 arrays, synchronised, from different cameras.
-    camera_matrices: corresponding calibrated 3x3 OpenCV intrinsic matrices.
-    distortion_coeffs: optional two OpenCV distortion arrays; simulator uses none.
-    camera_extrinsics: optional two calibrated 3x4 world-to-camera matrices
-    [R|t], with translation in metres. World = x right, y into wall, z up.
-    With these supplied, camera poses stay fixed and wall markers are optional
-    validation observations. Intrinsics alone still require two wall markers.
-    Quaternion rotates trunk-frame vectors into this world frame, in w,x,y,z order.
-    The vertical-wall assumption defines the frame, not the robot's orientation.
-    A single-camera
-    result includes an ambiguity warning and any alternate planar-pose solution.
-    Raises ValueError when neither image provides enough detections.
+
+def _single_camera_candidates(marker_corners, projection, image_corners):
+    """Keep both possible poses when only one camera sees the square."""
+    solved, rotations, translations, _ = cv2.solvePnPGeneric(
+        marker_corners, image_corners, np.eye(3), None, flags=cv2.SOLVEPNP_IPPE_SQUARE
+    )
+    if not solved:
+        raise ValueError("Single-camera marker pose could not be solved.")
+
+    camera_rotation = projection[:, :3]
+    camera_translation = projection[:, 3]
+    candidates = []
+    for rvec, tvec in zip(rotations, translations, strict=True):
+        rotation = cv2.Rodrigues(rvec)[0]
+        points_in_camera = marker_corners @ rotation.T + tvec.ravel()
+        if np.any(points_in_camera[:, 2] <= 0):
+            continue
+
+        rotation_world = camera_rotation.T @ rotation
+        centre_world = camera_rotation.T @ (tvec.ravel() - camera_translation)
+        result = _trunk_pose(rotation_world, centre_world)
+        projected = cv2.projectPoints(marker_corners, rvec, tvec, np.eye(3), None)[0][:, 0]
+        error = projected - image_corners
+        result["marker_reprojection_rms_normalized"] = float(
+            np.sqrt(np.mean(np.sum(error**2, axis=1)))
+        )
+        candidates.append(result)
+
+    if not candidates:
+        raise ValueError("Single-camera marker pose is behind the camera.")
+    return sorted(candidates, key=lambda candidate: candidate["marker_reprojection_rms_normalized"])
+
+
+def _check_extrinsics(camera_extrinsics):
+    """Check the supplied camera transforms before using them."""
+    if len(camera_extrinsics) != 2:
+        raise ValueError("Provide one calibrated 3x4 extrinsic matrix per camera.")
+    for extrinsic in camera_extrinsics:
+        extrinsic = np.asarray(extrinsic, dtype=float)
+        if extrinsic.shape != (3, 4) or not np.isfinite(extrinsic).all():
+            raise ValueError("Camera extrinsics must be finite 3x4 world-to-camera matrices.")
+        rotation = extrinsic[:, :3]
+        orthogonal = np.allclose(rotation.T @ rotation, np.eye(3), atol=1e-6)
+        right_handed = np.isclose(np.linalg.det(rotation), 1, atol=1e-6)
+        if not orthogonal or not right_handed:
+            raise ValueError("Camera extrinsics must contain a proper rotation matrix.")
+
+
+def estimate_robot_pose(images, camera_matrices, distortion_coeffs=None, camera_extrinsics=None):
+    """Return the trunk position and quaternion from two synchronised RGB images.
+
+    Supply each camera's 3x3 intrinsic matrix and optional distortion coefficients.
+    If you also provide 3x4 world-to-camera transforms [R|t], they stay fixed.
+    Otherwise, at least two wall markers are needed to locate each camera.
+
+    A one-camera result includes the alternate pose and an ambiguity warning.
+    If neither camera can provide a pose, this raises ValueError.
     """
     if len(images) != 2 or len(camera_matrices) != 2:
         raise ValueError("Provide exactly two RGB images and their intrinsic matrices.")
@@ -249,19 +294,13 @@ def estimate_robot_pose(images, camera_matrices, distortion_coeffs=None, camera_
     if len(distortion_coeffs) != 2:
         raise ValueError("Provide one distortion array per camera.")
     if camera_extrinsics is not None:
-        if len(camera_extrinsics) != 2:
-            raise ValueError("Provide one calibrated 3x4 extrinsic matrix per camera.")
-        for extrinsic in camera_extrinsics:
-            extrinsic = np.asarray(extrinsic, dtype=float)
-            if extrinsic.shape != (3, 4) or not np.isfinite(extrinsic).all():
-                raise ValueError("Camera extrinsics must be finite 3x4 world-to-camera matrices.")
-            rotation = extrinsic[:, :3]
-            if not np.allclose(rotation.T @ rotation, np.eye(3), atol=1e-6) or not np.isclose(
-                np.linalg.det(rotation), 1, atol=1e-6
-            ):
-                raise ValueError("Camera extrinsics must contain a proper rotation matrix.")
+        _check_extrinsics(camera_extrinsics)
     calibration_source = "supplied_extrinsics" if camera_extrinsics is not None else "wall_markers"
-    projections, robot_pixels, wall_errors, cameras_used, unavailable = [], [], [], [], []
+    projections = []
+    robot_pixels = []
+    wall_errors = []
+    cameras_used = []
+    unavailable = []
     views = []
     for index, (image, matrix, distortion) in enumerate(
         zip(images, camera_matrices, distortion_coeffs, strict=True)
@@ -298,7 +337,8 @@ def estimate_robot_pose(images, camera_matrices, distortion_coeffs=None, camera_
         else:
             wall_errors.append(None)
         projections.append(np.column_stack([rotation, tvec]))
-        robot_pixels.append(cv2.undistortPoints(detected[5][:, None], matrix, distortion)[:, 0])
+        marker_corners = np.asarray(detected[5], dtype=float)
+        robot_pixels.append(cv2.undistortPoints(marker_corners[:, None], matrix, distortion)[:, 0])
         cameras_used.append(index)
         views.append((rotation, tvec.ravel(), matrix, distortion, detected[5]))
 
@@ -312,36 +352,7 @@ def estimate_robot_pose(images, camera_matrices, distortion_coeffs=None, camera_
     half = MARKER_SIZE / 2
     local = np.array([[-half, half, 0], [half, half, 0], [half, -half, 0], [-half, -half, 0]])
     if len(projections) == 1:
-        # IPPE returns both planar pose hypotheses. Do not conceal the ambiguity.
-        solved, rvecs, tvecs, _ = cv2.solvePnPGeneric(
-            local, robot_pixels[0], np.eye(3), None, flags=cv2.SOLVEPNP_IPPE_SQUARE
-        )
-        if not solved:
-            raise ValueError("Single-camera marker pose could not be solved.")
-        camera_rotation = projections[0][:, :3]
-        camera_translation = projections[0][:, 3]
-        candidates = []
-        for rvec, tvec in zip(rvecs, tvecs, strict=True):
-            marker_rotation = cv2.Rodrigues(rvec)[0]
-            if np.any((local @ marker_rotation.T + tvec.ravel())[:, 2] <= 0):
-                continue
-            rotation_world = camera_rotation.T @ marker_rotation
-            centre_world = camera_rotation.T @ (tvec.ravel() - camera_translation)
-            trunk_rotation = rotation_world @ R_TRUNK_MARKER.T
-            trunk_position = centre_world - trunk_rotation @ MARKER_CENTRE
-            projected = cv2.projectPoints(local, rvec, tvec, np.eye(3), None)[0][:, 0]
-            error = float(np.sqrt(np.mean(np.sum((projected - robot_pixels[0]) ** 2, axis=1))))
-            candidates.append(
-                {
-                    "position_m": trunk_position.tolist(),
-                    "quaternion_wxyz": _quaternion(trunk_rotation),
-                    "rotation_matrix": trunk_rotation.tolist(),
-                    "marker_reprojection_rms_normalized": error,
-                }
-            )
-        if not candidates:
-            raise ValueError("Single-camera marker pose is behind the camera.")
-        candidates.sort(key=lambda candidate: candidate["marker_reprojection_rms_normalized"])
+        candidates = _single_camera_candidates(local, projections[0], robot_pixels[0])
         return {
             **candidates[0],
             "method": "single_camera",
@@ -365,23 +376,19 @@ def estimate_robot_pose(images, camera_matrices, distortion_coeffs=None, camera_
         if np.any((points @ projection[:, :3].T + projection[:, 3])[:, 2] <= 0):
             raise ValueError("Triangulated robot marker is behind a camera.")
 
-    # Fit the known 42 mm square to stereo corners, giving a proper rigid rotation.
+    # Start with triangulated corners, then fit the square to both images.
     centre = points.mean(axis=0)
     u, _, vt = np.linalg.svd(local.T @ (points - centre))
     rotation_marker = vt.T @ np.diag([1, 1, np.linalg.det(vt.T @ u.T)]) @ u.T
     rotation_marker, centre, reprojection, initial_reprojection, iterations = _joint_pose_fit(
         local, rotation_marker, centre, views
     )
-    rotation_trunk = rotation_marker @ R_TRUNK_MARKER.T
-    position_trunk = centre - rotation_trunk @ MARKER_CENTRE
     fit_error = np.sqrt(np.mean(np.sum((local @ rotation_marker.T + centre - points) ** 2, axis=1)))
     return {
         "method": "stereo",
         "camera_calibration_source": calibration_source,
         "cameras_used": cameras_used,
-        "position_m": position_trunk.tolist(),
-        "quaternion_wxyz": _quaternion(rotation_trunk),
-        "rotation_matrix": rotation_trunk.tolist(),
+        **_trunk_pose(rotation_marker, centre),
         "wall_reprojection_rms_px": wall_errors,
         "marker_fit_rms_m": float(fit_error),
         "marker_reprojection_rms_px": reprojection,
@@ -398,6 +405,11 @@ def main():
     )
     parser.add_argument("--debug-dir", type=Path, help="Save camera images and detection overlays")
     parser.add_argument(
+        "--require-stereo",
+        action="store_true",
+        help="Exit without a pose if either camera cannot observe marker 5",
+    )
+    parser.add_argument(
         "--use-calibrated-extrinsics",
         action="store_true",
         help="Use fixed camera poses from simulator configuration; no wall pose fitting",
@@ -409,6 +421,7 @@ def main():
     try:
         sim.reset_hanging()
         cameras = list(sim.cameras.values())
+        matrices = [mujoco_pixel_intrinsics(camera.K()) for camera in cameras]
         extrinsics = None
         if args.use_calibrated_extrinsics:
             # Camera configuration uses x right/y up/z out, whereas output uses
@@ -438,11 +451,11 @@ def main():
                     )
                 cv2.imwrite(str(args.debug_dir / f"{camera.name}_detected.png"), bgr)
         try:
-            result = estimate_robot_pose(
-                images, [camera.K() for camera in cameras], camera_extrinsics=extrinsics
-            )
+            result = estimate_robot_pose(images, matrices, camera_extrinsics=extrinsics)
         except ValueError as error:
             parser.exit(1, f"Pose unavailable: {error}\n")
+        if args.require_stereo and result["method"] != "stereo":
+            parser.exit(1, "Pose unavailable: stereo required; single-camera fallback rejected.\n")
         result["frame"] = "wall: x right, y into wall, z up"
         if args.check:
             # Ground truth is used only here to evaluate the finished image estimate.
