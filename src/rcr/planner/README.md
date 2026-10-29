@@ -13,12 +13,14 @@
 - **Scoring** [Rules §8]: height comes first (the highest hold *touched*), then time. A plan that reliably reaches high beats a
   fast plan that might fail.
 
-## Method (D2): reachability A\* over stances, checked lazily with the optimiser's feasibility
-Decided on 27 Oct, on this branch. **Reason:**
+## Method (D2): reachability A\* over stances, with the optimiser's feasibility checked at expansion
+Decided on 27 Oct, on this branch; on 29 Oct the check moved from the best path's moves (LazySP) to each stance A\*
+expands (Lazy Weighted A\*) [Ours]. **Reason:**
 - Holds are points, so what stays continuous is where the trunk can be. A stance's set of trunk positions is convex,
   so one small LP tells whether the stance is possible, in about 1 ms.
-- That cheap test generates the candidate moves. The optimiser's 1–17 s `feasible()` is asked only about the moves
-  of the best path.
+- That cheap test generates the candidate moves. The optimiser's 1–17 s `feasible()` is asked about the move into a
+  stance when A\* pops it to expand, so children that are never expanded cost nothing, and the search never has to
+  start again.
 - A\* keeps plans short (time is the tie-break).
 
 It draws on (see Julia's notes):
@@ -55,14 +57,17 @@ It draws on (see Julia's notes):
    - Candidate holds are tested all at once, with array masks and then a necessary test (`u_k + u_-k ≥ 0`, right for
      95 % of what it passes).
    - The exact LP runs only for the stances the search expands.
-3. **A\*** (`astar.search`):
+3. **A\*** (`astar.solve`):
    - Cost is 1 per move. The goal is a hand on a highest hold.
    - The heuristic is a lower bound on the moves left; a test checks it never overestimates on a small wall.
    - It is weighted (`WEIGHT` = 3): plans have at most 3× the fewest moves of the graph.
-4. **Lazy feasibility** (`astar.solve`, LazySP):
-   - The best path's moves are asked of `feasible()` from the start.
-   - A rejected move leaves the graph and the path is searched again.
-   - If the top can't be reached, the plan goes as high as it can.
+4. **Feasibility at expansion** (`astar.solve`, Lazy Weighted A\*, Cohen, Phillips & Likhachev 2014):
+   - A stance is queued once per parent. When it's popped, its trunk-region LP runs, then `feasible(parent, stance)`.
+   - A rejected move is banned (5) and the next stance is popped; the stance can still be expanded from another parent.
+   - So every stance expanded, and every move of the plan, has been checked. Each move is asked at most once.
+   - If the top can't be reached (or after `MAX_REJECTIONS`), the plan goes to the highest stance expanded.
+   - **Cost:** one call per stance expanded. With every move accepted that's 158–3,564 per test wall (L1–L3, seeds
+     0–2), with as many distinct layouts, so the cache (6) barely helps. Not yet run with the real optimiser.
 5. **A rejection reaches as far as its check** (`astar.Banned`). The optimiser's reason names the check that failed
    (`edge_checks.CHECKS`), and each check only looks at part of the move:
 
@@ -87,10 +92,10 @@ New to the planner? Start with [GUIDE.md](GUIDE.md) and its interactive companio
 
 | File | What |
 |---|---|
-| `GUIDE.md`, `playground.html` | starter guide; the planner rebuilt in JavaScript on a 2D wall, one tab per step |
+| `GUIDE.md`, `playground.html` | starter guide; the planner rebuilt in JavaScript on a 2D wall, one tab per step (still the best-path version) |
 | `__init__.py` | `plan(wall, feasible)` → `astar.solve(...).plan` |
 | `reach.py` | loads the reach sets; trunk regions (`region`, `maybe_nonempty`, `centre`: the Chebyshev LP) |
-| `astar.py` | `posture`, `Graph` (the reach graph), `search` (A\*), `Banned`, `solve` (LazySP) |
+| `astar.py` | `posture`, `Graph` (the reach graph), `Banned`, `solve` (A\* with feasibility at expansion) |
 | `cache.py` | `layout_key`, `Cache` |
 | `scripts/make_reach.py` | writes `data/robot/reach.json` (optimiser group) |
 | `scripts/plan_wall.py` | plans one wall (or `--warm N` walls), with the reach graph only or the optimiser |
@@ -119,7 +124,7 @@ uv run scripts/make_reach.py                                      # rebuild the 
 
 ## Measured
 With the reach graph alone (every move accepted), it plans the generated walls (L1–L3, seeds 0–9) and `wall_hard.json`
-to the top in 0.1–2 s per wall. In tests: 9 walls plus a small ladder, where weight 1 matches a breadth-first search.
+to the top in 0.1–4 s per wall, expanding (and so asking `feasible()` about) 114–3,564 stances. In tests: 9 walls plus a small ladder, where weight 1 matches a breadth-first search.
 
 With the real optimiser (`scripts/plan_eval.py`, MacBook, 27 Oct), on moves sampled at random from the reach graph:
 
@@ -128,8 +133,12 @@ With the real optimiser (`scripts/plan_eval.py`, MacBook, 27 Oct), on moves samp
 | kinematics only | 2 of 72 | `stance` 58, `start` 6, `release` 5, `path` 1 | 2.6 s |
 | + `ENVELOPE` | 18 of 63 (29 %) | `stance` 17, `path` 16, `start` 8, `release` 3, `arrival` 1 | 17 s |
 
-**Open problem: the lazy loop doesn't converge fast enough.**
-- On `gen_l1_s0`, with the real optimiser, there was still no plan after 40 min and about 80 checks.
+**Open problem: too many optimiser calls.**
+- With the previous best-path checks (before 29 Oct), on `gen_l1_s0` with the real optimiser, there was still no plan
+  after 40 min and about 80 checks.
+- With checks at expansion there's no loop to converge, but every stance expanded costs a call. On the reach graph
+  alone, that's 114–3,564 per wall, nearly all distinct layouts. Not yet measured with the real optimiser, where
+  rejections both ban families of moves (fewer expansions) and push A\* off the bold path (more).
 - The cause, reproduced with the playground's toy optimiser (tab 5):
   - the fewest-moves path picks the boldest moves (stances at the envelope's edge), which a stricter check rejects;
   - a `stance` ban removes one stance but not its near-twins, and a `path` ban removes one move while the same hold blocks
@@ -146,4 +155,3 @@ With the real optimiser (`scripts/plan_eval.py`, MacBook, 27 Oct), on moves samp
 - Trunk lean as discrete branches (CASSR's yaw), rather than one set over all the example's orientations.
 - A stage-2 trunk point per stance, deep in its region, to seed the optimiser (CASSR §VI).
 - A NAS-style backward pass: cost-to-go for every stance, as an informed heuristic and a replanning policy.
-- Incremental search (LPA\*) instead of searching again after each rejection.

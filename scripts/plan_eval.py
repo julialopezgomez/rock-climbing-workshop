@@ -113,7 +113,6 @@ def plans(args) -> dict:
                 checks=result.checks,
                 cached=feasible.hits - hits,
                 rejected=len(result.rejected),
-                searches=result.searches,
                 expansions=result.expansions,
                 seconds=round(result.seconds, 1),
             )

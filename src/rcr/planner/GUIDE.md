@@ -27,26 +27,32 @@ For teammates who know robotics but not planning.
 1. **A cheap stand-in graph** (the *reach graph*). Each limb can reach only so far from the trunk, and the robot only holds
    postures like ones the optimiser has solved. This prunes most moves in **milliseconds**, with no optimiser call.
 2. **A\* search** on that graph finds the plan with the fewest moves.
-3. **Lazy checks.**
-   - Only the moves of the best plan are sent to the optimiser.
-   - A "no" bans that move, or a whole family of moves when the failed check implies it, and the search runs again.
+3. **Checks at expansion** (Lazy Weighted A\*).
+   - The reach graph generates a stance's children without asking the optimiser.
+   - When A\* pops a stance to expand it, the move that led there is sent to the optimiser first.
+   - A "no" bans that move, or a whole family of moves when the failed check implies it. The stance stays reachable from
+     its other parents, and the search carries on: there is no second search.
    - Verdicts are remembered by the *shape* of the move, so the same move elsewhere on the wall isn't asked twice.
 
 ```
-   wall ──► reach graph (ms per stance) ──► A* ──► best plan ──► check its moves with feasible() (seconds each)
-                 ▲                                                         │
-                 └──────────── ban what the "no" rules out ◄───────────────┘ (until every move passes)
+   wall ──► reach graph (ms per stance) ──► A* pops a stance ──► feasible(the move into it)? (seconds each)
+                                                 ▲                   │
+                                                 └───────────────────┘ yes: queue its children; no: ban what it rules out
 ```
 
 > [!IMPORTANT]
 > **Status (27 Oct).**
 > - With the reach graph alone, it plans every test wall (L1–L3) in under 2 s.
-> - With the real optimiser, the "search → reject → search again" loop **does not converge fast enough yet**. See §5:
->   it's the main open problem.
+> - **29 Oct: the optimiser is now asked at expansion, not about the best path's moves.** Every stance expanded costs one
+>   call. With the reach graph alone the search expands 158–3,564 stances per test wall, and the layout cache answers
+>   almost none of them (§5). How many the optimiser's bans save is not measured yet.
+> - The playground (tabs 0, 1, 5) still shows the previous version, which checked the best path's moves and searched
+>   again.
 
 > [!TIP]
-> **See it:** playground tab 0 runs the same wall two ways. *Eager* asks the optimiser about every move the search touches;
-> *ours* asks about the best path only. Compare the optimiser-call counters.
+> **See it:** playground tab 0 runs the same wall two ways. *Eager* asks the optimiser about every child when a stance is
+> expanded; the playground's *ours* is the previous version, which asked about the best path only. Compare the
+> optimiser-call counters.
 
 ---
 
@@ -69,7 +75,7 @@ For teammates who know robotics but not planning.
 | **trunk region** | every trunk position from which all four balls reach their holds at once. Empty means the stance is impossible, whatever the joint angles. |
 | **LP** | a linear program: a fast, exact optimisation with linear constraints. One LP tells whether a trunk region is empty, in about 1 ms. |
 | **posture envelope** | ranges (hands apart, hand above the feet, lean, …) taken from the 36 stances the optimiser solved on the example wall. Our stand-in for torque limits. |
-| **lazy evaluation / LazySP** | ask the expensive check only about the edges of the current best path, not about every edge the search sees. |
+| **Lazy Weighted A\*** | ask the expensive check about an edge when the search pops the stance it leads to, not when the stance is first generated. Children that are never popped cost nothing. |
 | **ban** | a move, or a family of moves, the optimiser rejected. The search skips it. |
 | **layout cache** | verdicts stored under the move's layout: the hold positions relative to each other, on the grid. The same move anywhere hits the same entry. |
 
@@ -113,31 +119,33 @@ uv run scripts/plan_wall.py --level 1 --seed 0 --feasibility optimiser  # with t
 - `Banned()`: empty.
 - The start key: the wall's start stance.
 
-### Step 4: the loop (`solve`, [astar.py](astar.py))
+### Step 4: the search (`solve`, [astar.py](astar.py))
 ```
-repeat:
-    path = search(...)                 # 4a: A* on the reach graph, skipping banned moves (no optimiser call)
-    for each move (a → b) of path, from the start:
-        verdict = feasible(a, b)       # 4e: the optimiser (through the cache)
-        if no: ban what it implies     # 4f
-               and search again
-    if every move passed: return the plan
+pop the stance b with the lowest f, reached from a     # 4a
+    skip it if expanded, its trunk region is empty, or a → b is banned
+    verdict = feasible(a, b)                           # 4e: the optimiser (through the cache)
+    if no: ban what it implies, and pop the next one   # 4f
+    if a hand is on a highest hold: return the path
+    queue b's children from the reach graph            # 4b (no optimiser call)
 ```
 
 > [!TIP]
-> **See it:** tab 1 walks through this whole loop on a real run, one step at a time, highlighting the box in the diagram
-> and the move on the wall.
+> **See it:** tab 1 walks through the previous version's loop on a real run, one step at a time, highlighting the box in
+> the diagram and the move on the wall.
 
-#### 4a. `search()`: A\* on the reach graph
+#### 4a. A\* on the reach graph
 1. Put the start in a *priority queue*, ordered by `f = g + w·h`.
-2. Pop the stance with the lowest `f`.
-3. Skip it if it was already expanded, or if its trunk region turns out empty (4c).
-4. If a hand is on a highest hold, stop: follow the parent links back to get the path.
-5. Otherwise expand it (4b). Each child gets `g + 1` if that's better than any earlier route to it, and goes into the queue.
-6. If the queue empties without reaching the top, return the path to the highest stance reached (height first [Rules §8]).
+2. Pop the stance with the lowest `f`, with the parent it was queued from.
+3. Skip it if it was already expanded, if its trunk region turns out empty (4c), or if the move from that parent is banned.
+4. Ask the optimiser about the move from the parent (4e). On a "no", ban (4f) and go back to 2.
+5. If a hand is on a highest hold, stop: follow the parent links back to get the path. Every move on it was checked.
+6. Otherwise expand it (4b): each child goes into the queue with `g + 1`, once per parent, so a child whose move from one
+   parent is rejected can still be reached from another.
+7. If the queue empties (or 200 moves are rejected) without reaching the top, return the path to the highest stance
+   expanded (height first [Rules §8]).
 
 > [!TIP]
-> **See it:** tab 4 steps through `search()` line by line on a small ladder.
+> **See it:** tab 4 steps through A\* line by line on a small ladder (without the optimiser).
 > - The queue (with f, g and h) and the heuristic's breakdown update as you go.
 > - Tick **quiz me** to be asked, at each line, which stance pops, whether it's skipped, how many children are queued, and
 >   what a child's f is.
@@ -170,7 +178,7 @@ For each limb, every hold on the wall goes through these filters, cheapest first
   - It's right for 95 % of the stances it passes.
 - **Exact test** (`centre`):
   - One LP finds the point deepest inside the region.
-  - It runs only for stances the search actually pops (in step 4a), the same "lazy" idea one level down.
+  - It runs only for stances the search actually pops (in step 4a), before the optimiser is asked: cheap checks first.
 
 > [!TIP]
 > **See it:** tab 2.
@@ -184,8 +192,8 @@ For each limb, every hold on the wall goes through these filters, cheapest first
 - So `h` = moves the hands still need + moves the feet still need. That's a lower bound, so it's admissible. It is also
   loose, which is why we weight it (`w = 3`).
 
-#### 4e. Checking the path: `Cache` → `feasible()`
-- Moves are checked in order from the start. A move already verified isn't asked again.
+#### 4e. Checking the move into a stance: `Cache` → `feasible()`
+- One call per stance popped. Each move is asked at most once: a stance is expanded once, so it queues each child once.
 - **The cache** ([cache.py](cache.py)):
   - The key is the moving limb, plus the grid offsets of the five holds involved, plus any other hold within 0.25 m, all
     relative to the moving limb's old hold.
@@ -212,29 +220,29 @@ Each of the optimiser's checks looks at only part of the move, so its "no" reach
 
 > [!TIP]
 > **See it:** tab 5.
-> - Step through search → check → ban.
+> - Step through search → check → ban (the previous version's order: the whole path, then search again).
 > - Switch "a 'no' bans" between *by its check* and *only that move*, and the cache on and off, and compare the totals.
 
 ### Step 5: the result
-- **`Result`:** the plan, whether it reached the top, and counters (searches, stances expanded, optimiser calls, rejections,
-  time).
+- **`Result`:** the plan, whether it reached the top, and counters (stances expanded, optimiser calls, rejections, time).
 - **The plan:** `plan_wall.py --save` writes it as `contact_plan/1`.
 - **Next:** `optimiser.optimise(wall, plan)` turns it into the trajectory the robot executes.
 
 ---
 
-## 4. Eager vs ours (the same wall)
+## 4. Three ways to place the check (the same wall)
 
-|  | Eager: ask about every move | Ours |
-|---|---|---|
-| Who proposes moves | every hold in reach | the reach graph (posture rules + trunk region) |
-| When the optimiser is asked | every move the search touches | only the best path's moves |
-| What a "no" removes | one move | everything the failed check implies |
-| Same move elsewhere | asked again | from the cache |
-| Optimiser calls, toy, `gen_l1_s0` | 14,155 (≈ 13 h) | 346 (≈ 25 min) |
-| Reaches the top (toy, 5 walls) | always | 2 of 5 within 200 rejections (§5) |
+|  | Eager: every child | Ours (since 29 Oct): at expansion | Before 29 Oct: best path |
+|---|---|---|---|
+| Who proposes moves | every hold in reach | the reach graph | the reach graph |
+| When the optimiser is asked | every child of every stance expanded | the move into each stance expanded | only the best path's moves |
+| What a "no" removes | one move | everything the failed check implies | everything the failed check implies |
+| Same move elsewhere | asked again | from the cache | from the cache |
+| Optimiser calls, toy, `gen_l1_s0` | 14,155 (≈ 13 h) | not in the playground yet | 346 (≈ 25 min) |
+| Reaches the top (toy, 5 walls) | always | not in the playground yet | 2 of 5 within 200 rejections (§5) |
 
-The bottom two rows come from the playground's toy optimiser, so they show the pattern, not real timings.
+The bottom two rows come from the playground's toy optimiser, so they show the pattern, not real timings. With the reach
+graph alone (every move accepted), ours asks 1,767 moves on `gen_l1_s0` (1,751 distinct layouts).
 
 ---
 
@@ -248,9 +256,17 @@ reach graph:
 | kinematics only | 2 of 72 | `stance` (58): the new stance can't be held at all | 2.6 s |
 | + posture envelope | 18 of 63 (29 %) | `stance` 17, `path` 16, `start` 8, `release` 3 | 17 s |
 
-On `gen_l1_s0`, a full plan with the real optimiser had still not converged after 40 minutes and about 80 checks.
+On `gen_l1_s0`, a full plan with the real optimiser had still not converged after 40 minutes and about 80 checks (with
+the previous, best-path version).
 
-**Why the loop doesn't converge** (the toy in tab 5 shows the same thing):
+**With checks at expansion** (29 Oct), every move on the plan is checked by the time the goal is popped, and there is no
+loop to converge. The cost moves to the number of stances expanded: with every move accepted, 158–3,564 per test wall
+(L1–L3, seeds 0–2). The layout cache barely helps, since nearly every one of these moves has a layout of its own, even
+across walls. At 17 s a check, that is hours a wall. Rejections ban stances and families of moves, which shrinks the
+search, but by how much is not measured yet.
+
+**Why the previous loop didn't converge** (the toy in tab 5 shows the same thing; the same causes now make A\* expand
+more stances):
 - **The fewest-moves path is bold.** It picks the biggest rises and stances at the edge of the envelope. Those are exactly
   the moves a stricter check rejects, so the rejection rate on the path is far higher than on random moves.
 - **Bans are narrow.** A `stance` ban removes one stance, but its near-identical neighbours remain. A `path` ban (a shin
@@ -306,12 +322,12 @@ The optimiser is quasi-static, and so is everything the planner relies on. The w
 
 | Concept | Playground tab | Code |
 |---|---|---|
-| eager vs lazy, same wall | 0 | `astar.solve` |
+| eager vs best-path checks, same wall | 0 | `astar.solve` (now checks at expansion) |
 | what runs, in order | 1 | `scripts/plan_wall.py` → `astar.solve` |
 | trunk region, reach sets | 2 | `reach.py`, `Graph.valid` |
 | expanding a stance | 3 | `Graph.children`, `posture` |
-| A\*, with a quiz | 4 | `search`, `Graph.h` |
-| lazy checks and bans | 5 | `solve`, `Banned` |
+| A\*, with a quiz | 4 | `solve`, `Graph.h` |
+| checks and bans (best-path version) | 5 | `solve`, `Banned` |
 | layout cache | 6 | `cache.layout_key` |
 
 **About the playground:**

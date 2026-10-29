@@ -48,7 +48,7 @@ def report(wall, result: astar.Result, cache: Cache | None) -> None:
     print(
         f"{wall.id}: {len(result.plan.stances) - 1} moves, top {top}; "
         f"{result.checks} feasibility checks{hits}, {len(result.rejected)} rejected; "
-        f"{result.searches} searches, {result.expansions} stances expanded; {result.seconds:.1f} s"
+        f"{result.expansions} stances expanded; {result.seconds:.1f} s"
     )
     reasons = Counter(reason.split(":")[0] for _, _, reason in result.rejected)
     if reasons:

@@ -1,13 +1,13 @@
-"""Reachability A* over stances, checked lazily with the optimiser's feasibility (D2).
+"""Reachability A* over stances, with the optimiser's feasibility checked at expansion (D2).
 
 Two levels, as FARO orders its checks cheap to expensive [Ours, after FARO and CASSR]:
   - the reach graph: a node is a stance (limb -> hold); a move changes one limb's hold. A move is
     in the graph if the new stance keeps our posture rules and its trunk region is not empty
-    (reach.py). Building it is milliseconds per node;
-  - `feasible(wall, a, b)` (1-17 s a move with the optimiser's): asked only about the moves of
-    the reach graph's best path, from the start. A rejected move leaves the graph and the path is
-    searched again (LazySP, Dellin & Srinivasa 2016), so feasible() sees a path's moves, not
-    every node the search touches.
+    (reach.py). Building it is milliseconds per node, and it generates A*'s children;
+  - `feasible(wall, a, b)` (1-17 s a move with the optimiser's): asked about the move into a
+    stance when A* pops it to expand, not when it is generated (Lazy Weighted A*, Cohen, Phillips
+    & Likhachev 2014). A rejected move is banned (`Banned`) and the stance stays open to its
+    other parents, so every stance expanded is reached by feasible moves only.
 Cost 1 per move, so the plan has the fewest moves (time is the tie-break [Rules §8]). The goal is
 a hand on one of the highest holds [Rules §8]; if no plan gets there, the plan goes as high as it
 can (height first [Rules §8]).
@@ -17,13 +17,13 @@ import heapq
 import math
 import time
 from dataclasses import dataclass, field
-from itertools import count, pairwise
+from itertools import count
 
 import numpy as np
 
 from rcr.planner import reach as rc
 from rcr.planner.cache import Cache
-from rcr.types import LIMBS, ContactPlan, Feasibility, FeasibilityFn, Stance, WallModel
+from rcr.types import LIMBS, ContactPlan, FeasibilityFn, Stance, WallModel
 
 HANDS = ("right_hand", "left_hand")
 FEET = ("right_foot", "left_foot")
@@ -64,8 +64,7 @@ class Result:
     plan: ContactPlan
     reached_top: bool  # a hand ends on one of the highest holds
     seconds: float
-    expansions: int = 0  # reach-graph nodes expanded, all searches together
-    searches: int = 0
+    expansions: int = 0  # stances expanded
     checks: int = 0  # feasible() calls
     rejected: list[tuple[Stance, Stance, str]] = field(default_factory=list)
 
@@ -236,35 +235,6 @@ class Banned:
         )
 
 
-def search(graph: Graph, start: Key, banned: Banned, weight: float = WEIGHT):
-    """A* on the reach graph without the banned moves: (path to a goal, or to the highest
-    stance reached if no goal can be; True if it is a goal; nodes expanded)."""
-    tie = count()
-    g = {start: 0}
-    parent: dict[Key, Key] = {}
-    heap = [(weight * graph.h(start), -graph.best_hand(start), next(tie), start)]
-    closed = set()
-    best = start
-    while heap:
-        _, _, _, k = heapq.heappop(heap)
-        if k in closed or (k != start and not graph.valid(k)):
-            continue
-        closed.add(k)
-        if graph.is_goal(k):
-            return _path(parent, k), True, len(closed)
-        if (graph.best_hand(k), -g[k]) > (graph.best_hand(best), -g[best]):
-            best = k
-        for child in graph.children(k):
-            m = next(n for n in range(4) if child[n] != k[n])
-            if g[k] + 1 >= g.get(child, math.inf) or not banned.allows(k, child, m):
-                continue
-            g[child] = g[k] + 1
-            parent[child] = k
-            f = g[child] + weight * graph.h(child)
-            heapq.heappush(heap, (f, -graph.best_hand(child), next(tie), child))
-    return _path(parent, best), False, len(closed)
-
-
 def _path(parent: dict[Key, Key], k: Key) -> list[Key]:
     path = [k]
     while path[-1] in parent:
@@ -279,35 +249,54 @@ def solve(
     weight: float = WEIGHT,
     max_rejections: int = MAX_REJECTIONS,
 ) -> Result:
-    """The plan and how it was found. See the module docstring. `feasible` is asked through a
-    layout cache (cache.Cache) unless it is one already, so a move rejected once is not asked
-    again elsewhere on the wall."""
+    """The plan and how it was found: A* on the reach graph, asking feasible() about the move
+    into each stance before expanding it (see the module docstring). `feasible` is asked through
+    a layout cache (cache.Cache) unless it is one already, so a move rejected once is not asked
+    again elsewhere on the wall. With no way to the top, or after max_rejections, the plan goes
+    to the highest stance expanded."""
     clock = time.perf_counter()
     graph = Graph(wall, reach or rc.load())
-    start = key(wall.start)
     if not isinstance(feasible, Cache):
         feasible = Cache(feasible)
-    banned = Banned()
-    verified: dict[tuple[Key, Key], Feasibility] = {}
     result = Result(plan=ContactPlan(wall.id, [wall.start]), reached_top=False, seconds=0.0)
-    while True:
-        path, reached_top, expanded = search(graph, start, banned, weight)
-        result.searches += 1
-        result.expansions += expanded
-        good = [path[0]]
-        for a, b in pairwise(path):
-            if (a, b) not in verified:
-                result.checks += 1
-                verdict = feasible(wall, stance(a), stance(b))
-                if not verdict.feasible:
-                    banned.add(a, b, verdict.reason)
-                    result.rejected.append((stance(a), stance(b), verdict.reason))
-                    break
-                verified[(a, b)] = verdict
-            good.append(b)
-        done = len(good) == len(path)
-        if done or len(result.rejected) >= max_rejections:
-            result.plan = ContactPlan(wall_id=wall.id, stances=[stance(k) for k in good])
-            result.reached_top = done and reached_top
-            result.seconds = time.perf_counter() - clock
-            return result
+    banned = Banned()
+    start = key(wall.start)
+    tie = count()
+    # (f, -highest hand, tie, stance, parent, moves). A stance is queued once per parent, so if
+    # the move from one parent is rejected it can still be expanded from another.
+    heap = [(weight * graph.h(start), -graph.best_hand(start), next(tie), start, None, 0)]
+    g: dict[Key, int] = {}  # the stances expanded
+    parent: dict[Key, Key] = {}
+    best = goal = start
+    while heap and len(result.rejected) < max_rejections:
+        _, _, _, k, p, moves = heapq.heappop(heap)
+        if k in g:
+            continue
+        if p is not None:
+            m = next(n for n in range(4) if p[n] != k[n])
+            if not graph.valid(k) or not banned.allows(p, k, m):
+                continue
+            result.checks += 1
+            verdict = feasible(wall, stance(p), stance(k))
+            if not verdict.feasible:
+                banned.add(p, k, verdict.reason)
+                result.rejected.append((stance(p), stance(k), verdict.reason))
+                continue
+            parent[k] = p
+        g[k] = moves
+        if graph.is_goal(k):
+            goal, result.reached_top = k, True
+            break
+        if (graph.best_hand(k), -g[k]) > (graph.best_hand(best), -g[best]):
+            best = k
+        for child in graph.children(k):
+            m = next(n for n in range(4) if child[n] != k[n])
+            if child in g or not banned.allows(k, child, m):
+                continue
+            f = moves + 1 + weight * graph.h(child)
+            heapq.heappush(heap, (f, -graph.best_hand(child), next(tie), child, k, moves + 1))
+    path = _path(parent, goal if result.reached_top else best)
+    result.plan = ContactPlan(wall_id=wall.id, stances=[stance(k) for k in path])
+    result.expansions = len(g)
+    result.seconds = time.perf_counter() - clock
+    return result

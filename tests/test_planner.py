@@ -1,6 +1,7 @@
 """Planner (D2): plans keep the rules and reach the top, the search is A* on the reach graph, the
-optimiser's feasibility is asked lazily, and the cache keys moves by their layout. No optimiser
-needed: feasibility is a stand-in here (scripts/plan_eval.py runs the real one)."""
+optimiser's feasibility is asked of each stance expanded, and the cache keys moves by their
+layout. No optimiser needed: feasibility is a stand-in here (scripts/plan_eval.py runs the real
+one)."""
 
 import dataclasses
 from collections import deque
@@ -64,7 +65,7 @@ def test_plans_keep_the_rules_and_reach_the_top(wall):
     for a, b in pairwise(stances):
         (limb,) = moved(a, b)
         assert graph.z[b.contacts[limb]] >= graph.z[a.contacts[limb]] - astar.MAX_DROP - 1e-9
-    assert result.checks == len(stances) - 1, "feasible() asked once per move of the plan"
+    assert result.checks == result.expansions - 1, "feasible() asked once per stance expanded"
 
 
 def test_plan_returns_a_contact_plan_for_the_wall():
@@ -73,10 +74,13 @@ def test_plan_returns_a_contact_plan_for_the_wall():
     assert isinstance(out, ContactPlan) and out.wall_id == wall.id and len(out.stances) > 1
 
 
-def test_rejected_moves_are_planned_around():
+def test_rejected_moves_are_planned_around(monkeypatch):
     """Take the holds the left and the right hand first move to when every move is allowed. Now
     no stance can have the left hand on its hold (as the optimiser's 'stance' check would say),
-    and no limb can arrive on the right hand's (a 'path' failure, of that move only)."""
+    and no limb can arrive on the right hand's (a 'path' failure, of that move only). These
+    rules name holds, so the same layout elsewhere on the wall gets another answer: no layout
+    cache here."""
+    monkeypatch.setattr("rcr.planner.cache.layout_key", lambda *args: None)
     wall = walls.generate(1, 0)
     free = astar.solve(wall, always).plan.stances
     first = {}
@@ -185,11 +189,11 @@ def test_weight_one_finds_the_fewest_moves_and_the_heuristic_is_admissible():
     graph = astar.Graph(wall, rc.load())
     start = astar.key(wall.start)
     dist = distances_to_goal(graph, start)
-    path, top, _ = astar.search(graph, start, astar.Banned(), weight=1.0)
-    assert top and len(path) - 1 == dist[start]
+    exact = astar.solve(wall, always, weight=1.0)
+    assert exact.reached_top and len(exact.plan.stances) - 1 == dist[start]
     assert all(graph.h(k) <= d for k, d in dist.items()), "h never overestimates"
-    weighted, _, _ = astar.search(astar.Graph(wall, rc.load()), start, astar.Banned(), astar.WEIGHT)
-    assert len(weighted) - 1 <= astar.WEIGHT * dist[start]
+    weighted = astar.solve(wall, always, weight=astar.WEIGHT)
+    assert len(weighted.plan.stances) - 1 <= astar.WEIGHT * dist[start]
 
 
 def shifted(wall: WallModel, di: int, dj: int) -> WallModel:

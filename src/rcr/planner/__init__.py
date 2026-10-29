@@ -1,7 +1,8 @@
 """Planner (laptop): wall model -> full contact plan. See README.md.
 
 Imports rcr.types only: never rcr.optimiser or rcr.controller. Feasibility is passed in.
-Method (D2): reachability A* over stances, the optimiser's feasibility asked lazily (astar.py).
+Method (D2): reachability A* over stances, the optimiser's feasibility asked at expansion
+(astar.py).
 """
 
 from rcr.types import ContactPlan, FeasibilityFn, WallModel
