@@ -116,8 +116,15 @@ feasible: each move stays as close to it as the constraints allow. From the file
 - each move cut where the moving ball leaves its hold: the held part onto phase A's samples, the part in the air onto
   phase B's; and its **timing** (the medians over its moves become the phase durations).
 
-The cost gets `w_track · Σ_k ||S (dq_k − dq_ref,k)||²` (`w_track` = 10; `S` counts the trunk's position 1 cm as
-0.1 rad, `track_position_scale`), the reference is the starting point, and the start pose stays near its first pose.
+The reference is always the solver's starting point (every sample of every move, and the start pose). With
+`w_track` > 0 the cost also gets `w_track · Σ_k ||S (dq_k − dq_ref,k)||²` (`S` counts the trunk's position 1 cm as
+0.1 rad, `track_position_scale`), keeping the result near it; with `w_track` = 0 (`run.sh`'s default) the other costs
+(swing, hook, keep-out) decide the motion, and the reference only gives IPOPT a good start.
+
+**A motion as the starting guess for a plan** (`PLAN --guess FILE`; `run.sh`'s `GUESS`). The plan decides the moves;
+the file (same format) only gives the solver its starting point, for each of the plan's moves it also has (from the
+same stance to the same stance, `reference.guesses`). The other moves start as usual. With `w_track` > 0 the result
+is also kept near it, which then needs every move.
 The costs that shape the motion themselves (swing, keep-out, hooks, posture) are off: the reference decides it. After
 each move, the runner prints how far it ended from the reference.
 

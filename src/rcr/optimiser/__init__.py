@@ -40,7 +40,8 @@ def solve_plan(
 
 def start_pose(wall: WallModel, plan: ContactPlan, cfg: TransitionConfig | None = None, near=None):
     """The plan's first configuration: a static pose of its first stance (validates the plan).
-    near: a configuration (NQ) to stay close to (a reference's first), weighted by w_track."""
+    near: a configuration (NQ) to start from (a reference's first), and stay close to with
+    w_track."""
     from dataclasses import replace
 
     from rcr.optimiser import transition as tr
@@ -48,7 +49,8 @@ def start_pose(wall: WallModel, plan: ContactPlan, cfg: TransitionConfig | None 
     cfg = cfg or tr.TransitionConfig()
     validate_plan(wall, plan)
     if near is not None:
-        return tr.static_pose(wall, plan.stances[0], near, replace(cfg, w_stay=cfg.w_track)).q[0]
+        stay = max(cfg.w_stay, cfg.w_track)
+        return tr.static_pose(wall, plan.stances[0], near, replace(cfg, w_stay=stay)).q[0]
     return tr.stance_pose(wall, plan.stances[0], cfg)
 
 

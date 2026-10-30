@@ -163,8 +163,9 @@ class TransitionConfig:
     w_hook: float = 10.0  # weight on (hook_up - upward component)^2
     hook_up: float = 0.5
     # Follow a reference motion (rcr.optimiser.reference, e.g. an IK trajectory): the distance
-    # from it at every sample, the trunk's position scaled by track_position_scale [rad/m]. Off
-    # (0) unless a reference is given; reference.tracking_config turns it on [Ours].
+    # from it at every sample, the trunk's position scaled by track_position_scale [rad/m]. A
+    # given reference is always the solve's starting point; w_track also keeps the result near
+    # it (0: the reference is only the starting point) [Ours].
     w_track: float = 0.0
     track_position_scale: float = 10.0
     phase_a_duration: float = 1.0  # [s] for phase A, chosen after solving (quasi-static) [Ours]
@@ -632,8 +633,8 @@ def solve_transition(
     q0 must have every ball on its hold of `a` (e.g. stance_pose, or the previous transition's
     end). Only the moving limb's final point is fixed, not the final configuration.
     rescue: if the solve fails, solve the move coarsely (coarse()) and start from that path.
-    reference: (N + 1) x NQ configurations to follow (needed with cfg.w_track, ignored without):
-    the w_track cost's target, and the solve's starting point.
+    reference: (N + 1) x NQ configurations (e.g. an IK motion): always the solve's starting
+    point; with cfg.w_track also the cost's target, kept close (needed with cfg.w_track).
     """
     cfg = cfg or TransitionConfig()
     check_holds(wall, a, index)
@@ -644,11 +645,12 @@ def solve_transition(
     p.opti.set_value(p.q_ref, q0)
     p.opti.set_value(p.holds, contact_points(wall, a, cfg))
     p.opti.set_value(p.target, contact_point(wall, b.contacts[moving], cfg))
-    if cfg.w_track:
-        if reference is None:
-            raise ValueError(f"{what}: w_track is set, but no reference was given")
+    if cfg.w_track and reference is None:
+        raise ValueError(f"{what}: w_track is set, but no reference was given")
+    if reference is not None:
         path = np.column_stack([rm.difference(q0, r) for r in reference])
-        p.opti.set_value(p.track, path)
+        if cfg.w_track:  # and keep near it
+            p.opti.set_value(p.track, path)
         _fresh(p)
         _warm_start(p, wall, b, q0, moving, cfg, index, path)  # start on the reference
     else:

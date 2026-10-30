@@ -100,6 +100,24 @@ def move_samples(q: np.ndarray, move: ReferenceMove, cfg: tr.TransitionConfig) -
     return resample(q, np.concatenate([a, b]))
 
 
+def guesses(plan: ContactPlan, wall: WallModel, q: np.ndarray, cfg: tr.TransitionConfig):
+    """Per move of `plan`, the reference's samples ((N + 1) x NQ) of the same move: from the same
+    stance to the same stance (so the same limb, from the same hold to the same hold); None
+    where the reference has no such move. For the solver's starting guess (and w_track)."""
+    ref_plan, moves = plan_of(wall, q, cfg)
+
+    def key(stance: Stance) -> tuple:
+        return tuple(stance.contacts[limb] for limb in LIMBS)
+
+    found = {}
+    for move, a, b in zip(moves, ref_plan.stances[:-1], ref_plan.stances[1:], strict=True):
+        found.setdefault((key(a), key(b)), move)
+    return [
+        move_samples(q, found[key(a), key(b)], cfg) if (key(a), key(b)) in found else None
+        for a, b in zip(plan.stances, plan.stances[1:], strict=False)
+    ]
+
+
 def tracking_config(cfg: tr.TransitionConfig, moves: list[ReferenceMove]) -> tr.TransitionConfig:
     """cfg for tracking: w_track on; the costs that shape the motion themselves off (swing,
     keep-out, hooks, posture), the reference decides it; phase durations the reference's

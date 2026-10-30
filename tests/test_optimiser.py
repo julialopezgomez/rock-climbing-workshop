@@ -472,7 +472,7 @@ def solve_in_background(
         out.send(("start", q))
         start = time.perf_counter()
         for i, result in enumerate(iter_plan(wall, plan, q, cfg, references)):
-            if references is not None:
+            if references is not None and references[i] is not None:
                 apart = np.array(
                     [rm.difference(r, s) for r, s in zip(references[i], result.q, strict=True)]
                 )
@@ -656,6 +656,8 @@ def replay(wall: WallModel, view: bool = True, path: Path | None = None) -> None
     """Play `path` (default trajectory_file(wall.id), saved by --save) in the sim, without
     solving anything."""
     path = path or trajectory_file(wall.id)
+    if not path.exists():
+        sys.exit(f"nothing to replay: no {path}. Solve it first (without --replay / --play)")
     traj = io.load_trajectory(path)
     if traj.trunk_poses is None or traj.planned_positions is None:
         sys.exit(f"{path} has no planned motion to replay: solve it with --save")
@@ -709,6 +711,9 @@ USAGE = """usage: tests/test_optimiser.py [PLAN | --track FILE] [--save | --repl
                                 [--set NAME=VALUE ...] [--send PI] [--headless]
     PLAN              the contact plan to solve (default build/plan_N1.json): each move is solved
                       and played in the organisers' sim as it comes
+    --guess FILE      with PLAN: a motion (.npz, as --track's) as the solver's starting guess,
+                      for each of PLAN's moves it also has (from the same stance to the same
+                      stance); the others start as usual. With w_track > 0 also followed
     --track FILE      instead of a plan: follow the motion in FILE (.npz, q: T x 26 at 50 Hz, e.g.
                       an IK trajectory), made feasible: its plan, wall (N1-N3) and timing are read
                       from it, each move stays as close to it as balance and torques allow
@@ -754,6 +759,13 @@ if __name__ == "__main__":
         except (IndexError, ValueError):
             sys.exit("--samples needs a number\n" + USAGE)
         del args[i : i + 2]
+    guess = None
+    if "--guess" in args:
+        i = args.index("--guess")
+        if i + 1 >= len(args) or args[i + 1].startswith("--"):
+            sys.exit("--guess needs a motion file (.npz with q)\n" + USAGE)
+        guess = Path(args.pop(i + 1))
+        args.pop(i)
     if track:  # before the weights below, which may still change what tracking_config sets
         from rcr.optimiser import reference
 
@@ -848,6 +860,19 @@ if __name__ == "__main__":
         _SIM_WALLS[wall.id] = organisers_wall(wall.id)
     if "--replay" in flags:
         replay(wall, view, out)
+    elif guess:
+        from rcr.optimiser import reference
+
+        references = reference.guesses(plan, wall, reference.read(guess), cfg)
+        have = sum(r is not None for r in references)
+        print(f"guess {guess}: {have} of {len(references)} moves found in it", flush=True)
+        if cfg.w_track and have < len(references):
+            sys.exit("w_track > 0 needs every move in the guess; w_track 0 uses it only to start")
+        near = references[0][0] if references and references[0] is not None else None
+        run_plan(
+            wall, plan, view, save="--save" in flags, send=send, cfg=cfg,
+            references=references, near=near, out=out,
+        )  # fmt: skip
     elif track:
         references = [reference.move_samples(q_ref, move, cfg) for move in moves]
         run_plan(
