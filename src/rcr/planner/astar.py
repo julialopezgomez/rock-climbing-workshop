@@ -134,8 +134,8 @@ HAND_MAX_APART = 0.7  # a pair with a hand (hand-hand, hand-foot)
 FEET_MAX_APART = 0.27  # the two feet
 # [m] most one hand is above the other, and one foot above the other [Ours]: the example
 # plan the optimiser solved has up to 0.195 m (hands) and 0.135 m (feet)
-MAX_LEVEL = 0.07
-MAX_TRANSITION_HEIGHT = 0.07
+MAX_LEVEL = 0.09
+MAX_TRANSITION_DISTANCE = 0.09  # [m] most a limb's hold in b is from its hold in a [Ours]
 
 Q_HANG = pin.neutral(model)
 for name, angle in json.loads(HANG.read_text())["joints"].items():
@@ -175,22 +175,17 @@ def reach(targets):
     return None
 
 
-def acceptable_transition_height(wall, a, b):
-    """The highest hand in b is at most MAX_TRANSITION_HEIGHT above the highest hand in a, and the
-    same for the feet."""
-    z = {h.id: h.position[2] for h in wall.holds}
-    hands_a = [z[a.contacts[limb]] for limb in LIMBS if "hand" in limb]
-    hands_b = [z[b.contacts[limb]] for limb in LIMBS if "hand" in limb]
-    feet_a = [z[a.contacts[limb]] for limb in LIMBS if "foot" in limb]
-    feet_b = [z[b.contacts[limb]] for limb in LIMBS if "foot" in limb]
-    if max(hands_b) - max(hands_a) > MAX_TRANSITION_HEIGHT:
-        return fail(
-            f"transition: a hand too high ({mm(max(hands_b) - max(hands_a))} > {mm(MAX_TRANSITION_HEIGHT)})"
-        )
-    if max(feet_b) - max(feet_a) > MAX_TRANSITION_HEIGHT:
-        return fail(
-            f"transition: a foot too high ({mm(max(feet_b) - max(feet_a))} > {mm(MAX_TRANSITION_HEIGHT)})"
-        )
+def acceptable_transition(wall, a, b):
+    """Each limb's hold in b is at most MAX_TRANSITION_DISTANCE from its hold in a (straight
+    line, so up and sideways both count); a limb off any hold (None) in a or b is left out."""
+    position = {h.id: np.array(h.position) for h in wall.holds}
+    for limb in LIMBS:
+        hold_a, hold_b = a.contacts[limb], b.contacts[limb]
+        if hold_a is None or hold_b is None:
+            continue
+        step = norm(position[hold_b] - position[hold_a])
+        if step > MAX_TRANSITION_DISTANCE:
+            return fail(f"transition: {limb} too far ({mm(step)} > {mm(MAX_TRANSITION_DISTANCE)})")
     return None
     
 
@@ -334,7 +329,9 @@ def solve(
             # holds limb i can reach with the other three where they are
             children = [k[:i] + (hold,) + k[i + 1 :] for hold in z if hold not in k]
             children = [c for c in children if reach(targets(wall, c)) is None]
-            children = [c for c in children if acceptable_transition_height(wall, stance(k), stance(c)) is None]
+            children = [
+                c for c in children if acceptable_transition(wall, stance(k), stance(c)) is None
+            ]
             for child in children:
                 if g[k] + 1 >= g.get(child, np.inf):
                     continue
