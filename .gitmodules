@@ -4,4 +4,4 @@
 	branch = dev_v2
 [submodule "third_party/simulator"]
 	path = third_party/simulator
-	url = https://github.com/rock-climbing-robots/simulator.git
+	url = git@github.com:rayruchira/simulator.git
