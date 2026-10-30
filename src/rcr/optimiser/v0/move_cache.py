@@ -48,7 +48,7 @@ CACHE_VERSION = 3  # bump when the solver or the key changes what a stored move 
 # repeat on a ladder climbed to 0.8 m: the rungs below the feet kept changing the key.
 NEAR_SIDE = 0.12  # [m]
 NEAR_ABOVE = 0.15  # [m]
-DEFAULT_DIR = Path(__file__).resolve().parents[3] / "build" / "move_cache"
+DEFAULT_DIR = Path(__file__).resolve().parents[4] / "build" / "move_cache"
 # Store infeasible verdicts (feasibility()'s rejections, failed solves) and answer them at once,
 # "(cached)". Off for now: a coarse rejection stored by planning blocked the full solve of the
 # same move, which could have succeeded [Ours]. Rejections already stored are then ignored.
@@ -84,8 +84,8 @@ class MoveCache:
     @staticmethod
     def version(cfg) -> str:
         """What the stored motions depend on besides the holds: change any and the cache is new."""
-        from rcr.optimiser import collision as col
-        from rcr.optimiser import robot_model as rm
+        from rcr.optimiser.v0 import collision as col
+        from rcr.optimiser.v0 import robot_model as rm
         from rcr.robot import hooks
 
         parts = [
@@ -103,7 +103,7 @@ class MoveCache:
     def key(wall: WallModel, a: Stance, b: Stance) -> tuple[str, np.ndarray] | None:
         """(key, reference point [m]) of the move a -> b, or None if a hold is off the grid
         relative to the others (then it is not cached)."""
-        from rcr.optimiser import transition as tr
+        from rcr.optimiser.v0 import transition as tr
 
         moving = tr.moving_limb(a, b, 0)
         pos = {h.id: np.array(h.position, dtype=float) for h in wall.holds}
@@ -137,8 +137,8 @@ class MoveCache:
 
     def get(self, wall: WallModel, a: Stance, b: Stance, cfg) -> Entry | None:
         """The stored move, its motion moved onto this wall; None if not stored."""
-        from rcr.optimiser import robot_model as rm
-        from rcr.optimiser import transition as tr
+        from rcr.optimiser.v0 import robot_model as rm
+        from rcr.optimiser.v0 import transition as tr
 
         found = self.key(wall, a, b)
         if found is None:
@@ -204,7 +204,7 @@ def solve_move_cached(wall, a, b, cfg, cache: MoveCache, index: int = 0):
     stored infeasible move raises OptimisationError at once, naming it as cached."""
     import time
 
-    from rcr.optimiser import transition as tr
+    from rcr.optimiser.v0 import transition as tr
 
     if not cfg.settle:
         raise ValueError("the cache holds moves solved with TransitionConfig.settle only")
@@ -232,9 +232,9 @@ def verify(wall, a, b, result, cfg) -> bool:
     yes without cfg.avoid_collisions (then nothing is checked)."""
     if not cfg.avoid_collisions:
         return True
-    from rcr.optimiser import avoidance as av
-    from rcr.optimiser import collision as col
-    from rcr.optimiser import robot_model as rm
+    from rcr.optimiser.v0 import avoidance as av
+    from rcr.optimiser.v0 import collision as col
+    from rcr.optimiser.v0 import robot_model as rm
 
     moving = result.moving
     contacts = av.transition_contacts(a, b, moving, cfg)
@@ -261,7 +261,7 @@ SEED_MATCH = 0.02  # [m] layouts this close make a solved move a good seed [Ours
 def layout(wall: WallModel, a: Stance, b: Stance, cfg) -> np.ndarray:
     """3x8: the contact points of a, then b, relative to the moving limb's start point. Two
     transitions with the same layout are the same move, shifted: one's dq can seed the other."""
-    from rcr.optimiser import transition as tr
+    from rcr.optimiser.v0 import transition as tr
 
     start = tr.contact_point(wall, a.contacts[tr.moving_limb(a, b, 0)], cfg)
     both = np.hstack([tr.contact_points(wall, a, cfg), tr.contact_points(wall, b, cfg)])
@@ -278,7 +278,7 @@ def shifted_seed(q0: np.ndarray, previous_q: np.ndarray, shift: np.ndarray, cfg)
     q0. The gap between q0 and the moved start fades out over phase A, so the seed starts at q0
     and follows the solved motion from the release on. Reusing dq instead (relative to the other
     start) put the arm 15 mm into a hold: the starts differ by up to ~20 deg in the joints."""
-    from rcr.optimiser import robot_model as rm
+    from rcr.optimiser.v0 import robot_model as rm
 
     moved = np.array(previous_q, dtype=float)
     moved[:, 0:3] += shift

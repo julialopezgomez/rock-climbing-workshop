@@ -110,6 +110,6 @@ The wall frame is the same, and our optimiser's kinematics match theirs to 1e-9 
 
 ```bash
 uv run mjpython tests/test_sim.py N2                      # the robot on their wall N2 (macOS: mjpython)
-uv run mjpython tests/test_optimiser.py PLAN       # solve a contact plan, play it in their sim
+uv run mjpython tests/test_optimiser_v0.py PLAN       # solve a contact plan, play it in their sim
 uv run scripts/wall_generator.py N1 N2 N3                 # their walls -> data/examples/N*.json
 ```

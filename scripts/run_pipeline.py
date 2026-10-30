@@ -122,7 +122,7 @@ def check() -> int:
     plan, s = stage("planner.plan", planner.plan, ContactPlan, plan_ex, wall, optimiser.feasibility)
     results.append(s)
     # The plan's first move only: a check of the stage, not the climb (the whole example takes an
-    # hour on an empty move cache; tests/test_optimiser.py PLAN solves and plays it) [Ours]
+    # hour on an empty move cache; tests/test_optimiser_v0.py PLAN solves and plays it) [Ours]
     if len(plan.stances) < 2:
         print(f"  {'optimiser.optimise':<32} -> {'Trajectory':<18} skip (a plan with no move)")
         traj, s = traj_ex, "skip"

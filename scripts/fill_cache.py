@@ -1,4 +1,4 @@
-"""Fill the optimiser's move cache (rcr.optimiser.move_cache) by climbing generated walls.
+"""Fill the optimiser's move cache (rcr.optimiser.v0.move_cache) by climbing generated walls.
 
     uv run python scripts/fill_cache.py --levels 1 2 3 --seeds 0-9 --height 0.8 --hours 8
     uv run python scripts/fill_cache.py --levels 2 --seeds 10-14 --no-store   # hit rate only
@@ -27,9 +27,9 @@ import numpy as np
 from climbing_sim.routes import generate_wall
 
 from rcr import walls
-from rcr.optimiser import edge_checks as fe
-from rcr.optimiser import move_cache as mc
-from rcr.optimiser import transition as tr
+from rcr.optimiser.v0 import edge_checks as fe
+from rcr.optimiser.v0 import move_cache as mc
+from rcr.optimiser.v0 import transition as tr
 from rcr.types import LIMBS, Stance, WallModel
 
 ORDER = ("right_hand", "left_hand", "right_foot", "left_foot")

@@ -148,4 +148,4 @@ midpoint, start their start holds.)
 `trajectory/2` adds the two optional replay fields to `trajectory/1`; `null` when absent. The
 [example](data/examples/trajectory.json) is kept only as a sample file for the link and the Pi: it was solved
 for our former example wall and the old robot model, so it does not climb any current wall. A new one comes from
-`tests/test_optimiser.py --hard PLAN --save`, once there is a plan on the organisers' walls.
+`tests/test_optimiser_v0.py --hard PLAN --save`, once there is a plan on the organisers' walls.

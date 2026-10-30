@@ -26,13 +26,13 @@ from typing import TYPE_CHECKING
 import casadi as ca
 import numpy as np
 
-from rcr.optimiser.collision import Check, check_trajectory
-from rcr.optimiser.robot_model import NV, RobotModel, load_robot_model
+from rcr.optimiser.v0.collision import Check, check_trajectory
+from rcr.optimiser.v0.robot_model import NV, RobotModel, load_robot_model
 from rcr.robot import hooks
 from rcr.types import LIMBS, Limb, Stance, WallModel
 
 if TYPE_CHECKING:
-    from rcr.optimiser.transition import TransitionConfig, _Problem, _Solution
+    from rcr.optimiser.v0.transition import TransitionConfig, _Problem, _Solution
 
 # The hold's socket opens upwards: a ball leaves it only near vertical (~10 deg, the organisers'
 # sim, wall.py). The first solve keeps each ball's neck within NECK_CONE of up, so it starts with
@@ -240,7 +240,12 @@ def solve_clear(
     With a `seed` (a solved motion reused, already in the right basin), step 1 is replaced by a
     first SCP step from it: its clearances linearised, within the trust region, unsteered.
     OptimisationError if the motion cannot be made clear (strict), else the least violating."""
-    from rcr.optimiser.transition import FIRST_SOLVE_PATIENCE, OptimisationError, _read, solve_opti
+    from rcr.optimiser.v0.transition import (
+        FIRST_SOLVE_PATIENCE,
+        OptimisationError,
+        _read,
+        solve_opti,
+    )
 
     model, q_ref = load_robot_model(), np.array(p.opti.value(p.q_ref)).ravel()
     fixed_start = len(p.q) > 1  # a transition's first sample is its given start

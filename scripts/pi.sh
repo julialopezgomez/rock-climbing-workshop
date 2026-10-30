@@ -13,7 +13,7 @@
 #
 # --check, --send, --stream, --start and --stop need the receiver running on the Pi: there,
 # sh ~/rcr/run.sh (or --install TARGET --run here). --stream follows the file: run the optimiser
-# with --save (tests/test_optimiser.py PLAN --save) and each move it saves goes to the robot.
+# with --save (tests/test_optimiser_v0.py PLAN --save) and each move it saves goes to the robot.
 # More in src/rcr/link/README.md.
 set -e
 

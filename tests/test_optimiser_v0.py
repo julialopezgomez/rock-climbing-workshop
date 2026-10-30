@@ -1,13 +1,13 @@
 """Optimiser tests, and a runner that solves a contact plan and plays it in the organisers' sim.
 
-    git submodule update --init                                  # Microban and their simulator
+    git submodule update --init                            # Microban and their simulator
     uv sync --group optimiser --group sim
-    uv run pytest tests/test_optimiser.py                        # the checks
-    uv run mjpython tests/test_optimiser.py                   # solve build/plan_N1.json, play it
-    uv run mjpython tests/test_optimiser.py --save            # also save build/trajectory_N1.json
-    uv run mjpython tests/test_optimiser.py --replay          # play the saved one, no solving
-    uv run mjpython tests/test_optimiser.py PLAN ...          # another plan file
-    uv run mjpython tests/test_optimiser.py --help            # every option
+    uv run pytest tests/test_optimiser_v0.py               # the checks
+    uv run mjpython tests/test_optimiser_v0.py             # solve build/plan_N1.json, play it
+    uv run mjpython tests/test_optimiser_v0.py --save      # also save build/trajectory_N1.json
+    uv run mjpython tests/test_optimiser_v0.py --replay    # play the saved one, no solving
+    uv run mjpython tests/test_optimiser_v0.py PLAN ...    # another plan file
+    uv run mjpython tests/test_optimiser_v0.py --help      # every option
 
 The wall is the organisers' N1 (data/examples/N1.json, from their simulator by
 scripts/wall_generator.py). A plan's wall is data/examples/<its wall_id>.json, and it is played on
@@ -23,9 +23,10 @@ angles and trunk poses in it are what --replay plays. The playback is kinematic:
 the optimiser's poses exactly, at the planned times, no physics. Add --headless for no window.
 --send PI also sends each solved move to the robot at PI (rcr.link) as the trajectory's next
 segment, so it can climb while the rest is solved (start it: bash scripts/pi.sh PI --start).
-With --cache, solved moves are kept in the move cache (build/move_cache, rcr.optimiser.move_cache),
-so a move solved once is taken from there next time; without it (the default for now), every move
-is solved afresh. Collisions are ignored unless --collision is given (the default for now).
+With --cache, solved moves are kept in the move cache (build/move_cache,
+rcr.optimiser.v0.move_cache), so a move solved once is taken from there next time; without it
+(the default for now), every move is solved afresh. Collisions are ignored unless --collision is
+given (the default for now).
 macOS needs `mjpython` for the window (Linux: python). Without the optimiser group or the robot
 model, pytest skips this file; without the sim group, the test against their sim.
 """
@@ -48,7 +49,7 @@ except FileNotFoundError as missing:
     pytest.skip(str(missing), allow_module_level=True)
 
 from rcr import io  # noqa: E402
-from rcr.optimiser import (  # noqa: E402
+from rcr.optimiser.v0 import (  # noqa: E402
     SERVO_KP,
     feasibility,
     iter_plan,
@@ -59,12 +60,12 @@ from rcr.optimiser import (  # noqa: E402
     to_trajectory,
     validate_plan,
 )
-from rcr.optimiser import avoidance as av  # noqa: E402
-from rcr.optimiser import collision as col  # noqa: E402
-from rcr.optimiser import edge_checks as fe  # noqa: E402
-from rcr.optimiser import move_cache as mc  # noqa: E402
-from rcr.optimiser import robot_model as rm  # noqa: E402
-from rcr.optimiser import transition as tr  # noqa: E402
+from rcr.optimiser.v0 import avoidance as av  # noqa: E402
+from rcr.optimiser.v0 import collision as col  # noqa: E402
+from rcr.optimiser.v0 import edge_checks as fe  # noqa: E402
+from rcr.optimiser.v0 import move_cache as mc  # noqa: E402
+from rcr.optimiser.v0 import robot_model as rm  # noqa: E402
+from rcr.optimiser.v0 import transition as tr  # noqa: E402
 from rcr.robot import hooks  # noqa: E402
 from rcr.types import (  # noqa: E402
     GRID_PITCH,
@@ -612,7 +613,7 @@ def test_feasibility_answers_from_the_cache_and_stores_its_rejections(wall, tmp_
 
 
 def test_targets_are_preloaded_against_sag(results, wall):
-    from rcr.optimiser import to_trajectory
+    from rcr.optimiser.v0 import to_trajectory
 
     traj, r = to_trajectory(results, CFG), results[0]
     assert np.allclose(traj.positions[0], r.q[0][7:] + r.tau[0] / SERVO_KP)
@@ -870,8 +871,9 @@ def play(wall: WallModel, pose, done, view: bool) -> None:
             time.sleep(0.02)
 
 
-USAGE = """usage: tests/test_optimiser.py [PLAN] [--save | --replay] [--samples N] [--clearance M]
-                                [--approach] [--collision] [--cache] [--send PI] [--headless]
+USAGE = """usage: tests/test_optimiser_v0.py [PLAN] [--save | --replay] [--samples N]
+                                   [--clearance M] [--approach] [--collision] [--cache]
+                                   [--send PI] [--headless]
     PLAN              the contact plan to solve (default build/plan_N1.json): each move is solved
                       and played in the organisers' sim as it comes
     --save            also save it in build/trajectory_<wall id>.json after every move

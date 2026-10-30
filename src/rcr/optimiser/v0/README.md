@@ -1,4 +1,4 @@
-# optimiser
+# optimiser v0 (reference)
 
 **Purpose:** turn the contact plan into the joint motion the robot actually executes, and say which transitions
 are possible at all.
@@ -10,7 +10,7 @@ are possible at all.
 | Runs on | laptop (never on the Pi) |
 
 The optimiser owns `feasibility` because "can the robot actually do this transition?" is a control question. The
-planner receives `rcr.optimiser.feasibility` as an argument and never imports this module.
+planner receives `rcr.optimiser.v0.feasibility` as an argument and never imports this module.
 
 ## Method (D3)
 **Quasi-static direct transcription, one NLP per transition, CasADi + IPOPT, on Microban's URDF.** Reason: each
@@ -57,7 +57,7 @@ never on the moves before it.
   feasible or not. It resumes where it stopped. `--no-store` measures how many moves the cache already answers.
 - **Off by default for now [Ours]:** a run uses it only with `RCR_MOVE_CACHE=on` (`build/move_cache/`) or
   `RCR_MOVE_CACHE=<folder>`, or the runner's `--cache`. Then:
-  - `optimise`, `solve_plan` and the runner (`tests/test_optimiser.py PLAN --cache`) take stored moves from
+  - `optimise`, `solve_plan` and the runner (`tests/test_optimiser_v0.py PLAN --cache`) take stored moves from
     the cache and add each new one;
   - `feasibility()` answers a stored move at once;
   - rejections (`feasibility()`'s and failed solves) are neither stored nor trusted, for now
@@ -263,15 +263,15 @@ The balls come from `rcr.robot.hooks`, shared with the sim; `contact_offset` fol
 ```bash
 git submodule update --init                    # Microban, in third_party/microban (once)
 uv sync --group optimiser --group sim          # casadi (IPOPT), coacd, coal, pin (tests); their sim for the runner
-uv run pytest tests/test_optimiser.py                     # solves the example plan's first moves, checks them
-uv run mjpython tests/test_optimiser.py PLAN           # solves the plan, plays it in the sim
-uv run mjpython tests/test_optimiser.py PLAN --save    # the same, and saves build/trajectory_<wall id>.json
-uv run mjpython tests/test_optimiser.py PLAN --replay  # plays the saved trajectory, without solving
+uv run pytest tests/test_optimiser_v0.py                     # solves the example plan's first moves, checks them
+uv run mjpython tests/test_optimiser_v0.py PLAN           # solves the plan, plays it in the sim
+uv run mjpython tests/test_optimiser_v0.py PLAN --save    # the same, and saves build/trajectory_<wall id>.json
+uv run mjpython tests/test_optimiser_v0.py PLAN --replay  # plays the saved trajectory, without solving
 ```
 PLAN defaults to `build/plan_N1.json`. `--samples N`, `--clearance M`, `--approach` and `--collision` set
 `n_samples`, `clearance`, `approach_from_above` and `avoid_collisions` for the run. **Collisions are ignored unless
 `--collision` is given** (`avoid_collisions` is off by default for now); the tests turn it on, as they check it. `--cache` uses the move cache (`build/move_cache/`); without it, every move is solved afresh.
-The runner (`tests/test_optimiser.py`, run directly) reads a contact plan file and its wall, the organisers' wall
+The runner (`tests/test_optimiser_v0.py`, run directly) reads a contact plan file and its wall, the organisers' wall
 named by the plan (`data/examples/<wall_id>.json`, played on their wall of that name in their sim). There is no
 example plan yet. It solves each transition in a worker process and plays it in the sim as soon as
 it's ready, while the next one is solved; between them the robot stays where it ended. The playback is kinematic:
@@ -282,8 +282,8 @@ transition, so a solve that stops part way keeps what it solved.
 - `positions` is what the robot executes: motor targets pre-loaded against sag. Send it over the link.
 - `planned_positions` and `trunk_poses` are the planned motion itself, which `--replay` plays. The robot ignores them.
 ```python
-from rcr.optimiser import optimise, solve_plan, to_trajectory
-from rcr.optimiser.transition import TransitionConfig
+from rcr.optimiser.v0 import optimise, solve_plan, to_trajectory
+from rcr.optimiser.v0.transition import TransitionConfig
 
 traj = optimise(wall, plan)  # defaults
 results = solve_plan(
@@ -345,7 +345,7 @@ can't replace them. The remaining cost is the path tier.
 - **The cache only helps with layouts it has seen.** A gap or a drift is a new layout, solved once (30 s – 3 min).
 - **Not yet redone on the climbing model (29 Oct):** the measurements above and the example trajectory are from the old
   model. The example plan does not solve yet (a foot 2.6 mm too close to its shin). Then:
-  `tests/test_optimiser.py PLAN --save`.
+  `tests/test_optimiser_v0.py PLAN --save`.
 - **Contact normals and mu are ours:** hands are supported only along +z; the real socket may hold more.
 - **The robot's shapes** are convex hulls (a little larger where a part is not convex: conservative); the climbing
   limbs' pieces and balls lie within 0.21 mm of the drawn mesh.

@@ -2,6 +2,7 @@
 
 uv run scripts/plan_sim_wall.py --level 2                  # a random seed, printed
 uv run scripts/plan_sim_wall.py --level 2 --seed 5 --save build/plan.json --show
+uv run mjpython scripts/plan_sim_wall.py --level 2 --seed 5 --play   # the optimiser's motion
 """
 
 import argparse
@@ -16,9 +17,9 @@ from climbing_sim import ClimbingSim, Wall
 from climbing_sim.routes import generate_wall
 from numpy.linalg import norm
 
-from rcr import io
+from rcr import io, optimiser
 from rcr.planner import astar, feasible, plan
-from rcr.types import LIMBS, ContactPlan, Hold, Stance, WallModel
+from rcr.types import LIMBS, ContactPlan, Hold, Stance, Trajectory, WallModel
 
 
 def hold_id(hold) -> str:
@@ -70,12 +71,35 @@ def show(sim_wall, wall: WallModel, contact_plan: ContactPlan) -> None:
     viewer.close()
 
 
+def play(sim_wall, trajectory: Trajectory) -> None:
+    """The trajectory in MuJoCo's viewer at real time, kinematically (no physics): the trunk pose
+    and the joints by name, as the robot gets them."""
+    sim = ClimbingSim(sim_wall, cameras=[])
+    viewer = sim.view()
+    joints = [sim.model.joint(name).qposadr[0] for name in trajectory.joint_names]
+    clock = time.perf_counter()
+    for t, pose, row in zip(
+        trajectory.times, trajectory.trunk_poses, trajectory.positions, strict=True
+    ):
+        sim.data.qpos[0:7] = pose  # x, y, z, qw, qx, qy, qz: MuJoCo's order
+        sim.data.qpos[joints] = row
+        mujoco.mj_forward(sim.model, sim.data)
+        viewer.sync()
+        time.sleep(max(0.0, clock + t - time.perf_counter()))
+    input("done. Enter: close ")
+    viewer.close()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--level", type=int, default=1, choices=(1, 2, 3, 4))
     parser.add_argument("--seed", type=int, help="random if not given")
     parser.add_argument("--save", help="save the contact plan to this JSON file")
     parser.add_argument("--show", action="store_true", help="show each stance in MuJoCo")
+    parser.add_argument(
+        "--play", action="store_true", help="the optimiser's motion of the plan, in MuJoCo"
+    )
+    parser.add_argument("--save-trajectory", help="save the optimiser's trajectory to this file")
     parser.add_argument(
         "--heuristic-weight", type=float, default=astar.WEIGHT, help="A* heuristic weight"
     )
@@ -117,6 +141,17 @@ def main() -> None:
         print(f"saved {args.save}")
     if args.show:
         show(sim_wall, wall, contact_plan)
+    if (args.play or args.save_trajectory) and len(contact_plan.stances) > 1:
+        clock = time.perf_counter()
+        trajectory = optimiser.optimise(wall, contact_plan)
+        seconds = time.perf_counter() - clock
+        print(f"trajectory: {trajectory.times[-1]:.1f} s of motion, solved in {seconds:.1f} s")
+        if args.save_trajectory:
+            Path(args.save_trajectory).parent.mkdir(parents=True, exist_ok=True)
+            io.save_trajectory(trajectory, args.save_trajectory)
+            print(f"saved {args.save_trajectory}")
+        if args.play:
+            play(sim_wall, trajectory)
 
 
 if __name__ == "__main__":

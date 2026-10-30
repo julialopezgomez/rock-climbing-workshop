@@ -39,11 +39,11 @@ import numpy as np
 from climbing_sim import scene as sim_scene
 from climbing_sim import wall as sim_wall
 
-from rcr.optimiser import robot_model as rm
+from rcr.optimiser.v0 import robot_model as rm
 from rcr.robot import hooks
 from rcr.types import Hold
 
-REPO = Path(__file__).resolve().parents[3]
+REPO = Path(__file__).resolve().parents[4]
 # The hold, from the organisers' simulator (climbing_sim) [simulator]: the mesh it draws (in m,
 # origin at the socket centre, the wall frame's axes), placed as it places it (Hold.socket: the
 # socket centre SOCKET_OUT out of the wall and SOCKET_BELOW below the bolts' midpoint)

@@ -2,7 +2,7 @@
 
 Method (D3): quasi-static direct transcription, one NLP per transition (transition.py), solved
 with CasADi + IPOPT, on kinematics written in CasADi from Microban's URDF (robot_model.py).
-casadi is imported only when a solve runs, so importing rcr.optimiser needs no extra group.
+casadi is imported only when a solve runs, so importing rcr.optimiser.v0 needs no extra group.
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 from rcr.types import MICROBAN_JOINTS, ContactPlan, Feasibility, Stance, Trajectory, WallModel
 
 if TYPE_CHECKING:
-    from rcr.optimiser.transition import TransitionConfig, TransitionResult
+    from rcr.optimiser.v0.transition import TransitionConfig, TransitionResult
 
 # Servo stiffness, to pre-load each target against its expected sag (q_cmd = q + tau / kp).
 KP_DEFAULT = 400  # [register units] the servos' P gain [Microban constants.py]
@@ -22,7 +22,7 @@ SERVO_KP = KP_DEFAULT * KP_GAIN_PRM  # [N·m/rad], about 0.88
 
 def optimise(wall: WallModel, plan: ContactPlan) -> Trajectory:
     """The full joint trajectory the robot executes for this plan."""
-    from rcr.optimiser.transition import TransitionConfig
+    from rcr.optimiser.v0.transition import TransitionConfig
 
     cfg = TransitionConfig()
     return to_trajectory(solve_plan(wall, plan, cfg), cfg)
@@ -36,7 +36,7 @@ def solve_plan(
 ) -> list[TransitionResult]:
     """Solve every transition of the plan in order, each starting where the previous ended
     (with cfg.settle: each from its stance's own pose; stored moves come from the cache)."""
-    from rcr.optimiser import transition as tr
+    from rcr.optimiser.v0 import transition as tr
 
     cfg = cfg or tr.TransitionConfig()
     return list(iter_plan(wall, plan, start_pose(wall, plan, cfg), cfg, cache))
@@ -44,7 +44,7 @@ def solve_plan(
 
 def start_pose(wall: WallModel, plan: ContactPlan, cfg: TransitionConfig | None = None):
     """The plan's first configuration: a static pose of its first stance (validates the plan)."""
-    from rcr.optimiser import transition as tr
+    from rcr.optimiser.v0 import transition as tr
 
     cfg = cfg or tr.TransitionConfig()
     validate_plan(wall, plan)
@@ -61,11 +61,11 @@ def iter_plan(
     the same every run (q, from start_pose, is stance 0's pose). Moves are reused from and
     stored in `cache`: by default move_cache.default_cache (none unless RCR_MOVE_CACHE is set);
     None for none."""
-    from rcr.optimiser import transition as tr
+    from rcr.optimiser.v0 import transition as tr
 
     cfg = cfg or tr.TransitionConfig()
     if cfg.settle:  # each move from stance a's own pose to stance b's: q is stance 0's pose
-        from rcr.optimiser.move_cache import default_cache, solve_move_cached
+        from rcr.optimiser.v0.move_cache import default_cache, solve_move_cached
 
         if cache == DEFAULT:
             cache = default_cache()
@@ -76,7 +76,7 @@ def iter_plan(
             else:
                 yield solve_move_cached(wall, a, b, cfg, cache, index=i)[0]
         return
-    from rcr.optimiser import move_cache as mc
+    from rcr.optimiser.v0 import move_cache as mc
 
     solved = {}  # limb -> (layout, start point, configurations) of its last move
     for i, (a, b) in enumerate(zip(plan.stances, plan.stances[1:], strict=False)):
@@ -98,7 +98,7 @@ def validate_plan(wall: WallModel, plan: ContactPlan) -> None:
     would hide a hold from it."""
     from collections import Counter
 
-    from rcr.optimiser import transition as tr
+    from rcr.optimiser.v0 import transition as tr
 
     repeated = sorted(i for i, n in Counter(h.id for h in wall.holds).items() if n > 1)
     if repeated:
@@ -157,6 +157,6 @@ def feasibility(wall: WallModel, a: Stance, b: Stance) -> Feasibility:
     Cheap checks at the move's edges (edge_checks.py, ~1-3 s, cached), not the full transition:
     failing means it cannot be done; passing means the full solve is worth trying.
     """
-    from rcr.optimiser.edge_checks import feasibility as check
+    from rcr.optimiser.v0.edge_checks import feasibility as check
 
     return check(wall, a, b)
