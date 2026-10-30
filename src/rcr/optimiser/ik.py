@@ -23,13 +23,15 @@ MAX_ITERATIONS = 200  # for the start pose
 STEP = 0.5  # fraction of the error the start pose's IK closes per iteration
 # The ball's path [Ours, to tune]: out of socket a straight off the wall, up and away from it to a
 # bit above socket b, then down into it.
-OUT = 0.02  # [m] away from the wall (-y), at both ends
-ABOVE =0.04  # [m] above socket b, before going in
+OUT = 0.04  # [m] away from the wall (-y), at both ends
+ABOVE = 0.05  # [m] above socket b, before going in
 MOVE_TIME = 2.0  # [s] per move
 DT = 0.02  # [s] between samples: the robot's 50 Hz loop
 GAIN = 0.5  # fraction of a ball's tracking error corrected per sample [Ours]
 LOCK_PASSES = 4  # ik_step: solves at most, each locking the joints it would push past a limit
-MAX_ERROR = 0.01  # [m] a ball further than this from its target: the move cannot be tracked
+MAX_ERROR = 0.01  # [m] a held ball further than this from its socket: the move cannot be done
+DAMPING = 0.03  # damped(): the moving ball's and the trunk's tasks [Ours]
+ITERATIONS = 3  # IK steps per sample, toward that sample's targets [Ours]
 
 # trunk free: q = (x, y, z, qx, qy, qz, qw, 19 joints)
 model = pin.buildModelFromUrdf(str(microban_model.urdf(climb=True)), pin.JointModelFreeFlyer())
@@ -55,32 +57,44 @@ def balls(q) -> np.ndarray:
     return np.array([data.oMf[BALL[limb]].translation for limb in LIMBS])
 
 
-def ik_step(q, displacement):
-    """One hierarchical IK step: each limb's ball moved by its displacement (in LIMBS order), in
-    TASK_ORDER, each in the null space of the ones before; last, the trunk turned upright and
-    facing the wall as far as the balls allow. A joint the step would push past a limit is locked
-    there and the step solved again without it [Ours]: with clipping alone (the planner's), a held
-    ball drifted up to 10 mm off its socket on a level-2 climb (seed 5226); with locking, every
-    ball stays within 1 mm on that climb and on seed 3352."""
+def damped(A):
+    """Damped least-squares inverse: like pinv, but the step stays bounded where A is near
+    singular (a limb stretched out), so a target out of reach is only approached."""
+    return A.T @ np.linalg.inv(A @ A.T + DAMPING**2 * np.eye(A.shape[0]))
+
+
+def ik_step(q, displacement, moving=None):
+    """One hierarchical IK step: each limb's ball moved by its displacement (in LIMBS order), the
+    held ones first in TASK_ORDER, then the moving one, each in the null space of the ones before;
+    last, the trunk turned upright and facing the wall as far as the balls allow.
+    - The held balls are solved exactly (their sockets are always in reach); the moving ball and
+      the trunk with `damped`, so the moving ball gets as close as it can to a target out of reach
+      while the held balls stay in their sockets [Ours]. With pinv for all and a fixed order, a
+      long hand move with OUT 0.05 / ABOVE 0.10 diverged (NaN), or pulled a held hand 6 mm out.
+    - A joint the step would push past a limit is locked there and the step solved again without
+      it [Ours]: with clipping alone (the planner's), a held ball drifted up to 10 mm off its
+      socket on a level-2 climb (seed 5226)."""
     pin.computeJointJacobians(model, data, q)
     pin.updateFramePlacements(model, data)
+    order = [limb for limb in TASK_ORDER if limb != moving] + ([moving] if moving else [])
     tasks = [
         (
             pin.getFrameJacobian(model, data, BALL[limb], pin.LOCAL_WORLD_ALIGNED)[:3],
             LIMBS.index(limb),
+            limb == moving,
         )
-        for limb in TASK_ORDER
+        for limb in order
     ]
     trunk = pin.getJointJacobian(model, data, 1, pin.LOCAL_WORLD_ALIGNED)[3:]
     turn = GAIN * pin.log3(TRUNK_UPRIGHT @ data.oMi[1].rotation.T)
     free = np.ones(model.nv)  # 0: a locked joint (its column out of every Jacobian)
     for _ in range(LOCK_PASSES):
         vq, P = np.zeros(model.nv), np.eye(model.nv)
-        for J, i in tasks:
-            JP_pinv = pinv(J * free @ P)
-            vq = vq + JP_pinv @ (displacement[i] - J * free @ vq)
-            P = P - JP_pinv @ J * free @ P
-        vq = vq + pinv(trunk * free @ P) @ (turn - trunk * free @ vq)
+        for J, i, is_moving in tasks:
+            JP = J * free @ P
+            vq = vq + (damped(JP) if is_moving else pinv(JP)) @ (displacement[i] - J * free @ vq)
+            P = P - pinv(JP) @ JP  # the exact null space, also under a damped task
+        vq = vq + damped(trunk * free @ P) @ (turn - trunk * free @ vq)
         new = pin.integrate(model, q, vq)
         past = (new > model.upperPositionLimit) | (new < model.lowerPositionLimit)
         past = past[7:]  # the joints' (the free flyer has no limits)
@@ -115,7 +129,8 @@ def start_pose(wall: WallModel, stance: Stance):
 def ball_path(p_a, p_b):
     """B(s), s in [0, 1]: a cubic Bezier from p_a to p_b that leaves p_a straight off the wall
     (-y) and arrives at p_b from above and away from the wall.
-    The control points are p_a, p_a + away, p_b + away + up, p_b, with away = (0, -OUT, 0) and up = (0, 0, ABOVE).
+    The control points are p_a, p_a + away, p_b + away + up, p_b, with away = (0, -OUT, 0) and
+    up = (0, 0, ABOVE).
     """
     away, up = np.array([0.0, -OUT, 0.0]), np.array([0.0, 0.0, ABOVE])
     P = np.array([p_a, p_a + away, p_b + away + up, p_b])
@@ -139,27 +154,26 @@ def moving_limb(a: Stance, b: Stance) -> str:
 
 
 def track_move(wall: WallModel, a: Stance, b: Stance, q0):
-    """The configurations of the move a -> b, one every DT from q0 (excluded) to the end: the
-    moving ball tracks ball_path, the others their sockets. Also the worst tracking error [m].
-    ValueError, naming the move, if a ball gets MAX_ERROR from its target (e.g. the path out of
-    the limb's reach: the IK then diverges)."""
+    """The configurations of the move a -> b, one every DT from q0 (excluded) to the end: at each
+    sample, ITERATIONS IK steps closing GAIN of each ball's error to its target (the moving ball's
+    on ball_path, the others' their sockets). Where the path is out of the limb's reach, the
+    moving ball only gets as close as it can (ik_step). Also the moving ball's worst distance from
+    its path [m]. ValueError, naming the move, if a held ball gets MAX_ERROR from its socket."""
     limb = moving_limb(a, b)
     i = LIMBS.index(limb)
     held = sockets(wall, a)
     B = ball_path(held[i], sockets(wall, b)[i])
-    n = round(MOVE_TIME / DT)
-    q, reference, worst, out = q0, held.copy(), 0.0, []
-    for k in range(n + 1):  # k: the sample q is at; the last one is only checked
-        error = reference - balls(q)
-        e = norm(error, axis=1).max()
-        if not e <= MAX_ERROR:  # also NaN: the IK diverged
-            move = f"{limb} {a.contacts[limb]} -> {b.contacts[limb]}"
-            raise ValueError(f"{move}: a ball {e * 1000:.0f} mm from its target at {k * DT:.2f} s")
-        worst = max(worst, e)
-        if k == n:
-            return out, worst
+    q, worst, out = q0, 0.0, []
+    for k in range(1, round(MOVE_TIME / DT) + 1):
         target = held.copy()
-        target[i] = B(timing((k + 1) * DT))
-        q = ik_step(q, target - reference + GAIN * error)  # feed-forward + correction
-        reference = target
+        target[i] = B(timing(k * DT))
+        for _ in range(ITERATIONS):
+            q = ik_step(q, GAIN * (target - balls(q)), moving=limb)
+        error = norm(target - balls(q), axis=1)
+        if not np.delete(error, i).max() <= MAX_ERROR:  # also NaN: the IK diverged
+            move = f"{limb} {a.contacts[limb]} -> {b.contacts[limb]}"
+            e = np.delete(error, i).max() * 1000
+            raise ValueError(f"{move}: a held ball {e:.0f} mm from its socket at {k * DT:.2f} s")
+        worst = max(worst, error[i])
         out.append(q)
+    return out, worst

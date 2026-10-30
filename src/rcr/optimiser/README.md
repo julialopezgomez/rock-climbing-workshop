@@ -20,14 +20,17 @@ first a kinematic motion, then we see. All in `ik.py`.
   away and `ABOVE` up, and `P3 = socket b`. The ball leaves socket a straight off the wall, arcs up and away, and
   goes into socket b from above and out. It is timed by min-jerk (`10τ³ − 15τ⁴ + 6τ⁵`), so it is at rest at both
   ends.
-- **The whole body follows** by the planner's hierarchical IK (`astar.ik`, copied here, not imported): each ball's
-  task in `TASK_ORDER`, each in the null space of the ones before, then the trunk upright and facing the wall. One
-  step per sample, with a feed-forward and an error correction (CLIK): `Δx = Δp_ref + GAIN · (p_ref − ball)`. The
-  held balls' `p_ref` is their socket.
+- **The whole body follows** by the planner's hierarchical IK (`astar.ik`, copied here, not imported). The held
+  balls' tasks come first, in `TASK_ORDER`, then the moving ball's, each in the null space of the ones before, then
+  the trunk upright and facing the wall. At each sample, `ITERATIONS` steps each close `GAIN` of every ball's error
+  to its target. The moving ball's target is on the path; the held balls' targets are their sockets.
+- **Out of reach** [Ours]: the held balls are solved exactly (their sockets are always in reach). The moving ball
+  and the trunk use a damped least-squares inverse (`DAMPING`), so where the path is out of the limb's reach the
+  moving ball only gets as close as it can, while the held balls stay in their sockets. With plain `pinv` for all
+  and a fixed order, long hand moves with a big `OUT` / `ABOVE` diverged (NaN) or pulled a held hand out.
 - **Joint limits:** a joint the step would push past a limit is locked there and the step solved again without it,
   then the joints are clipped (`projecttojointlimits`, as in the planner). With the clipping alone, the ankles and
-  the shoulder roll saturate and a held ball drifted up to 10 mm off its socket on a level-2 climb. With the
-  locking, every ball stays within 1 mm.
+  the shoulder roll saturate and a held ball drifted up to 10 mm off its socket on a level-2 climb.
 - **Start pose:** the planner's: the hang pose with its trunk fitted to stance 0's sockets, then IK to 1 mm.
 - **Output:** `optimise(wall, plan) -> Trajectory`: the start pose, then every move's samples every `DT`, each move
   from where the previous one ended. `positions` = `planned_positions` = the IK's joint angles (kinematic);
@@ -37,17 +40,18 @@ first a kinematic motion, then we see. All in `ik.py`.
 
 | Parameter | Value | |
 |---|---|---|
-| `OUT` | 0.055 m | the ball away from the wall at both ends of its path |
-| `ABOVE` | 0.10 m | above socket b, before going in |
+| `OUT` | see `ik.py` | the ball away from the wall at both ends of its path |
+| `ABOVE` | see `ik.py` | above socket b, before going in (arrival direction `(0, OUT, -ABOVE)`) |
 | `MOVE_TIME`, `DT` | 2.0 s, 0.02 s | per move; between samples (the robot's 50 Hz loop) |
-| `GAIN` | 0.5 | fraction of a tracking error (and of the trunk's tilt) corrected per sample |
-| `MAX_ERROR` | 0.01 m | a ball further from its target: `ValueError` naming the move (the path out of reach) |
+| `GAIN`, `ITERATIONS` | 0.5, 3 | fraction of each error (and of the trunk's tilt) closed per IK step; steps per sample |
+| `DAMPING` | 0.03 | the moving ball's and the trunk's damped inverse |
+| `MAX_ERROR` | 0.01 m | a held ball further from its socket: `ValueError` naming the move |
 
-Measured, level-2 climbs (about 40 moves, 80 s of motion, solved in 0.5 s):
-- With `OUT` 0.03 m and `ABOVE` 0.02 m, every ball stayed within 1 mm of its target on seeds 1, 2, 4, 6, 7, 3352 and
-  5226, and every move ended with all balls in their sockets.
-- With the current 0.055 m and 0.10 m, the path goes out of some limbs' reach. Seed 5 tracks; seeds 1 and 5226 each stop
-  at a hand move (seed 1: `left_hand r37_c21 -> r44_c18: a ball 17 mm from its target at 1.32 s`).
+Measured on level-2 climbs, seeds 1, 2, 4, 5, 6, 7, 3352 and 5226 (about 40 moves, 80 s of motion each, solved in
+about 2 s), every move ending with all balls in their sockets:
+- `OUT` 0.02 / `ABOVE` 0.04: the moving ball within 1.1 mm of its path, the held balls exact.
+- `OUT` 0.05 / `ABOVE` 0.10: the moving ball up to 10 mm short of the top of its path on long hand moves (out of
+  reach), within 2 mm elsewhere; the held balls within 5 mm of their sockets (under 1 mm on most walls).
 
 ```bash
 uv run mjpython scripts/plan_sim_wall.py --level 2 --seed 5226 --heuristic-weight 1.5 --play  # see it
