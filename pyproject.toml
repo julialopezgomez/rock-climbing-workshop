@@ -6,7 +6,12 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "numpy",
-    "scipy>=1.18.1",
+    # the planner's reach and IK (rcr.planner.astar): Pinocchio on the robot's URDF, from
+    # microban-model (pinned below to the simulator's commit) [Microban]
+    "pin>=4.1.0",
+    "microban-model",
+    # the organisers' simulator (third_party/simulator): walls, and the MuJoCo viewer of a plan
+    "climbing-sim",
 ]
 
 [dependency-groups]
@@ -19,10 +24,8 @@ perception = ["opencv-contrib-python-headless>=4.10"]
 dev = ["pytest", "ruff", "opencv-contrib-python-headless>=4.10"]
 optimiser = [
     "microban-model",
-    "climbing-sim",  # the hold mesh and its placement, from the organisers' simulator
+    "climbing-sim",  # the hold's socket and its placement, from the organisers' simulator
     "casadi>=3.8.1",
-    "coacd>=1.0.14",
-    "coal>=3.0.3",
     "pin>=4.1.0",
 ]  # pin: only to check our CasADi kinematics in tests
 
@@ -33,7 +36,8 @@ build-backend = "uv_build"
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-extend-exclude = ["third_party"]  # Microban, the submodule: not our code
+# not our code: the submodules (Microban, the simulator) and the ARO course's IK reference
+extend-exclude = ["third_party", "src/rcr/planner/inverse_kin_aro_reference.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]

@@ -119,10 +119,10 @@ def check() -> int:
     results = []
     wall, s = stage("perception.wall_model", perception.wall_model, WallModel, wall_ex, [])
     results.append(s)
-    plan, s = stage("planner.plan", planner.plan, ContactPlan, plan_ex, wall, optimiser.feasibility)
+    plan, s = stage("planner.plan", planner.plan, ContactPlan, plan_ex, wall, planner.feasible)
     results.append(s)
-    # The plan's first move only: a check of the stage, not the climb (the whole example takes an
-    # hour on an empty move cache; tests/test_optimiser.py --hard PLAN solves and plays it) [Ours]
+    # The plan's first move only: a check of the stage, not the climb (tests/test_optimiser.py
+    # PLAN solves and plays a whole plan) [Ours]
     if len(plan.stances) < 2:
         print(f"  {'optimiser.optimise':<32} -> {'Trajectory':<18} skip (a plan with no move)")
         traj, s = traj_ex, "skip"

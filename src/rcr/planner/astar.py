@@ -1,313 +1,329 @@
-"""Reachability A* over stances, checked lazily with the optimiser's feasibility (D2).
-
-Two levels, as FARO orders its checks cheap to expensive [Ours, after FARO and CASSR]:
-  - the reach graph: a node is a stance (limb -> hold); a move changes one limb's hold. A move is
-    in the graph if the new stance keeps our posture rules and its trunk region is not empty
-    (reach.py). Building it is milliseconds per node;
-  - `feasible(wall, a, b)` (1-17 s a move with the optimiser's): asked only about the moves of
-    the reach graph's best path, from the start. A rejected move leaves the graph and the path is
-    searched again (LazySP, Dellin & Srinivasa 2016), so feasible() sees a path's moves, not
-    every node the search touches.
-Cost 1 per move, so the plan has the fewest moves (time is the tie-break [Rules §8]). The goal is
-a hand on one of the highest holds [Rules §8]; if no plan gets there, the plan goes as high as it
-can (height first [Rules §8]).
-"""
+"""A* over stances. A move puts one limb on a free hold if feasible(wall, a, b) says so; cost 1."""
 
 import heapq
-import math
-import time
-from dataclasses import dataclass, field
-from itertools import count, pairwise
+import json
+from itertools import combinations, count
+from pathlib import Path
 
+import microban_model
+import mujoco
 import numpy as np
+import pinocchio as pin
+from climbing_sim import Hold as SimHold
+from climbing_sim import Wall as SimWall
+from climbing_sim import build_model
+from climbing_sim.wall import GRID_X0, GRID_Z0, HOLE_PITCH
+from numpy.linalg import norm, pinv
 
-from rcr.planner import reach as rc
-from rcr.planner.cache import Cache
 from rcr.types import LIMBS, ContactPlan, Feasibility, FeasibilityFn, Stance, WallModel
 
-HANDS = ("right_hand", "left_hand")
-FEET = ("right_foot", "left_foot")
-# The postures a stance may take [Ours]: the ranges of the 36 stances of the example plan, every
-# move of which the optimiser solved (data/examples/contact_plan_hard.json), each widened by
-# ENVELOPE_MARGIN. Kinematics alone allow far more, and the optimiser can hold almost none of it:
-# of 72 moves sampled from the reach graph without this, it accepted 2, and rejected 58 because
-# the new stance could not be held (scripts/plan_eval.py moves). A proxy for torque and
-# collisions until a stance model is learned from the optimiser's static poses (README).
-ENVELOPE = {  # [m] (min, max)
-    "hands_apart": (0.150, 0.255),  # right hand x - left hand x
-    "feet_apart": (0.075, 0.240),  # right foot x - left foot x
-    "hand_above_feet": (0.097, 0.323),  # each hand's z - the feet's mean z
-    "hands_level": (0.0, 0.150),  # |right hand z - left hand z|
-    "feet_level": (0.0, 0.120),  # |right foot z - left foot z|
-    # the hands' mean x - the feet's mean x. The example climbs straight up (-0.030..0.037); a
-    # traverse needs more: with this, all of L3 seeds 0-9 have a plan in the reach graph (3 of 10
-    # with the example's range). Not yet measured against the optimiser.
-    "lean": (-0.100, 0.100),
+SOCKET = np.array([0.0, -0.026, -0.014])  # ball centre from Hold.position [simulator wall.py]
+HANG = Path(__file__).parents[3] / "third_party/simulator/climbing_sim/assets/poses/hang.json"
+EPSILON = 1e-3  # [m]
+DT = 0.5
+MAX_ITERATIONS = 200
+WEIGHT = 1.0  # A* heuristic weight: 1.0 = admissible, 0.0 = Dijkstra
+# TODO: order by move: moving arm, diagonal leg, other leg, other arm
+TASK_ORDER = ("right_hand", "left_hand", "right_foot", "left_foot")
+# trunk z up, x into the wall (+y) [simulator README, Frames]
+TRUNK_UPRIGHT = np.array([[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
+
+# trunk free: q = (x, y, z, qx, qy, qz, qw, 19 joints)
+model = pin.buildModelFromUrdf(str(microban_model.urdf(climb=True)), pin.JointModelFreeFlyer())
+data = model.createData()
+BALL = {limb: model.getFrameId(f"{limb}_ball") for limb in LIMBS}
+
+
+def jointlimitscost(model, q):
+    up = max(q - model.upperPositionLimit)
+    down = max(model.lowerPositionLimit - q)
+    return max(0, max(up, down))
+
+
+def jointlimitsviolated(model, q):
+    """Return true if config not in joint limits"""
+    return jointlimitscost(model, q) > 0.0
+
+
+def projecttojointlimits(model, q):
+    return np.minimum(np.maximum(model.lowerPositionLimit, q), model.upperPositionLimit)
+
+
+def qpos(m, q):
+    """Pinocchio q -> MuJoCo qpos: quaternion (x, y, z, w) -> (w, x, y, z), joints by name."""
+    out = np.zeros(m.nq)
+    out[0:3], out[3:7] = q[0:3], q[[6, 3, 4, 5]]
+    for j in range(2, model.njoints):
+        out[m.joint(model.names[j]).qposadr] = q[model.idx_qs[j]]
+    return out
+
+
+_scenes = {}
+
+
+def scene(wall):
+    """The simulator's MuJoCo scene of this wall (built once), and what collision() needs."""
+    if wall.id not in _scenes:
+        # Hold.position is the simulator's bolt_axis: back to (col, row)
+        cells = [
+            (
+                round((h.position[0] - GRID_X0) / HOLE_PITCH) - 1,
+                round((h.position[2] - GRID_Z0) / HOLE_PITCH),
+            )
+            for h in wall.holds
+        ]
+        m = build_model(wall=SimWall(holds=[SimHold(*c) for c in cells]), cameras=[])
+        d = mujoco.MjData(m)
+        robot = {g for g in range(m.ngeom) if m.body_rootid[m.geom_bodyid[g]] == m.body("trunk").id}
+        ball = {limb: m.geom(f"{limb}_ball_coll").id for limb in LIMBS}
+        hold = {
+            h.id: m.body(f"hold{n}_c{c}_r{r}").id
+            for n, (h, (c, r)) in enumerate(zip(wall.holds, cells, strict=True))
+        }
+        # self pairs already touching in the hanging posture (like an SRDF's disabled pairs)
+        d.qpos[:] = qpos(m, Q_HANG)
+        mujoco.mj_forward(m, d)
+        hanging = {frozenset((c.geom1, c.geom2)) for c in d.contact[: d.ncon]}
+        hanging = {pair for pair in hanging if pair <= robot}
+        _scenes[wall.id] = m, d, robot, ball, hold, hanging
+    return _scenes[wall.id]
+
+
+def collision(wall, k, q):
+    """The first robot contact, but a ball in its own hold or self pairs touching when hanging,
+    as 'body into body (depth)'; "" if none."""
+    m, d, robot, ball, hold, hanging = scene(wall)
+    own = {(ball[limb], hold[h]) for limb, h in zip(LIMBS, k, strict=True) if h is not None}
+    d.qpos[:] = qpos(m, q)
+    mujoco.mj_forward(m, d)
+    for c in d.contact[: d.ncon]:
+        a, b = c.geom1, c.geom2
+        if (
+            frozenset((a, b)) in hanging
+            or (a, m.geom_bodyid[b]) in own
+            or (b, m.geom_bodyid[a]) in own
+        ):
+            continue
+        if a in robot or b in robot:
+            body_a, body_b = (m.body(m.geom_bodyid[g]).name for g in (a, b))
+            return f"{body_a} into {body_b} ({mm(-c.dist)} deep)"
+    return ""
+
+
+def chain(limb):
+    """Joints from the trunk to the ball."""
+    joints, j = [], model.frames[BALL[limb]].parentJoint
+    while j > 1:
+        joints.insert(0, j)
+        j = model.parents[j]
+    return joints
+
+
+# first joint (shoulder / hip) in the trunk frame, and reach = limb stretched straight
+ROOT = {limb: model.jointPlacements[chain(limb)[0]].translation for limb in LIMBS}
+REACH = {
+    limb: sum(norm(model.jointPlacements[j].translation) for j in chain(limb)[1:])
+    + norm(model.frames[BALL[limb]].placement.translation)
+    for limb in LIMBS
 }
-ENVELOPE_MARGIN = 0.03  # [m] two grid pitches [Ours]
-MAX_HAND_ABOVE_FEET = ENVELOPE["hand_above_feet"][1] + ENVELOPE_MARGIN
-# [m] a limb never moves down more than this [Ours]: every solved move of the example plan goes up,
-# and the generated walls' traverses never drop. It halves the moves to consider per stance.
-MAX_DROP = 0.0
-# A*'s heuristic weight [Ours]. The heuristic is a lower bound but a loose one (it allows a hand
-# MAX_HAND_ABOVE_FEET, 0.35 m, a move; solved moves are 0.03-0.225 m), and with weight 1 the
-# search visits most of the graph. With weight w a plan has at most w times the fewest moves of
-# the graph (multi-cap A* uses 1.5).
-WEIGHT = 3.0
-MAX_REJECTIONS = 200  # feasible() rejections before giving up on the top [Ours]
+# the longest step the simulator's routes leave a limb [simulator routes.py]
+STEP = 0.105
+MIN_APART = 1.0  # two balls at least this fraction of their roots' distance apart [Ours]
+# and at most this fraction of their reaches + roots' distance [Ours]
+HAND_MAX_APART = 0.7  # a pair with a hand (hand-hand, hand-foot)
+FEET_MAX_APART = 0.27  # the two feet
+# [m] most one hand is above the other, and one foot above the other [Ours]: the example
+# plan the optimiser solved has up to 0.195 m (hands) and 0.135 m (feet)
+MAX_LEVEL = 0.12
 
-Key = tuple[str, str, str, str]  # hold ids in LIMBS order
-
-
-@dataclass
-class Result:
-    plan: ContactPlan
-    reached_top: bool  # a hand ends on one of the highest holds
-    seconds: float
-    expansions: int = 0  # reach-graph nodes expanded, all searches together
-    searches: int = 0
-    checks: int = 0  # feasible() calls
-    rejected: list[tuple[Stance, Stance, str]] = field(default_factory=list)
+Q_HANG = pin.neutral(model)
+for name, angle in json.loads(HANG.read_text())["joints"].items():
+    Q_HANG[model.idx_qs[model.getJointId(name)]] = angle
+pin.framesForwardKinematics(model, data, Q_HANG)
+BALLS_HANG = np.array([data.oMf[BALL[limb]].translation for limb in LIMBS])
 
 
-def posture(x: dict, z: dict):
-    """Inside ENVELOPE (each range widened by ENVELOPE_MARGIN), and no hand below a foot (the
-    optimiser's rule). x, z: limb -> hold coordinate [m], a number or an array (one per
-    candidate hold): the answer is then an array too."""
-    e = ENVELOPE_MARGIN + 1e-9
-    feet_z = (z["right_foot"] + z["left_foot"]) / 2
-    values = {
-        "hands_apart": [x["right_hand"] - x["left_hand"]],
-        "feet_apart": [x["right_foot"] - x["left_foot"]],
-        "hand_above_feet": [z["right_hand"] - feet_z, z["left_hand"] - feet_z],
-        "hands_level": [abs(z["right_hand"] - z["left_hand"])],
-        "feet_level": [abs(z["right_foot"] - z["left_foot"])],
-        "lean": [(x["right_hand"] + x["left_hand"]) / 2 - (x["right_foot"] + x["left_foot"]) / 2],
-    }
-    ok = (
-        np.minimum(z["right_hand"], z["left_hand"])
-        >= np.maximum(z["right_foot"], z["left_foot"]) - 1e-9
-    )
-    for name, vs in values.items():
-        low, high = ENVELOPE[name]
-        for v in vs:
-            ok = ok & (v >= low - e) & (v <= high + e)
-    return ok
+def reach(targets):
+    """Two balls are at most HAND_MAX_APART (FEET_MAX_APART for the two feet) of their reaches +
+    the distance between their roots apart, and at least MIN_APART of that root distance."""
+    for i, j in combinations(range(4), 2):
+        a, b = LIMBS[i], LIMBS[j]
+        roots, apart = norm(ROOT[a] - ROOT[b]), norm(targets[i] - targets[j])
+        max_apart = FEET_MAX_APART if "foot" in a and "foot" in b else HAND_MAX_APART
+        most, least = max_apart * (REACH[a] + REACH[b] + roots), MIN_APART * roots
+        if apart > most:
+            return fail(f"reach: {a}, {b} too far apart ({mm(apart)} > {mm(most)})")
+        if apart < least:
+            return fail(f"reach: {a}, {b} too close ({mm(apart)} < {mm(least)})")
+    right_hand, left_hand, right_foot, left_foot = targets  # LIMBS order; x right, z up
+    if right_hand[0] <= left_hand[0]:
+        gap = right_hand[0] - left_hand[0]
+        return fail(f"reach: right hand not right of left hand ({mm(gap)})")
+    if right_foot[0] <= left_foot[0]:
+        gap = right_foot[0] - left_foot[0]
+        return fail(f"reach: right foot not right of left foot ({mm(gap)})")
+    above = min(right_hand[2], left_hand[2]) - max(right_foot[2], left_foot[2])
+    if above <= 0:
+        return fail(f"reach: a hand not above the feet ({mm(above)} above the higher foot)")
+    if abs(right_hand[2] - left_hand[2]) > MAX_LEVEL:
+        level = abs(right_hand[2] - left_hand[2])
+        return fail(f"reach: one hand too far above the other ({mm(level)} > {mm(MAX_LEVEL)})")
+    if abs(right_foot[2] - left_foot[2]) > MAX_LEVEL:
+        level = abs(right_foot[2] - left_foot[2])
+        return fail(f"reach: one foot too far above the other ({mm(level)} > {mm(MAX_LEVEL)})")
+    return None
 
 
-def key(stance: Stance) -> Key:
+def mm(metres):
+    return f"{metres * 1000:.0f} mm"
+
+
+def fail(reason):
+    return Feasibility(False, reason=reason)
+
+
+def initial_q(targets):
+    """Hang posture, trunk fitted rigidly to the targets [simulator sim.py reset_hanging]
+    (a free limb's target is NaN: left out of the fit)."""
+    on = ~np.isnan(targets[:, 0])
+    cp, cs = BALLS_HANG[on].mean(0), targets[on].mean(0)
+    U, _, Vt = np.linalg.svd((BALLS_HANG[on] - cp).T @ (targets[on] - cs))
+    R = Vt.T @ np.diag([1, 1, np.sign(np.linalg.det(Vt.T @ U.T))]) @ U.T
+    q = Q_HANG.copy()
+    q[0:3] = cs - R @ cp
+    q[3:7] = pin.Quaternion(R).coeffs()
+    return q
+
+
+def ik(wall, k):
+    """Hierarchical IK on the ball positions of the limbs on holds (a free limb, None, is left
+    out), joints clipped; then joint limits, collision. Returns (verdict, q, reached): reached[limb]
+    is whether its ball is within EPSILON of its socket, None for a free limb."""
+    t = targets(wall, k)
+    q = initial_q(t)
+    for _ in range(MAX_ITERATIONS):
+        pin.computeJointJacobians(model, data, q)
+        pin.updateFramePlacements(model, data)
+        balls = [data.oMf[BALL[limb]].translation for limb in LIMBS]
+        error = {limb: t[i] - balls[i] for i, limb in enumerate(LIMBS) if k[i] is not None}
+        reached = {
+            limb: bool(norm(error[limb]) < EPSILON) if limb in error else None for limb in LIMBS
+        }
+
+        if all(reached[limb] for limb in error):
+            if jointlimitsviolated(model, q):
+                return Feasibility(False, reason="joint limits"), q, reached
+            for limb in error:
+                side = 1 if limb.startswith("right") else -1  # robot's right is +x
+                ball = balls[LIMBS.index(limb)]
+                past = side * (data.oMi[chain(limb)[0]].translation[0] - ball[0])
+                if past > 0:
+                    return fail(f"{limb} crosses its root (by {mm(past)})"), q, reached
+            if hit := collision(wall, k, q):
+                return fail(f"collision: {hit}"), q, reached
+            return Feasibility(True), q, reached
+
+        # each task in the null space of the ones before
+        vq, P = np.zeros(model.nv), np.eye(model.nv)
+
+        for limb in (limb for limb in TASK_ORDER if limb in error):
+            J = pin.getFrameJacobian(model, data, BALL[limb], pin.LOCAL_WORLD_ALIGNED)[:3]
+            JP_pinv = pinv(J @ P)
+            vq = vq + JP_pinv @ (error[limb] - J @ vq)
+            P = P - JP_pinv @ J @ P
+
+        # last: trunk upright and facing the wall, as far as the balls allow
+        J = pin.getJointJacobian(model, data, 1, pin.LOCAL_WORLD_ALIGNED)[3:]
+        e = pin.log3(TRUNK_UPRIGHT @ data.oMi[1].rotation.T)
+        vq = vq + pinv(J @ P) @ (e - J @ vq)
+
+        q = pin.integrate(model, q, vq * DT)
+        q = projecttojointlimits(model, q)
+
+    left = max(norm(e) for e in error.values())
+    reason = f"ik: balls not reached ({mm(left)} left after {MAX_ITERATIONS} iterations)"
+    return fail(reason), q, reached
+
+
+def targets(wall, k):
+    """Socket of each limb's hold, in LIMBS order; NaN for a free limb (None), which reach()
+    then ignores (every comparison with NaN is false)."""
+    position = {h.id: h.position for h in wall.holds}
+    return np.array([position[hold] if hold else (np.nan,) * 3 for hold in k]) + SOCKET
+
+
+_cache = {}
+
+
+def feasible(wall: WallModel, a: Stance, b: Stance) -> Feasibility:
+    """Reach, then IK, on stance b (does not depend on a, so cached)."""
+    k = (wall.id, *key(b))
+    if k not in _cache:
+        _cache[k] = reach(targets(wall, key(b))) or ik(wall, key(b))[0]
+    return _cache[k]
+
+
+def key(stance):
     return tuple(stance.contacts[limb] for limb in LIMBS)
 
 
-def stance(k: Key) -> Stance:
+def stance(k):
     return Stance(contacts=dict(zip(LIMBS, k, strict=True)))
-
-
-class Graph:
-    """The reach graph of one wall, built as the search asks for it."""
-
-    def __init__(self, wall: WallModel, reach: rc.Reach):
-        self.reach = reach
-        self.ids = [h.id for h in wall.holds]
-        self.x = {h.id: h.position[0] for h in wall.holds}
-        self.z = {h.id: h.position[2] for h in wall.holds}
-        points = rc.contact_points(wall, reach)
-        self.point = points
-        self.points = np.array([points[i] for i in self.ids])
-        self.ids_array = np.array(self.ids)
-        self.hold_x = np.array([self.x[i] for i in self.ids])
-        self.hold_z = np.array([self.z[i] for i in self.ids])
-        self.top_z = max(self.z.values())
-        self.top = {i for i, z in self.z.items() if z >= self.top_z - 1e-9}
-        self._children: dict[Key, list[Key]] = {}
-        self._valid: dict[Key, bool] = {}
-        self.lps = 0
-
-    def posture_ok(self, k: Key) -> bool:
-        """Every limb on its own hold, and the posture rules (`posture`)."""
-        if len(set(k)) < 4:
-            return False
-        x = {limb: self.x[h] for limb, h in zip(LIMBS, k, strict=True)}
-        z = {limb: self.z[h] for limb, h in zip(LIMBS, k, strict=True)}
-        return bool(posture(x, z))
-
-    def children(self, k: Key) -> list[Key]:
-        """The stances one move from k that may be in the graph: a limb to another hold no more
-        than MAX_DROP lower, keeping the posture rules, passing the cheap emptiness test of the
-        new trunk region. All holds at once per limb. The exact test (an LP) is `valid`, which
-        the search asks only of the stances it expands: the cheap test is right for 95 % of
-        the stances it passes, and most children are never expanded."""
-        if k in self._children:
-            return self._children[k]
-        out = []
-        x = {limb: self.x[h] for limb, h in zip(LIMBS, k, strict=True)}
-        z = {limb: self.z[h] for limb, h in zip(LIMBS, k, strict=True)}
-        for m, limb in enumerate(LIMBS):
-            allowed = (self.hold_z >= z[limb] - MAX_DROP - 1e-9) & ~np.isin(self.ids_array, k)
-            allowed &= posture({**x, limb: self.hold_x}, {**z, limb: self.hold_z})
-            if not allowed.any():
-                continue
-            three = {other: self.point[k[n]] for n, other in enumerate(LIMBS) if n != m}
-            candidates = np.flatnonzero(allowed)
-            u = np.minimum(
-                rc.region(self.reach, three), rc.bound(self.reach, limb, self.points[candidates])
-            )
-            for index in candidates[rc.maybe_nonempty(self.reach, u)]:
-                out.append(k[:m] + (self.ids[index],) + k[m + 1 :])
-        self._children[k] = out
-        return out
-
-    def valid(self, k: Key) -> bool:
-        """Is the stance's trunk region not empty (the exact test, one LP; cached)?"""
-        if k not in self._valid:
-            self.lps += 1
-            u = rc.region(
-                self.reach, {limb: self.point[h] for limb, h in zip(LIMBS, k, strict=True)}
-            )
-            self._valid[k] = rc.centre(self.reach, u) is not None
-        return self._valid[k]
-
-    def is_goal(self, k: Key) -> bool:
-        return k[LIMBS.index("right_hand")] in self.top or k[LIMBS.index("left_hand")] in self.top
-
-    def best_hand(self, k: Key) -> float:
-        return max(self.z[k[LIMBS.index(h)]] for h in HANDS)
-
-    def h(self, k: Key) -> int:
-        """Moves still needed, a lower bound (admissible and consistent), d = MAX_HAND_ABOVE_FEET:
-          - at the goal one hand is at the top, the other no lower than the feet's mean, which is
-            at least top - d; each foot at least top - 2d (the feet's mean is, and a foot is no
-            higher than the hands);
-          - a hand rises at most d a move (it ends at most d above the feet's mean and started no
-            lower than the feet); a foot at most 2d (it ends no higher than the lowest hand, and
-            started no lower than the highest hand less 2d);
-        a move changes one limb, so the limbs' counts add up."""
-        d, top = MAX_HAND_ABOVE_FEET, self.top_z
-        z = dict(zip(LIMBS, (self.z[i] for i in k), strict=True))
-
-        def moves(rise: float, step: float) -> int:
-            return math.ceil(max(0.0, rise) / step - 1e-9)
-
-        a, b = (z[h] for h in HANDS)
-        hands = min(
-            moves(top - a, d) + moves(top - d - b, d), moves(top - b, d) + moves(top - d - a, d)
-        )
-        return hands + sum(moves(top - 2 * d - z[f], 2 * d) for f in FEET)
-
-
-@dataclass
-class Banned:
-    """Moves feasible() ruled out. Its checks run in a fixed order (optimiser edge_checks.CHECKS)
-    and its reason names the one that failed. What that check looks at says how far the
-    verdict reaches [Ours, after FARO: a failure low in the cascade prunes all above it]:
-      stance           stance b cannot be held                  -> every move into b
-      start            stance a cannot be held                  -> every move out of a
-      release, lift    the moving limb cannot leave a's hold    -> every move of that limb out of a
-      arrival          the moving limb cannot settle on b's     -> every move of that limb into b
-      anything else    the move itself                          -> that move
-    """
-
-    nodes: set = field(default_factory=set)
-    leaving: set = field(default_factory=set)  # (stance, moving limb's index)
-    arriving: set = field(default_factory=set)  # (stance, moving limb's index)
-    moves: set = field(default_factory=set)
-
-    def add(self, a: Key, b: Key, reason: str) -> None:
-        (m,) = [n for n in range(4) if a[n] != b[n]]
-        check = reason.removeprefix("cached: ").split(":")[0].strip()
-        if check == "stance":
-            self.nodes.add(b)
-        elif check == "start":
-            self.nodes.add(a)
-        elif check in ("release", "lift"):
-            self.leaving.add((a, m))
-        elif check == "arrival":
-            self.arriving.add((b, m))
-        else:
-            self.moves.add((a, b))
-
-    def allows(self, a: Key, b: Key, m: int) -> bool:
-        return not (
-            b in self.nodes
-            or a in self.nodes
-            or (a, m) in self.leaving
-            or (b, m) in self.arriving
-            or (a, b) in self.moves
-        )
-
-
-def search(graph: Graph, start: Key, banned: Banned, weight: float = WEIGHT):
-    """A* on the reach graph without the banned moves: (path to a goal, or to the highest
-    stance reached if no goal can be; True if it is a goal; nodes expanded)."""
-    tie = count()
-    g = {start: 0}
-    parent: dict[Key, Key] = {}
-    heap = [(weight * graph.h(start), -graph.best_hand(start), next(tie), start)]
-    closed = set()
-    best = start
-    while heap:
-        _, _, _, k = heapq.heappop(heap)
-        if k in closed or (k != start and not graph.valid(k)):
-            continue
-        closed.add(k)
-        if graph.is_goal(k):
-            return _path(parent, k), True, len(closed)
-        if (graph.best_hand(k), -g[k]) > (graph.best_hand(best), -g[best]):
-            best = k
-        for child in graph.children(k):
-            m = next(n for n in range(4) if child[n] != k[n])
-            if g[k] + 1 >= g.get(child, math.inf) or not banned.allows(k, child, m):
-                continue
-            g[child] = g[k] + 1
-            parent[child] = k
-            f = g[child] + weight * graph.h(child)
-            heapq.heappush(heap, (f, -graph.best_hand(child), next(tie), child))
-    return _path(parent, best), False, len(closed)
-
-
-def _path(parent: dict[Key, Key], k: Key) -> list[Key]:
-    path = [k]
-    while path[-1] in parent:
-        path.append(parent[path[-1]])
-    return path[::-1]
 
 
 def solve(
     wall: WallModel,
     feasible: FeasibilityFn,
-    reach: rc.Reach | None = None,
-    weight: float = WEIGHT,
-    max_rejections: int = MAX_REJECTIONS,
-) -> Result:
-    """The plan and how it was found. See the module docstring. `feasible` is asked through a
-    layout cache (cache.Cache) unless it is one already, so a move rejected once is not asked
-    again elsewhere on the wall."""
-    clock = time.perf_counter()
-    graph = Graph(wall, reach or rc.load())
-    start = key(wall.start)
-    if not isinstance(feasible, Cache):
-        feasible = Cache(feasible)
-    banned = Banned()
-    verified: dict[tuple[Key, Key], Feasibility] = {}
-    result = Result(plan=ContactPlan(wall.id, [wall.start]), reached_top=False, seconds=0.0)
-    while True:
-        path, reached_top, expanded = search(graph, start, banned, weight)
-        result.searches += 1
-        result.expansions += expanded
-        good = [path[0]]
-        for a, b in pairwise(path):
-            if (a, b) not in verified:
-                result.checks += 1
-                verdict = feasible(wall, stance(a), stance(b))
-                if not verdict.feasible:
-                    banned.add(a, b, verdict.reason)
-                    result.rejected.append((stance(a), stance(b), verdict.reason))
-                    break
-                verified[(a, b)] = verdict
-            good.append(b)
-        done = len(good) == len(path)
-        if done or len(result.rejected) >= max_rejections:
-            result.plan = ContactPlan(wall_id=wall.id, stances=[stance(k) for k in good])
-            result.reached_top = done and reached_top
-            result.seconds = time.perf_counter() - clock
-            return result
+    HEURISTIC_WEIGHT: float = 1.0,
+    start: Stance | None = None,
+    failed_moves=(),
+    failed_stances=(),
+) -> ContactPlan:
+    """Moves to a hand on a top hold, or else to the highest hand reachable.
+    - z is the height of each hold.
+    - k is a node: the tuple of holds for each limb, in LIMBS order.
+    - start: the stance to plan from (wall.start if None). A free limb (None) is placed first.
+    - failed_moves: (a, b) stance pairs never taken again; failed_stances: stances never entered.
+    """
+    z = {h.id: h.position[2] for h in wall.holds}
+    top = max(z.values())
+    failed_moves = {(key(a), key(b)) for a, b in failed_moves}
+    failed_stances = {key(s) for s in failed_stances}
+
+    def hand_z(k):  # a free limb (None) counts as at the bottom
+        return max(z.get(k[0], 0.0), z.get(k[1], 0.0))
+
+    def h(k):  # steps left for all four limbs: not admissible, so not always the fewest moves
+        return sum(top - z.get(hold, 0.0) for hold in k) / STEP
+
+    start = key(start or wall.start)
+    g, parent, closed, tie = {start: 0}, {}, set(), count()
+    heap = [(h(start), 0, next(tie), start)]  # (f, -g, tie, stance): deeper first on equal f
+    best = start
+    while heap:
+        *_, k = heapq.heappop(heap)
+        if k in closed:
+            continue
+        closed.add(k)
+        if (hand_z(k), -g[k]) > (hand_z(best), -g[best]):
+            best = k
+        if hand_z(k) == top:
+            break
+        for i in [i for i in range(4) if k[i] is None] or range(4):  # a free limb first
+            # holds limb i can reach with the other three where they are
+            children = [k[:i] + (hold,) + k[i + 1 :] for hold in z if hold not in k]
+            children = [c for c in children if reach(targets(wall, c)) is None]
+            for child in children:
+                if g[k] + 1 >= g.get(child, np.inf):
+                    continue
+                if child in failed_stances or (k, child) in failed_moves:
+                    continue
+                if feasible(wall, stance(k), stance(child)).feasible:
+                    g[child], parent[child] = g[k] + 1, k
+                    heapq.heappush(
+                        heap, (g[child] + HEURISTIC_WEIGHT * h(child), -g[child], next(tie), child)
+                    )
+    path = [best]
+    while path[-1] in parent:
+        path.append(parent[path[-1]])
+    return ContactPlan(wall_id=wall.id, stances=[stance(k) for k in reversed(path)])
