@@ -323,9 +323,9 @@ can't replace them. The remaining cost is the path tier.
   1) stopped the climb: one missing hold left a hand 0.18 m short of the next, which fails the checks at 70 % torque
   with the old limbs; not measured again with the climbing model yet.
 - **The cache only helps with layouts it has seen.** A gap or a drift is a new layout, solved once (30 s – 3 min).
-- **Not yet redone on the climbing model (29 Oct):** the measurements above, the example trajectory and the planner's
-  reach table (`data/robot/reach.json`) are from the old model. The example plan does not solve yet (a foot 2.6 mm
-  too close to its shin). Then: `tests/test_optimiser.py --hard PLAN --save` and `scripts/make_reach.py`.
+- **Not yet redone on the climbing model (29 Oct):** the measurements above and the example trajectory are from the old
+  model. The example plan does not solve yet (a foot 2.6 mm too close to its shin). Then:
+  `tests/test_optimiser.py --hard PLAN --save`.
 - **Contact normals and mu are ours:** hands are supported only along +z; the real socket may hold more.
 - **The robot's shapes** are convex hulls (a little larger where a part is not convex: conservative); the climbing
   limbs' pieces and balls lie within 0.21 mm of the drawn mesh.

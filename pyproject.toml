@@ -6,7 +6,12 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "numpy",
-    "scipy>=1.18.1",
+    # the planner's reach and IK (rcr.planner.astar): Pinocchio on the robot's URDF, from
+    # microban-model (pinned below to the simulator's commit) [Microban]
+    "pin>=4.1.0",
+    "microban-model",
+    # the organisers' simulator (third_party/simulator): walls, and the MuJoCo viewer of a plan
+    "climbing-sim",
 ]
 
 [dependency-groups]
@@ -33,7 +38,8 @@ build-backend = "uv_build"
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-extend-exclude = ["third_party"]  # Microban, the submodule: not our code
+# not our code: the submodules (Microban, the simulator) and the ARO course's IK reference
+extend-exclude = ["third_party", "src/rcr/planner/inverse_kin_aro_reference.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
