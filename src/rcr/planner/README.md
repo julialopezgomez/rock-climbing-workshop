@@ -13,19 +13,29 @@
 - **Scoring** [Rules §8]: height comes first (the highest hold *touched*), then time. A plan that reliably reaches high beats a
   fast plan that might fail.
 
-## v0 could be
-For L1: a ladder heuristic that moves one limb at a time to the next hold up, hands first and then feet, and keeps
-each step only if `feasible` says yes.
+## Method (v1, 29 Oct) [Ours]
+A\* over stances (`astar.py`), started over from v0 to keep it minimal:
+- **Node:** a stance, every limb on its own hold. **Move:** one limb to a free hold, cost 1.
+- **Heuristic:** sum over the four limbs of (top hold z − limb z) / `STEP`, `STEP` = 0.105 m, the longest step the
+  simulator's routes leave a limb. Not admissible: plans are not always the fewest moves.
+- **Goal:** a hand on a highest hold [Rules §8]. Otherwise, the plan goes to the highest hand reachable.
+- **`feasible(wall, a, b)`**, depends on `b` only, so it is cached:
+  - reach: no two balls further apart than their reaches plus the distance between their shoulders/hips;
+  - IK: hierarchical, like the ARO course reference, on the four ball positions, joints clipped to their limits;
+  - collision: the simulator's MuJoCo scene of the wall; any robot contact counts except a ball in its own hold and
+    self pairs already touching in the hanging posture (our SRDF).
 
-## Candidates later (not decided)
-- A graph search over stances (BFS / A*), with `feasible` as the edge test and `cost` as the edge weight.
-- Hand-authored plans per wall as a fallback.
+The robot comes only from files Microban and the simulator use:
+| What | Source |
+|---|---|
+| URDF, ball frames `<limb>_ball` | `microban_model.urdf(climb=True)` [Microban] |
+| socket = `Hold.position` + (0, −0.026, −0.014) m | `climbing_sim/wall.py` [simulator] |
+| IK start: hanging posture, trunk fitted to the sockets | `climbing_sim/assets/poses/hang.json`, `sim.py` `reset_hanging` [simulator] |
 
 ## Open decisions
-- Method (D2, decide by Tue 20 Oct).
+- Ball rotations; the IK's task order.
+- Dangling limbs at the goal and the 3 s hold.
 - How to handle L2 gaps and L3 lateral moves.
-- Whether one or more limbs may move per stance change.
-- Whether the plan should reach for the top fast or play safe.
 
 ## v0 (reference)
 The first planner (reachability A\* with LazySP over the optimiser's feasibility, its reach sets and cache) is in

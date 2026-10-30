@@ -3,9 +3,12 @@
 Imports rcr.types only: never rcr.optimiser or rcr.controller. Feasibility is passed in.
 """
 
+from rcr.planner.astar import feasible, solve
 from rcr.types import ContactPlan, FeasibilityFn, WallModel
+
+__all__ = ["feasible", "plan"]
 
 
 def plan(wall: WallModel, feasible: FeasibilityFn) -> ContactPlan:
     """Sequence of stances from wall.start to the top. May call feasible(wall, a, b)."""
-    raise NotImplementedError
+    return solve(wall, feasible)
