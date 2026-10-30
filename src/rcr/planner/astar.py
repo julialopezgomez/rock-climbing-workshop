@@ -90,7 +90,8 @@ def scene(wall):
 
 
 def collision(wall, k, q):
-    """Any robot contact, but a ball in its own hold or self pairs touching when hanging."""
+    """The first robot contact, but a ball in its own hold or self pairs touching when hanging,
+    as 'body into body (depth)'; "" if none."""
     m, d, robot, ball, hold, hanging = scene(wall)
     own = {(ball[limb], hold[h]) for limb, h in zip(LIMBS, k, strict=True)}
     d.qpos[:] = qpos(m, q)
@@ -104,8 +105,9 @@ def collision(wall, k, q):
         ):
             continue
         if a in robot or b in robot:
-            return True
-    return False
+            body_a, body_b = (m.body(m.geom_bodyid[g]).name for g in (a, b))
+            return f"{body_a} into {body_b} ({mm(-c.dist)} deep)"
+    return ""
 
 
 def chain(limb):
@@ -145,22 +147,36 @@ def reach(targets):
     for i, j in combinations(range(4), 2):
         a, b = LIMBS[i], LIMBS[j]
         roots, apart = norm(ROOT[a] - ROOT[b]), norm(targets[i] - targets[j])
-        if apart > MAX_APART * (REACH[a] + REACH[b] + roots):
-            return Feasibility(False, reason=f"reach: {a}, {b}")
-        if apart < MIN_APART * roots:
-            return Feasibility(False, reason=f"reach: {a}, {b} too close")
+        most, least = MAX_APART * (REACH[a] + REACH[b] + roots), MIN_APART * roots
+        if apart > most:
+            return fail(f"reach: {a}, {b} too far apart ({mm(apart)} > {mm(most)})")
+        if apart < least:
+            return fail(f"reach: {a}, {b} too close ({mm(apart)} < {mm(least)})")
     right_hand, left_hand, right_foot, left_foot = targets  # LIMBS order; x right, z up
     if right_hand[0] <= left_hand[0]:
-        return Feasibility(False, reason="reach: right hand not right of left hand")
+        gap = right_hand[0] - left_hand[0]
+        return fail(f"reach: right hand not right of left hand ({mm(gap)})")
     if right_foot[0] <= left_foot[0]:
-        return Feasibility(False, reason="reach: right foot not right of left foot")
-    if min(right_hand[2], left_hand[2]) <= max(right_foot[2], left_foot[2]):
-        return Feasibility(False, reason="reach: a hand not above the feet")
+        gap = right_foot[0] - left_foot[0]
+        return fail(f"reach: right foot not right of left foot ({mm(gap)})")
+    above = min(right_hand[2], left_hand[2]) - max(right_foot[2], left_foot[2])
+    if above <= 0:
+        return fail(f"reach: a hand not above the feet ({mm(above)} above the higher foot)")
     if abs(right_hand[2] - left_hand[2]) > MAX_LEVEL:
-        return Feasibility(False, reason="reach: one hand too far above the other")
+        level = abs(right_hand[2] - left_hand[2])
+        return fail(f"reach: one hand too far above the other ({mm(level)} > {mm(MAX_LEVEL)})")
     if abs(right_foot[2] - left_foot[2]) > MAX_LEVEL:
-        return Feasibility(False, reason="reach: one foot too far above the other")
+        level = abs(right_foot[2] - left_foot[2])
+        return fail(f"reach: one foot too far above the other ({mm(level)} > {mm(MAX_LEVEL)})")
     return None
+
+
+def mm(metres):
+    return f"{metres * 1000:.0f} mm"
+
+
+def fail(reason):
+    return Feasibility(False, reason=reason)
 
 
 def initial_q(targets):
@@ -189,10 +205,11 @@ def ik(wall, k):
                 return Feasibility(False, reason="joint limits"), q
             for limb, ball in zip(LIMBS, balls, strict=True):
                 side = 1 if limb.startswith("right") else -1  # robot's right is +x
-                if side * (ball[0] - data.oMi[chain(limb)[0]].translation[0]) < 0:
-                    return Feasibility(False, reason=f"{limb} crosses its root"), q
-            if collision(wall, k, q):
-                return Feasibility(False, reason="collision"), q
+                past = side * (data.oMi[chain(limb)[0]].translation[0] - ball[0])
+                if past > 0:
+                    return fail(f"{limb} crosses its root (by {mm(past)})"), q
+            if hit := collision(wall, k, q):
+                return fail(f"collision: {hit}"), q
             return Feasibility(True), q
 
         # each task in the null space of the ones before
@@ -212,7 +229,8 @@ def ik(wall, k):
         q = pin.integrate(model, q, vq * DT)
         q = projecttojointlimits(model, q)
 
-    return Feasibility(False, reason=f"ik: {max(norm(e) for e in error.values()):.4f} m left"), q
+    left = max(norm(e) for e in error.values())
+    return fail(f"ik: balls not reached ({mm(left)} left after {MAX_ITERATIONS} iterations)"), q
 
 
 def targets(wall, k):

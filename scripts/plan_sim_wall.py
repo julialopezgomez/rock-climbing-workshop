@@ -7,6 +7,7 @@ uv run scripts/plan_sim_wall.py --level 2 --seed 5 --save build/plan.json --show
 import argparse
 import random
 import time
+from collections import Counter
 from itertools import pairwise
 from pathlib import Path
 
@@ -29,6 +30,26 @@ def to_wall_model(sim_wall, level: int, seed: int) -> WallModel:
     holds = [Hold(hold_id(h), tuple(float(v) for v in h.bolt_axis)) for h in sim_wall.holds]
     start = Stance(contacts={limb: hold_id(h) for limb, h in sim_wall.start.items()})
     return WallModel(id=f"l{level}_s{seed}", level=level, holds=holds, start=start)
+
+
+def why_stuck(wall: WallModel, last: Stance) -> None:
+    """The moves from the last stance that would put a hand higher than it has been (a hand to a
+    higher free hold), counted by why they fail, with one example of the values."""
+    k = astar.key(last)
+    z = {h.id: h.position[2] for h in wall.holds}
+    highest = max(z[k[0]], z[k[1]])  # the hands, LIMBS order
+    reasons, example = Counter(), {}
+    for i in (0, 1):
+        for h in wall.holds:
+            if h.id not in k and z[h.id] > highest:
+                reason = feasible(wall, last, astar.stance(k[:i] + (h.id,) + k[i + 1 :])).reason
+                reason = reason or "feasible (already visited)"
+                kind = reason.split(" (")[0]  # the values are in parentheses
+                reasons[kind] += 1
+                example.setdefault(kind, reason)
+    print(f"the {sum(reasons.values())} moves that would put a hand higher, by reason:")
+    for kind, n in reasons.most_common():
+        print(f"  {n:4d}  {example[kind]}")
 
 
 def show(sim_wall, wall: WallModel, contact_plan: ContactPlan) -> None:
@@ -76,6 +97,8 @@ def main() -> None:
         f"{len(contact_plan.stances) - 1} moves in {seconds:.1f} s; highest hand {hand:.3f} m, "
         f"top {top:.3f} m: {'reached' if hand == top else 'NOT reached'}"
     )
+    if hand != top:
+        why_stuck(wall, contact_plan.stances[-1])
 
     if args.save:
         Path(args.save).parent.mkdir(parents=True, exist_ok=True)
