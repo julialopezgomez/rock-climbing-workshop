@@ -2,9 +2,6 @@ version = 1
 revision = 5
 requires-python = ">=3.12"
 
-[manifest]
-overrides = [{ name = "microban-model", git = "https://github.com/MohammadrezaDindarloo/microban_model?lfs=true&rev=4e8a1f0929f42742e705bcf51e7f93feaa99eca6" }]
-
 [[package]]
 name = "absl-py"
 version = "2.5.1"
@@ -393,7 +390,7 @@ wheels = [
 [[package]]
 name = "microban-model"
 version = "2.0.0"
-source = { git = "https://github.com/MohammadrezaDindarloo/microban_model?lfs=true&rev=4e8a1f0929f42742e705bcf51e7f93feaa99eca6#4e8a1f0929f42742e705bcf51e7f93feaa99eca6" }
+source = { git = "https://github.com/Rhoban/microban_model?lfs=true#8e42ef70673b5747dbdca3efaf60bc0f8ec7ea6d" }
 
 [[package]]
 name = "microban-sim"
@@ -706,7 +703,7 @@ sim = [
 [package.metadata]
 requires-dist = [
     { name = "climbing-sim", directory = "third_party/simulator" },
-    { name = "microban-model", git = "https://github.com/MohammadrezaDindarloo/microban_model?lfs=true&rev=4e8a1f0929f42742e705bcf51e7f93feaa99eca6" },
+    { name = "microban-model", git = "https://github.com/Rhoban/microban_model?lfs=true&rev=8e42ef70673b5747dbdca3efaf60bc0f8ec7ea6d" },
     { name = "numpy" },
     { name = "pin", specifier = ">=4.1.0" },
 ]
@@ -721,13 +718,13 @@ optimiser = [
     { name = "climbing-sim", directory = "third_party/simulator" },
     { name = "coacd", specifier = ">=1.0.14" },
     { name = "coal", specifier = ">=3.0.3" },
-    { name = "microban-model", git = "https://github.com/MohammadrezaDindarloo/microban_model?lfs=true&rev=4e8a1f0929f42742e705bcf51e7f93feaa99eca6" },
+    { name = "microban-model", git = "https://github.com/Rhoban/microban_model?lfs=true&rev=8e42ef70673b5747dbdca3efaf60bc0f8ec7ea6d" },
     { name = "pin", specifier = ">=4.1.0" },
 ]
 perception = []
 sim = [
     { name = "climbing-sim", directory = "third_party/simulator" },
-    { name = "microban-model", git = "https://github.com/MohammadrezaDindarloo/microban_model?lfs=true&rev=4e8a1f0929f42742e705bcf51e7f93feaa99eca6" },
+    { name = "microban-model", git = "https://github.com/Rhoban/microban_model?lfs=true&rev=8e42ef70673b5747dbdca3efaf60bc0f8ec7ea6d" },
 ]
 
 [[package]]
