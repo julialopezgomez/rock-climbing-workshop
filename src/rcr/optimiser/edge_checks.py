@@ -9,8 +9,8 @@ first, cheapest first, stopping at the first that fails:
               reach from its shoulder or hip, plus the distance between those on the trunk
               (robot_model.limb_reach, an upper bound from the URDF). Microseconds, no solve.
     cache     answered before (move_cache, on this wall or any with the same holds around the
-              move): a stored move is feasible, a stored rejection is not, at once. Every
-              rejection below is stored there, so it is never checked again.
+              move): a stored move is feasible, at once. With move_cache.REJECTIONS (off for now)
+              a stored rejection is not, and every rejection below is stored there.
     stance    b can be held: four contacts, balance, torque limit, clear of the holds and wall
     release   the moving ball still in its socket of a but carrying nothing: the other three
               hold the robot (a hand reaching up a 0.15 m row fails here, on torque)
@@ -42,6 +42,7 @@ import time
 
 import numpy as np
 
+from rcr.optimiser import avoidance as av
 from rcr.optimiser import robot_model as rm
 from rcr.optimiser import transition as tr
 from rcr.optimiser.move_cache import default_cache
@@ -61,7 +62,7 @@ CHECKS = (
 # Ways out of the socket for the lift pose [m, wall frame]: straight up, then up and out from the
 # wall, all inside its ~60 deg opening cone. Straight up alone rejected a foot whose next hold is
 # 75 mm above, which the transition solves by leaving up and out [Ours].
-EXITS = ((0.0, 0.0, tr.LIFT), (0.0, -0.02, 0.03), (0.0, -0.035, 0.025))
+EXITS = ((0.0, 0.0, av.LIFT), (0.0, -0.02, 0.03), (0.0, -0.035, 0.025))
 _cache: dict[tuple, tuple[bool, float, str, np.ndarray | None]] = {}
 
 

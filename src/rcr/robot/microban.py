@@ -23,7 +23,7 @@ from pathlib import Path
 
 SUBMODULE = Path(__file__).resolve().parents[3] / "third_party" / "microban"
 BRANCH = "dev_v2"  # the submodule's branch: what the competition robot runs [Microban]
-MODEL_COMMIT = "8e42ef7"  # microban_model, as pinned in pyproject.toml
+MODEL_COMMIT = "4e8a1f0"  # microban_model: our fork (Rhoban's 8e42ef7, feet cut), as pinned
 CLIMBER = True  # the climbing variant of the model (False: the walking one)
 
 

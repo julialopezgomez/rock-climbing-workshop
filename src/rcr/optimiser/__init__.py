@@ -28,7 +28,7 @@ def optimise(wall: WallModel, plan: ContactPlan) -> Trajectory:
     return to_trajectory(solve_plan(wall, plan, cfg), cfg)
 
 
-DEFAULT = "default"  # cache argument: the move cache every run uses (move_cache.default_cache)
+DEFAULT = "default"  # cache argument: move_cache.default_cache (none unless RCR_MOVE_CACHE is set)
 
 
 def solve_plan(
@@ -56,10 +56,10 @@ def iter_plan(
 ):
     """Yield each transition of the plan as it is solved, the first starting at q, each next one
     where the previous ended. A move starts from the same limb's last solved motion when the holds
-    are laid out alike (tr.same_layout): on a regular wall, most moves repeat a row up [Ours].
+    are laid out alike (move_cache.same_layout): on a regular wall, most moves repeat a row up.
     With cfg.settle, each move is tr.solve_move instead: from stance a's own pose to stance b's,
     the same every run (q, from start_pose, is stance 0's pose). Moves are reused from and
-    stored in `cache`: by default the move cache every run uses (move_cache.default_cache);
+    stored in `cache`: by default move_cache.default_cache (none unless RCR_MOVE_CACHE is set);
     None for none."""
     from rcr.optimiser import transition as tr
 
@@ -76,13 +76,15 @@ def iter_plan(
             else:
                 yield solve_move_cached(wall, a, b, cfg, cache, index=i)[0]
         return
+    from rcr.optimiser import move_cache as mc
+
     solved = {}  # limb -> (layout, start point, configurations) of its last move
     for i, (a, b) in enumerate(zip(plan.stances, plan.stances[1:], strict=False)):
-        moving, here = tr.moving_limb(a, b, i), tr.layout(wall, a, b, cfg)
+        moving, here = tr.moving_limb(a, b, i), mc.layout(wall, a, b, cfg)
         start = tr.contact_point(wall, a.contacts[moving], cfg)
         last, seed = solved.get(moving), None
-        if last is not None and tr.same_layout(last[0], here):
-            seed = tr.shifted_seed(q, last[2], start - last[1], cfg)
+        if last is not None and mc.same_layout(last[0], here):
+            seed = mc.shifted_seed(q, last[2], start - last[1], cfg)
         result = tr.solve_transition(wall, a, b, q, cfg, index=i, seed=seed)
         solved[moving] = (here, start, result.q)
         q = result.q[-1]

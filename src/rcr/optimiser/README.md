@@ -55,12 +55,15 @@ never on the moves before it.
   A new version (another model, other settings) starts with an empty cache.
 - **Filling it:** `scripts/fill_cache.py` climbs generated walls (levels 1–3) and stores every move it asks for,
   feasible or not. It resumes where it stopped. `--no-store` measures how many moves the cache already answers.
-- **Every run uses it, with no setting:**
-  - `optimise`, `solve_plan` and the runner (`tests/test_optimiser.py --hard PLAN`) take stored moves from
-    `build/move_cache/` and add each new one;
-  - `feasibility()` answers a stored move at once and stores its own rejections;
-  - `RCR_MOVE_CACHE=<folder>` uses another cache, and `RCR_MOVE_CACHE=off` none (the tests set it, so they always
-    solve).
+- **Off by default for now [Ours]:** a run uses it only with `RCR_MOVE_CACHE=on` (`build/move_cache/`) or
+  `RCR_MOVE_CACHE=<folder>`, or the runner's `--cache`. Then:
+  - `optimise`, `solve_plan` and the runner (`tests/test_optimiser.py PLAN --cache`) take stored moves from
+    the cache and add each new one;
+  - `feasibility()` answers a stored move at once;
+  - rejections (`feasibility()`'s and failed solves) are neither stored nor trusted, for now
+    (`move_cache.REJECTIONS = False` [Ours]): a coarse rejection stored by planning used to block the full
+    solve of the same move. A move that failed once is checked or solved again;
+  - unset or `RCR_MOVE_CACHE=off`: none, every move solved afresh (the tests set it, so they always solve).
 
   The example plan then takes about 25 s through `optimise()`, against over an hour to solve it.
 - **Measured:**
@@ -85,10 +88,11 @@ never on the moves before it.
 | File | What |
 |---|---|
 | `robot_model.py` | reads the climbing model's URDF (never edited), and its collision shapes and visual meshes from its MJCF; builds the CasADi functions (`limb_positions`, `limb_jacobians`, `com`, `gravity_torques`, `body_points`, `integrate`, `link_frames`, `point_jacobian`) once |
-| `transition.py` | `TransitionConfig`, `solve_static_pose`, `solve_transition`; the physics of one sample, each as a small function; the collision loop `_solve_clear` |
-| `collision.py` | the hold mesh and its convex pieces, the robot's convex shapes, exact signed distances and their gradients (`coal`), and `check_trajectory` along a motion |
-| `edge_checks.py` | `feasibility(wall, a, b)` and `trace`: the checks above, and their cache |
-| `move_cache.py` | `MoveCache`, `solve_move_cached`: solved moves stored by layout and reused on any wall |
+| `transition.py` | **the solver**: `TransitionConfig`; the physics of one sample (balance, friction, joint and torque limits), each a small function; the static pose, transition and settle problems with their subject-to's; `solve_static_pose`, `solve_transition`, `solve_move` |
+| `avoidance.py` | **collision avoidance, off by default for now** (`avoid_collisions`, `--collision`; `approach_from_above`, `--approach`): the constraints it adds to the problems (necks from above, the ball out from the wall mid-air, above its sockets, the static pose out of the wall, the clearance slots) and the collision loop `solve_clear`. Without it the solver never calls in here |
+| `collision.py` | the hold mesh and its convex pieces, the robot's convex shapes, exact signed distances and their gradients (`coal`), and `check_trajectory` along a motion (used by `avoidance.py`) |
+| `edge_checks.py` | `feasibility(wall, a, b)` and `trace`: the checks above |
+| `move_cache.py` | **the move cache, off by default for now** (`--cache`): `MoveCache`, `solve_move_cached`, solved moves stored by layout and reused on any wall; and the seeds that reuse a solved move without `settle` (`layout`, `same_layout`, `shifted_seed`) |
 | `__init__.py` | `optimise` (and `solve_plan`, `start_pose`, `iter_plan`, `to_trajectory`): chains the transitions, reusing solved motions, times them, pre-loads against sag; `feasibility` |
 
 ## Formulation
@@ -146,6 +150,11 @@ the ball resting in its own socket. Nothing about *how* a hook should move is im
   - the robot: the convex hull of each of the model's visual meshes (its collision boxes are smaller than the
     thighs and shins), except on the climbing forearms and feet, which use the model's own convex pieces, plus a
     sphere per ball [Microban MJCF]. A test checks that every drawn vertex is inside;
+  - **the feet [Ours]:** the model is our fork of `microban_model`, where the climbing feet are cut as on our robot
+    ([robot README](../robot/README.md)). Their 51 pieces (CoACD, at most 64 vertices each) follow the foot to 0.6 mm
+    (Rhoban's 24 left parts of its foot up to 22.7 mm outside and bulged up to 7 mm past it), and a self check takes
+    12 ms instead of 36. The cut (y 21–48 mm of the foot's frame) is away from where the tibia comes closest
+    (y 0–17 mm), so it doesn't change the tibia/foot clearance; it removes the plate's end that hit holds;
   - the wall as the half-space y ≥ 0.
 
   The hold mesh is closed (every edge shared by two triangles), outward-oriented, and has genus 2 (the bolt holes).
@@ -172,7 +181,7 @@ the ball resting in its own socket. Nothing about *how* a hook should move is im
     are within `near`. Same SCP slots and gradient, the nearest point on each shape moving. Nothing stops the solver
     from crossing the legs or folding an arm into the trunk otherwise; the closest pair on the example climb is the
     trunk and a thigh, 0.5 mm past its margin.
-- **Solving: sequential convex programming** [TrajOpt, Schulman et al. 2014], in `transition._solve_clear`:
+- **Solving: sequential convex programming** [TrajOpt, Schulman et al. 2014], in `avoidance.solve_clear` (with `avoid_collisions` only):
   - linearise the tightest pairs into fixed constraint slots (parameters, so the NLP is never rebuilt);
   - ℓ1-penalised slack keeps every subproblem solvable;
   - re-solve within a trust region, and accept a step only if the exact merit (cost + 1000 × violation) improves as
@@ -184,6 +193,13 @@ the ball resting in its own socket. Nothing about *how* a hook should move is im
   its old and new sockets one sample after leaving and one before arriving (`LIFT`: the hold's top plus the ball's
   radius). Both are switched off before the exact loop. The result must pass the exact check, which these hints have
   no part in.
+- **`approach_from_above` [Ours], off by default (runner: `--approach`):** the moving ball's way in, kept in every
+  round. It is out from the wall until sample N−3, 35 mm above its new socket within 45° at N−2, and 10 mm above it
+  within 10° at N−1 (`SEAT_LIFT`, `SEAT_CONE`), so the last interval is a short drop. Why: the climbing model's ball
+  fills its socket (0.2 mm of play) and the socket is a tube, not a funnel (5 mm above the resting point the ball
+  touches the rim ~1 mm off-axis, 10 mm above ~3 mm off). Coming in along one long last interval, the ball's path
+  curved and grazed the rim by ~2.5 mm on N1's foot moves. The way out keeps the old 35 mm / 45° on the sample after
+  release. Needs `n_samples` ≥ `release_sample` + 5.
 - **Numbers derived from the hold:** `clearance` (the moving ball's distance out from the wall mid-air) is now
   **0.06 m**, not the task's 0.04 m. The hold sticks out 43 mm and the ball is 12.5 mm in radius, so 0.04 m could not
   pass in front of a hold.
@@ -226,10 +242,11 @@ fresh values (variables and multipliers at zero), so a move's result does not de
 | `normals` | +z for all four limbs: the socket opens upwards and holds a resting ball up | from the sim's hold mesh [Ours] |
 | `mu` | 0.8 per limb | [Ours] |
 | `clearance` | 0.06 m, moving ball out from the wall on samples K+2..N−2 | from the hold's depth + ball [Ours] |
-| `avoid_collisions` | True | |
+| `avoid_collisions` | **False for now**: the motion ignores every collision (holds, wall, itself), and with it the mid-air `clearance`, the static pose's `wall_margin` and the first solve's steering. True (runner: `--collision`): all of them | [Ours] |
 | `collision_clearance` | `margin` 2 mm, `step` 2 mm, `near` 20 mm, `aim` 0.5 mm (`collision.Clearance`) | [Ours] |
 | `collision_slots`, `w_collision` | 40 per interval, 1000 per m | [Ours] |
 | `trust_radius`, `scp_iterations`, `scp_polish`, `retry_trust_radius` | 0.05, 30, 0, 0.02 (one more try from a smaller trust region) | [Ours] |
+| `approach_from_above` | False: the moving ball 35 mm above its sockets, one sample after leaving and one before arriving, in the first solve only. True: in every round, and the way in in two steps (35 mm / 45° at N−2, 10 mm / 10° at N−1) | [Ours]; 10°: [the organisers' sim, `wall.py`] |
 | `midpoints`, `midpoint_play` | True, 1 mm | [Ours] |
 | `wall_margin`, `wall_points` | 0.002 m for every collision-box point; in transitions off (the exact check covers the wall) | [Ours] |
 | `contact_offset` | (0, −0.026, −0.0142) m from `Hold.position`: the ball at the bottom of the hold's socket | [Rules Figure 3], as the sim |
@@ -247,17 +264,20 @@ The balls come from `rcr.robot.hooks`, shared with the sim; `contact_offset` fol
 git submodule update --init                    # Microban, in third_party/microban (once)
 uv sync --group optimiser --group sim          # casadi (IPOPT), coacd, coal, pin (tests); their sim for the runner
 uv run pytest tests/test_optimiser.py                     # solves the example plan's first moves, checks them
-uv run mjpython tests/test_optimiser.py --hard PLAN           # solves the plan, plays it in the sim
-uv run mjpython tests/test_optimiser.py --hard PLAN --save    # the same, and saves data/examples/trajectory.json
-uv run mjpython tests/test_optimiser.py --hard PLAN --replay  # plays the saved trajectory, without solving
+uv run mjpython tests/test_optimiser.py PLAN           # solves the plan, plays it in the sim
+uv run mjpython tests/test_optimiser.py PLAN --save    # the same, and saves build/trajectory_<wall id>.json
+uv run mjpython tests/test_optimiser.py PLAN --replay  # plays the saved trajectory, without solving
 ```
+PLAN defaults to `build/plan_N1.json`. `--samples N`, `--clearance M`, `--approach` and `--collision` set
+`n_samples`, `clearance`, `approach_from_above` and `avoid_collisions` for the run. **Collisions are ignored unless
+`--collision` is given** (`avoid_collisions` is off by default for now); the tests turn it on, as they check it. `--cache` uses the move cache (`build/move_cache/`); without it, every move is solved afresh.
 The runner (`tests/test_optimiser.py`, run directly) reads a contact plan file and its wall, the organisers' wall
 named by the plan (`data/examples/<wall_id>.json`, played on their wall of that name in their sim). There is no
 example plan yet. It solves each transition in a worker process and plays it in the sim as soon as
 it's ready, while the next one is solved; between them the robot stays where it ended. The playback is kinematic:
 the robot follows the optimiser's poses exactly, with no physics. Add `--headless` to run without a window.
 
-**Saving and replaying [Ours]:** `--save` writes `data/examples/trajectory.json` (`trajectory/2`) after every solved
+**Saving and replaying [Ours]:** `--save` writes `build/trajectory_<wall id>.json` (`trajectory/2`) after every solved
 transition, so a solve that stops part way keeps what it solved.
 - `positions` is what the robot executes: motor targets pre-loaded against sag. Send it over the link.
 - `planned_positions` and `trunk_poses` are the planned motion itself, which `--replay` plays. The robot ignores them.
@@ -325,7 +345,7 @@ can't replace them. The remaining cost is the path tier.
 - **The cache only helps with layouts it has seen.** A gap or a drift is a new layout, solved once (30 s – 3 min).
 - **Not yet redone on the climbing model (29 Oct):** the measurements above and the example trajectory are from the old
   model. The example plan does not solve yet (a foot 2.6 mm too close to its shin). Then:
-  `tests/test_optimiser.py --hard PLAN --save`.
+  `tests/test_optimiser.py PLAN --save`.
 - **Contact normals and mu are ours:** hands are supported only along +z; the real socket may hold more.
 - **The robot's shapes** are convex hulls (a little larger where a part is not convex: conservative); the climbing
   limbs' pieces and balls lie within 0.21 mm of the drawn mesh.

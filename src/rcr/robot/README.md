@@ -4,8 +4,13 @@
 README explains how our code meets Microban. The only code here is what we add to Microban's robot.
 
 ## The robot model and its climbing limbs [Microban]
-- **Model:** the `microban_model` package, climbing variant (`robot_climb.urdf` / `robot_climb.xml`), pinned in
-  `pyproject.toml` to the organisers' simulator's version. [`microban.py`](microban.py) finds it.
+- **Model:** the `microban_model` package, climbing variant (`robot_climb.urdf` / `robot_climb.xml`), from **our fork**
+  ([MohammadrezaDindarloo/microban_model](https://github.com/MohammadrezaDindarloo/microban_model), branch
+  `cut-foot`), pinned in `pyproject.toml`. It is Rhoban's 8e42ef7 (the organisers' simulator's and Microban `dev_v2`'s
+  version) with only the climbing feet changed, as on our real robot: the end of each foot's bottom plate cut off, the
+  drawn foot, its collision pieces (51, CoACD) and its mass (29.98 → 25.74 g) updated in the MJCF and the URDF
+  [Ours]. `override-dependencies` in `pyproject.toml` makes the organisers' simulator load it too (it asks for
+  Rhoban's), so their sim, the optimiser and the robot have the same feet. [`microban.py`](microban.py) finds it.
 - **Limbs:** the climbing forearms and feet each end in a **12.5 mm ball** that sits in a hold's socket.
   [`hooks.py`](hooks.py) reads each ball's link, centre and radius from the model files (URDF `<limb>_ball_frame`,
   MJCF `<limb>_ball_coll`); nothing is typed in. The optimiser takes them from there; a test checks they are where
