@@ -22,8 +22,9 @@ cache starts empty for it. On reuse the stored motion is checked again for colli
 actual wall before it is trusted (verify), as a hold outside the box could still be in the way.
 
 Storage: DIR/<version>/<key>.npz, one small file per move, written whole (safe to stop at any time).
-Every run uses it unless told otherwise (default_cache): optimise, solve_plan and the runner store
-and reuse solved moves; feasibility() answers stored moves at once. Rejections (feasibility()'s
+Off by default for now: a run uses it only when asked (default_cache: RCR_MOVE_CACHE=on or a
+folder; the runner's --cache). Then optimise, solve_plan and the runner store and reuse solved
+moves, and feasibility() answers stored moves at once. Rejections (feasibility()'s
 and failed solves) are stored and trusted only with REJECTIONS, off for now: a move that failed
 once is checked or solved again.
 """
@@ -55,15 +56,15 @@ REJECTIONS = False
 
 
 def default_cache() -> MoveCache | None:
-    """The cache every run uses unless told otherwise: DEFAULT_DIR, or the folder in the
-    environment variable RCR_MOVE_CACHE; None if that is "off" (the tests set it, so they
-    always solve)."""
+    """The cache a run uses, from the environment variable RCR_MOVE_CACHE: DEFAULT_DIR if it is
+    "on", that folder if it is a path, and None (no cache) if it is unset or "off": off by
+    default for now [Ours]."""
     import os
 
-    where = os.environ.get("RCR_MOVE_CACHE", "")
-    if where.lower() == "off":
+    where = os.environ.get("RCR_MOVE_CACHE", "off")
+    if where.lower() in ("", "off"):
         return None
-    return MoveCache(where or DEFAULT_DIR)
+    return MoveCache(DEFAULT_DIR if where.lower() == "on" else where)
 
 
 @dataclass
@@ -227,13 +228,16 @@ def solve_move_cached(wall, a, b, cfg, cache: MoveCache, index: int = 0):
 
 
 def verify(wall, a, b, result, cfg) -> bool:
-    """Is a stored motion clear of this wall's holds (all of them), the wall and itself?"""
+    """Is a stored motion clear of this wall's holds (all of them), the wall and itself? Always
+    yes without cfg.avoid_collisions (then nothing is checked)."""
+    if not cfg.avoid_collisions:
+        return True
+    from rcr.optimiser import avoidance as av
     from rcr.optimiser import collision as col
     from rcr.optimiser import robot_model as rm
-    from rcr.optimiser import transition as tr
 
     moving = result.moving
-    contacts = tr.transition_contacts(a, b, moving, cfg)
+    contacts = av.transition_contacts(a, b, moving, cfg)
     contacts += [dict(b.contacts)] * (len(result.q) - len(contacts))  # the settle's samples
     own = {limb: {a.contacts[limb], b.contacts[limb]} for limb in LIMBS}
     holds = {h.id: h for h in wall.holds}
@@ -245,3 +249,41 @@ def verify(wall, a, b, result, cfg) -> bool:
 
 def _sha(path: Path) -> str:
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()[:16]
+
+
+# --- Seeds: a solved move reused as the start of the same move elsewhere ------------------------
+# Used without TransitionConfig.settle only (iter_plan), where a move starts where the previous
+# one ended: on a regular wall, most moves repeat a row up [Ours].
+
+SEED_MATCH = 0.02  # [m] layouts this close make a solved move a good seed [Ours]
+
+
+def layout(wall: WallModel, a: Stance, b: Stance, cfg) -> np.ndarray:
+    """3x8: the contact points of a, then b, relative to the moving limb's start point. Two
+    transitions with the same layout are the same move, shifted: one's dq can seed the other."""
+    from rcr.optimiser import transition as tr
+
+    start = tr.contact_point(wall, a.contacts[tr.moving_limb(a, b, 0)], cfg)
+    both = np.hstack([tr.contact_points(wall, a, cfg), tr.contact_points(wall, b, cfg)])
+    return both - start[:, None]
+
+
+def same_layout(one: np.ndarray, other: np.ndarray) -> bool:
+    return bool(np.abs(one - other).max() <= SEED_MATCH)
+
+
+def shifted_seed(q0: np.ndarray, previous_q: np.ndarray, shift: np.ndarray, cfg):
+    """A seed (NV x samples) from a solved motion of the same move elsewhere: its configurations
+    moved by `shift` [m] (the trunk; joints and trunk turn as they were), in the tangent space at
+    q0. The gap between q0 and the moved start fades out over phase A, so the seed starts at q0
+    and follows the solved motion from the release on. Reusing dq instead (relative to the other
+    start) put the arm 15 mm into a hold: the starts differ by up to ~20 deg in the joints."""
+    from rcr.optimiser import robot_model as rm
+
+    moved = np.array(previous_q, dtype=float)
+    moved[:, 0:3] += shift
+    dq = np.column_stack([rm.difference(q0, q) for q in moved])
+    gap = dq[:, 0].copy()
+    for k in range(dq.shape[1]):
+        dq[:, k] -= max(0.0, 1.0 - k / cfg.release_sample) * gap
+    return dq

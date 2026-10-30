@@ -42,6 +42,7 @@ import time
 
 import numpy as np
 
+from rcr.optimiser import avoidance as av
 from rcr.optimiser import robot_model as rm
 from rcr.optimiser import transition as tr
 from rcr.optimiser.move_cache import default_cache
@@ -61,7 +62,7 @@ CHECKS = (
 # Ways out of the socket for the lift pose [m, wall frame]: straight up, then up and out from the
 # wall, all inside its ~60 deg opening cone. Straight up alone rejected a foot whose next hold is
 # 75 mm above, which the transition solves by leaving up and out [Ours].
-EXITS = ((0.0, 0.0, tr.LIFT), (0.0, -0.02, 0.03), (0.0, -0.035, 0.025))
+EXITS = ((0.0, 0.0, av.LIFT), (0.0, -0.02, 0.03), (0.0, -0.035, 0.025))
 _cache: dict[tuple, tuple[bool, float, str, np.ndarray | None]] = {}
 
 
