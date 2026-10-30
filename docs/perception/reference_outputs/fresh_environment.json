@@ -1,0 +1,299 @@
+{
+  "passed": true,
+  "scope": "Simplified examples; independent of competition benchmarks",
+  "examples": {
+    "stereo": {
+      "lab": "stereo",
+      "seed": 7,
+      "noise_px": 0.5,
+      "baseline_m": 0.064,
+      "points": 500,
+      "valid_points": 500,
+      "median_depth_error_mm": 14.0229605216059,
+      "p90_depth_error_mm": 58.45352919073279
+    },
+    "cad_fit": {
+      "lab": "cad_fit",
+      "seed": 7,
+      "starts": 4,
+      "occlusion": 0.0,
+      "keep_fraction": 1.0,
+      "translation_error_px": 0.18824109446232717,
+      "yaw_error_deg": 0.05034551756256668,
+      "selected": {
+        "pose": [
+          87.08077097873411,
+          81.89168788715342,
+          0.6907602287222203
+        ],
+        "cost": 0.03528876602649689,
+        "converged": true
+      },
+      "candidates": [
+        {
+          "pose": [
+            87.08077097873411,
+            81.89168788715342,
+            0.6907602287222203
+          ],
+          "cost": 0.03528876602649689,
+          "converged": true
+        },
+        {
+          "pose": [
+            77.29180763726116,
+            82.2981841409507,
+            2.35357931138707
+          ],
+          "cost": 19.37272071838379,
+          "converged": true
+        },
+        {
+          "pose": [
+            74.15118676642257,
+            77.36559823278476,
+            3.2458239396636217
+          ],
+          "cost": 15.677234649658203,
+          "converged": true
+        },
+        {
+          "pose": [
+            84.86513417894145,
+            71.96739013218551,
+            4.74407929884224
+          ],
+          "cost": 13.333707809448242,
+          "converged": true
+        }
+      ],
+      "scope": "Planar synthetic outline, 3 parameters; no 6D or benchmark accuracy claim"
+    },
+    "keypoint_pose": {
+      "lab": "keypoint_pose",
+      "seed": 7,
+      "noise_px": 0.5,
+      "outlier_fraction": 0.15,
+      "joint_error_deg": 0.0,
+      "retained_per_camera": [
+        14,
+        14
+      ],
+      "position_error_mm": 0.38310664026509056,
+      "rotation_error_deg": 0.25195744362940653,
+      "worst_endpoint_error_mm": 1.176191347823322,
+      "rotation_model_to_camera0": [
+        [
+          0.944388641434226,
+          -0.3179875939421044,
+          -0.08374953151467954
+        ],
+        [
+          0.2922406564984047,
+          0.9283837595107167,
+          -0.22956261404272504
+        ],
+        [
+          0.15074976822336553,
+          0.1923213071286149,
+          0.9696839805859135
+        ]
+      ],
+      "translation_model_to_camera0_m": [
+        0.024860694016180438,
+        -0.0151321724821686,
+        0.8503315041110524
+      ],
+      "scope": "Synthetic identified landmarks; no learned detector or Microban benchmark"
+    },
+    "contact_registration": {
+      "lab": "contact_registration",
+      "seed": 7,
+      "noise_mm": 0.5,
+      "injected_outliers": 2,
+      "gate_mm": 3.0,
+      "retained": [
+        false,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "least_squares_all": {
+        "position_error_mm": 14.687946597903837,
+        "rotation_error_deg": 5.931538868892011
+      },
+      "sample_consensus": {
+        "position_error_mm": 0.38409635907160455,
+        "rotation_error_deg": 0.204042865207735
+      },
+      "scope": "Given synthetic point correspondences; does not confirm contact loading"
+    },
+    "real_stereo": {
+      "lab": "real_stereo",
+      "regions_per_camera": [
+        8,
+        9
+      ],
+      "matched_regions": 8,
+      "surface_point_candidates": [
+        {
+          "position_scene_m": [
+            -0.2932386748484776,
+            1.3727506535987954,
+            0.017061241788449703
+          ],
+          "pixels": [
+            [
+              256.0217391304348,
+              29.595108695652176
+            ],
+            [
+              258.20749279538904,
+              35.74063400576369
+            ]
+          ],
+          "matching_cost": 0.14614077068282613
+        },
+        {
+          "position_scene_m": [
+            -0.3580783372666379,
+            1.2275335240879919,
+            0.02096074018979126
+          ],
+          "pixels": [
+            [
+              223.21875,
+              99.1953125
+            ],
+            [
+              226.6468085106383,
+              105.17446808510638
+            ]
+          ],
+          "matching_cost": 0.12285649504369021
+        },
+        {
+          "position_scene_m": [
+            -0.08468033462732691,
+            1.1832107527813789,
+            0.040507613255000345
+          ],
+          "pixels": [
+            [
+              357.9102990033223,
+              118.30564784053156
+            ],
+            [
+              356.8587786259542,
+              119.77099236641222
+            ]
+          ],
+          "matching_cost": 0.3137236559575872
+        },
+        {
+          "position_scene_m": [
+            -0.17343766736019486,
+            0.9829445755359073,
+            0.0035224594276056093
+          ],
+          "pixels": [
+            [
+              316.02491103202846,
+              223.09964412811388
+            ],
+            [
+              316.8416988416988,
+              224.72972972972974
+            ]
+          ],
+          "matching_cost": 0.20217792896914538
+        },
+        {
+          "position_scene_m": [
+            0.2485371102151978,
+            0.6385952857203387,
+            0.01313942341411792
+          ],
+          "pixels": [
+            [
+              518.9322033898305,
+              388.8677966101695
+            ],
+            [
+              520.4623287671233,
+              389.5582191780822
+            ]
+          ],
+          "matching_cost": 0.22394265111351627
+        },
+        {
+          "position_scene_m": [
+            0.3792951832079969,
+            0.6416476999801299,
+            0.014802500890970096
+          ],
+          "pixels": [
+            [
+              581.2265372168284,
+              387.57928802589
+            ],
+            [
+              585.2932098765432,
+              387.98765432098764
+            ]
+          ],
+          "matching_cost": 0.40545956296853236
+        },
+        {
+          "position_scene_m": [
+            0.27204494771502663,
+            0.4776795230980239,
+            0.013537849260117748
+          ],
+          "pixels": [
+            [
+              530.1692789968652,
+              466.3573667711599
+            ],
+            [
+              532.0755287009064,
+              467.87915407854985
+            ]
+          ],
+          "matching_cost": 0.41596364568211414
+        },
+        {
+          "position_scene_m": [
+            -0.3069832878481159,
+            0.16549068267290326,
+            0.010162681667294006
+          ],
+          "pixels": [
+            [
+              250.165,
+              619.8475
+            ],
+            [
+              252.7871794871795,
+              614.8846153846154
+            ]
+          ],
+          "matching_cost": 0.17398405406041784
+        }
+      ],
+      "scope": "One saved simulator scene; unscored colour-centroid baseline, not hold-anchor pose estimates"
+    }
+  },
+  "checks": [
+    "Exact stereo",
+    "Exact PnP",
+    "Outlier-resistant exact registration",
+    "Reject collinear contacts",
+    "Reject nonpositive disparity",
+    "CAD candidate selection and fit"
+  ]
+}

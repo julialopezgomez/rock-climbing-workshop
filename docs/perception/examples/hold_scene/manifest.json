@@ -1,0 +1,8 @@
+{
+  "scope": "Saved latest-source benchmark example; calibration is provided. Expected JSON is for checking output only.",
+  "files": {
+    "stereo.png": "2cde25a42ab9aaf766e367ea6e83ad7c3c8d5294ebd8ce0486a40870793c0ab7",
+    "calibration.json": "bf7ce070484c398f143ba9e162d36c086614feee971d5a89a6534c1c1722c59b",
+    "expected_holds.json": "290e4a8183395cfc185dc0f14a41167e3d15296bf71219c61ec57bd997b8811a"
+  }
+}

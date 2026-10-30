@@ -1,0 +1,128 @@
+{
+  "schema": "robot-input-v1",
+  "timestamp_s": 0.0,
+  "clock": "sim",
+  "stationary": true,
+  "joints_rad": {
+    "head": 0.00914925978704257,
+    "right_shoulder_pitch": -1.463843471175921,
+    "right_shoulder_roll": -0.15105335722141827,
+    "right_elbow": -0.01935948853880659,
+    "right_hip_yaw": -0.06252175337830378,
+    "right_hip_roll": -0.03308398516660366,
+    "right_hip_pitch": -0.34729841620869123,
+    "right_knee": 0.19787781613087133,
+    "right_ankle_pitch": -0.024668989669211758,
+    "right_ankle_roll": -0.10891234556868169,
+    "left_shoulder_pitch": -1.105018633465559,
+    "left_shoulder_roll": 0.20843368804195828,
+    "left_elbow": 0.4091179717200789,
+    "left_hip_yaw": 0.22245918595398992,
+    "left_hip_roll": 0.03746244900848525,
+    "left_hip_pitch": 0.13962405800180372,
+    "left_knee": -0.07764519025243802,
+    "left_ankle_pitch": -0.048299180080827994,
+    "left_ankle_roll": -0.037908968960105344
+  },
+  "imu": {
+    "rotation_world_wxyz": [
+      0.801824862642723,
+      -0.1267568244285225,
+      -0.05079758063462571,
+      0.5817466827670303
+    ],
+    "orientation_age_s": 0.08,
+    "R_wall_world": [
+      [
+        1.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        1.0
+      ],
+      [
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "gyro_trunk_rad_s": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "gyro_age_s": 0.06,
+    "note": "Reset snapshot is static, sensor buffers initialized consistently; dynamic delay tested separately."
+  },
+  "cameras": [
+    {
+      "K": [
+        [
+          924.277379745929,
+          0.0,
+          639.5
+        ],
+        [
+          0.0,
+          925.7384642369517,
+          359.5
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "width": 1280,
+      "height": 720,
+      "distortion": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixel_convention": "opencv_centres",
+      "rgb": "rgb_0.png",
+      "camera_id": "cam_0",
+      "timestamp_s": 0.0
+    },
+    {
+      "K": [
+        [
+          924.277379745929,
+          0.0,
+          639.5
+        ],
+        [
+          0.0,
+          925.7384642369517,
+          359.5
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "width": 1280,
+      "height": 720,
+      "distortion": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixel_convention": "opencv_centres",
+      "rgb": "rgb_1.png",
+      "camera_id": "cam_1",
+      "timestamp_s": 0.0
+    }
+  ],
+  "frame_convention": "wall",
+  "source": "RGB and normal simulator observation()"
+}

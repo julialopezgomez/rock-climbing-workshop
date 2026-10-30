@@ -1,0 +1,10 @@
+{
+  "lab": "stereo",
+  "seed": 7,
+  "noise_px": 0.5,
+  "baseline_m": 0.064,
+  "points": 500,
+  "valid_points": 500,
+  "median_depth_error_mm": 14.0229605216059,
+  "p90_depth_error_mm": 58.45352919073279
+}

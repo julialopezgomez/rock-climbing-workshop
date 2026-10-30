@@ -1,0 +1,354 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[margin=25mm]{geometry}
+\usepackage{graphicx,booktabs,tabularx,array,amsmath,microtype}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{pdftitle={Perception Challenge: Implementation and Reproduction},pdfauthor={Ege Gursoy}}
+\setlength{\emergencystretch}{2em}
+\renewcommand{\arraystretch}{1.15}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcommand{\image}[3]{\begin{figure}[htbp]\centering\includegraphics[width=#2\linewidth]{figures/#1}\caption{#3}\end{figure}}
+\title{Perception Challenge\\\large Implementation, Reproduction and Camera Operation}
+\author{Ege Gursoy}
+\date{30 October 2026}
+\begin{document}
+\maketitle
+This report describes the perception implementation supplied on the
+\path{perception_challenge_full} branch. It covers the selected simulator
+estimator, the camera path, the input/output conventions and the experiments
+that determined the method choices. Commands are run from the team repository
+root. The full command reference is \path{docs/perception/RUNBOOK.md}.
+
+\section{What is supplied}
+The runtime is in \path{src/rcr/perception/challenge/}, with the three trained
+Microban landmark checkpoints and their matching schemas. The setup scripts
+install an isolated Python environment, fetch pinned public CAD, build M3T\footnote{\url{https://github.com/DLR-RM/3DObjectTracking/tree/master/M3T}} and
+the seed-recovery binaries, and install the pinned climbing model. Inference
+loads its code and resources from this checkout and its configured cache. The
+original experiment workspace is not a runtime dependency.
+
+\begin{table}[htbp]\centering
+\caption{Available entrypoints and their requirements.}
+\begin{tabularx}{\linewidth}{@{}lYY@{}}\toprule
+Command & Input & Output\\\midrule
+\texttt{holds} & Stereo PNG and declared rig calibration & Hold JSON, scene envelope, fitting/recovery diagnostics\\
+\texttt{reproduce} & Included saved stereo cases & Predictions and exact-reference comparison\\
+\texttt{replay} & Saved RGB packets; measured joints for configured profiles & Robot/cup predictions and converted team pose\\
+\texttt{capture} & Two RealSense color cameras & Timestamped RGB pairs and calibration metadata\\
+\texttt{calibrate} & Captured chessboard pairs, measured square size & Intrinsics, residual distortion and stereo geometry\\
+\texttt{live} & Color streams; measured mounting or synchronized joints & JSONL stream and atomic latest-result file\\\bottomrule
+\end{tabularx}
+\end{table}
+
+The supplied implementation has two uses. The offline hold estimator targets
+the released RCR image generator\footnote{\url{https://github.com/jackybaltes/rcr-perception}}. Camera operation estimates the robot in the
+wall frame and optionally maps the released cup geometry. These outputs use
+different reference points and must remain distinct.
+
+\section{Installation and first checks}
+Use Linux x86-64 and Python 3.12. The learned robot estimator requires an NVIDIA
+GPU and CUDA 12.8-compatible runtime/development tools. The tested GPU is an
+RTX 5000 Ada with 32 GB. The default build target is compute capability 8.9; set
+\texttt{--cuda-arch} for another supported card.
+\begin{verbatim}
+git submodule update --init
+python3.12 scripts/perception/setup.py --robot --cuda
+source .venv-perception/bin/activate
+python scripts/perception/run.py doctor --robot
+\end{verbatim}
+Setup creates \texttt{.venv-perception} and a separate resource cache, normally
+\path{~/.cache/rcr-perception}. It preserves the team's base environment and
+third-party submodules. The native dependencies and GPU packages require
+several GB of storage and downloads. \texttt{RCR\_PERCEPTION\_HOME} selects a
+different cache; use the same value for setup and inference.
+
+Subsequent commands use the activated environment.
+The native library dependencies have an explicit conda-forge lock; source
+commits and downloaded CAD hashes are pinned. A Docker recipe is supplied at
+\path{scripts/perception/Dockerfile}. The runtime and native builds have been
+tested directly. The Docker image itself was not built in this container,
+which has no Docker daemon. For camera capture and the measured-marker
+baseline without learned robot inference, use setup with \texttt{--cameras}.
+
+The launcher checks ambient GPU load and free memory before inference. It
+serializes its own jobs and checks again every 30 minutes while an external
+workload occupies the GPU. It never stops another process.
+
+\section{Reproduce the selected hold estimator}
+\subsection{Run the supplied cases}
+Five original stereo pairs, calibration files and saved reference hold
+records are included under \path{data/perception/holds/}.
+\begin{verbatim}
+python scripts/perception/run.py reproduce \
+  --out outputs/perception/holds
+\end{verbatim}
+The program completes inference before opening the expected hold dictionary.
+The new repository-backed run reproduced all 50 hold records exactly. This is
+a saved-case regression, separate from the earlier two blind 100-scene sets.
+For a new input:
+\begin{verbatim}
+python scripts/perception/run.py holds \
+  --stereo stereo.png --calibration rig.json \
+  --out outputs/perception/prediction
+\end{verbatim}
+The PNG contains equal-width left/right panels. Use the provided calibration
+schema: image dimensions, K and \texttt{T\_camera\_scene} for each view.
+\texttt{holds.json} uses metres, intrinsic XYZ Euler radians, the released
+hold types and the CAD backplate anchor. It is not a socket-centre map.
+
+\subsection{Method and conditions}
+The estimator obtains color proposals, fits estimated supporting geometry,
+and renders the public hold CAD through both cameras. Multiple yaw and
+inclined-pose hypotheses are refined and selected using observed image
+residuals. The renderer includes the wall and estimated volumes, which
+matters when a tilted hold is partly hidden by them.
+
+A conditional second stage identifies layouts generated by the public
+pseudo-random sampler. It searches the nonzero unsigned 32-bit seed range,
+requires several consistent pose/color agreements and a unique supported
+layout, then checks the candidate against RGB. No input seed, filename-derived
+seed, answer table or reference pose enters this stage. If recovery is
+unverified, the estimator retains the independent CAD result.
+
+The exact result assumes an untouched native scene: ten Microban holds,
+zero to three volumes, public paint/CAD, the known 0.8$\times$1.4 m wall and
+supplied rig calibration. Cube holds, arbitrary edits and physical photographs
+are outside this validation. Use \texttt{--cad-only} to disable recovery.
+Even that CAD profile retains assumptions about the source geometry and
+appearance. Exactness concerns hold dictionaries; full volume reconstruction
+is not claimed.
+
+\image{hold_examples.pdf}{1}{Five fixed examples from the latest-source set. Left views are shown; inference uses both. Green rings are source anchors and pink rings are recovered anchors. Numerical JSON equality establishes exactness.}
+
+\begin{table}[htbp]\centering
+\caption{Earlier validation on two new 100-scene sets, 1,000 holds per set. Strict pose means position below 5 mm and rotation below 15°.}
+\begin{tabularx}{\linewidth}{@{}Yrrr@{}}\toprule
+Set and method & Matched & Strict poses & Median position\\\midrule
+Original source, independent CAD &999&998/1,000&0.104 mm\\
+Original source, verified recovery &1,000&1,000/1,000&0\\
+Latest source, independent CAD &998&995/1,000&0.108 mm\\
+Latest source, verified recovery &1,000&1,000/1,000&0\\\bottomrule
+\end{tabularx}
+\end{table}
+The earlier recovery settings were frozen before these images and labels.
+These are local diagnostics and exact source-record comparisons. No official
+weighted competition score is inferred.
+
+\section{Reproduce robot pose and cup mapping}
+\subsection{Known-joint and image-only profiles}
+With measured joints, the model configuration is known. The estimator solves
+for one six-dimensional trunk transform. A 20-point Microban network initializes
+the pose; M3T tracks 20 configured links; protected differentiable and exact CAD
+refinement reduce the remaining image error. If full-silhouette fitting rejects,
+a bounded partial-boundary search trims the largest mismatches while retaining
+the incoming estimate as a candidate.
+\begin{verbatim}
+python scripts/perception/run.py replay \
+  --dataset data/perception/robot --profile max \
+  --out outputs/perception/robot
+python scripts/perception/verify_replays.py \
+  --dataset data/perception/robot \
+  --predictions outputs/perception/robot \
+  --out outputs/perception/robot/verification.json
+\end{verbatim}
+All five included cases passed both the root and endpoint checks in the
+repository-backed run. Root error ranged from 0.21 to 1.14 mm and 0.05 to 0.39°;
+worst endpoint errors ranged from 0.28 to 1.64 mm. References are loaded only
+by the scoring step. Failures remain in its denominator. Small numerical
+differences between GPU runs are expected; exact equality is checked only for
+the recovered hold records.
+
+\image{repository_robot}{1}{The five robot regression cases in this checkout. Orange rings show reference CAD landmarks and blue rings show landmarks transformed by the selected estimate. Titles give root translation and rotation errors. Both cameras contribute to inference; the left view is shown.}
+
+\texttt{max} is the selected static profile. \texttt{fast} retains the persistent
+M3T tracker; \texttt{accuracy} omits exact/boundary refinement. \texttt{trunk}
+combines two invariant-landmark networks and three crops before one geometric
+solve. It reads no joints, but supplies root pose only. It does not reconstruct
+articulation or support configured cup/robot occlusion reasoning.
+
+\subsection{Inputs and outputs}
+A saved packet identifies two RGB files, camera K, size, serial/ID and timestamp,
+a common clock, and all 19 named joint angles for configured profiles. The
+included packets illustrate the format. Image and joint measurements must be
+aligned within 15 ms; true camera/root poses, contact labels and native depth
+are not actor inputs.
+
+\texttt{replay --task live --profile fast} adds dense cup mapping and conditional
+socket registration. The mapper uses RGB-supported components and the public
+cup/lattice geometry. The socket prior requires at least three non-collinear,
+unique and congruent correspondences; an 8 mm association gate is followed by
+a 1 mm fit check and bounded pose correction. It does not confirm seating or loading.
+
+The repository-backed combined replay produced valid robot predictions and
+72--86 mapped cup candidates across the five supplied scenes, with no map
+refresh errors. This is a regression check, not an independently scored new map
+benchmark. A map-refresh error remains explicit even when robot pose is valid.
+
+The output retains the research-frame prediction and a converted
+\texttt{team\_pose}. The research basis is x right, y up, z out; the team's
+basis is x right, y into the wall, z up. With a common origin,
+$p_{team}=(x,-z,y)$ and the same basis rotation must also multiply orientation.
+Quaternions are WXYZ. \texttt{team\_api.robot\_pose} returns the existing team
+\texttt{Pose}. \texttt{team\_api.wall\_model} uses mounting transforms and
+requires caller-supplied verified start contacts. It never converts a socket
+centre into a bolt midpoint by assumption or infers loaded contacts.
+
+\section{Operate two physical cameras}
+\subsection{Capture and calibrate}
+List devices, choose serial order, and capture RGB pairs:
+\begin{verbatim}
+python scripts/perception/run.py capture --list
+python scripts/perception/run.py capture \
+  --serial LEFT_SERIAL --serial RIGHT_SERIAL \
+  --width 1280 --height 720 --fps 30 --count 40 \
+  --out outputs/camera_calibration
+\end{verbatim}
+Only color streams are enabled. SDK projection rectifies color distortion;
+common-clock matching gates pairs at 15 ms. Timestamp matching does not establish
+simultaneous exposure. The pinned competition rules restrict external streams
+to RGB, so native depth/IR is not enabled.
+
+Generate and print the chessboard at 100\%, measure the printed square, and
+capture at least ten successful pairs with varied distance and tilt:
+\begin{verbatim}
+python3 scripts/perception/make_chessboard.py \
+  --out outputs/chessboard.svg
+python scripts/perception/run.py calibrate \
+  --dataset outputs/camera_calibration --square 0.020 \
+  --out outputs/calibrated_cameras
+\end{verbatim}
+The vector board has nine by six internal corners and nominal 20 mm squares.
+Use the measured print size, not an assumed printer scale. The solver estimates
+intrinsics/residual distortion and relative stereo geometry from the captured,
+SDK-rectified RGB images. It reports accepted/rejected pairs and RMS residuals.
+Inspect coverage and repeat poor calibration. Wall pose is estimated separately.
+
+Use \texttt{--camera-calibration} on subsequent capture/live runs. The runtime
+binds the measured calibration to the same serial order, image dimensions and
+source intrinsics. Applying it to another profile is rejected. It is not a
+raw-sensor distortion model.
+
+\subsection{Marker-based physical baseline}
+Mount marker ID 5 rigidly on the trunk. Measure the black-code size and the full
+\texttt{T\_trunk\_marker} transform. Copy
+\path{config/perception/marker.example.json}; replace its example geometry and
+set \texttt{measured} to true. The unmeasured template refuses to run.
+
+Wall markers use DICT\_4X4\_50 IDs 1--4. Defaults match the released board;
+measured alternative marker corners can be supplied in the configuration.
+Each used view needs at least two wall markers. Do not use outer white-border
+size as black-code size.
+\begin{verbatim}
+python scripts/perception/run.py live \
+  --serial LEFT_SERIAL --serial RIGHT_SERIAL \
+  --estimator markers --marker-config config/perception/my_marker.json \
+  --camera-calibration outputs/calibrated_cameras/calibration.json \
+  --out outputs/perception/marker_live
+\end{verbatim}
+The estimator considers planar PnP hypotheses and jointly refines the measured
+marker geometry against the camera observations. This path needs no learned
+model or encoder readings. It provides a calibration/reference baseline for
+checking the learned estimator; physical accuracy remains to be measured.
+
+\subsection{Learned root pose and live cups}
+For configured inference, record all 19 measured joint positions in JSONL with
+\path{clock=host_monotonic} and measurement timestamps mapped to the laptop
+clock. A Pi's independent monotonic clock and packet receipt times are not
+substitutes for aligned measurement time. The reader interpolates only nearby
+samples and rejects stale telemetry.
+\begin{verbatim}
+python scripts/perception/run.py live \
+  --serial LEFT_SERIAL --serial RIGHT_SERIAL \
+  --profile fast --task live --telemetry-log outputs/encoders.jsonl \
+  --camera-calibration outputs/calibrated_cameras/calibration.json \
+  --out outputs/perception/learned_live
+\end{verbatim}
+Use \texttt{--calibration boundary} for the markerless wall-calibration profile,
+subject to its tested board/appearance assumptions. The private runtime uses the original Rhoban climbing geometry for regression.
+Current team main uses a cut-foot fork. Physical configured fitting must use
+the measured robot model through \texttt{RCR\_MICROBAN\_MODEL}; the runbook
+describes this override. The learned networks were
+trained in the released simulator. Their physical appearance transfer has not
+been evaluated. The cup map likewise depends on the released upright cup and
+measured mounting geometry; the simulator lattice does not establish physical
+bolt spacing or origin.
+
+\subsection{Freshness and controller use}
+\texttt{live} writes \texttt{predictions.jsonl} and atomically replaces
+\texttt{latest.json}. It reports acquisition time, processing time and age at
+output. Frames are selected from the recent synchronized pair buffer. Estimates
+older than \texttt{--max-output-age} (default 0.25 s) do not expose a usable team
+pose. Ctrl-C closes the owned camera pipelines and estimator.
+
+Recorded simulator sequences have about 20 ms median full inference, but map
+refresh/reacquisition reached 3.01 s. The median is not a deadline. High-compute
+\texttt{max} is therefore most useful on saved captures; choosing a larger
+freshness limit for online use is an explicit controller decision.
+
+\section{Earlier methods and observed failures}
+\begin{table}[htbp]\centering
+\caption{Selected comparisons on the same historical 100-scene hold set, 1,000 holds. These are development results, distinct from the later blind recovery sets.}
+\begin{tabularx}{\linewidth}{@{}Yr@{}}\toprule
+Method & Strict hold poses\\\midrule
+FoundationStereo + FoundationPose &447/1,000\\
+S2M2 + FoundationPose &278/1,000\\
+FoundationStereo + SAM-6D &164/1,000\\
+Combined RGB proposals + exact CAD &975/1,000\\
+Learned proposals + exact CAD &976/1,000\\\bottomrule
+\end{tabularx}
+\end{table}
+FoundationStereo and S2M2 had mean target-depth errors of 9.614 and 9.872 mm.
+These errors matter on small holds; the smoother map did not reliably produce
+better poses. Accurate rendered-depth controls showed that the rigid-object
+adapters could work when depth was reliable. They did not establish performance
+with real depth cameras. Extra sampling, refinement or a larger network did
+not consistently improve the final output.
+
+CAD fitting benefited from correcting wall/volume occlusion and evaluating
+multiple geometric hypotheses against both images. Native recovery then
+resolved source-layout ambiguity under its explicit generator assumptions.
+The original 1,000-scene sweep also showed why subset analysis matters: only 79
+of 10,000 holds were volume-mounted, and their large orientation errors were
+hidden by the aggregate rotation median.
+
+For the robot, FoundationPose with stereo passed 98 root checks but 62 endpoint
+checks on the original 100 cases. MegaPose passed 6 and 2. Both ran actual image
+inference. The configured keypoint/M3T/CAD estimator achieved more endpoint
+successes under those conditions. On two fresh 100-scene sets, selected max
+passed all root and endpoint checks, with median root errors 0.356/0.378 mm and
+0.146/0.125°. These local thresholds are 5 mm/5° for the root and 5 mm for every
+endpoint; an official offline robot scorer has not been released.
+
+An artificial 20\% cutout initially caused full-silhouette refinement to discard
+usable poses. Preserving the incoming pose and adding trimmed boundary fitting
+raised successes to 100 root/99 endpoint on one set and 100/100 on another.
+Pixel noise and incorrect joints still cause endpoint failures. Lower image
+residual is insufficient when the model configuration or calibration is wrong.
+
+\section{Validation status and remaining work}
+The new checkout has reproduced the five supplied hold scenes and five robot
+poses with locally built native binaries and repository checkpoints. The
+calibration solver is tested on generated RGB chessboard pairs; the marker
+path is tested on an augmented RGB fixture with known mounting geometry. SDK
+import and enumeration work, but no cameras are attached here. These tests
+establish software behaviour and regression reproduction. They do not establish
+physical USB reliability, exposure synchronization, real-camera pose accuracy
+or perception-driven climbing performance.
+
+\image{live_examples}{1}{Earlier recorded simulator sequence, five selected frames. Projected model landmarks are overlaid on RGB. These correlated frames illustrate temporal tracking; they are not independent trials or physical-camera validation.}
+
+The original broad benchmark records remain in
+\path{docs/perception/metrics_snapshot.json}. The current deployment checks and
+commands are recorded separately in \path{docs/perception/verification.json}.
+Reference data are opened after prediction, and failed cases remain counted.
+The setup and API preserve the team frame/types; they do not manufacture joint
+velocities, a verified start stance or loaded contacts.
+
+Before controller use, measure the physical cameras, wall geometry and marker
+mount; verify timestamp alignment; inspect overlays and root/endpoint error
+against an independent reference; and test reacquisition delays. Those checks
+address the remaining difference between the recorded simulator results and
+the physical acquisition task.
+\end{document}

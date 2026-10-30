@@ -4,9 +4,8 @@ This is our team project for the [Rock Climbing Robots](https://rock-climbing-ro
 (Bordeaux, 29 Oct – 1 Nov 2026). The robot is Microban-based ([Rhoban/microban](https://github.com/Rhoban/microban)), and the rules are
 [v1.1](https://github.com/rock-climbing-robots/rules/releases/tag/v1.1).
 
-The repo is a skeleton for the pipeline: contracts, stubs and a check, with no algorithms yet. We have
-**not** chosen the planner, the optimiser or the controller. When we choose or change one, the change
-stays inside its module.
+The repository defines the pipeline contracts and its implementations. Module READMEs
+and the pipeline check identify implemented stages and remaining integration work.
 
 ## Pipeline
 
@@ -116,3 +115,22 @@ uv run mjpython tests/test_sim.py N2                      # the robot on their w
 uv run mjpython tests/test_optimiser.py PLAN       # solve a contact plan, play it in their sim
 uv run scripts/wall_generator.py N1 N2 N3                 # their walls -> data/examples/N*.json
 ```
+
+## Perception
+
+The [perception runtime](docs/perception/README.md) includes the selected RGB/CAD
+hold estimator, trained Microban keypoint models, configured robot tracking and
+refinement, replay data, and two-RealSense RGB capture/calibration entrypoints.
+The [report](docs/perception/perception_report.pdf) describes the method,
+measured results and limitations. Start with:
+
+```bash
+python3.12 scripts/perception/setup.py --robot --cuda
+.venv-perception/bin/python scripts/perception/run.py reproduce --out outputs/perception/holds
+```
+
+Use the [runbook](docs/perception/RUNBOOK.md) for robot replay and physical
+cameras. The runtime uses an isolated environment and explicit measurement
+packets. The legacy images-only functions remain stubs; the
+[team adapters](docs/perception/TEAM_INTEGRATION.md) convert runtime outputs
+without changing existing contracts or inventing start contacts.

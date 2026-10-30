@@ -1,0 +1,142 @@
+{
+  "hold_1": {
+    "type": "microban_hold",
+    "color": "#F2554E",
+    "position": {
+      "x": 0.29645,
+      "y": 0.373674,
+      "z": 0.0
+    },
+    "orientation": {
+      "roll": -0.0,
+      "pitch": 0.0,
+      "yaw": 0.0
+    }
+  },
+  "hold_2": {
+    "type": "microban_hold",
+    "color": "#F2554E",
+    "position": {
+      "x": -0.354555,
+      "y": 1.098748,
+      "z": 0.0
+    },
+    "orientation": {
+      "roll": -0.0,
+      "pitch": 0.0,
+      "yaw": -0.785398
+    }
+  },
+  "hold_3": {
+    "type": "microban_hold",
+    "color": "#59C77B",
+    "position": {
+      "x": 0.380248,
+      "y": 0.304924,
+      "z": 0.0
+    },
+    "orientation": {
+      "roll": -0.0,
+      "pitch": 0.0,
+      "yaw": 0.785398
+    }
+  },
+  "hold_4": {
+    "type": "microban_hold",
+    "color": "#6389ED",
+    "position": {
+      "x": -0.206515,
+      "y": 1.060662,
+      "z": 0.0
+    },
+    "orientation": {
+      "roll": -0.0,
+      "pitch": 0.0,
+      "yaw": 0.785398
+    }
+  },
+  "hold_5": {
+    "type": "microban_hold",
+    "color": "#6389ED",
+    "position": {
+      "x": -0.008698,
+      "y": 0.847187,
+      "z": 0.0
+    },
+    "orientation": {
+      "roll": -0.0,
+      "pitch": 0.0,
+      "yaw": -0.785398
+    }
+  },
+  "hold_6": {
+    "type": "microban_hold",
+    "color": "#F2554E",
+    "position": {
+      "x": -0.352242,
+      "y": 0.553366,
+      "z": 0.0
+    },
+    "orientation": {
+      "roll": -0.0,
+      "pitch": 0.0,
+      "yaw": 0.0
+    }
+  },
+  "hold_7": {
+    "type": "microban_hold",
+    "color": "#F2554E",
+    "position": {
+      "x": -0.260894,
+      "y": 0.915963,
+      "z": 0.0
+    },
+    "orientation": {
+      "roll": -0.0,
+      "pitch": 0.0,
+      "yaw": 0.0
+    }
+  },
+  "hold_8": {
+    "type": "microban_hold",
+    "color": "#F2554E",
+    "position": {
+      "x": 0.220986,
+      "y": 0.645044,
+      "z": 0.0
+    },
+    "orientation": {
+      "roll": -0.0,
+      "pitch": 0.0,
+      "yaw": -0.785398
+    }
+  },
+  "hold_9": {
+    "type": "microban_hold",
+    "color": "#F2554E",
+    "position": {
+      "x": -0.273888,
+      "y": 1.351988,
+      "z": 0.0
+    },
+    "orientation": {
+      "roll": -0.0,
+      "pitch": 0.0,
+      "yaw": 0.0
+    }
+  },
+  "hold_10": {
+    "type": "microban_hold",
+    "color": "#59C77B",
+    "position": {
+      "x": -0.021698,
+      "y": 0.291546,
+      "z": 0.0
+    },
+    "orientation": {
+      "roll": -0.0,
+      "pitch": 0.0,
+      "yaw": -0.785398
+    }
+  }
+}

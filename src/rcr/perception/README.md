@@ -1,38 +1,25 @@
-# perception
+# Perception
 
-**Purpose:** say what the robot faces: where the holds are, where the robot starts, and where the robot is.
+The operational implementation is in `challenge/`. See the
+[runbook](../../../docs/perception/RUNBOOK.md) and
+[report](../../../docs/perception/perception_report.pdf).
 
-| | |
-|---|---|
-| Input | RGB images from the 2 USB wall cameras, one on each side, plugged into our laptop [Rules §5.1]. Only the RGB part of the streams may be used |
-| Output | `WallModel` (holds + start stance) via `wall_model(images)`; `Pose` of the robot base in the wall frame via `robot_pose(images)` |
-| Runs on | laptop |
+It provides source-specific stereo hold JSON, configured robot pose, an image-only
+trunk profile, RGB cup mapping, a measured-marker baseline, and two-RealSense
+color capture/calibration. The selected models and replay examples are included;
+`scripts/perception/setup.py` installs a private environment and pinned resources.
 
-## For now
-Real perception is parked (see ROADMAP). The pipeline loads a **hand-written wall model** with `rcr.io.load_wall`
-(e.g. the organisers' `data/examples/N1.json`). Both functions stay stubs.
+Run `scripts/perception/run.py --help` inside that environment. Inputs are explicit
+RGB packets with calibration and timing; configured profiles require measured
+joints. `challenge.team_api` converts measured outputs to existing team types.
+Read the [integration notes](../../../docs/perception/TEAM_INTEGRATION.md) for
+frames, mount/socket reference points, start-contact requirements and validity.
 
-## Where real detection plugs in
-- Camera images go into `wall_model()` / `robot_pose()`. Implementation files go next to `__init__.py`, and `__init__`
-  delegates to them, so callers do not change.
-- **With markers** [Rules §5.2, §6.1]:
-  - ArUco DICT_4X4_50 markers 1–4 sit on the wall corners. Their centres are given in INTERFACES.md: 0.100 m code, 0.136 m with the border.
-  - Detecting them gives each camera's extrinsics in the wall frame.
-  - Optional marker ID 5 on the robot (any size, anywhere) gives `robot_pose` directly.
-  - The robot can instead be detected without a marker, with the wall markers still giving the extrinsics.
-- **Markerless** [Rules §6.2]: no markers at all, and the organisers move the cameras slightly before each attempt, so the camera pose
-  must be estimated by us. Time factor ×1, against ×1.25 with markers [Rules §8].
-- **In the official sim**, perception works from the camera images MuJoCo renders [Rules §7].
-- A live `robot_pose` can be sent to the robot over the link (`LaptopLink.send_pose`) if the controller needs it.
+The legacy `wall_model(images)` and `robot_pose(images)` signatures remain stubs.
+They do not carry camera calibration, telemetry or capture timing. Pipeline callers
+can continue loading saved wall models while the explicit runtime supplies camera
+results. A controller bridge must agree on these additional inputs.
 
-## v0 could be
-- hand-written walls built from grid indices: a hold centred on hole (i, j), bolted through (i ± 1, j), is at
-  x = 0.0175 + 0.015·i, z = 0.010 + 0.015·j, with i = 1..50 [Rules v1.1 §4, Figures 2–3];
-- later, ArUco 1–4 for extrinsics plus hand-entered hold grid positions;
-- later still, holds detected in the images.
-
-## Open decisions
-- Marker vs markerless (score factor ×1.25 vs ×1).
-- Whether we use ID 5 on the robot, and its size and placement.
-- The detection library. OpenCV's `aruco` would go in the `perception` dependency group, never on the Pi.
-- Whether the robot pose is needed live by the controller at all.
+No physical cameras were attached during preparation. Saved simulator regression,
+synthetic RGB calibration and marker tests establish software behavior; they do
+not establish physical-camera accuracy or a camera-driven climb.

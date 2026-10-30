@@ -1,0 +1,30 @@
+{
+  "lab": "cad_fit",
+  "seed": 7,
+  "starts": 1,
+  "occlusion": 0.0,
+  "keep_fraction": 1.0,
+  "translation_error_px": 9.947131257112115,
+  "yaw_error_deg": 127.45553946998398,
+  "selected": {
+    "pose": [
+      97.07459928209045,
+      83.53464455492714,
+      0.43758477477391683
+    ],
+    "cost": 14.120348930358887,
+    "converged": true
+  },
+  "candidates": [
+    {
+      "pose": [
+        97.07459928209045,
+        83.53464455492714,
+        0.43758477477391683
+      ],
+      "cost": 14.120348930358887,
+      "converged": true
+    }
+  ],
+  "scope": "Planar synthetic outline, 3 parameters; no 6D or benchmark accuracy claim"
+}

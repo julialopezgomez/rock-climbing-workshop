@@ -1,0 +1,216 @@
+{
+  "date_utc": "2026-10-30T12:07:09.480931+00:00",
+  "scope": "Repository-backed saved-case regression and software calibration tests; no new blind or physical-camera benchmark",
+  "environment": {
+    "python": "3.12",
+    "gpu": "NVIDIA RTX 5000 Ada, 32 GB",
+    "torch": "2.9.1+cu128",
+    "core": "Fresh isolated pinned environment",
+    "robot": "Private environment reusing existing Torch read-only; private nvdiffrast wheel and pinned robot model",
+    "native": "Fresh explicit conda prefix; M3T and repository adapter built from pinned source",
+    "original_workspace_runtime_dependency": false
+  },
+  "checks": {
+    "holds": {
+      "passed": true,
+      "cases": 5,
+      "records": [
+        {
+          "case": "000000",
+          "exact": true,
+          "predicted_holds": 10
+        },
+        {
+          "case": "000024",
+          "exact": true,
+          "predicted_holds": 10
+        },
+        {
+          "case": "000049",
+          "exact": true,
+          "predicted_holds": 10
+        },
+        {
+          "case": "000074",
+          "exact": true,
+          "predicted_holds": 10
+        },
+        {
+          "case": "000099",
+          "exact": true,
+          "predicted_holds": 10
+        }
+      ],
+      "scope": "Replay of published benchmark examples; not a new blind evaluation"
+    },
+    "configured_robot": {
+      "cases": 5,
+      "root_passes": 5,
+      "endpoint_passes": 5,
+      "records": [
+        {
+          "case": "000000",
+          "position_mm": 1.1387369284247681,
+          "rotation_deg": 0.17227925531077112,
+          "worst_endpoint_mm": 1.6406192919784695,
+          "passed_root": true,
+          "passed_endpoints": true
+        },
+        {
+          "case": "000023",
+          "position_mm": 0.2089299470056101,
+          "rotation_deg": 0.39057275647589296,
+          "worst_endpoint_mm": 0.9608506495046085,
+          "passed_root": true,
+          "passed_endpoints": true
+        },
+        {
+          "case": "000041",
+          "position_mm": 0.8212474004527148,
+          "rotation_deg": 0.32303992929935027,
+          "worst_endpoint_mm": 1.5934798983218283,
+          "passed_root": true,
+          "passed_endpoints": true
+        },
+        {
+          "case": "000062",
+          "position_mm": 0.3509997641504514,
+          "rotation_deg": 0.1101582026884646,
+          "worst_endpoint_mm": 0.5536211880685172,
+          "passed_root": true,
+          "passed_endpoints": true
+        },
+        {
+          "case": "000089",
+          "position_mm": 0.22708438460045166,
+          "rotation_deg": 0.05086178114144794,
+          "worst_endpoint_mm": 0.2849369514207588,
+          "passed_root": true,
+          "passed_endpoints": true
+        }
+      ],
+      "scope": "Saved-case regression under local 5mm/5degree root and all-endpoints-5mm criteria"
+    },
+    "image_only_trunk": {
+      "cases": 5,
+      "root_passes": 5,
+      "endpoint_passes": 0,
+      "records": [
+        {
+          "case": "000000",
+          "position_mm": 1.2017025966138968,
+          "rotation_deg": 0.8283520695375398,
+          "worst_endpoint_mm": null,
+          "passed_root": true,
+          "passed_endpoints": false
+        },
+        {
+          "case": "000023",
+          "position_mm": 2.683687763265351,
+          "rotation_deg": 2.592178294712491,
+          "worst_endpoint_mm": null,
+          "passed_root": true,
+          "passed_endpoints": false
+        },
+        {
+          "case": "000041",
+          "position_mm": 0.5940589748958316,
+          "rotation_deg": 0.924162285617413,
+          "worst_endpoint_mm": null,
+          "passed_root": true,
+          "passed_endpoints": false
+        },
+        {
+          "case": "000062",
+          "position_mm": 0.7175716136231949,
+          "rotation_deg": 0.33878107510719224,
+          "worst_endpoint_mm": null,
+          "passed_root": true,
+          "passed_endpoints": false
+        },
+        {
+          "case": "000089",
+          "position_mm": 0.23516716368962556,
+          "rotation_deg": 0.9889161476794537,
+          "worst_endpoint_mm": null,
+          "passed_root": true,
+          "passed_endpoints": false
+        }
+      ],
+      "scope": "Saved-case regression under local 5mm/5degree root and all-endpoints-5mm criteria"
+    },
+    "combined": [
+      {
+        "case": "000000",
+        "robot_valid": true,
+        "mapped_candidates": 72,
+        "map_refresh_error": null
+      },
+      {
+        "case": "000023",
+        "robot_valid": true,
+        "mapped_candidates": 86,
+        "map_refresh_error": null
+      },
+      {
+        "case": "000041",
+        "robot_valid": true,
+        "mapped_candidates": 86,
+        "map_refresh_error": null
+      },
+      {
+        "case": "000062",
+        "robot_valid": true,
+        "mapped_candidates": 72,
+        "map_refresh_error": null
+      },
+      {
+        "case": "000089",
+        "robot_valid": true,
+        "mapped_candidates": 84,
+        "map_refresh_error": null
+      }
+    ],
+    "base_suite": {
+      "passed": 973,
+      "skipped": 2,
+      "command": "uv run --locked pytest -q"
+    },
+    "runtime_suite": {
+      "passed": 8,
+      "command": "python -m pytest tests/test_perception_runtime.py tests/test_perception_team_api.py -q",
+      "conditions": [
+        "Generated RGB chessboard views",
+        "Augmented RGB marker with known rigid mount",
+        "Capture-profile serial/resolution binding",
+        "Fresh-pair selection after slow inference",
+        "Team basis/mount/start-contact conversion",
+        "Live output-age rejection, stale telemetry recovery and resource cleanup with fake capture"
+      ]
+    },
+    "ruff": "Passed check and format",
+    "pipeline_check": "Passed: four implemented, two stubs, two skips; legacy perception/controller stubs explicit, optional CasADi absent",
+    "realsense": {
+      "sdk_version": "2.59.1.11053",
+      "devices": []
+    },
+    "micromamba_bootstrap": "Pinned archive GET returned HTTP 200"
+  },
+  "commands": [
+    "python scripts/perception/run.py reproduce --out outputs/perception/holds",
+    "python scripts/perception/run.py replay --dataset data/perception/robot --profile max --out outputs/perception/robot",
+    "python scripts/perception/verify_replays.py --dataset data/perception/robot --predictions outputs/perception/robot --out outputs/perception/robot/verification.json",
+    "python scripts/perception/run.py replay --dataset data/perception/robot --profile fast --task live --out outputs/perception/combined",
+    "python scripts/perception/run.py replay --dataset data/perception/robot --profile trunk --out outputs/perception/trunk"
+  ],
+  "limitations": [
+    "No attached physical cameras; USB capture, synchronization, physical accuracy and contact acquisition unvalidated",
+    "Docker recipe supplied but not built: no Docker daemon",
+    "Hold generator recovery applies only to the untouched native source distribution",
+    "No official offline robot evaluator; stated thresholds are local",
+    "Combined mapping replay checks absence of runtime errors, not new independently scored map accuracy",
+    "Five published saved cases are not a generalization benchmark",
+    "Training code/full historical datasets are not included; inference checkpoints are supplied"
+  ],
+  "base_commit": "72d5c8b0a08eb99ba51717e09f520f11879cc7af"
+}

@@ -1,0 +1,15 @@
+{
+  "team_branch": "perception_challenge_full",
+  "base_commit": "6c9e515",
+  "team_tests_passed": 982,
+  "team_tests_skipped": 5,
+  "pipeline_check": "passed with existing 2 stubs and 3 skipped stages",
+  "lint": "passed",
+  "format": "passed",
+  "example_programs": 5,
+  "example_checks": "passed in original and freshly installed example environments",
+  "latex_errors": false,
+  "code_excerpts_match_functions": true,
+  "fixture_hashes_match": true,
+  "production_interfaces_changed": false
+}
