@@ -7,9 +7,11 @@ README explains how our code meets Microban. The only code here is what we add t
 - **Model:** the `microban_model` package, climbing variant (`robot_climb.urdf` / `robot_climb.xml`), pinned in
   `pyproject.toml` to the organisers' simulator's version. [`microban.py`](microban.py) finds it.
 - **Limbs:** the climbing forearms and feet each end in a **12.5 mm ball** that sits in a hold's socket.
-  [`hooks.py`](hooks.py) gives each ball's link, centre and finger direction (`neck`). The optimiser and the sim read
-  them from there, and `test_the_balls_are_the_models` checks them against the model.
-- **Still our guesses [Ours]:** how a hold pushes on a ball (`normals`, `mu` in `TransitionConfig`).
+  [`hooks.py`](hooks.py) reads each ball's link, centre and radius from the model files (URDF `<limb>_ball_frame`,
+  MJCF `<limb>_ball_coll`); nothing is typed in. The optimiser takes them from there; a test checks they are where
+  the organisers' sim has them.
+- **Ours [Ours]:** only `hooks.NECK`, the direction the forearm or foot comes into each ball (measured on the model),
+  a hint for the optimiser's first solve. And `observation.py`, which converts, adds nothing.
 
 ## What Microban gives us [Microban]
 - **Hardware:**
@@ -31,27 +33,23 @@ README explains how our code meets Microban. The only code here is what we add t
 We wrap our controller in a thin Move and do **not** rewrite Microban's Move or Scheduler:
 
 ```python
-# Microban's Move; ~30 lines, location depends on D1
-class ClimbMove(Move):
-    def step(self, obs, command):
-        # Microban's RobotState -> rcr.types.RobotState
-        state = to_rcr_state(obs.robot_state, self.t0, self.link.pose())
-        command.target_angles.update(self.controller.step(state).positions)
+# a Microban move (dev_v2: a class with step(obs), docs/moves.md); location depends on D1
+from microban_model import JOINTS
+from rcr.robot import to_state
+
+
+class ClimbMove:
+    def start(self, obs):
+        self.t0 = obs["time"]
+
+    def step(self, obs):
+        state = to_state(obs, JOINTS, self.t0, self.link.pose())  # Microban's obs -> RobotState
         self.link.send_state(state)  # non-blocking
-
-
-# start/stop from the laptop instead of the keyboard
-class LinkInputSource(InputSource):
-    def read(self):
-        return UserInput(active_moves={"climb"} if self.link.run_requested() else set())
+        return self.controller.step(state).positions  # {joint: rad}; the others keep their target
 ```
 
-`to_rcr_state` maps the fields as follows:
-- `motor_positions` → `joint_positions`;
-- `motor_velocities` → `joint_velocities`;
-- `body_quat` → `imu_quat`;
-- `gyro` → `gyro`;
-- `time_s` − t0 → `time`.
+`to_state` ([observation.py](observation.py)) is the same conversion the sim uses: Microban's observation is the
+organisers' simulator's. Start/stop from the laptop instead of the keyboard is still to do.
 
 ### Pitfalls to handle in the wrapper (found in Microban's code)
 1. **`main.py` ramps all motors to `NEUTRAL_POSE` (standing) at start.** On the wall that is wrong: the start ramp must go
@@ -108,7 +106,7 @@ Still open: where `ClimbMove` and our entry point sit on the Pi (next to Microba
 **At the team table**
 1. Power the robot. Check it is on our access point (`ping`, `ssh`). Deploy our Pi files.
 2. Get the wall model for this wall: hand-written from the hold layout (perception later). Check the hold positions.
-3. On the laptop: plan → optimise → trajectory. Dry-run it in our sim and confirm that it climbs.
+3. On the laptop: plan → optimise → trajectory. Dry-run it in the organisers' sim and confirm that it climbs.
 
 **At the wall**
 

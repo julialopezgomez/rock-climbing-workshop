@@ -91,8 +91,8 @@ class TransitionConfig:
     tau_limit: float = 0.7 * SERVO_TORQUE_LIMIT  # [N·m] 70 % of the servo limit [Ours]
     # Friction pyramid per limb: contact normal (the direction the hold pushes the ball) and mu.
     # Up (+z) for all four: the hold's socket opens upwards and holds a resting ball up, a foot's
-    # as much as a hand's [hold.stl]. (Feet pushed only out from the wall, -y, made the robot
-    # lean out and hang from its arms.) A simplification of the ball in its spherical socket,
+    # as much as a hand's [the sim's hold mesh]. (Feet pushed only out from the wall, -y, made the
+    # robot lean out and hang from its arms.) A simplification of the ball in its spherical socket,
     # which can push in more directions [Ours].
     normals: dict[str, tuple[float, float, float]] = field(
         default_factory=lambda: dict.fromkeys(LIMBS, (0.0, 0.0, 1.0))
@@ -101,8 +101,8 @@ class TransitionConfig:
     mu: dict[str, float] = field(default_factory=lambda: dict.fromkeys(LIMBS, 0.8))
     # The moving limb keeps this far out from the wall face (y <= -clearance) in the middle of
     # phase B, i.e. on samples K+2..N-2, so it can leave and enter its cups [Ours].
-    # 0.06 m: the hold sticks out 43 mm [hold.stl], the ball is 12.5 mm in radius, + 4.5 mm, so
-    # the ball can pass in front of a hold (the task's first value, 0.04 m, could not).
+    # 0.06 m: the hold sticks out 43 mm [the sim's hold mesh], the ball is 12.5 mm in radius,
+    # + 4.5 mm, so the ball can pass in front of a hold (the task's first value, 0.04 m, could not).
     clearance: float = 0.06  # [m]
     # Every point of Microban's collision shapes stays this far out of the wall face, in every
     # sample (y <= -wall_margin). Without it the trunk can sink into the wall [Ours].
@@ -112,7 +112,7 @@ class TransitionConfig:
     wall_points: bool = False
     # Ball centre relative to Hold.position (the bolt midpoint on the wall face): the bottom of
     # the hold's spherical socket, 26 mm out and 14 mm below the bolts [Rules Figure 3], lowered
-    # by the socket/ball clearance (12.7 - 12.5 mm). The same point as rcr.sim's grasp point.
+    # by the socket/ball clearance (12.7 - 12.5 mm): where a ball rests in the organisers' sim.
     # Follows the model's ball (rcr.robot.hooks.BALL_RADIUS): (0, -0.026, -0.0142) today.
     contact_offset: tuple[float, float, float] = (
         HOLD_MESH_OFFSET[0],

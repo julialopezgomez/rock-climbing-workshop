@@ -56,7 +56,7 @@ never on the moves before it.
 - **Filling it:** `scripts/fill_cache.py` climbs generated walls (levels 1–3) and stores every move it asks for,
   feasible or not. It resumes where it stopped. `--no-store` measures how many moves the cache already answers.
 - **Every run uses it, with no setting:**
-  - `optimise`, `solve_plan` and the runner (`tests/test_optimiser.py --hard`) take stored moves from
+  - `optimise`, `solve_plan` and the runner (`tests/test_optimiser.py --hard PLAN`) take stored moves from
     `build/move_cache/` and add each new one;
   - `feasibility()` answers a stored move at once and stores its own rejections;
   - `RCR_MOVE_CACHE=<folder>` uses another cache, and `RCR_MOVE_CACHE=off` none (the tests set it, so they always
@@ -142,7 +142,7 @@ the plan.
 the ball resting in its own socket. Nothing about *how* a hook should move is imposed; the exact geometry decides.
 
 - **Geometry, from the sources:**
-  - the organisers' hold mesh `data/holds/hold.stl` [Rules v1.1 Figure 3], placed as the sim does;
+  - the organisers' simulator's hold mesh (`climbing_sim/assets/hold/hold_visual.stl`), placed as it places it (socket 26 mm out, 14 mm below the bolts; `SOCKET_OUT`, `SOCKET_BELOW` read from it);
   - the robot: the convex hull of each of the model's visual meshes (its collision boxes are smaller than the
     thighs and shins), except on the climbing forearms and feet, which use the model's own convex pieces, plus a
     sphere per ball [Microban MJCF]. A test checks that every drawn vertex is inside;
@@ -223,7 +223,7 @@ fresh values (variables and multipliers at zero), so a move's result does not de
 |---|---|---|
 | `n_samples` (N), `release_sample` (K) | 12, 4 | [Ours] |
 | `tau_limit` | 0.7 × 0.605 = 0.424 N·m | 0.605 N·m: 1.75 A × 0.346 N·m/A, as the organisers' sim clips the servos [Microban]; 70 % [Ours] |
-| `normals` | +z for all four limbs: the socket opens upwards and holds a resting ball up | from `hold.stl` [Ours] |
+| `normals` | +z for all four limbs: the socket opens upwards and holds a resting ball up | from the sim's hold mesh [Ours] |
 | `mu` | 0.8 per limb | [Ours] |
 | `clearance` | 0.06 m, moving ball out from the wall on samples K+2..N−2 | from the hold's depth + ball [Ours] |
 | `avoid_collisions` | True | |
@@ -245,14 +245,15 @@ The balls come from `rcr.robot.hooks`, shared with the sim; `contact_offset` fol
 ## How to run
 ```bash
 git submodule update --init                    # Microban, in third_party/microban (once)
-uv sync --group optimiser --group sim          # casadi (IPOPT), coacd, coal, pin (tests); mujoco for the runner
+uv sync --group optimiser --group sim          # casadi (IPOPT), coacd, coal, pin (tests); their sim for the runner
 uv run pytest tests/test_optimiser.py                     # solves the example plan's first moves, checks them
-uv run mjpython tests/test_optimiser.py --hard            # solves the example plan, plays it in the sim
-uv run mjpython tests/test_optimiser.py --hard --save     # the same, and saves data/examples/trajectory.json
-uv run mjpython tests/test_optimiser.py --hard --replay   # plays the saved trajectory, without solving
+uv run mjpython tests/test_optimiser.py --hard PLAN           # solves the plan, plays it in the sim
+uv run mjpython tests/test_optimiser.py --hard PLAN --save    # the same, and saves data/examples/trajectory.json
+uv run mjpython tests/test_optimiser.py --hard PLAN --replay  # plays the saved trajectory, without solving
 ```
-The runner (`tests/test_optimiser.py`, run directly) reads the example plan and its wall (`contact_plan_hard.json`,
-`wall_hard.json`, the only ones). It solves each transition in a worker process and plays it in the sim as soon as
+The runner (`tests/test_optimiser.py`, run directly) reads a contact plan file and its wall, the organisers' wall
+named by the plan (`data/examples/<wall_id>.json`, played on their wall of that name in their sim). There is no
+example plan yet. It solves each transition in a worker process and plays it in the sim as soon as
 it's ready, while the next one is solved; between them the robot stays where it ended. The playback is kinematic:
 the robot follows the optimiser's poses exactly, with no physics. Add `--headless` to run without a window.
 
@@ -324,7 +325,7 @@ can't replace them. The remaining cost is the path tier.
 - **The cache only helps with layouts it has seen.** A gap or a drift is a new layout, solved once (30 s – 3 min).
 - **Not yet redone on the climbing model (29 Oct):** the measurements above and the example trajectory are from the old
   model. The example plan does not solve yet (a foot 2.6 mm too close to its shin). Then:
-  `tests/test_optimiser.py --hard --save`.
+  `tests/test_optimiser.py --hard PLAN --save`.
 - **Contact normals and mu are ours:** hands are supported only along +z; the real socket may hold more.
 - **The robot's shapes** are convex hulls (a little larger where a part is not convex: conservative); the climbing
   limbs' pieces and balls lie within 0.21 mm of the drawn mesh.

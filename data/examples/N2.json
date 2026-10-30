@@ -1,0 +1,807 @@
+{
+  "schema": "wall/1",
+  "id": "N2",
+  "level": 2,
+  "holds": [
+    {
+      "id": "c26_r2",
+      "position": [
+        0.4225,
+        0.0,
+        0.04
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c21_r2",
+      "position": [
+        0.3475,
+        0.0,
+        0.04
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c29_r23",
+      "position": [
+        0.4675,
+        0.0,
+        0.355
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c18_r23",
+      "position": [
+        0.3025,
+        0.0,
+        0.355
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c29_r2",
+      "position": [
+        0.4675,
+        0.0,
+        0.04
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c18_r2",
+      "position": [
+        0.3025,
+        0.0,
+        0.04
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c26_r9",
+      "position": [
+        0.4225,
+        0.0,
+        0.145
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c21_r9",
+      "position": [
+        0.3475,
+        0.0,
+        0.145
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c29_r9",
+      "position": [
+        0.4675,
+        0.0,
+        0.145
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c18_r9",
+      "position": [
+        0.3025,
+        0.0,
+        0.145
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c26_r16",
+      "position": [
+        0.4225,
+        0.0,
+        0.25
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c21_r16",
+      "position": [
+        0.3475,
+        0.0,
+        0.25
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c29_r16",
+      "position": [
+        0.4675,
+        0.0,
+        0.25
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c18_r16",
+      "position": [
+        0.3025,
+        0.0,
+        0.25
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c26_r23",
+      "position": [
+        0.4225,
+        0.0,
+        0.355
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c21_r23",
+      "position": [
+        0.3475,
+        0.0,
+        0.355
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c26_r30",
+      "position": [
+        0.4225,
+        0.0,
+        0.46
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c21_r30",
+      "position": [
+        0.3475,
+        0.0,
+        0.46
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c29_r30",
+      "position": [
+        0.4675,
+        0.0,
+        0.46
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c18_r30",
+      "position": [
+        0.3025,
+        0.0,
+        0.46
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c26_r37",
+      "position": [
+        0.4225,
+        0.0,
+        0.565
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c21_r37",
+      "position": [
+        0.3475,
+        0.0,
+        0.565
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c29_r37",
+      "position": [
+        0.4675,
+        0.0,
+        0.565
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c18_r37",
+      "position": [
+        0.3025,
+        0.0,
+        0.565
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c26_r44",
+      "position": [
+        0.4225,
+        0.0,
+        0.67
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c21_r44",
+      "position": [
+        0.3475,
+        0.0,
+        0.67
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c29_r44",
+      "position": [
+        0.4675,
+        0.0,
+        0.67
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c18_r44",
+      "position": [
+        0.3025,
+        0.0,
+        0.67
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c26_r51",
+      "position": [
+        0.4225,
+        0.0,
+        0.775
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c21_r51",
+      "position": [
+        0.3475,
+        0.0,
+        0.775
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c29_r51",
+      "position": [
+        0.4675,
+        0.0,
+        0.775
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c18_r51",
+      "position": [
+        0.3025,
+        0.0,
+        0.775
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c26_r58",
+      "position": [
+        0.4225,
+        0.0,
+        0.88
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c21_r58",
+      "position": [
+        0.3475,
+        0.0,
+        0.88
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c29_r58",
+      "position": [
+        0.4675,
+        0.0,
+        0.88
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c18_r58",
+      "position": [
+        0.3025,
+        0.0,
+        0.88
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c26_r65",
+      "position": [
+        0.4225,
+        0.0,
+        0.985
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c21_r65",
+      "position": [
+        0.3475,
+        0.0,
+        0.985
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c29_r65",
+      "position": [
+        0.4675,
+        0.0,
+        0.985
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c18_r65",
+      "position": [
+        0.3025,
+        0.0,
+        0.985
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c26_r72",
+      "position": [
+        0.4225,
+        0.0,
+        1.09
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c21_r72",
+      "position": [
+        0.3475,
+        0.0,
+        1.09
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c29_r72",
+      "position": [
+        0.4675,
+        0.0,
+        1.09
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c18_r72",
+      "position": [
+        0.3025,
+        0.0,
+        1.09
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c26_r79",
+      "position": [
+        0.4225,
+        0.0,
+        1.195
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c21_r79",
+      "position": [
+        0.3475,
+        0.0,
+        1.195
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c29_r79",
+      "position": [
+        0.4675,
+        0.0,
+        1.195
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c18_r79",
+      "position": [
+        0.3025,
+        0.0,
+        1.195
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c26_r86",
+      "position": [
+        0.4225,
+        0.0,
+        1.3
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c21_r86",
+      "position": [
+        0.3475,
+        0.0,
+        1.3
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c29_r86",
+      "position": [
+        0.4675,
+        0.0,
+        1.3
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c18_r86",
+      "position": [
+        0.3025,
+        0.0,
+        1.3
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c24_r5",
+      "position": [
+        0.3925,
+        0.0,
+        0.085
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c31_r5",
+      "position": [
+        0.4975,
+        0.0,
+        0.085
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c16_r5",
+      "position": [
+        0.2725,
+        0.0,
+        0.085
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c24_r12",
+      "position": [
+        0.3925,
+        0.0,
+        0.19
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c31_r12",
+      "position": [
+        0.4975,
+        0.0,
+        0.19
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c16_r12",
+      "position": [
+        0.2725,
+        0.0,
+        0.19
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c24_r19",
+      "position": [
+        0.3925,
+        0.0,
+        0.295
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c31_r19",
+      "position": [
+        0.4975,
+        0.0,
+        0.295
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c16_r19",
+      "position": [
+        0.2725,
+        0.0,
+        0.295
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c24_r26",
+      "position": [
+        0.3925,
+        0.0,
+        0.4
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c31_r26",
+      "position": [
+        0.4975,
+        0.0,
+        0.4
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c16_r26",
+      "position": [
+        0.2725,
+        0.0,
+        0.4
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c24_r33",
+      "position": [
+        0.3925,
+        0.0,
+        0.505
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c31_r33",
+      "position": [
+        0.4975,
+        0.0,
+        0.505
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c16_r33",
+      "position": [
+        0.2725,
+        0.0,
+        0.505
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c24_r40",
+      "position": [
+        0.3925,
+        0.0,
+        0.61
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c31_r40",
+      "position": [
+        0.4975,
+        0.0,
+        0.61
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c16_r40",
+      "position": [
+        0.2725,
+        0.0,
+        0.61
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c24_r47",
+      "position": [
+        0.3925,
+        0.0,
+        0.715
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c31_r47",
+      "position": [
+        0.4975,
+        0.0,
+        0.715
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c16_r47",
+      "position": [
+        0.2725,
+        0.0,
+        0.715
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c24_r54",
+      "position": [
+        0.3925,
+        0.0,
+        0.82
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c31_r54",
+      "position": [
+        0.4975,
+        0.0,
+        0.82
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c16_r54",
+      "position": [
+        0.2725,
+        0.0,
+        0.82
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c24_r61",
+      "position": [
+        0.3925,
+        0.0,
+        0.925
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c31_r61",
+      "position": [
+        0.4975,
+        0.0,
+        0.925
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c16_r61",
+      "position": [
+        0.2725,
+        0.0,
+        0.925
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c24_r68",
+      "position": [
+        0.3925,
+        0.0,
+        1.03
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c31_r68",
+      "position": [
+        0.4975,
+        0.0,
+        1.03
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c16_r68",
+      "position": [
+        0.2725,
+        0.0,
+        1.03
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c24_r75",
+      "position": [
+        0.3925,
+        0.0,
+        1.135
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c31_r75",
+      "position": [
+        0.4975,
+        0.0,
+        1.135
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c16_r75",
+      "position": [
+        0.2725,
+        0.0,
+        1.135
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c24_r82",
+      "position": [
+        0.3925,
+        0.0,
+        1.24
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c31_r82",
+      "position": [
+        0.4975,
+        0.0,
+        1.24
+      ],
+      "kind": "unknown"
+    },
+    {
+      "id": "c16_r82",
+      "position": [
+        0.2725,
+        0.0,
+        1.24
+      ],
+      "kind": "unknown"
+    }
+  ],
+  "start": {
+    "contacts": {
+      "left_hand": "c18_r23",
+      "right_hand": "c29_r23",
+      "left_foot": "c21_r2",
+      "right_foot": "c26_r2"
+    }
+  }
+}

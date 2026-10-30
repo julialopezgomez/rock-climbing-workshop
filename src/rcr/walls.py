@@ -19,14 +19,15 @@ needs to move to the right or to the left" [Rules §3]. Our reading [Ours]:
 Holds are named as on the example wall: the route's `L<k>` and `R<k>` (k the rung, so a missing hold
 leaves a gap in k), the other holds `M<n>` from the bottom up. The start copies the example wall the
 optimiser has solved: feet on `L0` and `R0`, hands on the rung closest to 0.225 m above them
-[Ours, data/examples/wall_hard.json].
+[Ours, as on our former example wall].
 
 Every hold is placed only where it keeps the rules and the crowding rule (`_fits`), and the wall is
 checked again at the end. (level, seed) reproduces a wall exactly; `scripts/make_wall.py --save`
-writes one to a file. Wall ids are `gen_l<level>_s<seed>`, apart from those of `rcr.sim.levels` (an
-earlier, separate generator).
+writes one to a file. Wall ids are `gen_l<level>_s<seed>`.
 
-Pi-safe: stdlib only. Independent of `rcr.sim` (which needs mujoco).
+`from_organisers` reads one of the organisers' walls (their simulator's `Wall`) as ours.
+
+Pi-safe: stdlib only.
 """
 
 import itertools
@@ -49,7 +50,7 @@ N_ROWS = round((WALL_HEIGHT - 2 * GRID_MARGIN_Z) / GRID_PITCH) + 1  # 93
 ARUCO_PLATE = 0.136  # [m] square plate on each corner of the board [Rules §5.2]
 
 # The provided hold on the wall face, around Hold.position (the bolt midpoint) [m], measured on
-# data/holds/hold.stl [Rules v1.1 Figure 3]: 40.3 mm wide, from 29 mm below to 4 mm above. Two of
+# the organisers' simulator's hold_visual.stl: 40.3 mm wide, from 29 mm below to 4 mm above. Two of
 # them collide unless 3 pitches apart sideways or vertically. tests/test_walls.py checks the mesh.
 HOLD_HALF_WIDTH = 0.0202
 HOLD_ABOVE = 0.004
@@ -101,6 +102,26 @@ def grid_index(hold: Hold) -> tuple[int, int] | None:
     if abs(i - round(i)) > 1e-6 or abs(j - round(j)) > 1e-6:
         return None
     return round(i), round(j)
+
+
+# --- The organisers' walls (third_party/simulator, climbing_sim) --------------------------------
+# Their wall frame is ours. Their Hold(col, row) is bolted through holes (col, row) and
+# (col + 2, row): its left hole, where ours is the hole between the two [simulator wall.py].
+
+
+def organisers_id(col: int, row: int) -> str:
+    """Our id for their hold (col, row): "c<col>_r<row>", as their sim names its hold bodies."""
+    return f"c{col}_r{row}"
+
+
+def from_organisers(theirs, level: int) -> WallModel:
+    """Their `climbing_sim.Wall` as ours: positions are their bolt midpoints (Hold.bolt_axis)."""
+    holds = [
+        Hold(organisers_id(h.col, h.row), tuple(round(float(v), 6) for v in h.bolt_axis), KIND)
+        for h in theirs.holds
+    ]
+    start = {limb: organisers_id(h.col, h.row) for limb, h in theirs.start.items()}
+    return WallModel(id=theirs.name, level=level, holds=holds, start=Stance(start))
 
 
 # --- Checks -------------------------------------------------------------------------------------

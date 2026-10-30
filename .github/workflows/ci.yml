@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7.0.1
         with:
-          submodules: true  # third_party/simulator: climbing-sim is a dependency
+          submodules: true  # the organisers' simulator: uv.lock reads it (the sim group)
       - uses: astral-sh/setup-uv@v10.2.0
         with:
           python-version: "3.12"
