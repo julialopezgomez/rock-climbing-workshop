@@ -57,7 +57,7 @@ SOCKET_RADIUS = round(
 # The convex pieces, keyed by the STL's sha256, kept with the mesh in the repository: CoACD gives
 # slightly different pieces on another machine, and so slightly different solutions [Ours].
 PIECES_CACHE = REPO / "data" / "holds"
-COACD_THRESHOLD = 0.02  # CoACD concavity: 106 pieces, swelling < ~0.4 mm into the socket [Ours]
+COACD_THRESHOLD = 0.02  # CoACD concavity: 110 pieces, swelling < ~0.4 mm into the socket [Ours]
 TOUCHING = 5e-5  # [m] the exact mesh reports a ball resting in its socket as -4e-6 m
 # [m] how far a hook may press into the hold its ball rests in for a whole interval [Ours]: that is
 # the contact itself. At a touch the exact mesh gives no direction

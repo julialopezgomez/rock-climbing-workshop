@@ -9,8 +9,8 @@ first, cheapest first, stopping at the first that fails:
               reach from its shoulder or hip, plus the distance between those on the trunk
               (robot_model.limb_reach, an upper bound from the URDF). Microseconds, no solve.
     cache     answered before (move_cache, on this wall or any with the same holds around the
-              move): a stored move is feasible, a stored rejection is not, at once. Every
-              rejection below is stored there, so it is never checked again.
+              move): a stored move is feasible, at once. With move_cache.REJECTIONS (off for now)
+              a stored rejection is not, and every rejection below is stored there.
     stance    b can be held: four contacts, balance, torque limit, clear of the holds and wall
     release   the moving ball still in its socket of a but carrying nothing: the other three
               hold the robot (a hand reaching up a 0.15 m row fails here, on torque)

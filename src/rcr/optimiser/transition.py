@@ -64,6 +64,14 @@ NECK_PROBE = 0.01  # [m] how far back from the ball along its neck (hooks.Hook.n
 # Likewise the moving ball starts its path above its sockets: on the sample after it lets go and
 # the one before it arrives, at least LIFT above its resting point, inside the opening cone [Ours].
 LIFT = 0.035  # [m]: the hold's top is 18.2 mm above the resting ball, + its 12.5 mm radius + 4 mm
+# With TransitionConfig.approach_from_above, the sample before the ball arrives is closer and
+# narrower: SEAT_LIFT above its resting point within SEAT_CONE of vertical, so the last interval
+# is a short drop that stays inside the socket's mouth. The socket is a tube, not a funnel: 5 mm
+# above the resting point the ball touches its rim ~1 mm off its axis, 10 mm above ~3 mm off
+# [Ours, measured on the sim's hold mesh]; 10 mm x tan 10 deg = 1.8 mm. 10 deg: a ball can only
+# leave a socket within ~10 deg of vertical [the organisers' sim, wall.py EXIT_BLOCK].
+SEAT_LIFT = 0.010  # [m]
+SEAT_CONE = np.radians(10.0)
 
 # The reference posture's leg joints: from a hand-designed pose on the example's start stance
 # (legs mirrored, knees bent 20 deg, spine 25 deg, hips 100 mm off the wall, clear of the holds;
@@ -148,6 +156,13 @@ class TransitionConfig:
     retry_trust_radius: float = 0.02  # [rad, m]
     scp_iterations: int = 30  # most re-solves for the clearances [Ours]
     scp_polish: int = 0  # once clear, at most this many more re-solves to lower the cost [Ours]
+    # The moving ball's way in, in every SCP round (not only in the steered first solve): out
+    # from the wall until N-3, LIFT above its new socket inside NECK_CONE at N-2, SEAT_LIFT above
+    # it inside SEAT_CONE at N-1, so the last interval is a short, straight drop. The climbing
+    # model's ball fills its socket (0.2 mm of play), and coming in along one long last interval
+    # it grazed the rim by ~2.5 mm on N1's foot moves [Ours]. Off by default until it has been
+    # tried on more moves. Needs n_samples >= release_sample + 5.
+    approach_from_above: bool = False
     # Also hold the limits at the midpoint of every interval (the joints are interpolated there):
     # balls on their holds, balance, friction and torque limits, with their own hold forces.
     # Without it the plan met the limits only at the samples: +8 % torque and 4 mm of ball drift
@@ -328,11 +343,11 @@ def _cached(key: tuple, build) -> _Problem:
     return _problems[key]
 
 
-def above_socket(opti: ca.Opti, rel, on) -> None:
-    """With on = 1 the ball (rel: from its resting point in a socket) is at least LIFT above it,
-    inside the socket's opening cone; with on = 0 this is always true (within a metre)."""
-    opti.subject_to(rel[2] >= on * LIFT - (1 - on))
-    opti.subject_to(rel[0] ** 2 + rel[1] ** 2 <= np.tan(NECK_CONE) ** 2 * rel[2] ** 2 + (1 - on))
+def above_socket(opti: ca.Opti, rel, on, lift: float = LIFT, cone: float = NECK_CONE) -> None:
+    """With on = 1 the ball (rel: from its resting point in a socket) is at least `lift` above
+    it, within `cone` of vertical; with on = 0 this is always true (within a metre)."""
+    opti.subject_to(rel[2] >= on * lift - (1 - on))
+    opti.subject_to(rel[0] ** 2 + rel[1] ** 2 <= np.tan(cone) ** 2 * rel[2] ** 2 + (1 - on))
 
 
 def posture(q, cfg: TransitionConfig):
@@ -448,6 +463,9 @@ def transition_problem(moving: Limb, cfg: TransitionConfig) -> _Problem:
     n, k_release = cfg.n_samples, cfg.release_sample
     if not 0 < k_release < n - 2:
         raise ValueError(f"need 0 < release_sample < n_samples - 2, got {k_release}, {n}")
+    if cfg.approach_from_above and n < k_release + 5:
+        raise ValueError(f"approach_from_above needs n_samples >= release_sample + 5, got {n}")
+    last_out = n - 3 if cfg.approach_from_above else n - 2  # the last sample out from the wall
 
     def build() -> _Problem:
         model, opti = load_robot_model(), ca.Opti()
@@ -471,12 +489,18 @@ def transition_problem(moving: Limb, cfg: TransitionConfig) -> _Problem:
                     friction_pyramid(opti, sample[limb], cfg.normals[limb], cfg.mu[limb])
                 else:
                     opti.subject_to(sample[limb] == 0)  # f_K^moving = 0, and nothing after
-            if k_release + 2 <= k <= n - 2:
+            if k_release + 2 <= k <= last_out:
                 opti.subject_to(balls[1, m] <= -cfg.clearance)  # away from the wall in mid-air
             if k == n:
                 opti.subject_to(balls[:, m] == target)  # the moving limb arrives
-            if k in (k_release + 1, n - 1):  # seed only: just out of / just before its sockets
-                above_socket(opti, balls[:, m] - (holds[:, m] if k < n - 1 else target), approach)
+            if k == k_release + 1:  # just out of its old socket (seed only, unless approach_...)
+                above_socket(opti, balls[:, m] - holds[:, m], approach)
+            if k == n - 1 and not cfg.approach_from_above:  # seed only: just before its socket
+                above_socket(opti, balls[:, m] - target, approach)
+            if cfg.approach_from_above and k == n - 2:  # above its socket, then a short drop
+                above_socket(opti, balls[:, m] - target, approach)
+            if cfg.approach_from_above and k == n - 1:
+                above_socket(opti, balls[:, m] - target, approach, SEAT_LIFT, SEAT_CONE)
             qs.append(q)
             taus.append(tau)
         mid_forces, mid_taus, mid_qs = midpoint_poses(opti, model, dq, q0, holds, moving, cfg)
@@ -774,7 +798,7 @@ def _solve_clear(
         p.neck_min, _neck_bounds(model, q_ref, steer, fixed_start, p.free_neck, p.end_q)
     )
     if p.approach is not None:
-        p.opti.set_value(p.approach, 1.0 if steer else 0.0)
+        p.opti.set_value(p.approach, 1.0 if steer or cfg.approach_from_above else 0.0)
     best = _read(p, *solve_opti(p.opti, what, FIRST_SOLVE_PATIENCE))
     if not cfg.avoid_collisions:
         return best
@@ -782,7 +806,7 @@ def _solve_clear(
         p.neck_min, _neck_bounds(model, q_ref, False, fixed_start, p.free_neck, p.end_q)
     )
     if p.approach is not None:
-        p.opti.set_value(p.approach, 0.0)
+        p.opti.set_value(p.approach, 1.0 if cfg.approach_from_above else 0.0)
     checks = check(best.dq)
     violation, radius = _violation(checks), cfg.trust_radius
     polished = 0
@@ -1025,8 +1049,14 @@ def shifted_seed(q0: np.ndarray, previous_q: np.ndarray, shift: np.ndarray, cfg:
 def coarse(cfg: TransitionConfig) -> TransitionConfig:
     """The same move with half the samples and no midpoints: a few seconds, for a first path
     (the last start solve_transition tries) and for feasibility's path check."""
+    n, k_release = cfg.n_samples // 2, cfg.release_sample // 2
     return replace(
-        cfg, n_samples=cfg.n_samples // 2, release_sample=cfg.release_sample // 2, midpoints=False
+        cfg,
+        n_samples=n,
+        release_sample=k_release,
+        midpoints=False,
+        # its two-step way in needs room: without it, the coarse path is only a first guess
+        approach_from_above=cfg.approach_from_above and n >= k_release + 5,
     )
 
 

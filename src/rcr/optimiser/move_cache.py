@@ -23,7 +23,9 @@ actual wall before it is trusted (verify), as a hold outside the box could still
 
 Storage: DIR/<version>/<key>.npz, one small file per move, written whole (safe to stop at any time).
 Every run uses it unless told otherwise (default_cache): optimise, solve_plan and the runner store
-and reuse solved moves; feasibility() answers stored moves at once and stores its rejections.
+and reuse solved moves; feasibility() answers stored moves at once. Rejections (feasibility()'s
+and failed solves) are stored and trusted only with REJECTIONS, off for now: a move that failed
+once is checked or solved again.
 """
 
 from __future__ import annotations
@@ -46,6 +48,10 @@ CACHE_VERSION = 3  # bump when the solver or the key changes what a stored move 
 NEAR_SIDE = 0.12  # [m]
 NEAR_ABOVE = 0.15  # [m]
 DEFAULT_DIR = Path(__file__).resolve().parents[3] / "build" / "move_cache"
+# Store infeasible verdicts (feasibility()'s rejections, failed solves) and answer them at once,
+# "(cached)". Off for now: a coarse rejection stored by planning blocked the full solve of the
+# same move, which could have succeeded [Ours]. Rejections already stored are then ignored.
+REJECTIONS = False
 
 
 def default_cache() -> MoveCache | None:
@@ -143,7 +149,7 @@ class MoveCache:
         with np.load(path) as stored:
             meta = json.loads(str(stored["meta"]))
             if not meta["feasible"]:
-                return Entry(False, meta["reason"], meta["solve_time"])
+                return Entry(False, meta["reason"], meta["solve_time"]) if REJECTIONS else None
             q = stored["q"].copy()
             q[:, [0, 2]] += ref[[0, 2]]  # onto this wall
             result = tr.TransitionResult(
@@ -158,7 +164,9 @@ class MoveCache:
         return Entry(True, "", meta["solve_time"], result)
 
     def put(self, wall, a, b, cfg, result=None, reason: str = "", solve_time: float = 0.0):
-        """Store the move: its result if it was solved, else why not."""
+        """Store the move: its result if it was solved, else why not (only with REJECTIONS)."""
+        if result is None and not REJECTIONS:
+            return
         found = self.key(wall, a, b)
         if found is None:
             return
@@ -191,8 +199,8 @@ class MoveCache:
 
 def solve_move_cached(wall, a, b, cfg, cache: MoveCache, index: int = 0):
     """(TransitionResult, from_cache) of the move a -> b with cfg.settle: from the cache if it is
-    stored and still clear on this wall, else solved (solve_move) and stored. A stored
-    infeasible move raises OptimisationError at once, naming it as cached."""
+    stored and still clear on this wall, else solved (solve_move) and stored. With REJECTIONS, a
+    stored infeasible move raises OptimisationError at once, naming it as cached."""
     import time
 
     from rcr.optimiser import transition as tr

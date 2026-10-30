@@ -3,9 +3,10 @@
     git submodule update --init                                  # Microban and their simulator
     uv sync --group optimiser --group sim
     uv run pytest tests/test_optimiser.py                        # the checks
-    uv run mjpython tests/test_optimiser.py --hard PLAN          # solve PLAN, play it as it comes
-    uv run mjpython tests/test_optimiser.py --hard PLAN --save   # the same, and save it
-    uv run mjpython tests/test_optimiser.py --hard PLAN --replay # play the saved one, no solving
+    uv run mjpython tests/test_optimiser.py --hard            # solve build/plan_N1.json, play it
+    uv run mjpython tests/test_optimiser.py --hard --save     # also save build/trajectory_N1.json
+    uv run mjpython tests/test_optimiser.py --hard --replay   # play the saved one, no solving
+    uv run mjpython tests/test_optimiser.py --hard PLAN ...   # another plan file
 
 The wall is the organisers' N1 (data/examples/N1.json, from their simulator by
 scripts/wall_generator.py). A plan's wall is data/examples/<its wall_id>.json, and it is played on
@@ -15,7 +16,7 @@ our planner's plan on N1 is saved as data/examples/contact_plan_N1.json.
 sim (the same wall, holds and balls); the robot then stays where it ended until the next one is
 ready.
 Solving runs in a separate process, so the next transition is solved while the current one plays.
---save writes data/examples/trajectory.json (trajectory/2) after every transition, so a solve that
+--save writes build/trajectory_<wall id>.json (trajectory/2) after every transition, so a solve that
 stops part way keeps what it solved: `positions` is what the robot executes, and the planned
 angles and trunk poses in it are what --replay plays. The playback is kinematic: the robot follows
 the optimiser's poses exactly, at the planned times, no physics. Add --headless for no window.
@@ -79,7 +80,16 @@ EXAMPLES = Path(__file__).resolve().parent.parent / "data" / "examples"
 # 29 (right); start: feet c21_r2, c26_r2, hands c18_r22, c29_r22. The tests solve the first moves
 # of its plan, once there is one (PLAN).
 WALL, PLAN = EXAMPLES / "N1.json", EXAMPLES / "contact_plan_N1.json"
-TRAJECTORY = EXAMPLES / "trajectory.json"
+# The runner's files: the plan our planner saved (scripts/plan_wall.py --save), and the solved
+# trajectory, build/trajectory_<wall id>.json [Ours]
+BUILD = EXAMPLES.parent.parent / "build"
+RUN_PLAN = BUILD / "plan_N1.json"
+
+
+def trajectory_file(wall_id: str) -> Path:
+    return BUILD / f"trajectory_{wall_id}.json"
+
+
 FIRST_MOVES = 4  # the plan's first transitions, solved once for the tests below
 DENSE = col.Clearance(step=0.0005)  # independent re-checks: 4x denser than the solver's
 
@@ -235,7 +245,8 @@ def test_collision_points_match_microbans_mjcf(model):
 def test_what_the_sim_draws_is_inside_the_checked_hulls(model):
     """Every vertex of the model's visual meshes lies in a shape checked on its link: one of its
     hulls, or on the climbing forearms and feet one of the model's pieces or the ball. The
-    pieces are a decomposition, a little inside the drawn mesh: 0.21 mm at most [Microban]."""
+    pieces are a decomposition, a little inside the drawn mesh: 0.21 mm at most on the
+    forearms [Microban], 0.6 mm on our cut feet (decimated CoACD pieces, our model fork)."""
     mujoco = pytest.importorskip("mujoco")
     mm = mujoco.MjModel.from_xml_path(str(rm.mjcf_path()))
     md = mujoco.MjData(mm)
@@ -264,10 +275,11 @@ def test_what_the_sim_draws_is_inside_the_checked_hulls(model):
         start, n = mm.mesh_vertadr[mesh], mm.mesh_vertnum[mesh]
         world = mm.mesh_vert[start : start + n] @ md.geom_xmat[g].reshape(3, 3).T + md.geom_xpos[g]
         link = mujoco.mj_id2name(mm, mujoco.mjtObj.mjOBJ_BODY, mm.geom_bodyid[g])
+        foot = link in {hooks.HOOKS[limb].link for limb in ("right_foot", "left_foot")}
         outside = np.min([(world @ nrm.T + off).max(1) for nrm, off in hulls[link]], axis=0)
         if link in balls:  # a climbing forearm or foot: its pieces, or its ball
             ball = np.linalg.norm(world - balls[link], axis=1) - hooks.BALL_RADIUS
-            assert np.minimum(outside, ball).max() < 3e-4, link
+            assert np.minimum(outside, ball).max() < (6e-4 if foot else 3e-4), link
         else:
             assert outside.max() < 1e-5, link  # inside one of its link's hulls (6-digit files)
 
@@ -547,7 +559,7 @@ def shifted(wall: WallModel, holes_x: int, holes_z: int) -> WallModel:
     return replace(wall, holds=moved)
 
 
-def test_the_move_cache_keys_on_the_layout_not_on_the_wall(wall, results, tmp_path):
+def test_the_move_cache_keys_on_the_layout_not_on_the_wall(wall, results, tmp_path, monkeypatch):
     a, b = first_row(wall).stances[:2]
     key, ref = mc.MoveCache.key(wall, a, b)
     there = shifted(wall, 3, 7)
@@ -568,12 +580,18 @@ def test_the_move_cache_keys_on_the_layout_not_on_the_wall(wall, results, tmp_pa
     assert np.allclose(entry.result.q[:, :3], results[0].q[:, :3] + lift)
     assert np.allclose(entry.result.q[:, 3:], results[0].q[:, 3:])  # the angles stay
     assert cache.get(wall, a, b, replace(cfg, mu=dict.fromkeys(LIMBS, 0.5))) is None  # new version
-    cache.put(wall, *first_row(wall).stances[1:3], cfg, reason="stance: infeasible")
-    assert not cache.get(there, *first_row(wall).stances[1:3], cfg).feasible
+    rejected = first_row(wall).stances[1:3]
+    cache.put(wall, *rejected, cfg, reason="stance: infeasible")  # by default not stored
+    assert cache.get(there, *rejected, cfg) is None and cache.size(cfg) == (1, 0)
+    monkeypatch.setattr(mc, "REJECTIONS", True)
+    cache.put(wall, *rejected, cfg, reason="stance: infeasible")
+    assert not cache.get(there, *rejected, cfg).feasible
     assert cache.size(cfg) == (1, 1)
 
 
-def test_feasibility_answers_from_the_cache_and_stores_its_rejections(wall, tmp_path):
+def test_feasibility_answers_from_the_cache_and_stores_its_rejections(wall, tmp_path, monkeypatch):
+    """With move_cache.REJECTIONS (off by default)."""
+    monkeypatch.setattr(mc, "REJECTIONS", True)
     a = wall.start
     far = Stance({**a.contacts, "right_hand": "c29_r37"})  # rejected by the checks (0.225 m up)
     cfg = tr.TransitionConfig()
@@ -611,7 +629,7 @@ def test_an_impossible_transition_raises_naming_it():
 # --- Run a contact plan in the sim ---------------------------------------------------------------
 
 
-def solve_in_background(wall: WallModel, plan: ContactPlan, out) -> None:
+def solve_in_background(wall: WallModel, plan: ContactPlan, out, cfg=None) -> None:
     """Worker process: the plan's start pose, then each transition in order, each starting where
     the previous one ended. Each is sent on `out` (one end of a Pipe) as soon as it is solved:
     ("start", q), ("transition", i, TransitionResult, seconds), then ("done",) or ("error", text).
@@ -628,7 +646,7 @@ def solve_in_background(wall: WallModel, plan: ContactPlan, out) -> None:
 
     threading.Thread(target=watch, daemon=True).start()
     try:
-        cfg = tr.TransitionConfig()
+        cfg = cfg or tr.TransitionConfig()
         q = start_pose(wall, plan, cfg)
         out.send(("start", q))
         start = time.perf_counter()
@@ -721,12 +739,18 @@ def planned_pose(traj: Trajectory, t: float) -> np.ndarray:
 
 
 def run_plan(
-    wall: WallModel, plan: ContactPlan, view: bool = True, save: bool = False, send: str = ""
+    wall: WallModel,
+    plan: ContactPlan,
+    view: bool = True,
+    save: bool = False,
+    send: str = "",
+    cfg: tr.TransitionConfig | None = None,
 ):
     """Solve the plan in a worker process and play each transition in the sim as it arrives.
-    save: write TRAJECTORY after every solved transition (what is solved so far).
+    save: write trajectory_file(wall.id) after every solved transition (what is solved so far).
     send: the robot's address; each solved transition goes to it as the trajectory's next
-    segment (rcr.link), so it can climb while the rest is solved. It is not started here."""
+    segment (rcr.link), so it can climb while the rest is solved. It is not started here.
+    cfg: the optimiser's settings (default TransitionConfig())."""
     import multiprocessing
 
     from rcr import link
@@ -734,12 +758,12 @@ def run_plan(
     context = multiprocessing.get_context("spawn")
     messages, worker_end = context.Pipe(duplex=False)
     # not a daemon: the collision check runs its own worker processes; stopped in `finally`
-    worker = context.Process(target=solve_in_background, args=(wall, plan, worker_end))
+    cfg, results = cfg or tr.TransitionConfig(), []
+    worker = context.Process(target=solve_in_background, args=(wall, plan, worker_end, cfg))
     worker.start()
     worker_end.close()  # this process only reads
     count = len(plan.stances) - 1
     print(f"plan for wall {wall.id!r}: {count} transitions; solving the start pose ...")
-    cfg, results = tr.TransitionConfig(), []
     player = PlanPlayer(cfg, count)
     robot, sent = (link.LaptopLink(send) if send else None), 0
 
@@ -771,8 +795,10 @@ def run_plan(
             if message[0] == "transition":
                 results.append(message[2])
             if message[0] == "transition" and save:
-                io.save_trajectory(to_trajectory(results, cfg), TRAJECTORY)
-                print(f"  saved {len(results)} of {count} transitions in {TRAJECTORY}", flush=True)
+                out = trajectory_file(wall.id)
+                out.parent.mkdir(parents=True, exist_ok=True)
+                io.save_trajectory(to_trajectory(results, cfg), out)
+                print(f"  saved {len(results)} of {count} transitions in {out}", flush=True)
             if robot is not None and message[0] != "start":
                 to_robot(message)
         player.update(now)
@@ -789,11 +815,12 @@ def run_plan(
 
 
 def replay(wall: WallModel, view: bool = True) -> None:
-    """Play TRAJECTORY (saved by --save) in the sim, without solving anything."""
-    traj = io.load_trajectory(TRAJECTORY)
+    """Play trajectory_file(wall.id) (saved by --save) in the sim, without solving anything."""
+    path = trajectory_file(wall.id)
+    traj = io.load_trajectory(path)
     if traj.trunk_poses is None or traj.planned_positions is None:
-        sys.exit(f"{TRAJECTORY} has no planned motion to replay: solve it with --hard PLAN --save")
-    print(f"replaying {TRAJECTORY}: {traj.times[-1]:.0f} s, {len(traj.times)} samples")
+        sys.exit(f"{path} has no planned motion to replay: solve it with --hard --save")
+    print(f"replaying {path}: {traj.times[-1]:.0f} s, {len(traj.times)} samples")
     start = None
 
     def pose(now: float):
@@ -814,19 +841,20 @@ def play(wall: WallModel, pose, done, view: bool) -> None:
     from climbing_sim import ClimbingSim, Wall
 
     sim = ClimbingSim(Wall.load(wall.id), cameras=[])  # their wall of that name
-    qpos = [sim.model.jnt_qposadr[sim.model.joint(name).id] for name in MICROBAN_JOINTS]
+    model, data = sim.model, sim.data
+    qpos = [model.jnt_qposadr[model.joint(name).id] for name in MICROBAN_JOINTS]
 
     def frame() -> None:
         q = pose(time.perf_counter())
         if q is not None:
-            sim.data.qpos[0:7] = q[0:7]  # the optimiser's q is laid out as the sim's qpos
-            sim.data.qpos[qpos] = q[7:]
-            mujoco.mj_forward(sim.model, sim.data)
+            data.qpos[0:7] = q[0:7]  # the optimiser's q is laid out as the sim's qpos
+            data.qpos[qpos] = q[7:]
+            mujoco.mj_forward(model, data)
 
     if view:
         import mujoco.viewer
 
-        with mujoco.viewer.launch_passive(sim.model, sim.data) as viewer:
+        with mujoco.viewer.launch_passive(model, data) as viewer:
             while viewer.is_running():  # keeps showing the last pose after the plan ends
                 frame()
                 viewer.sync()
@@ -837,10 +865,16 @@ def play(wall: WallModel, pose, done, view: bool) -> None:
             time.sleep(0.02)
 
 
-USAGE = """usage: tests/test_optimiser.py --hard PLAN [--save | --replay] [--send PI] [--headless]
-    --hard PLAN           solve the contact plan PLAN (a contact_plan/1 file), play it as it comes
-    --hard PLAN --save    the same, and save it in data/examples/trajectory.json
-    --hard PLAN --replay  play data/examples/trajectory.json on PLAN's wall, without solving
+USAGE = """usage: tests/test_optimiser.py --hard [PLAN] [--save | --replay] [--samples N]
+                                [--clearance M] [--approach] [--send PI] [--headless]
+    --hard [PLAN]     solve the contact plan PLAN (default build/plan_N1.json), play it as it comes
+    --hard --save     the same, and save it in build/trajectory_<wall id>.json after every move
+    --hard --replay   play build/trajectory_<wall id>.json on the plan's wall, without solving
+    --samples N       samples per move (TransitionConfig.n_samples, default 12); more take longer
+    --clearance M     [m] how far out from the wall the moving ball keeps in mid-move
+                      (TransitionConfig.clearance, default 0.06); less leaves it a shorter way in
+    --approach        bring the moving ball in in two steps, 35 mm then 10 mm above its socket,
+                      so it ends with a short straight drop (TransitionConfig.approach_from_above)
     --send PI         also send each solved move to the robot at PI (rcr.link), move by move"""
 
 if __name__ == "__main__":
@@ -852,9 +886,31 @@ if __name__ == "__main__":
             sys.exit("--send needs the robot's address\n" + USAGE)
         send = args.pop(i + 1).split("@")[-1]  # pi@172.20.10.8 as for scripts/pi.sh: the address
         args.pop(i)
-    if "--hard" not in args or args.index("--hard") + 1 >= len(args):
+    cfg = tr.TransitionConfig()
+    for option, field_name, kind in (
+        ("--samples", "n_samples", int),
+        ("--clearance", "clearance", float),
+    ):
+        if option in args:
+            i = args.index(option)
+            try:
+                value = kind(args[i + 1])
+            except (IndexError, ValueError):
+                sys.exit(f"{option} needs a number\n" + USAGE)
+            cfg = replace(cfg, **{field_name: value})
+            del args[i : i + 2]
+    if "--approach" in args:
+        args.remove("--approach")
+        cfg = replace(cfg, approach_from_above=True)
+    if "--hard" not in args:
         sys.exit(USAGE)
-    plan = io.load_contact_plan(Path(args.pop(args.index("--hard") + 1)))
+    i = args.index("--hard") + 1
+    given = i < len(args) and not args[i].startswith("--")
+    plan_file = Path(args.pop(i)) if given else RUN_PLAN
+    if not plan_file.exists():
+        sys.exit(f"no plan at {plan_file}: plan the wall first (scripts/plan_wall.py --save)")
+    plan = io.load_contact_plan(plan_file)
+    print(f"plan {plan_file}: wall {plan.wall_id}, {len(plan.stances) - 1} moves", flush=True)
     flags = set(args)
     if not flags <= {"--hard", "--save", "--replay", "--headless"}:
         sys.exit(USAGE)
@@ -866,4 +922,4 @@ if __name__ == "__main__":
     if "--replay" in flags:
         replay(wall, view)
     else:
-        run_plan(wall, plan, view, save="--save" in flags, send=send)
+        run_plan(wall, plan, view, save="--save" in flags, send=send, cfg=cfg)

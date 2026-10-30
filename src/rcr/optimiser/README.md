@@ -58,7 +58,10 @@ never on the moves before it.
 - **Every run uses it, with no setting:**
   - `optimise`, `solve_plan` and the runner (`tests/test_optimiser.py --hard PLAN`) take stored moves from
     `build/move_cache/` and add each new one;
-  - `feasibility()` answers a stored move at once and stores its own rejections;
+  - `feasibility()` answers a stored move at once;
+  - rejections (`feasibility()`'s and failed solves) are neither stored nor trusted, for now
+    (`move_cache.REJECTIONS = False` [Ours]): a coarse rejection stored by planning used to block the full
+    solve of the same move. A move that failed once is checked or solved again;
   - `RCR_MOVE_CACHE=<folder>` uses another cache, and `RCR_MOVE_CACHE=off` none (the tests set it, so they always
     solve).
 
@@ -146,6 +149,11 @@ the ball resting in its own socket. Nothing about *how* a hook should move is im
   - the robot: the convex hull of each of the model's visual meshes (its collision boxes are smaller than the
     thighs and shins), except on the climbing forearms and feet, which use the model's own convex pieces, plus a
     sphere per ball [Microban MJCF]. A test checks that every drawn vertex is inside;
+  - **the feet [Ours]:** the model is our fork of `microban_model`, where the climbing feet are cut as on our robot
+    ([robot README](../robot/README.md)). Their 51 pieces (CoACD, at most 64 vertices each) follow the foot to 0.6 mm
+    (Rhoban's 24 left parts of its foot up to 22.7 mm outside and bulged up to 7 mm past it), and a self check takes
+    12 ms instead of 36. The cut (y 21–48 mm of the foot's frame) is away from where the tibia comes closest
+    (y 0–17 mm), so it doesn't change the tibia/foot clearance; it removes the plate's end that hit holds;
   - the wall as the half-space y ≥ 0.
 
   The hold mesh is closed (every edge shared by two triangles), outward-oriented, and has genus 2 (the bolt holes).
@@ -184,6 +192,13 @@ the ball resting in its own socket. Nothing about *how* a hook should move is im
   its old and new sockets one sample after leaving and one before arriving (`LIFT`: the hold's top plus the ball's
   radius). Both are switched off before the exact loop. The result must pass the exact check, which these hints have
   no part in.
+- **`approach_from_above` [Ours], off by default (runner: `--approach`):** the moving ball's way in, kept in every
+  round. It is out from the wall until sample N−3, 35 mm above its new socket within 45° at N−2, and 10 mm above it
+  within 10° at N−1 (`SEAT_LIFT`, `SEAT_CONE`), so the last interval is a short drop. Why: the climbing model's ball
+  fills its socket (0.2 mm of play) and the socket is a tube, not a funnel (5 mm above the resting point the ball
+  touches the rim ~1 mm off-axis, 10 mm above ~3 mm off). Coming in along one long last interval, the ball's path
+  curved and grazed the rim by ~2.5 mm on N1's foot moves. The way out keeps the old 35 mm / 45° on the sample after
+  release. Needs `n_samples` ≥ `release_sample` + 5.
 - **Numbers derived from the hold:** `clearance` (the moving ball's distance out from the wall mid-air) is now
   **0.06 m**, not the task's 0.04 m. The hold sticks out 43 mm and the ball is 12.5 mm in radius, so 0.04 m could not
   pass in front of a hold.
@@ -230,6 +245,7 @@ fresh values (variables and multipliers at zero), so a move's result does not de
 | `collision_clearance` | `margin` 2 mm, `step` 2 mm, `near` 20 mm, `aim` 0.5 mm (`collision.Clearance`) | [Ours] |
 | `collision_slots`, `w_collision` | 40 per interval, 1000 per m | [Ours] |
 | `trust_radius`, `scp_iterations`, `scp_polish`, `retry_trust_radius` | 0.05, 30, 0, 0.02 (one more try from a smaller trust region) | [Ours] |
+| `approach_from_above` | False: the moving ball 35 mm above its sockets, one sample after leaving and one before arriving, in the first solve only. True: in every round, and the way in in two steps (35 mm / 45° at N−2, 10 mm / 10° at N−1) | [Ours]; 10°: [the organisers' sim, `wall.py`] |
 | `midpoints`, `midpoint_play` | True, 1 mm | [Ours] |
 | `wall_margin`, `wall_points` | 0.002 m for every collision-box point; in transitions off (the exact check covers the wall) | [Ours] |
 | `contact_offset` | (0, −0.026, −0.0142) m from `Hold.position`: the ball at the bottom of the hold's socket | [Rules Figure 3], as the sim |
@@ -248,16 +264,18 @@ git submodule update --init                    # Microban, in third_party/microb
 uv sync --group optimiser --group sim          # casadi (IPOPT), coacd, coal, pin (tests); their sim for the runner
 uv run pytest tests/test_optimiser.py                     # solves the example plan's first moves, checks them
 uv run mjpython tests/test_optimiser.py --hard PLAN           # solves the plan, plays it in the sim
-uv run mjpython tests/test_optimiser.py --hard PLAN --save    # the same, and saves data/examples/trajectory.json
+uv run mjpython tests/test_optimiser.py --hard PLAN --save    # the same, and saves build/trajectory_<wall id>.json
 uv run mjpython tests/test_optimiser.py --hard PLAN --replay  # plays the saved trajectory, without solving
 ```
+PLAN defaults to `build/plan_N1.json`. `--samples N`, `--clearance M` and `--approach` set `n_samples`, `clearance`
+and `approach_from_above` for the run. `RCR_MOVE_CACHE=off` solves every move afresh, ignoring stored ones.
 The runner (`tests/test_optimiser.py`, run directly) reads a contact plan file and its wall, the organisers' wall
 named by the plan (`data/examples/<wall_id>.json`, played on their wall of that name in their sim). There is no
 example plan yet. It solves each transition in a worker process and plays it in the sim as soon as
 it's ready, while the next one is solved; between them the robot stays where it ended. The playback is kinematic:
 the robot follows the optimiser's poses exactly, with no physics. Add `--headless` to run without a window.
 
-**Saving and replaying [Ours]:** `--save` writes `data/examples/trajectory.json` (`trajectory/2`) after every solved
+**Saving and replaying [Ours]:** `--save` writes `build/trajectory_<wall id>.json` (`trajectory/2`) after every solved
 transition, so a solve that stops part way keeps what it solved.
 - `positions` is what the robot executes: motor targets pre-loaded against sag. Send it over the link.
 - `planned_positions` and `trunk_poses` are the planned motion itself, which `--replay` plays. The robot ignores them.
