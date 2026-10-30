@@ -24,7 +24,7 @@ STEP = 0.5  # fraction of the error the start pose's IK closes per iteration
 # The ball's path [Ours, to tune]: out of socket a straight off the wall, up and away from it to a
 # bit above socket b, then down into it.
 OUT = 0.06  # [m] away from the wall (-y), at both ends
-ABOVE = 0.05  # [m] above socket b, before going in
+ABOVE = 0.1  # [m] above socket b, before going in
 MOVE_TIME = 2.0  # [s] per move
 DT = 0.02  # [s] between samples: the robot's 50 Hz loop
 GAIN = 0.5  # fraction of a ball's tracking error corrected per sample [Ours]
