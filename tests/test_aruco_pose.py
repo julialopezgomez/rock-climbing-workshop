@@ -20,7 +20,7 @@ if cv2 is not None:
     spec.loader.exec_module(pose)
 
 
-@unittest.skipIf(cv2 is None, "OpenCV is required for image perception tests")
+# @unittest.skipIf(cv2 is None, "OpenCV is required for image perception tests")
 class ArucoPoseTest(unittest.TestCase):
     def setUp(self):
         self.local = np.array(

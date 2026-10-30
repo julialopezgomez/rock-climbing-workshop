@@ -1,4 +1,4 @@
-"""Find the robot's trunk position and orientation from two camera images.
+"""Find the robot's trunk position and orientation from one or two camera images.
 
 From the workshop root:
   MUJOCO_GL=egl third_party/simulator/.venv/bin/python scripts/robot_pose_aruco.py
@@ -263,9 +263,9 @@ def _single_camera_candidates(marker_corners, projection, image_corners):
     return sorted(candidates, key=lambda candidate: candidate["marker_reprojection_rms_normalized"])
 
 
-def _check_extrinsics(camera_extrinsics):
+def _check_extrinsics(camera_extrinsics, camera_count):
     """Check the supplied camera transforms before using them."""
-    if len(camera_extrinsics) != 2:
+    if len(camera_extrinsics) != camera_count:
         raise ValueError("Provide one calibrated 3x4 extrinsic matrix per camera.")
     for extrinsic in camera_extrinsics:
         extrinsic = np.asarray(extrinsic, dtype=float)
@@ -279,7 +279,7 @@ def _check_extrinsics(camera_extrinsics):
 
 
 def estimate_robot_pose(images, camera_matrices, distortion_coeffs=None, camera_extrinsics=None):
-    """Return the trunk position and quaternion from two synchronised RGB images.
+    """Return the trunk position and quaternion from one or two RGB images.
 
     Supply each camera's 3x3 intrinsic matrix and optional distortion coefficients.
     If you also provide 3x4 world-to-camera transforms [R|t], they stay fixed.
@@ -288,13 +288,13 @@ def estimate_robot_pose(images, camera_matrices, distortion_coeffs=None, camera_
     A one-camera result includes the alternate pose and an ambiguity warning.
     If neither camera can provide a pose, this raises ValueError.
     """
-    if len(images) != 2 or len(camera_matrices) != 2:
-        raise ValueError("Provide exactly two RGB images and their intrinsic matrices.")
-    distortion_coeffs = [None, None] if distortion_coeffs is None else distortion_coeffs
-    if len(distortion_coeffs) != 2:
+    if not 1 <= len(images) <= 2 or len(camera_matrices) != len(images):
+        raise ValueError("Provide one or two RGB images and one intrinsic matrix per image.")
+    distortion_coeffs = [None] * len(images) if distortion_coeffs is None else distortion_coeffs
+    if len(distortion_coeffs) != len(images):
         raise ValueError("Provide one distortion array per camera.")
     if camera_extrinsics is not None:
-        _check_extrinsics(camera_extrinsics)
+        _check_extrinsics(camera_extrinsics, len(images))
     calibration_source = "supplied_extrinsics" if camera_extrinsics is not None else "wall_markers"
     projections = []
     robot_pixels = []

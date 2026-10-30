@@ -4,12 +4,15 @@ Run from the workshop root:
   python scripts/overlay_wall_grid.py /path/to/AruCo1_Color.png --output-dir /tmp/wall-grid
   python scripts/overlay_wall_grid.py image1280.png image640.png --pose-pairs \
       --serials 243222071545 233722072758 --output-dir /tmp/wall-grid
+  python scripts/overlay_wall_grid.py image.png --pose \
+      --serials 233722072758 --output-dir /tmp/wall-grid
 
 The grid is a projection of the documented wall geometry, not a measurement of
 physical hole placement. The source images are never modified.
 """
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -19,7 +22,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from rcr.types import GRID_MARGIN_X, GRID_MARGIN_Z, GRID_PITCH, WALL_HEIGHT, WALL_WIDTH
 from capture_robot_pose import DEFAULT_CALIBRATION, load_calibration
-from robot_pose_aruco import MARKER_CENTRE, _wall_corners, detect_markers, estimate_robot_pose
+from robot_pose_aruco import MARKER_CENTRE, MARKER_SIZE, _wall_corners, detect_markers, estimate_robot_pose
 
 
 def wall_homography(detections):
@@ -98,18 +101,60 @@ def annotate(image, homography):
     return output
 
 
-def calibration_for(serial, size):
+def calibration_path_for(size):
     if size == (640, 480):
-        path = DEFAULT_CALIBRATION
-    elif size == (1280, 720):
-        path = DEFAULT_CALIBRATION.with_name("realsense-1280x720.json")
-    else:
-        raise ValueError(f"No Color calibration for {size[0]}x{size[1]}")
+        return DEFAULT_CALIBRATION
+    if size == (1280, 720):
+        return DEFAULT_CALIBRATION.with_name("realsense-1280x720.json")
+    raise ValueError(f"No Color calibration for {size[0]}x{size[1]}")
+
+
+def calibration_for(serial, size):
+    path = calibration_path_for(size)
     matrices, distortion, _, _, serials = load_calibration(path)
     if serial not in serials:
         raise ValueError(f"No calibration for serial {serial}")
     index = serials.index(serial)
     return matrices[index], distortion[index]
+
+
+def pose_report(paths, images, serials, calibrations, result, fits):
+    rotation = np.asarray(result["rotation_matrix"])
+    marker = np.asarray(result["position_m"]) + rotation @ MARKER_CENTRE
+    return {
+        "pose": result,
+        "marker_center_wall_m": marker.tolist(),
+        "wall_frame": {
+            "origin": "bottom-left outer corner, viewed from the front",
+            "axes": "x right, y into wall, z up",
+            "board_width_m": WALL_WIDTH,
+            "board_height_m": WALL_HEIGHT,
+            "quaternion_order": "wxyz, trunk-to-wall",
+        },
+        "cameras": [
+            {
+                "image": str(path.resolve()),
+                "assumed_serial": serial,
+                "resolution": [image.shape[1], image.shape[0]],
+                "calibration_file": str(calibration_path_for((image.shape[1], image.shape[0]))),
+                "camera_matrix": matrix.tolist(),
+                "distortion_coeffs": distortion.tolist(),
+                "wall_marker_ids": ids,
+                "wall_homography_rms_px": rms,
+            }
+            for path, image, serial, (matrix, distortion), (_, ids, rms) in zip(
+                paths, images, serials, calibrations, fits, strict=True
+            )
+        ],
+        "assumptions": [
+            "Camera serials are supplied by the caller; PNG files do not establish their serials.",
+            f"Robot ID 5 black code is {MARKER_SIZE * 1000:g} mm square.",
+            "Robot marker-to-trunk transform is the simulator mount in robot_pose_aruco.py.",
+            "Wall marker geometry and board dimensions are those in robot_pose_aruco.py.",
+            "If two images are provided, they must show the same static robot pose; no synchronization is checked.",
+            "Reprojection residuals measure model consistency, not ground-truth pose error.",
+        ],
+    }
 
 
 def add_pose_annotation(image, detections, matrix, distortion, result, serial):
@@ -128,7 +173,7 @@ def add_pose_annotation(image, detections, matrix, distortion, result, serial):
     trunk_pixel, marker_pixel = [tuple(np.rint(point).astype(int))
                                  for point in (trunk_pixel, marker_pixel)]
 
-    output = np.full((image.shape[0] + 144, image.shape[1], 3), (26, 29, 32), dtype=np.uint8)
+    output = np.full((image.shape[0] + 168, image.shape[1], 3), (26, 29, 32), dtype=np.uint8)
     output[: image.shape[0]] = image
     cv2.line(output, marker_pixel, trunk_pixel, (255, 255, 255), 1, cv2.LINE_AA)
     cv2.circle(output, marker_pixel, 7, (0, 220, 255), 2, cv2.LINE_AA)
@@ -145,6 +190,8 @@ def add_pose_annotation(image, detections, matrix, distortion, result, serial):
         f"Trunk q (w,x,y,z): {position_text(result['quaternion_wxyz'])}",
         f"Assumed serial {serial}; simulated 42 mm marker and mount",
         "y points into wall; larger y is closer to wall",
+        ("SINGLE CAMERA: depth and orientation ambiguous" if result["method"] == "single_camera"
+         else "STEREO: ID 5 fitted jointly in both images"),
     ]
     for index, line in enumerate(lines):
         cv2.putText(output, line, (12, image.shape[0] + 25 + index * 24),
@@ -156,14 +203,22 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("images", nargs="+", type=Path)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--pose", action="store_true",
+                        help="Estimate pose from one image, or prefer stereo with two images")
     parser.add_argument("--pose-pairs", action="store_true", help="Estimate stereo pose from consecutive image pairs")
-    parser.add_argument("--serials", nargs=2, metavar=("FIRST", "SECOND"),
-                        help="Assumed camera serials in each pair's image order")
+    parser.add_argument("--serials", nargs="+", metavar="SERIAL",
+                        help="Assumed camera serials in image order")
     args = parser.parse_args()
-    if args.pose_pairs and (len(args.images) % 2 or args.serials is None):
+    if args.pose and args.pose_pairs:
+        parser.error("Choose --pose or --pose-pairs")
+    if args.pose and (len(args.images) > 2 or args.serials is None
+                      or len(args.serials) != len(args.images)):
+        parser.error("--pose needs one or two images and one --serials entry per image")
+    if args.pose_pairs and (len(args.images) % 2 or args.serials is None
+                            or len(args.serials) != 2):
         parser.error("--pose-pairs needs an even number of images and --serials FIRST SECOND")
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    step = 2 if args.pose_pairs else 1
+    step = 2 if args.pose_pairs else len(args.images) if args.pose else 1
     for offset in range(0, len(args.images), step):
         paths = args.images[offset : offset + step]
         images = [cv2.imread(str(path)) for path in paths]
@@ -175,14 +230,14 @@ def main():
         try:
             fits = [wall_homography(found) for found in detections]
             result = None
-            if args.pose_pairs:
+            if args.pose or args.pose_pairs:
                 calibrations = [calibration_for(serial, (image.shape[1], image.shape[0]))
                                 for serial, image in zip(args.serials, images, strict=True)]
                 matrices = [calibration[0] for calibration in calibrations]
                 distortion = [calibration[1] for calibration in calibrations]
                 rgb = [cv2.cvtColor(image, cv2.COLOR_BGR2RGB) for image in images]
                 result = estimate_robot_pose(rgb, matrices, distortion)
-                if result["method"] != "stereo":
+                if args.pose_pairs and result["method"] != "stereo":
                     raise ValueError("Both cameras must see robot marker ID 5 for stereo pose")
         except ValueError as error:
             parser.exit(1, f"{paths[0].name}: {error}\n")
@@ -190,7 +245,7 @@ def main():
                                                                 strict=True)):
             homography, ids, rms = fit
             annotated = annotate(image, homography)
-            if result is not None:
+            if result is not None and index in result["cameras_used"]:
                 matrix, distortion_coeffs = calibrations[index]
                 annotated = add_pose_annotation(annotated, found, matrix, distortion_coeffs,
                                                  result, args.serials[index])
@@ -198,6 +253,12 @@ def main():
             if not cv2.imwrite(str(output), annotated):
                 parser.exit(1, f"Cannot write image: {output}\n")
             print(f"{output}: wall IDs {ids}, fit {rms:.2f} px")
+        if result is not None:
+            report = pose_report(paths, images, args.serials, calibrations, result, fits)
+            stem = "__".join(path.stem for path in paths)
+            output = args.output_dir / f"{stem}_pose.json"
+            output.write_text(json.dumps(report, indent=2) + "\n")
+            print(f"{output}: {result['method']} trunk pose and calibration details")
 
 
 if __name__ == "__main__":
