@@ -253,16 +253,16 @@ def test_a_coarse_path_lands_on_the_full_samples():
     assert np.allclose(full[:, 1], (dq[:, 0] + dq[:, 1]) / 2)
 
 
-def test_the_swing_curve_leaves_and_enters_the_cups_vertically():
-    cfg = replace(CFG, swing_lift=0.03, swing_out=0.04)
+def test_the_swing_path_goes_up_out_across_in_and_down():
+    cfg = replace(CFG, swing_lift=0.025, swing_out=0.04, swing_vertical=0.25)
     start, target = np.array([0.4, -0.03, 0.5]), np.array([0.5, -0.03, 0.62])
-    curve = lambda s: tr.swing_point(start, target, s, cfg)  # noqa: E731
-    assert np.allclose(curve(0.0), start) and np.allclose(curve(1.0), target)
-    halfway = curve(0.5) - (start + target) / 2
-    assert np.allclose(halfway, [0.0, -0.04, 0.03])  # swing_out from the wall, swing_lift up
-    for end, inward in ((0.0, 1e-4), (1.0, 1 - 1e-4)):  # straight up out, straight down in
-        step = curve(inward) - curve(end)
-        assert abs(step[0]) + abs(step[1]) < 1e-3 * abs(step[2])
+    up, out = np.array([0.0, 0.0, 0.025]), np.array([0.0, -0.04, 0.0])
+    path = lambda s: tr.swing_point(start, target, s, cfg)  # noqa: E731
+    corners = [start, start + up, start + up + out, target + up + out, target + up, target]
+    for s, corner in zip([0.0, 0.25, 0.375, 0.625, 0.75, 1.0], corners, strict=True):
+        assert np.allclose(path(s), corner)
+    assert np.allclose(path(0.125), start + up / 2)  # straight up out of the old cup
+    assert np.allclose(path(0.875), target + up / 2)  # straight down into the new one
 
 
 def test_a_transition_moves_one_limb_and_keeps_the_rules(wall, results, model):
@@ -583,19 +583,15 @@ def play(wall: WallModel, pose, done, view: bool) -> None:
             time.sleep(0.02)
 
 
-# --swing's weight when none is given: a 1 cm miss over phase B's ~16 poses costs about as much
-# as the torques do [Ours]
-SWING_WEIGHT = 1e3
-
-USAGE = """usage: tests/test_optimiser.py [PLAN] [--save | --replay] [--samples N] [--swing [W]]
+USAGE = """usage: tests/test_optimiser.py [PLAN] [--save | --replay] [--samples N] [--swing W]
                                 [--send PI] [--headless]
     PLAN              the contact plan to solve (default build/plan_N1.json): each move is solved
                       and played in the organisers' sim as it comes
     --save            also save it in build/trajectory_<wall id>.json after every move
     --replay          play build/trajectory_<wall id>.json on the plan's wall, without solving
     --samples N       samples per move (TransitionConfig.n_samples, default 12); more take longer
-    --swing [W]       pull the moving ball along a curve up and out from the wall (w_swing = W,
-                      default 1000; swing_lift and swing_out in TransitionConfig)
+    --swing W         how hard the moving ball is pulled along its path up, out, across, in and
+                      down (TransitionConfig.w_swing, default 5000); 0 turns it off
     --send PI         also send each solved move to the robot at PI (rcr.link), move by move"""
 
 if __name__ == "__main__":
@@ -617,18 +613,11 @@ if __name__ == "__main__":
         del args[i : i + 2]
     if "--swing" in args:
         i = args.index("--swing")
-        weight = SWING_WEIGHT
-        if (
-            i + 1 < len(args)
-            and not args[i + 1].startswith("-")
-            and not args[i + 1].endswith(".json")
-        ):
-            try:
-                weight = float(args.pop(i + 1))
-            except ValueError:
-                sys.exit("--swing takes a number (its weight) or nothing\n" + USAGE)
-        args.pop(i)
-        cfg = replace(cfg, w_swing=weight)
+        try:
+            cfg = replace(cfg, w_swing=float(args[i + 1]))
+        except (IndexError, ValueError):
+            sys.exit("--swing needs a number (its weight; 0 turns it off)\n" + USAGE)
+        del args[i : i + 2]
     if {"-h", "--help"} & set(args):
         sys.exit(USAGE)
     if "--hard" in args:  # the former way to ask for the runner: still accepted, not needed

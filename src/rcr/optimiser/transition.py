@@ -20,12 +20,12 @@ Midpoints: halfway between consecutive samples (the joints interpolated, as the 
 will), the same balance, friction and limits apply, with their own hold forces, and the held balls
 stay within midpoint_play of their holds (midpoint_poses).
 Cost: w_tau sum ||tau||^2 (samples and midpoints) + w_smooth sum ||dq_{k+1} - dq_k||^2 + posture,
-and, if w_swing is set, the moving ball's distance^2 to a reference curve in phase B (swing_point).
++ w_swing sum ||ball - swing path||^2 in phase B (swing_point: up, out, across, in, down).
 
 A move of a plan is one transition: it starts where the previous one ended (the plan's first at
 stance 0's own pose, stance_pose) and ends with the moving ball on its new hold, the rest of the
 body wherever is cheapest. Collisions (with the holds, the wall or itself) are not modelled; the
-swing curve only steers the moving ball away from them.
+swing path only steers the moving ball away from them.
 
 Each problem is built once and re-solved with new numbers (its start, holds and target are
 CasADi parameters): building the derivatives costs ~3x more than solving. A transition's
@@ -36,7 +36,6 @@ Wall frame (INTERFACES.md): x right, z up, y into the wall, the robot at y < 0, 
 
 from __future__ import annotations
 
-import math
 import time
 from dataclasses import dataclass, field, replace
 
@@ -128,13 +127,16 @@ class TransitionConfig:
     # How far a held ball may be from its hold at a midpoint: interpolated joints cannot keep a
     # closed chain exactly on four points [Ours].
     midpoint_play: float = 0.001  # [m]
-    # A reference path for the moving ball in phase B, preferred softly (swing_point): it leaves
-    # its cup straight up, is swing_lift higher and swing_out further from the wall halfway, and
-    # comes straight down into the new cup. Keeps the ball off the wall and the cups' rims without
-    # collision constraints; not a guarantee. 0 = off (the runner's --swing turns it on) [Ours].
-    w_swing: float = 5000.0  # weight on ||ball - curve||^2 [1/m^2]
-    swing_lift: float = 0.03  # [m] above the line between the two holds, halfway
-    swing_out: float = 0.03  # [m] out from the wall (-y), halfway
+    # A reference path for the moving ball in phase B, preferred softly (swing_point): straight up
+    # out of its cup, out from the wall, across, in, and straight down into the new cup. Keeps the
+    # ball off the cups without collision constraints; not a guarantee. 0 = off [Ours].
+    # The ball clears a rim (3.6 mm above the socket centre, the organisers' cup_spheres.json)
+    # ~17 mm up. With 25 mm and 40 mm, the path stays >= 7.7 mm from every cup on N1 for every
+    # move to one of the 8 nearest holds (a cup in between included) [Ours].
+    w_swing: float = 5000.0  # weight on ||ball - path||^2 [1/m^2]
+    swing_lift: float = 0.025  # [m] straight up out of the cup, and down into the new one
+    swing_out: float = 0.04  # [m] out from the wall (-y) while going across
+    swing_vertical: float = 0.25  # share of phase B going up (and again down); below 1/3
     phase_a_duration: float = 1.0  # [s] for phase A, chosen after solving (quasi-static) [Ours]
     phase_b_duration: float = 2.0  # [s] for phase B [Ours]
     ipopt: dict = field(
@@ -267,16 +269,22 @@ def posture(q, cfg: TransitionConfig):
 
 def swing_point(start, target, s: float, cfg: TransitionConfig):
     """The moving ball's reference at s in [0, 1] (phase B's progress), from `start` (its old
-    contact point) to `target` (its new one): a quartic Bezier curve whose end tangents are
-    vertical (out of and into the cups, which open upwards), swing_lift up and swing_out out from
-    the wall (-y) at s = 0.5. Works on numbers and on CasADi expressions alike."""
-    # At s = 0.5 the Bernstein weights are (1, 4, 6, 4, 1)/16: the middle point counts 6/16 and
-    # the two lifted end points 4/16 each, so these are scaled to put the peak where asked
-    up = np.array([0.0, 0.0, cfg.swing_lift / (14 / 16)])
-    out = np.array([0.0, -cfg.swing_out / (6 / 16), 0.0])
-    points = [start, start + up, (start + target) / 2 + up + out, target + up, target]
-    weights = [math.comb(4, i) * s**i * (1 - s) ** (4 - i) for i in range(5)]
-    return sum(w * p for w, p in zip(weights, points, strict=True))
+    contact point) to `target` (its new one): straight lines through six points (v =
+    swing_vertical, up = swing_lift along +z, out = swing_out along -y, away from the wall):
+        s = 0          start                   in the old cup
+        s = v          start + up              straight up, clear of its rim
+        s = 1.5 v      start + up + out        out from the wall, clear of the cups
+        s = 1 - 1.5 v  target + up + out       across, as far out
+        s = 1 - v      target + up             in, above the new cup
+        s = 1          target                  straight down into it
+    Works on numbers and on CasADi expressions alike."""
+    v = cfg.swing_vertical
+    up, out = np.array([0.0, 0.0, cfg.swing_lift]), np.array([0.0, -cfg.swing_out, 0.0])
+    points = [start, start + up, start + up + out, target + up + out, target + up, target]
+    at = [0.0, v, 1.5 * v, 1 - 1.5 * v, 1 - v, 1.0]
+    i = min(int(np.searchsorted(at, s, side="right")) - 1, len(at) - 2)
+    t = (s - at[i]) / (at[i + 1] - at[i])
+    return (1 - t) * points[i] + t * points[i + 1]
 
 
 def midpoint_poses(opti: ca.Opti, model: RobotModel, dq, q0, holds, moving: Limb, cfg):
@@ -416,7 +424,7 @@ def transition_problem(moving: Limb, cfg: TransitionConfig) -> _Problem:
         smooth = sum(ca.sumsqr(dq[:, k + 1] - dq[:, k]) for k in range(n))
         legs_and_spine = sum(posture(q, cfg) for q in qs + mid_qs)
         objective = cfg.w_tau * torque + cfg.w_smooth * smooth + legs_and_spine
-        if cfg.w_swing:  # the moving ball near its swing curve, phase B's samples and midpoints
+        if cfg.w_swing:  # the moving ball near its swing path, phase B's samples and midpoints
             span = n - k_release
             on_curve = [(qs[k], (k - k_release) / span) for k in range(k_release, n + 1)]
             if mid_qs:

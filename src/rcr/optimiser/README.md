@@ -52,16 +52,29 @@ hold pushes its ball with. The torques follow from these through the static bala
   w_tau    · Σ ||tau||²                 over the samples and midpoints    (low torque)
 + w_smooth · Σ ||dq_{k+1} − dq_k||²     between samples                   (smooth)
 + Σ posture(q)                          over the samples and midpoints    (legs near a chosen pose, spine at 25°)
-+ w_swing  · Σ ||ball(q) − r(s)||²      phase B's samples and midpoints   (the moving ball near its swing curve; off by default)
++ w_swing  · Σ ||ball(q) − r(s)||²      phase B's samples and midpoints   (the moving ball near its swing path)
 ```
 `posture(q) = w_nominal · Σ (leg joint − its nominal angle)² + w_spine · (spine_z − cos 25°)²`.
 
-**The swing curve** `r(s)` (`swing_point`) is a reference path for the moving ball, with no collision constraints:
+**The swing path** `r(s)` (`swing_point`) is a reference for the moving ball, so no collision constraints are needed.
 `s = (k − K)/(N − K)` runs from 0 (the ball leaves its hold) to 1 (on its new hold); midpoints are at half steps.
-`r` is a quartic Bézier curve from the old contact point to the new one. It leaves the cup straight up, is `swing_lift`
-higher and `swing_out` further from the wall (−y) halfway, and comes straight down into the new cup. `ball(q)` is the
-moving ball's centre (forward kinematics). It's a cost, so the ball is pulled towards the curve, not held on it:
-`w_swing` sets how hard. It only steers the moving ball; the rest of the body can still touch.
+`r` is straight lines through six points (`a` the old contact point, `b` the new one, `up = swing_lift·ẑ`,
+`out = −swing_out·ŷ`, away from the wall; `v = swing_vertical`):
+
+| s | point | the ball |
+|---|---|---|
+| 0 | `a` | in the old cup |
+| v | `a + up` | straight up, clear of the rim |
+| 1.5 v | `a + up + out` | out from the wall |
+| 1 − 1.5 v | `b + up + out` | across, as far out |
+| 1 − v | `b + up` | in, above the new cup |
+| 1 | `b` | straight down into it |
+
+With v = 0.25 and N − K = 8, that is 2 sample intervals up, 1 out, 2 across, 1 in and 2 down. `ball(q)` is the moving
+ball's centre (forward kinematics). It's a cost, so the ball is pulled towards the path, not held on it: `w_swing` sets
+how hard. The ball clears a cup's rim about 17 mm up; with the defaults, the path stays at least 7.7 mm from every cup
+of N1 for every move to one of a hold's 8 nearest holds. It only steers the moving ball; the rest of the body can still
+touch.
 
 **The static pose** (`static_pose_problem`) is the same with one sample and all four balls held, and the cost
 `w_tau ||tau||² + w_stay ||dq||² + posture(q)` (`w_stay` keeps it near its guess). Besides the start pose, it gives each
@@ -86,8 +99,8 @@ uv run mjpython tests/test_optimiser.py PLAN          # solve the plan, play it 
 uv run mjpython tests/test_optimiser.py PLAN --save   # the same, and save build/trajectory_<wall id>.json
 uv run mjpython tests/test_optimiser.py PLAN --replay # play the saved one, without solving
 ```
-- `PLAN` defaults to `build/plan_N1.json`. `--samples N` changes the number of samples; `--swing [W]` turns the swing
-  curve on (`w_swing = W`, default 1000); `--headless` runs without a window; `--send PI` also sends each solved move to
+- `PLAN` defaults to `build/plan_N1.json`. `--samples N` changes the number of samples; `--swing W` sets the swing
+  path's weight (`w_swing`, default 5000; 0 turns it off); `--headless` runs without a window; `--send PI` also sends each solved move to
   the robot.
 - The playback shows the planned poses exactly (no physics). The next move is solved while the current one plays.
 - The saved file's `positions` are what the robot executes; `planned_positions` and `trunk_poses` are the planned
@@ -118,7 +131,8 @@ the move, IPOPT's status and the largest constraint violation.
 | `nominal`, `w_nominal` | a hand-designed leg pose (knees bent 20°, legs mirrored); 0.3 | without it the least-torque pose crouches [Ours] |
 | `spine_target`, `w_spine` | 25° from vertical; 2 | [Ours] |
 | `midpoints`, `midpoint_play` | on, 1 mm | without them, +8 % torque and 4 mm ball drift between samples [Ours] |
-| `w_swing`, `swing_lift`, `swing_out` | 0 (off; `--swing` gives 1000), 30 mm, 30 mm | at 1000, a 1 cm miss over phase B's ~16 poses costs about as much as the torques; not yet tuned [Ours] |
+| `w_swing` | 5000 | not yet tuned [Ours] |
+| `swing_lift`, `swing_out`, `swing_vertical` | 25 mm, 40 mm, 0.25 | clear of every cup on N1 by ≥ 7.7 mm (above) [Ours] |
 | `phase_a_duration`, `phase_b_duration` | 1 s, 2 s | [Ours] |
 | `ipopt` | `tol` 1e-6, `max_iter` 150 (continued up to ~1000), `mu_init` 1e-3 | [Ours] |
 
@@ -127,15 +141,14 @@ tests check them against Pinocchio to machine precision.
 
 ## Known limitations
 - **No collisions.** A motion can pass a limb through a hold, the wall or the robot itself. The playback shows it; the
-  real robot would hit. The swing curve (`--swing`) keeps the moving ball away from them, but not the other links.
+  real robot would hit. The swing path keeps the moving ball away from them, but not the other links.
 - **Quasi-static.** No inertia: slow motion is assumed, and the phase durations are chosen, not optimised.
 - **Our contact model.** The holds push only upwards (+z), within friction 0.8; the real socket may hold more.
 - **Not yet measured on the climbing model.** Earlier numbers (e.g. a hand could not reach up from 300 mm above the
   feet at 70 % torque, so "both hands up, then both feet up") were with the old limbs.
 
 ## Open decisions
-- Whether and how to add collision avoidance back (see below), or whether the swing curve is enough; its weight,
-  lift and distance from the wall, and whether to have it on by default.
+- Whether and how to add collision avoidance back (see below), or whether the swing path is enough; its weight.
 - Time per move (time is the tie-breaker in scoring).
 - Whether `Trajectory` needs velocities, per-joint kp or the stance index (marked CHANGE in INTERFACES.md).
 
