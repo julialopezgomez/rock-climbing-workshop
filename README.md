@@ -13,8 +13,8 @@ stays inside its module.
 ```
   LAPTOP                                                                       ROBOT (Pi, 50 Hz)
   perception ─► wall model ─► planner ─► contact plan ─► optimiser ─► trajectory ══ link ══► controller ─► joint targets
-                                 ▲          (full)          │           (full)                (a Microban Move)
-                                 └────── feasibility ◄──────┘                     ◄══ robot state ══
+                    (its own feasibility)   (full)                      (full)                (a Microban Move)
+                                                                                  ◄══ robot state ══
 ```
 
 - What crosses each arrow is defined in [INTERFACES.md](INTERFACES.md), which is the single source of truth, and implemented in
@@ -40,7 +40,7 @@ src/rcr/
   walls.py               seeded random walls per level, and the rule checks a wall must pass
   perception/            laptop: camera images -> wall model + robot pose
   planner/               laptop: wall model -> contact plan
-  optimiser/             laptop: contact plan -> trajectory; owns feasibility
+  optimiser/             laptop: contact plan -> trajectory
   controller/            ROBOT:  trajectory + robot state -> joint targets (Pi-safe)
   link/                  both:   trajectory, start/stop, pose ->; <- robot state
   robot/                 how our code meets Microban: where it is (microban.py), the climbing balls (hooks.py),
@@ -69,12 +69,9 @@ on branch **`dev_v2`**, what the competition robot runs. Cloned without
 The organisers' simulator ([rock-climbing-robots/simulator](https://github.com/rock-climbing-robots/simulator)) is a
 second submodule, in `third_party/simulator`, next to Microban as its README asks: see [Simulation](#simulation).
 
-**The robot model** is the package `microban_model`, as for Microban `dev_v2` and the simulator: we use its climbing
-variant (climbing forearms and feet with ball ends), from our fork
-([MohammadrezaDindarloo/microban_model](https://github.com/MohammadrezaDindarloo/microban_model), branch `cut-foot`):
-Rhoban's model at the simulator's commit with only the climbing feet cut, as on our robot
-([src/rcr/robot](src/rcr/robot/README.md)). `uv sync --group optimiser` / `--group sim` installs it, and the
-simulator loads it too. It needs git-lfs for the
+**The robot model** is the package `microban_model` ([Rhoban/microban_model](https://github.com/Rhoban/microban_model)),
+as for Microban `dev_v2` and the simulator: we use its climbing variant (climbing forearms and feet with ball ends).
+`uv sync --group optimiser` / `--group sim` installs it, pinned to the simulator's commit. It needs git-lfs for the
 meshes: `brew install git-lfs && git lfs install`, once.
 
 ```bash
