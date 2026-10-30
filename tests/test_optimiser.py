@@ -10,9 +10,10 @@
     uv run mjpython tests/test_optimiser.py --help            # every option
 
 The wall is the organisers' N1 (data/examples/N1.json, from their simulator by
-scripts/wall_generator.py). A plan's wall is data/examples/<its wall_id>.json, and it is played on
-their wall of that name. There is no example contact plan yet: the tests that solve one skip until
-our planner's plan on N1 is saved as data/examples/contact_plan_N1.json.
+scripts/wall_generator.py). A plan's wall is data/examples/<its wall_id>.json, else it is rebuilt
+from the plan saved by scripts/plan_sim_wall.py --save (plan_walls), and it is played on their wall.
+There is no example contact plan yet: the tests that solve one skip until our planner's plan on N1
+is saved as data/examples/contact_plan_N1.json.
 Run directly (not by pytest), it takes each two consecutive stances, solves that transition, and
 plays it in the organisers' sim (the same wall, holds and balls); the robot then stays where it
 ended until the next one is ready.
@@ -83,6 +84,60 @@ RUN_PLAN = BUILD / "plan_N1.json"
 
 def trajectory_file(wall_id: str) -> Path:
     return BUILD / f"trajectory_{wall_id}.json"
+
+
+# The organisers' wall each loaded plan is on, by wall id, for the playback (plan_walls)
+_SIM_WALLS: dict = {}
+
+
+def plan_walls(plan: ContactPlan) -> WallModel:
+    """The wall a plan is on: data/examples/<wall_id>.json if there is one; else rebuilt from
+    scripts/plan_sim_wall.py's output, whose hold ids are their grid holes, "r<row>_c<col>", so each
+    position is their Hold(col, row).bolt_axis, as that script places it. For the playback, their
+    whole wall: l<level>_s<seed> regenerated, else the bundled wall (N1, N2, N3) with all the plan's
+    holds (--wall N2 still names the wall l<level>_s<seed>), else only the plan's holds."""
+    import re
+
+    from climbing_sim import Wall
+    from climbing_sim.routes import generate_wall
+    from climbing_sim.wall import Hold as TheirHold
+    from climbing_sim.wall import bundled_walls
+
+    example = EXAMPLES / f"{plan.wall_id}.json"
+    if example.exists():
+        _SIM_WALLS[plan.wall_id] = Wall.load(plan.wall_id)
+        return io.load_wall(example)
+    used = {hold for stance in plan.stances for hold in stance.contacts.values()}
+    grid = {}
+    for hold in used:
+        match = re.fullmatch(r"r(\d+)_c(\d+)", hold)
+        if match is None:
+            sys.exit(
+                f"no wall {plan.wall_id}: not in {EXAMPLES}, and hold {hold} is not r<row>_c<col>"
+            )
+        grid[hold] = TheirHold(col=int(match[2]), row=int(match[1]))
+    candidates = [Wall.load(name) for name in bundled_walls()]
+    seeded = re.fullmatch(r"l(\d)_s(\d+)", plan.wall_id)
+    if seeded:
+        candidates.insert(0, generate_wall(int(seeded[1]), int(seeded[2])))
+    sim_wall = next(
+        (w for w in candidates if set(grid.values()) <= set(w.holds)),
+        Wall(name=plan.wall_id, holds=list(grid.values())),
+    )
+    print(f"wall {plan.wall_id}: rebuilt from the plan's holds; played on {sim_wall.name}")
+    _SIM_WALLS[plan.wall_id] = sim_wall
+    holds = [
+        Hold(f"r{h.row}_c{h.col}", tuple(round(float(v), 6) for v in h.bolt_axis))
+        for h in sim_wall.holds
+    ]
+    return WallModel(id=plan.wall_id, level=0, holds=holds, start=plan.stances[0])
+
+
+def organisers_wall(wall_id: str):
+    """Their wall for the sim: the one plan_walls found, else their wall of that name."""
+    from climbing_sim import Wall
+
+    return _SIM_WALLS.get(wall_id) or Wall.load(wall_id)
 
 
 FIRST_MOVES = 4  # the plan's first transitions, solved once for the tests below
@@ -251,6 +306,28 @@ def test_a_coarse_path_lands_on_the_full_samples():
     assert full.shape == (rm.NV, cfg.n_samples + 1)
     assert np.allclose(full[:, ::2], dq)  # coarse sample c is full sample 2c, release included
     assert np.allclose(full[:, 1], (dq[:, 0] + dq[:, 1]) / 2)
+
+
+def test_the_keep_out_points_box_each_part_but_the_hook_ends(model):
+    points = rm.keep_out_points()
+    parts = {link for link, _ in points}
+    assert len(points) == 8 * len(parts) and {"head", "trunk", "foot_climb"} <= parts
+    assert tr.CUP_FRONT == pytest.approx(-0.043, abs=1e-3)  # the cups' front, from their sim
+    for limb, hook in hooks.HOOKS.items():  # a forearm's or foot's box leaves out its ball's end
+        corners = np.array([p for link, p in points if link == hook.link])
+        centre = hooks.ball_centre(hook)
+        assert not np.all((corners.min(axis=0) <= centre) & (centre <= corners.max(axis=0))), limb
+    assert np.array(model.body_points(np.zeros(rm.NQ))).shape == (3, len(points))
+
+
+def test_the_hooks_point_along_their_shafts(model):
+    axes = rm.hook_axes()  # from the meshes: the hands' shafts along the forearm, the feet's +y
+    assert axes["right_hand"][0] < -0.9 and axes["left_hand"][0] > 0.9
+    assert axes["right_foot"][1] > 0.9 and axes["left_foot"][1] > 0.9
+    u = np.array(model.hook_directions(np.r_[0, 0, 0, 1, 0, 0, 0, np.zeros(rm.NJ)]))
+    assert np.allclose(np.linalg.norm(u, axis=0), 1)  # unit vectors in the wall frame
+    up = replace(CFG, hook_up=-1.0)  # anything counts as up: no cost
+    assert float(tr.hook_tilt(model, np.r_[0, 0, 0, 1, 0, 0, 0, np.zeros(rm.NJ)], up)) == 0
 
 
 def test_the_swing_path_goes_up_out_across_in_and_down():
@@ -556,9 +633,9 @@ def play(wall: WallModel, pose, done, view: bool) -> None:
     """Show pose(now) in the organisers' sim, kinematically (None: nothing to show yet), until the
     window closes or, without one, until done()."""
     import mujoco
-    from climbing_sim import ClimbingSim, Wall
+    from climbing_sim import ClimbingSim
 
-    sim = ClimbingSim(Wall.load(wall.id), cameras=[])  # their wall of that name
+    sim = ClimbingSim(organisers_wall(wall.id), cameras=[])  # their wall of that name
     model, data = sim.model, sim.data
     qpos = [model.jnt_qposadr[model.joint(name).id] for name in MICROBAN_JOINTS]
 
@@ -584,7 +661,7 @@ def play(wall: WallModel, pose, done, view: bool) -> None:
 
 
 USAGE = """usage: tests/test_optimiser.py [PLAN] [--save | --replay] [--samples N] [--swing W]
-                                [--send PI] [--headless]
+                                [--keep-out W] [--hook W] [--send PI] [--headless]
     PLAN              the contact plan to solve (default build/plan_N1.json): each move is solved
                       and played in the organisers' sim as it comes
     --save            also save it in build/trajectory_<wall id>.json after every move
@@ -592,6 +669,10 @@ USAGE = """usage: tests/test_optimiser.py [PLAN] [--save | --replay] [--samples 
     --samples N       samples per move (TransitionConfig.n_samples, default 12); more take longer
     --swing W         how hard the moving ball is pulled along its path up, out, across, in and
                       down (TransitionConfig.w_swing, default 5000); 0 turns it off
+    --keep-out W      how hard the body is pushed out of the cups' layer (TransitionConfig.
+                      w_keep_out, default 20000); 0 turns it off
+    --hook W          how hard each hook is turned to point up from its ball, so it goes into
+                      the cup from above (TransitionConfig.w_hook, default 10); 0 turns it off
     --send PI         also send each solved move to the robot at PI (rcr.link), move by move"""
 
 if __name__ == "__main__":
@@ -618,6 +699,20 @@ if __name__ == "__main__":
         except (IndexError, ValueError):
             sys.exit("--swing needs a number (its weight; 0 turns it off)\n" + USAGE)
         del args[i : i + 2]
+    if "--hook" in args:
+        i = args.index("--hook")
+        try:
+            cfg = replace(cfg, w_hook=float(args[i + 1]))
+        except (IndexError, ValueError):
+            sys.exit("--hook needs a number (its weight; 0 turns it off)\n" + USAGE)
+        del args[i : i + 2]
+    if "--keep-out" in args:
+        i = args.index("--keep-out")
+        try:
+            cfg = replace(cfg, w_keep_out=float(args[i + 1]))
+        except (IndexError, ValueError):
+            sys.exit("--keep-out needs a number (its weight; 0 turns it off)\n" + USAGE)
+        del args[i : i + 2]
     if {"-h", "--help"} & set(args):
         sys.exit(USAGE)
     if "--hard" in args:  # the former way to ask for the runner: still accepted, not needed
@@ -641,7 +736,7 @@ if __name__ == "__main__":
         sys.exit("--send sends what is solved; to send a saved one: scripts/link_pi.py stream")
     if {"--save", "--replay"} <= flags:
         sys.exit("--save solves and saves, --replay plays what was saved: pick one\n" + USAGE)
-    wall, view = io.load_wall(EXAMPLES / f"{plan.wall_id}.json"), "--headless" not in flags
+    wall, view = plan_walls(plan), "--headless" not in flags
     if "--replay" in flags:
         replay(wall, view)
     else:

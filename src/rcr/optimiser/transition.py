@@ -20,12 +20,15 @@ Midpoints: halfway between consecutive samples (the joints interpolated, as the 
 will), the same balance, friction and limits apply, with their own hold forces, and the held balls
 stay within midpoint_play of their holds (midpoint_poses).
 Cost: w_tau sum ||tau||^2 (samples and midpoints) + w_smooth sum ||dq_{k+1} - dq_k||^2 + posture,
-+ w_swing sum ||ball - swing path||^2 in phase B (swing_point: up, out, across, in, down).
++ w_swing sum ||ball - swing path||^2 in phase B (swing_point: up, out, across, in, down)
++ w_keep_out sum (how far the body is into the cups' layer)^2 (intrusion, samples and midpoints)
++ w_hook sum (how much flatter than hook_up each hook is)^2 (hook_tilt, samples and midpoints).
 
 A move of a plan is one transition: it starts where the previous one ended (the plan's first at
 stance 0's own pose, stance_pose) and ends with the moving ball on its new hold, the rest of the
-body wherever is cheapest. Collisions (with the holds, the wall or itself) are not modelled; the
-swing path only steers the moving ball away from them.
+body wherever is cheapest. Collisions are not modelled as such: the body is pushed out of the
+cups' layer (intrusion), and the swing path steers the moving ball; both are costs, so not a
+guarantee. The hooks next to a held ball and the robot itself are not checked.
 
 Each problem is built once and re-solved with new numbers (its start, holds and target are
 CasADi parameters): building the derivatives costs ~3x more than solving. A transition's
@@ -57,6 +60,11 @@ FACING_WALL = (np.cos(np.pi / 4), 0.0, 0.0, np.sin(np.pi / 4))  # (w,x,y,z): tru
 # [m] the hold's socket radius: the inner surface of the organisers' sim's socket spheres
 SOCKET_RADIUS = round(
     min(np.linalg.norm(s["pos"]) - s["r"] for s in sim_scene.HOLD_SPHERES if s["pos"][2] < 0), 6
+)
+# [m] wall-frame y of the cups' front: every cup is between the wall face and this (-43 mm), the
+# organisers' sim's socket spheres around their socket centres
+CUP_FRONT = round(
+    -sim_wall.SOCKET_OUT + min(s["pos"][1] - s["r"] for s in sim_scene.HOLD_SPHERES), 6
 )
 
 # The reference posture's leg joints: from a hand-designed pose on the example's start stance
@@ -137,6 +145,21 @@ class TransitionConfig:
     swing_lift: float = 0.025  # [m] straight up out of the cup, and down into the new one
     swing_out: float = 0.04  # [m] out from the wall (-y) while going across
     swing_vertical: float = 0.25  # share of phase B going up (and again down); below 1/3
+    # Push the body out of the layer the cups are in (wall-frame y from CUP_FRONT to the wall), at
+    # every pose (intrusion): the corners of the boxes around its parts (robot_model.
+    # keep_out_points), the hook and ball ends excepted, should be cup_clearance in front of the
+    # cups. A cost, not a constraint: as a constraint (4000 more rows) the first move did not solve
+    # in 5 min. At 2e4, a corner 1 cm past the limit costs about a whole move's torque (~2, on N2);
+    # not tuned further. 0 = off [Ours].
+    w_keep_out: float = 2e4  # weight on (how far past the limit)^2 [1/m^2]
+    cup_clearance: float = 0.005  # [m]
+    # Each hook pointing up from its ball (hook_tilt), so it enters and holds a cup from above:
+    # the upward component of its direction at least hook_up (0.5: at most 60 deg from up). The
+    # organisers' hanging pose (reset_hanging, N2) has its hands' hooks 54 deg from up, its
+    # feet's 5; without this, the solved hands lay at 82 deg, into the cup from the front, or
+    # came from below it. 0 = off [Ours].
+    w_hook: float = 10.0  # weight on (hook_up - upward component)^2
+    hook_up: float = 0.5
     phase_a_duration: float = 1.0  # [s] for phase A, chosen after solving (quasi-static) [Ours]
     phase_b_duration: float = 2.0  # [s] for phase B [Ours]
     ipopt: dict = field(
@@ -267,6 +290,21 @@ def posture(q, cfg: TransitionConfig):
     return cfg.w_nominal * legs + cfg.w_spine * (spine_z - np.cos(cfg.spine_target)) ** 2
 
 
+def intrusion(model: RobotModel, q, cfg: TransitionConfig):
+    """How far the body is into the cups' layer: sum over the corners of its parts' boxes
+    (robot_model.keep_out_points) of max(0, y - (CUP_FRONT - cup_clearance))^2 [m^2]. Zero when
+    every corner is cup_clearance in front of the cups."""
+    past = model.body_points(q)[1, :] - (CUP_FRONT - cfg.cup_clearance)
+    return ca.sumsqr(ca.fmax(past, 0))
+
+
+def hook_tilt(model: RobotModel, q, cfg: TransitionConfig):
+    """How much flatter than allowed the hooks are: sum over the four limbs of
+    max(0, hook_up - u_z)^2, u the hook's direction from its ball (robot_model.hook_axes) in the
+    wall frame. Zero when every hook points up at least hook_up."""
+    return ca.sumsqr(ca.fmax(cfg.hook_up - model.hook_directions(q)[2, :], 0))
+
+
 def swing_point(start, target, s: float, cfg: TransitionConfig):
     """The moving ball's reference at s in [0, 1] (phase B's progress), from `start` (its old
     contact point) to `target` (its new one): straight lines through six points (v =
@@ -350,7 +388,8 @@ def static_pose_problem(cfg: TransitionConfig) -> _Problem:
     Variables: dq (the pose, from q_ref), and each hold's force on its ball.
     Subject to: balanced_pose (balance, limits, trunk near q_ref); every ball on its hold;
         every hold pushing within its friction pyramid.
-    Cost: w_tau ||tau||^2 + w_stay ||dq||^2 + posture."""
+    Cost: w_tau ||tau||^2 + w_stay ||dq||^2 + posture + w_keep_out intrusion
+        + w_hook hook_tilt."""
 
     def build() -> _Problem:
         model, opti = load_robot_model(), ca.Opti()
@@ -364,6 +403,10 @@ def static_pose_problem(cfg: TransitionConfig) -> _Problem:
             friction_pyramid(opti, forces[limb], cfg.normals[limb], cfg.mu[limb])
         # --- cost
         objective = cfg.w_tau * ca.sumsqr(tau) + cfg.w_stay * ca.sumsqr(dq) + posture(q, cfg)
+        if cfg.w_keep_out:  # the body out of the cups' layer
+            objective = objective + cfg.w_keep_out * intrusion(model, q, cfg)
+        if cfg.w_hook:  # the hooks pointing up
+            objective = objective + cfg.w_hook * hook_tilt(model, q, cfg)
         p = _Problem(opti, dq, forces, [q], [tau], objective, q_ref, holds)
         _minimise(p, cfg, cold=True)
         return p
@@ -389,7 +432,9 @@ def transition_problem(moving: Limb, cfg: TransitionConfig) -> _Problem:
         w_tau    * sum ||tau||^2              over the samples and midpoints (low torque)
       + w_smooth * sum ||dq_{k+1} - dq_k||^2  between samples (smooth)
       + sum posture(q)                        over the samples and midpoints (legs, spine)
-      + w_swing * sum ||ball(q) - swing_point||^2  phase B's samples and midpoints (if w_swing)"""
+      + w_swing * sum ||ball(q) - swing_point||^2  phase B's samples and midpoints (if w_swing)
+      + w_keep_out * sum intrusion(q)         over the samples and midpoints (out of the cups)
+      + w_hook * sum hook_tilt(q)             over the samples and midpoints (hooks up)"""
     n, k_release = cfg.n_samples, cfg.release_sample
     if not 0 < k_release < n - 2:
         raise ValueError(f"need 0 < release_sample < n_samples - 2, got {k_release}, {n}")
@@ -434,6 +479,12 @@ def transition_problem(moving: Limb, cfg: TransitionConfig) -> _Problem:
                 for q, s in on_curve
             )
             objective = objective + cfg.w_swing * swing
+        if cfg.w_keep_out:  # the body out of the cups' layer, samples and midpoints
+            objective = objective + cfg.w_keep_out * sum(
+                intrusion(model, q, cfg) for q in qs + mid_qs
+            )
+        if cfg.w_hook:  # the hooks pointing up, samples and midpoints
+            objective = objective + cfg.w_hook * sum(hook_tilt(model, q, cfg) for q in qs + mid_qs)
         p = _Problem(opti, dq, forces, qs, taus, objective, q0, holds, target, mid_forces)
         _minimise(p, cfg)
         return p

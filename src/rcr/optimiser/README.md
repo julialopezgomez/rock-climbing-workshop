@@ -11,7 +11,7 @@ Turns a contact plan into the joint motion the robot executes. Runs on the lapto
 | File | What is in it |
 |---|---|
 | [`transition.py`](transition.py) | **the solver**: the settings (`TransitionConfig`), the constraints of one pose, the two problems (a static pose and a transition), and how they are solved |
-| [`robot_model.py`](robot_model.py) | the robot's kinematics in CasADi, read from Microban's URDF: ball positions, Jacobians, centre of mass, gravity torques |
+| [`robot_model.py`](robot_model.py) | the robot's kinematics in CasADi, read from Microban's URDF: ball positions, Jacobians, centre of mass, gravity torques; the body's keep-out points, from its MJCF meshes |
 | [`__init__.py`](__init__.py) | `optimise`: solves the plan move by move, times the samples, and pre-loads the motor targets against sag |
 
 ## How a plan is solved
@@ -53,6 +53,8 @@ hold pushes its ball with. The torques follow from these through the static bala
 + w_smooth · Σ ||dq_{k+1} − dq_k||²     between samples                   (smooth)
 + Σ posture(q)                          over the samples and midpoints    (legs near a chosen pose, spine at 25°)
 + w_swing  · Σ ||ball(q) − r(s)||²      phase B's samples and midpoints   (the moving ball near its swing path)
++ w_keep_out · Σ intrusion(q)           over the samples and midpoints    (the body out of the cups' layer)
++ w_hook     · Σ hook_tilt(q)           over the samples and midpoints    (each hook pointing up from its ball)
 ```
 `posture(q) = w_nominal · Σ (leg joint − its nominal angle)² + w_spine · (spine_z − cos 25°)²`.
 
@@ -76,8 +78,36 @@ how hard. The ball clears a cup's rim about 17 mm up; with the defaults, the pat
 of N1 for every move to one of a hold's 8 nearest holds. It only steers the moving ball; the rest of the body can still
 touch.
 
+**Keeping the body off the cups** (`intrusion`). Every cup is in a thin layer in front of the wall: from the wall
+face (y = 0) to `CUP_FRONT` = −43 mm, the front of the organisers' sim's cup. The body is pushed out of it at every
+sample, midpoint and static pose, through the 8 corners of a box around each part (`robot_model.keep_out_points`: 20
+parts, 160 corners, from the visual meshes of Microban's MJCF):
+
+```
+intrusion(q) = Σ over the corners  max(0, y(corner) − (CUP_FRONT − cup_clearance))²
+```
+
+A corner `cup_clearance` (5 mm) or more in front of the cups costs nothing; one further in costs the square of how far.
+A box contains its part, so with its corners out, the whole part is out: no collision checks, wherever the cups are.
+A forearm's or foot's box leaves out its hook and ball end (within `BALL_ZONE` = 50 mm of the ball), which must go into
+the cup. The boxes are 2–5 mm larger than the head and arms along y, up to 24 mm for the trunk. It is a cost, not a
+constraint: as 4,000 constraints (1,916 → 5,916 per move), the first move of N2 did not solve in 5 minutes. As a cost,
+the solver may still accept a small intrusion where that saves a lot of torque.
+
+**Hooks from above** (`hook_tilt`). The ball must go into its cup from above, so the hook above it must point up:
+the hands' hooks are straight shafts along the forearm, the feet's a short stub above the ball (`robot_model.hook_axes`,
+measured on the meshes between the ball's surface and 30 mm from its centre). With `u` a hook's direction in the wall
+frame:
+
+```
+hook_tilt(q) = Σ over the four limbs  max(0, hook_up − u_z)²        hook_up = 0.5: at most 60° from up
+```
+
+The organisers' own hanging pose (`reset_hanging`, N2) costs nothing (hands 51° from up, feet 11°). Without it, the
+solved hands lay flat into the cups from the front (82° from up) or came from below them.
+
 **The static pose** (`static_pose_problem`) is the same with one sample and all four balls held, and the cost
-`w_tau ||tau||² + w_stay ||dq||² + posture(q)` (`w_stay` keeps it near its guess). Besides the start pose, it gives each
+`w_tau ||tau||² + w_stay ||dq||² + posture(q) + w_keep_out · intrusion(q) + w_hook · hook_tilt(q)` (`w_stay` keeps it near its guess). Besides the start pose, it gives each
 move its starting guess: phase A stays put, then a straight line to the static pose of the next stance.
 
 If a move fails, it is solved once with half the samples and no midpoints, and the full solve starts again from that
@@ -100,7 +130,7 @@ uv run mjpython tests/test_optimiser.py PLAN --save   # the same, and save build
 uv run mjpython tests/test_optimiser.py PLAN --replay # play the saved one, without solving
 ```
 - `PLAN` defaults to `build/plan_N1.json`. `--samples N` changes the number of samples; `--swing W` sets the swing
-  path's weight (`w_swing`, default 5000; 0 turns it off); `--headless` runs without a window; `--send PI` also sends each solved move to
+  path's weight (`w_swing`, default 5000; 0 turns it off); `--keep-out W` sets the keep-out's weight (`w_keep_out`, default 20000; 0 turns it off); `--hook W` sets the hooks' (`w_hook`, default 10; 0 turns it off); `--headless` runs without a window; `--send PI` also sends each solved move to
   the robot.
 - The playback shows the planned poses exactly (no physics). The next move is solved while the current one plays.
 - The saved file's `positions` are what the robot executes; `planned_positions` and `trunk_poses` are the planned
@@ -133,6 +163,8 @@ the move, IPOPT's status and the largest constraint violation.
 | `midpoints`, `midpoint_play` | on, 1 mm | without them, +8 % torque and 4 mm ball drift between samples [Ours] |
 | `w_swing` | 5000 | not yet tuned [Ours] |
 | `swing_lift`, `swing_out`, `swing_vertical` | 25 mm, 40 mm, 0.25 | clear of every cup on N1 by ≥ 7.7 mm (above) [Ours] |
+| `w_hook`, `hook_up` | 10, 0.5 (60° from up) | on N2, a too flat hook cost ~1.7 per pose against ~0.075 of torque; not tuned [Ours] |
+| `w_keep_out`, `cup_clearance` | 20000, 5 mm | a corner 1 cm past the limit costs about a whole move's torque (~2 on N2); not tuned further [Ours]; `CUP_FRONT` from the organisers' sim |
 | `phase_a_duration`, `phase_b_duration` | 1 s, 2 s | [Ours] |
 | `ipopt` | `tol` 1e-6, `max_iter` 150 (continued up to ~1000), `mu_init` 1e-3 | [Ours] |
 
@@ -140,8 +172,9 @@ The kinematics are written in CasADi from the URDF, not with `pinocchio.casadi` 
 tests check them against Pinocchio to machine precision.
 
 ## Known limitations
-- **No collisions.** A motion can pass a limb through a hold, the wall or the robot itself. The playback shows it; the
-  real robot would hit. The swing path keeps the moving ball away from them, but not the other links.
+- **No collision model.** The body is pushed out of the cups' layer and the swing path steers the moving ball, both
+  as costs (not guaranteed), and the hooks next to a held ball (within 50 mm of it) may still touch a cup, and the robot is not checked against itself.
+  The playback shows it; the real robot would hit.
 - **Quasi-static.** No inertia: slow motion is assumed, and the phase durations are chosen, not optimised.
 - **Our contact model.** The holds push only upwards (+z), within friction 0.8; the real socket may hold more.
 - **Not yet measured on the climbing model.** Earlier numbers (e.g. a hand could not reach up from 300 mm above the

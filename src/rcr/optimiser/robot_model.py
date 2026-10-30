@@ -2,7 +2,8 @@
 
 The URDF (microban_model, climbing variant: rcr.robot.microban) is read as is, never edited or
 copied. Its climbing forearms and feet end in balls, the limbs' contact points, found from
-rcr.robot.hooks (as in the sim).
+rcr.robot.hooks (as in the sim). The body's shape, for keeping it off the cups, comes from the
+visual meshes of the model's MJCF (keep_out_points).
 
 Configuration q (NQ = 26), the same layout as the sim's MuJoCo qpos:
     q[0:3]   trunk position in the wall frame [m]
@@ -24,7 +25,7 @@ from pathlib import Path
 import casadi as ca
 import numpy as np
 
-from rcr.robot import microban
+from rcr.robot import hooks, microban
 from rcr.robot.hooks import HOOKS, ball_centre
 from rcr.types import LIMBS, MICROBAN_JOINTS
 
@@ -242,6 +243,74 @@ def difference(q0: np.ndarray, q1: np.ndarray) -> np.ndarray:
     return np.concatenate([v, omega, np.asarray(q1[7:]) - np.asarray(q0[7:])])
 
 
+# --- The body's shape, for keeping it off the cups ----------------------------------------------
+
+# [m] around each ball, the part of its forearm or foot (the hook, the ball) that may go into a
+# cup; beyond it, the rest of the limb is kept out (the forearm reaches 88 mm from its ball, the
+# foot's sole plate 115 mm) [Ours]
+BALL_ZONE = 0.05
+
+
+# [m] the hook's shaft: the part of a forearm or foot this far from its ball (beyond the ball's
+# surface), whose direction is the hook's (hook_axes) [Ours]
+HOOK_SHAFT = 0.03
+
+
+@lru_cache(maxsize=1)
+def link_shapes() -> dict[str, np.ndarray]:
+    """link -> Nx3 points of its drawn shape in the link frame: the vertices of the visual meshes
+    of Microban's MJCF, whose bodies are the URDF's links (checked to 1e-8 m)."""
+    import mujoco  # with the organisers' simulator, which the optimiser needs anyway
+
+    m = mujoco.MjModel.from_xml_path(str(microban.mjcf_path()))
+    shapes = {}
+    for body in range(1, m.nbody):
+        shape = []
+        for g in np.flatnonzero((m.geom_bodyid == body) & (m.geom_group == 2)):
+            if m.geom_type[g] != mujoco.mjtGeom.mjGEOM_MESH:
+                continue
+            mesh = m.geom_dataid[g]
+            start, count = m.mesh_vertadr[mesh], m.mesh_vertnum[mesh]
+            rotation = np.zeros(9)
+            mujoco.mju_quat2Mat(rotation, m.geom_quat[g])
+            shape.append(
+                m.mesh_vert[start : start + count] @ rotation.reshape(3, 3).T + m.geom_pos[g]
+            )
+        if shape:
+            shapes[mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_BODY, body)] = np.vstack(shape)
+    return shapes
+
+
+@lru_cache(maxsize=1)
+def keep_out_points() -> list[tuple[str, np.ndarray]]:
+    """(link, point in the link frame): the 8 corners of a box around each link's shape
+    (link_shapes), without the part of a forearm or foot within BALL_ZONE of its ball. A box
+    contains its shape, so with all 8 corners on one side of a plane, the whole link is."""
+    balls = {hook.link: ball_centre(hook) for hook in HOOKS.values()}
+    points = []
+    for link, shape in link_shapes().items():
+        if link in balls:
+            shape = shape[np.linalg.norm(shape - balls[link], axis=1) > BALL_ZONE]
+        low, high = shape.min(axis=0), shape.max(axis=0)
+        points += [(link, np.where([i & 1, i & 2, i & 4], high, low)) for i in range(8)]
+    return points
+
+
+@lru_cache(maxsize=1)
+def hook_axes() -> dict[str, np.ndarray]:
+    """limb -> unit vector in its link's frame, from its ball along its hook: towards the middle
+    of the shape between the ball's surface and HOOK_SHAFT from its centre. The hands' hooks are
+    straight shafts along the forearm (-x right, +x left); the feet's, a stub along +y."""
+    axes = {}
+    for limb, hook in HOOKS.items():
+        shape, centre = link_shapes()[hook.link], ball_centre(hook)
+        distance = np.linalg.norm(shape - centre, axis=1)
+        shaft = shape[(distance > hooks.BALL_RADIUS + 0.002) & (distance < HOOK_SHAFT)]
+        axis = shaft.mean(axis=0) - centre
+        axes[limb] = axis / np.linalg.norm(axis)
+    return axes
+
+
 # --- The model ----------------------------------------------------------------------------------
 
 
@@ -250,6 +319,8 @@ class RobotModel:
     """CasADi functions of the robot. Each takes q (NQ); see the module docstring.
 
     limb_positions(q) -> 3x4   ball centres [m], one column per limb in rcr.types.LIMBS order
+    body_points(q) -> 3xP      the corners of the body's boxes [m] (keep_out_points)
+    hook_directions(q) -> 3x4  each limb's hook direction, a unit vector (hook_axes), LIMBS order
     limb_jacobians(q) -> 3x76  d(ball centre)/d(motor angles), the four 3x19 blocks side by side
     com(q) -> 3                centre of mass [m]
     gravity_torques(q) -> 19   motor torques [N·m] that hold the robot against gravity alone
@@ -257,6 +328,8 @@ class RobotModel:
     """
 
     limb_positions: ca.Function
+    body_points: ca.Function
+    hook_directions: ca.Function
     limb_jacobians: ca.Function
     com: ca.Function
     gravity_torques: ca.Function
@@ -295,6 +368,10 @@ def load_robot_model() -> RobotModel:
     mass = sum(m for m, _, _ in point_masses)
     com = sum(m * (poses[n][0] + poses[n][1] @ p) for m, p, n in point_masses) / mass
 
+    points = ca.horzcat(*[poses[link][0] + poses[link][1] @ p for link, p in keep_out_points()])
+    axes = hook_axes()
+    hook_dirs = ca.horzcat(*[poses[HOOKS[limb].link][1] @ axes[limb] for limb in LIMBS])
+
     angles = q[7:]
     jacobians = ca.horzcat(*[ca.jacobian(limb_positions[:, i], angles) for i in range(4)])
     gravity = mass * GRAVITY * ca.jacobian(com[2], angles).T  # d(potential energy)/d(angles)
@@ -302,6 +379,8 @@ def load_robot_model() -> RobotModel:
     dq = ca.SX.sym("dq", NV)
     return RobotModel(
         limb_positions=ca.Function("limb_positions", [q], [limb_positions]),
+        body_points=ca.Function("body_points", [q], [points]),
+        hook_directions=ca.Function("hook_directions", [q], [hook_dirs]),
         limb_jacobians=ca.Function("limb_jacobians", [q], [jacobians]),
         com=ca.Function("com", [q], [com]),
         gravity_torques=ca.Function("gravity_torques", [q], [gravity]),
