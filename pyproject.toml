@@ -15,8 +15,8 @@ dependencies = [
 # Microban dev_v2 and the organisers' simulator use; pinned below to the same commit [Microban]
 # sim: the organisers' simulator (third_party/simulator, climbing_sim), with Rhoban's robot sim
 sim = ["climbing-sim", "microban-model"]
-perception = [] # e.g. opencv (ArUco)
-dev = ["pytest", "ruff"]
+perception = ["opencv-contrib-python-headless>=4.10"]
+dev = ["pytest", "ruff", "opencv-contrib-python-headless>=4.10"]
 optimiser = [
     "microban-model",
     "climbing-sim",  # the hold mesh and its placement, from the organisers' simulator

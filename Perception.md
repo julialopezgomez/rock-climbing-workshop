@@ -1,4 +1,4 @@
-# Code Template to potentially run 
+# Code Template to use AruCo 
 
 ```
 from pathlib import Path
