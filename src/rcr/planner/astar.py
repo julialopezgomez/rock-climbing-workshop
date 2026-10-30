@@ -128,7 +128,7 @@ MIN_APART = 0.9  # two balls at least this fraction of their roots' distance apa
 MAX_APART = 0.55  # and at most this fraction of their reaches + roots' distance [Ours]
 # [m] most one hand is above the other, and one foot above the other [Ours]: the example
 # plan the optimiser solved has up to 0.195 m (hands) and 0.135 m (feet)
-MAX_LEVEL = 0.15
+MAX_LEVEL = 0.11
 
 Q_HANG = pin.neutral(model)
 for name, angle in json.loads(HANG.read_text())["joints"].items():
