@@ -144,5 +144,6 @@
     "All retained robot profiles require measured joints",
     "No public-generator seed recovery in this version; no source-exact claim",
     "Full datasets and historical alternatives remain outside this compact branch"
-  ]
+  ],
+  "physical_rgb_followup": "real_images_verification.json"
 }

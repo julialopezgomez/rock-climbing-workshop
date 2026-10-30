@@ -9,6 +9,7 @@ The full experiments, alternative models and detailed report remain on
 | Stereo holds to challenge JSON | RGB proposals → four-mesh dual-view CAD fitting → support and collision recovery | Stereo PNG and declared camera/wall calibration |
 | Robot pose from saved frames | Microban keypoints → configured M3T → protected CAD refinement and partial-boundary fallback (`max`) | Two RGB frames, calibration metadata, all 19 measured joints and timestamps |
 | Continuous robot/cup perception | Persistent M3T + dense RGB cup map + bounded socket correction (`fast`) | Two calibrated RGB streams and synchronized measured joints |
+| Real recording review, experimental | Hole-lattice camera localization → cup CAD fitting → SAM 3 masks → rigid-trunk fitting | Four RGB bags; declared board/grid geometry; optional isolated SAM 3 and robot environments |
 
 One trained landmark checkpoint, two hold fixtures and one robot fixture are kept.
 Image-only robot estimation, robot-marker baselines, experiment sweeps, training
@@ -147,6 +148,15 @@ the rotation threshold. Small images, partial visibility and uncertain volume
 faces still cause missing or misplaced instances.
 
 ## Connect two RGB cameras
+
+### Process the supplied real recordings
+
+The separate [real-image workflow](REAL_IMAGES.md) reads the four `.bag` files
+directly, estimates camera placement from the perforated board and saves cup
+maps, an experimental rigid-trunk hypothesis, overlays, HTML and a LaTeX/PDF report.
+It uses RGB only. The four-type synthetic hold estimator above remains separate.
+
+### Capture and calibrate a live pair
 
 Only RealSense color streams are enabled; no depth or infrared enters inference.
 

@@ -20,8 +20,8 @@ import numpy as np
 
 from rcr.perception.challenge.src.calibration import (
     CalibrationError,
-    calibrate_wall_corners,
     calibrate_wall_corner_squares,
+    calibrate_wall_corners,
     detect_wall_texture_core,
     project_wall,
 )
@@ -112,12 +112,8 @@ def process_image(entry: dict, output_dir: Path) -> dict:
     overlay = bgr.copy()
     texture_bbox = None
     try:
-        texture_mask, texture_bbox = detect_wall_texture_core(
-            cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
-        )
-        contours, _ = cv2.findContours(
-            texture_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
-        )
+        texture_mask, texture_bbox = detect_wall_texture_core(cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB))
+        contours, _ = cv2.findContours(texture_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cv2.drawContours(overlay, contours, -1, (255, 255, 0), 2)
     except CalibrationError:
         pass
@@ -158,9 +154,7 @@ def process_image(entry: dict, output_dir: Path) -> dict:
         col, row = int(hole["col"]), int(hole["row"])
         if not (0 <= col < 52 and 0 <= row < 93):
             raise ValueError(f"hole index outside 52 x 93 grid: ({col}, {row})")
-        xyz = np.array(
-            [[GRID_MARGIN_X + col * GRID_PITCH, GRID_MARGIN_Z + row * GRID_PITCH, 0]]
-        )
+        xyz = np.array([[GRID_MARGIN_X + col * GRID_PITCH, GRID_MARGIN_Z + row * GRID_PITCH, 0]])
         expected = project_wall(xyz, K, T, distortion)[0]
         measured = np.asarray(hole["pixel"], dtype=float)
         error = float(np.linalg.norm(expected - measured))
@@ -229,9 +223,7 @@ def process_image(entry: dict, output_dir: Path) -> dict:
         float(camera_challenge[1]),
     ]
     hole_rms = (
-        float(np.sqrt(np.mean([check["error_px"] ** 2 for check in checks])))
-        if checks
-        else None
+        float(np.sqrt(np.mean([check["error_px"] ** 2 for check in checks]))) if checks else None
     )
     return {
         "image": str(path),

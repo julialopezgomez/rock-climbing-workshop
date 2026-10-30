@@ -335,9 +335,7 @@ def calibrate_wall_corner_squares(
         image_points.extend(squares[role])
     obj = np.asarray(object_points, np.float64)
     img = np.asarray(image_points, np.float64)
-    success, rvecs, tvecs, _ = cv2.solvePnPGeneric(
-        obj, img, K, distortion, flags=cv2.SOLVEPNP_IPPE
-    )
+    success, rvecs, tvecs, _ = cv2.solvePnPGeneric(obj, img, K, distortion, flags=cv2.SOLVEPNP_IPPE)
     if not success:
         raise CalibrationError("corner-square PnP failed")
     candidates = []
@@ -392,9 +390,10 @@ def calibrate_wall_corners(
         raise ValueError("image and wall dimensions must be positive")
     if np.any(corners < 0) or np.any(corners[:, 0] >= width) or np.any(corners[:, 1] >= height):
         raise CalibrationError("board corners must lie inside the image")
-    if not cv2.isContourConvex(corners.astype(np.float32)) or cv2.contourArea(
-        corners.astype(np.float32)
-    ) < width * height * 0.01:
+    if (
+        not cv2.isContourConvex(corners.astype(np.float32))
+        or cv2.contourArea(corners.astype(np.float32)) < width * height * 0.01
+    ):
         raise CalibrationError("board corners must form a sizable convex quadrilateral")
     distortion = np.zeros(5) if distortion is None else np.asarray(distortion, np.float64)
     obj = np.array(

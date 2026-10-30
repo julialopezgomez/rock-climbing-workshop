@@ -7,8 +7,8 @@ cv2 = pytest.importorskip("cv2")
 
 from rcr.perception.challenge.src.calibration import (  # noqa: E402
     CalibrationError,
-    calibrate_wall_corners,
     calibrate_wall_corner_squares,
+    calibrate_wall_corners,
     detect_wall_corner_squares,
     detect_wall_texture_core,
 )
@@ -75,8 +75,6 @@ def test_detects_four_corner_squares_without_decoding_ids():
 
     K = np.array([[600.0, 0, 320], [0, 600, 240], [0, 0, 1]])
     calibration, _ = calibrate_wall_corner_squares(image, K)
-    np.testing.assert_allclose(
-        calibration.camera_position_wall_m, [0.233, 0.7, 2.0], atol=0.03
-    )
+    np.testing.assert_allclose(calibration.camera_position_wall_m, [0.233, 0.7, 2.0], atol=0.03)
     assert calibration.reprojection_rms_px < 2.0
     assert calibration.marker_ids == []

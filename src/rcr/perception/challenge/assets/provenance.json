@@ -46,5 +46,16 @@
     "src/rcr/perception/challenge/src/rcr_exact_fit.py": "3c47cade920368aa8ce15187c9c3076cd7f8c2c36fd7e02c743f2de01527b275",
     "src/rcr/perception/challenge/src/rcr_methods.py": "5490cf21e167e2b9020664921f271877fb27d41ffde48b1e35093bc7a0cfb347",
     "src/rcr/perception/challenge/src/rcr_native_geometry.py": "393ccd81197d6ecec653d98252f253df447e79fd4b484fefcad7e8c5741f5882"
+  },
+  "physical_runtime_sha256": {
+    "src/rcr/perception/challenge/physical_calibration.py": "4ce1126f701171eec5357d272fb4fd960df4f8dcd47921b5d4cb0e2099e8e05b",
+    "src/rcr/perception/challenge/physical_frontends.py": "3d2babd2d3248ee5a87a0fbe60d75d6fd37f387684ff9f7a1362a98e8d0d06c3",
+    "src/rcr/perception/challenge/physical_mapping.py": "4648455d037e563213196f1d2f83e81cc0e3ae08385c9aa5a8ddf007cbfda092",
+    "src/rcr/perception/challenge/physical_report.py": "b4c62ea4ebbc35c4e23b27231d4ab6cd01c1c26782f5a9030eff2430600bae16",
+    "src/rcr/perception/challenge/physical_robot.py": "814e2461d2bf1a9147e15094db6017553fd19a07f3b5032047b778e0c2438db7",
+    "src/rcr/perception/challenge/physical_run.py": "0c27f79052e26e680e1a941a938c4f055aada2f0f07991faa448b9bf0f154d30",
+    "src/rcr/perception/challenge/physical_trunk.py": "d59958e0e4ff4c6049d98d95a4e4af3188a9b7d39ed89645458bda904c594d7b",
+    "src/rcr/perception/challenge/real_recordings.py": "7ad062cf7ff18a8621fdfd44e631fa49cb3cbc10e65ae030ad336591cfc8cba0",
+    "scripts/perception/process_recordings.py": "5f98ac13183c4667f730ca81f14df81520b767cc4cf2d708ba86cf54a2184ef4"
   }
 }

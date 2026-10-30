@@ -1,0 +1,287 @@
+{
+  "date_utc": "2026-10-30T19:19:03.071397+00:00",
+  "source_archive_sha256": "699b07403d99b19860aa21aba95875199483ce21745a8904f06d27551864381d",
+  "scope": "One real scene, four independent RGB recordings. Diagnostic support and repeatability only; no surveyed accuracy reference.",
+  "geometry": {
+    "wall_width_m": 0.8,
+    "wall_height_m": 1.4,
+    "hole_pitch_m": 0.015,
+    "first_hole_left_m": 0.01,
+    "first_hole_top_m": 0.01
+  },
+  "metric_origin_verified": false,
+  "cameras": {
+    "l_without_rob": {
+      "camera_position_wall_m": [
+        -0.4546047983087557,
+        0.8180585199501466,
+        1.6237552818822123
+      ],
+      "reprojection_rms_px": 0.449174469805724,
+      "inliers": 3071,
+      "repeatability": {
+        "records": [
+          {
+            "filename": "frame_0009.png",
+            "position_difference_mm": 2.06698802929281,
+            "rotation_difference_deg": 0.05752296386881989,
+            "reprojection_rms_px": 0.403384187558455
+          },
+          {
+            "filename": "frame_0018.png",
+            "position_difference_mm": 1.0796073200538872,
+            "rotation_difference_deg": 0.023843504425737003,
+            "reprojection_rms_px": 0.4335868991600642
+          },
+          {
+            "filename": "frame_0027.png",
+            "position_difference_mm": 3.4561783813793148,
+            "rotation_difference_deg": 0.10562768926006114,
+            "reprojection_rms_px": 0.38075130762514575
+          }
+        ],
+        "scope": "Within-recording repeatability with first-frame lattice indexing; not absolute accuracy"
+      }
+    },
+    "r_without_rob": {
+      "camera_position_wall_m": [
+        1.003152499534106,
+        1.0682942149033638,
+        1.4600408917496863
+      ],
+      "reprojection_rms_px": 0.7778967044262893,
+      "inliers": 2540,
+      "repeatability": {
+        "records": [
+          {
+            "filename": "frame_0008.png",
+            "position_difference_mm": 1.6136433827326955,
+            "rotation_difference_deg": 0.05941391065335056,
+            "reprojection_rms_px": 0.7874688162008939
+          },
+          {
+            "filename": "frame_0016.png",
+            "position_difference_mm": 1.8302995614623279,
+            "rotation_difference_deg": 0.06757549232816171,
+            "reprojection_rms_px": 0.7731382365111397
+          },
+          {
+            "filename": "frame_0024.png",
+            "position_difference_mm": 1.9890388195227033,
+            "rotation_difference_deg": 0.06753812143492585,
+            "reprojection_rms_px": 0.761984784230064
+          }
+        ],
+        "scope": "Within-recording repeatability with first-frame lattice indexing; not absolute accuracy"
+      }
+    },
+    "l_with_rob": {
+      "camera_position_wall_m": [
+        -0.45543135615641356,
+        0.8214085072718816,
+        1.624131733686582
+      ],
+      "reprojection_rms_px": 0.4961079414832613,
+      "inliers": 2603,
+      "repeatability": {
+        "records": [
+          {
+            "filename": "frame_0005.png",
+            "position_difference_mm": 0.7864172133536201,
+            "rotation_difference_deg": 0.025380134481102483,
+            "reprojection_rms_px": 0.47871373589526656
+          },
+          {
+            "filename": "frame_0010.png",
+            "position_difference_mm": 0.31075099242346266,
+            "rotation_difference_deg": 0.007973118889566075,
+            "reprojection_rms_px": 0.4886632355726789
+          },
+          {
+            "filename": "frame_0015.png",
+            "position_difference_mm": 1.2643756070355414,
+            "rotation_difference_deg": 0.03949520038483468,
+            "reprojection_rms_px": 0.48213210035199916
+          }
+        ],
+        "scope": "Within-recording repeatability with first-frame lattice indexing; not absolute accuracy"
+      }
+    },
+    "r_with_rob": {
+      "camera_position_wall_m": [
+        1.0602657178666821,
+        0.8952352150785695,
+        1.6318702515444465
+      ],
+      "reprojection_rms_px": 0.39084196873868976,
+      "inliers": 2572,
+      "repeatability": {
+        "records": [
+          {
+            "filename": "frame_0004.png",
+            "position_difference_mm": 4.128825263616982,
+            "rotation_difference_deg": 0.13104222219478368,
+            "reprojection_rms_px": 0.49709635066303065
+          },
+          {
+            "filename": "frame_0009.png",
+            "position_difference_mm": 1.5160561603783913,
+            "rotation_difference_deg": 0.04875082083418639,
+            "reprojection_rms_px": 0.3992006698338859
+          },
+          {
+            "filename": "frame_0014.png",
+            "position_difference_mm": 0.9486888175497293,
+            "rotation_difference_deg": 0.032550344483119026,
+            "reprojection_rms_px": 0.41001600539647026
+          }
+        ],
+        "scope": "Within-recording repeatability with first-frame lattice indexing; not absolute accuracy"
+      }
+    }
+  },
+  "maps": {
+    "without_rob": {
+      "view_counts": [
+        61,
+        48
+      ],
+      "image_supported": 60,
+      "scope": "Image/CAD support counts; no reference hold map or accuracy measurement"
+    },
+    "with_rob": {
+      "view_counts": [
+        53,
+        46
+      ],
+      "image_supported": 52,
+      "scope": "Image/CAD support counts; no reference hold map or accuracy measurement"
+    }
+  },
+  "fused_map_count": 60,
+  "reobserved_cups": 51,
+  "capture_separation_s": {
+    "without_rob": 105.05553173828125,
+    "with_rob": 17.021149658203125
+  },
+  "root": {
+    "hypothesis_available": true,
+    "valid_for_control": false,
+    "method": "two-view rigid-trunk CAD with trimmed RGB boundary support",
+    "translation_m": [
+      0.46028053107295475,
+      0.5939605906945379,
+      0.08831355328775582
+    ],
+    "rotation_wxyz": [
+      0.37103300741104456,
+      -0.6244003401696785,
+      0.47565230717373946,
+      0.49619915889469635
+    ],
+    "image_loss": 1.5732435286045074,
+    "view_diagnostics": [
+      {
+        "loss": 2.354523181915283,
+        "unsupported_area_fraction": 0.015196564255037992
+      },
+      {
+        "loss": 0.7919638752937317,
+        "unsupported_area_fraction": 0.00388457269700333
+      }
+    ],
+    "mesh_sha256": "500947e73d242a110ccc62f004c248467a43b03498f684e5fc3671cfc5a353a6",
+    "robot_label_used": true,
+    "markerless": false,
+    "measured_joints_used": false,
+    "joints_estimated": false,
+    "endpoints_estimated": false,
+    "scope": "Experimental physical-image root hypothesis; no surveyed pose reference or synchronized capture",
+    "parent_frame": "provisional_board",
+    "child_frame": "trunk",
+    "quaternion_order": "WXYZ"
+  },
+  "keypoint_multiview_frontend_supported": false,
+  "sam3_records": [
+    {
+      "recording": "l_with_rob",
+      "score": 0.83984375,
+      "pixels": 10528
+    },
+    {
+      "recording": "r_with_rob",
+      "score": 0.8359375,
+      "pixels": 11189
+    }
+  ],
+  "configured_robot": {
+    "available": false,
+    "reason": "No measured joint-angle log supplied"
+  },
+  "valid_for_control": false,
+  "team_pose": null,
+  "tests": {
+    "isolated_perception_passed": 23,
+    "base_passed": 973,
+    "base_skipped": 5,
+    "scope": "19 existing/new recording checks plus four teammate wall-corner tests in the isolated environment"
+  },
+  "unchanged_frozen_four_type_hashes": true,
+  "runtime_sha256": {
+    "src/rcr/perception/challenge/physical_calibration.py": "4ce1126f701171eec5357d272fb4fd960df4f8dcd47921b5d4cb0e2099e8e05b",
+    "src/rcr/perception/challenge/physical_frontends.py": "3d2babd2d3248ee5a87a0fbe60d75d6fd37f387684ff9f7a1362a98e8d0d06c3",
+    "src/rcr/perception/challenge/physical_mapping.py": "4648455d037e563213196f1d2f83e81cc0e3ae08385c9aa5a8ddf007cbfda092",
+    "src/rcr/perception/challenge/physical_report.py": "b4c62ea4ebbc35c4e23b27231d4ab6cd01c1c26782f5a9030eff2430600bae16",
+    "src/rcr/perception/challenge/physical_robot.py": "814e2461d2bf1a9147e15094db6017553fd19a07f3b5032047b778e0c2438db7",
+    "src/rcr/perception/challenge/physical_run.py": "0c27f79052e26e680e1a941a938c4f055aada2f0f07991faa448b9bf0f154d30",
+    "src/rcr/perception/challenge/physical_trunk.py": "d59958e0e4ff4c6049d98d95a4e4af3188a9b7d39ed89645458bda904c594d7b",
+    "src/rcr/perception/challenge/real_recordings.py": "7ad062cf7ff18a8621fdfd44e631fa49cb3cbc10e65ae030ad336591cfc8cba0",
+    "scripts/perception/process_recordings.py": "5f98ac13183c4667f730ca81f14df81520b767cc4cf2d708ba86cf54a2184ef4"
+  },
+  "sam3_checkpoint_sha256": "9999e2341ceef5e136daa386eecb55cb414446a00ac2b55eb2dfd2f7c3cf8c9e",
+  "archive_entrypoint_verified": true,
+  "integrated_teammate_commit": "284d21b",
+  "original_calibration_functions_ast_unchanged": true,
+  "teammate_automatic_corner_probe": [
+    {
+      "recording": "l_with_rob",
+      "texture_bbox": [
+        535,
+        100,
+        238,
+        620
+      ],
+      "corner_square_error": "missing visible wall corner squares: ['TL', 'TR', 'BR', 'BL']"
+    },
+    {
+      "recording": "l_without_rob",
+      "texture_bbox": [
+        544,
+        101,
+        239,
+        619
+      ],
+      "corner_square_error": "missing visible wall corner squares: ['TL', 'TR', 'BR', 'BL']"
+    },
+    {
+      "recording": "r_with_rob",
+      "texture_bbox": [
+        331,
+        80,
+        367,
+        640
+      ],
+      "corner_square_error": "missing visible wall corner squares: ['TL', 'TR', 'BL']"
+    },
+    {
+      "recording": "r_without_rob",
+      "texture_bbox": [
+        538,
+        169,
+        303,
+        551
+      ],
+      "corner_square_error": "missing visible wall corner squares: ['TR', 'BR', 'BL']"
+    }
+  ]
+}
