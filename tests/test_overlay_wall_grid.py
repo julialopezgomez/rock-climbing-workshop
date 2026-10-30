@@ -14,7 +14,7 @@ sys.path.insert(0, str(SCRIPTS))
 spec = importlib.util.spec_from_file_location("overlay_wall_grid", SCRIPTS / "overlay_wall_grid.py")
 grid = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(grid)
-import robot_pose_aruco as pose
+pose = importlib.import_module("robot_pose_aruco")
 
 
 class WallGridTest(unittest.TestCase):

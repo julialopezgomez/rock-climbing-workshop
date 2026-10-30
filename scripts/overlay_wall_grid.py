@@ -20,9 +20,16 @@ import cv2
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from rcr.types import GRID_MARGIN_X, GRID_MARGIN_Z, GRID_PITCH, WALL_HEIGHT, WALL_WIDTH
 from capture_robot_pose import DEFAULT_CALIBRATION, load_calibration
-from robot_pose_aruco import MARKER_CENTRE, MARKER_SIZE, _wall_corners, detect_markers, estimate_robot_pose
+from robot_pose_aruco import (
+    MARKER_CENTRE,
+    MARKER_SIZE,
+    _wall_corners,
+    detect_markers,
+    estimate_robot_pose,
+)
+
+from rcr.types import GRID_MARGIN_X, GRID_MARGIN_Z, GRID_PITCH, WALL_HEIGHT, WALL_WIDTH
 
 
 def wall_homography(detections):
@@ -77,8 +84,10 @@ def annotate(image, homography):
     output = cv2.addWeighted(fine, 0.33, output, 0.67, 0)
     output = cv2.addWeighted(major, 0.62, output, 0.38, 0)
 
-    board = np.rint(project(homography, [[0, 0], [WALL_WIDTH, 0],
-                                           [WALL_WIDTH, WALL_HEIGHT], [0, WALL_HEIGHT]])).astype(int)
+    board = np.rint(
+        project(homography, [[0, 0], [WALL_WIDTH, 0],
+                             [WALL_WIDTH, WALL_HEIGHT], [0, WALL_HEIGHT]])
+    ).astype(int)
     cv2.polylines(output, [board], True, (0, 180, 255), 2, cv2.LINE_AA)
     origin = board[0]
     x_axis, z_axis = np.rint(project(homography, [[0.20, 0], [0, 0.20]])).astype(int)
@@ -151,7 +160,8 @@ def pose_report(paths, images, serials, calibrations, result, fits):
             f"Robot ID 5 black code is {MARKER_SIZE * 1000:g} mm square.",
             "Robot marker-to-trunk transform is the simulator mount in robot_pose_aruco.py.",
             "Wall marker geometry and board dimensions are those in robot_pose_aruco.py.",
-            "If two images are provided, they must show the same static robot pose; no synchronization is checked.",
+            "If two images are provided, they must show the same static robot pose; "
+            "no synchronization is checked.",
             "Reprojection residuals measure model consistency, not ground-truth pose error.",
         ],
     }
@@ -205,7 +215,8 @@ def main():
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--pose", action="store_true",
                         help="Estimate pose from one image, or prefer stereo with two images")
-    parser.add_argument("--pose-pairs", action="store_true", help="Estimate stereo pose from consecutive image pairs")
+    parser.add_argument("--pose-pairs", action="store_true",
+                        help="Estimate stereo pose from consecutive image pairs")
     parser.add_argument("--serials", nargs="+", metavar="SERIAL",
                         help="Assumed camera serials in image order")
     args = parser.parse_args()
