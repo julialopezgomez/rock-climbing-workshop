@@ -42,10 +42,10 @@ import time
 
 import numpy as np
 
-from rcr.optimiser.v0 import avoidance as av
-from rcr.optimiser.v0 import robot_model as rm
-from rcr.optimiser.v0 import transition as tr
-from rcr.optimiser.v0.move_cache import default_cache
+from rcr.optimiser import avoidance as av
+from rcr.optimiser import robot_model as rm
+from rcr.optimiser import transition as tr
+from rcr.optimiser.move_cache import default_cache
 from rcr.types import LIMBS, Feasibility, Stance, WallModel
 
 CHECKS = (

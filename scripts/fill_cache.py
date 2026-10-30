@@ -27,9 +27,9 @@ import numpy as np
 from climbing_sim.routes import generate_wall
 
 from rcr import walls
-from rcr.optimiser.v0 import edge_checks as fe
-from rcr.optimiser.v0 import move_cache as mc
-from rcr.optimiser.v0 import transition as tr
+from rcr.optimiser import edge_checks as fe
+from rcr.optimiser import move_cache as mc
+from rcr.optimiser import transition as tr
 from rcr.types import LIMBS, Stance, WallModel
 
 ORDER = ("right_hand", "left_hand", "right_foot", "left_foot")

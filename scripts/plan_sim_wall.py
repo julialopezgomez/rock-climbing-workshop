@@ -17,7 +17,7 @@ from climbing_sim import ClimbingSim, Wall
 from climbing_sim.routes import generate_wall
 from numpy.linalg import norm
 
-from rcr import io, optimiser
+from rcr import io, kinematics
 from rcr.planner import astar, feasible, plan
 from rcr.types import LIMBS, ContactPlan, Hold, Stance, Trajectory, WallModel
 
@@ -146,7 +146,7 @@ def main() -> None:
         show(sim_wall, wall, contact_plan)
     if (args.play or args.save_trajectory or args.save_npz) and len(contact_plan.stances) > 1:
         clock = time.perf_counter()
-        trajectory = optimiser.optimise(wall, contact_plan)
+        trajectory = kinematics.optimise(wall, contact_plan)
         seconds = time.perf_counter() - clock
         print(f"trajectory: {trajectory.times[-1]:.1f} s of motion, solved in {seconds:.1f} s")
         if args.save_trajectory:
@@ -155,7 +155,7 @@ def main() -> None:
             print(f"saved {args.save_trajectory}")
         if args.save_npz:
             Path(args.save_npz).parent.mkdir(parents=True, exist_ok=True)
-            optimiser.convert_trajectory_to_npz(trajectory, args.save_npz)
+            kinematics.convert_trajectory_to_npz(trajectory, args.save_npz)
             print(f"saved {args.save_npz}")
         if args.play:
             play(sim_wall, trajectory)

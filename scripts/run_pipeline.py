@@ -20,7 +20,7 @@ import typing
 from pathlib import Path
 from types import NoneType
 
-from rcr import controller, io, link, optimiser, perception, planner, robot
+from rcr import controller, io, kinematics, link, perception, planner, robot
 from rcr.types import (
     MICROBAN_JOINTS,
     ContactPlan,
@@ -119,7 +119,7 @@ def check() -> int:
     results = []
     wall, s = stage("perception.wall_model", perception.wall_model, WallModel, wall_ex, [])
     results.append(s)
-    plan, s = stage("planner.plan", planner.plan, ContactPlan, plan_ex, wall, optimiser.feasibility)
+    plan, s = stage("planner.plan", planner.plan, ContactPlan, plan_ex, wall, kinematics.feasibility)
     results.append(s)
     # The plan's first move only: a check of the stage, not the climb (the whole example takes an
     # hour on an empty move cache; tests/test_optimiser_v0.py PLAN solves and plays it) [Ours]
@@ -129,7 +129,7 @@ def check() -> int:
     else:
         first_move = ContactPlan(plan.wall_id, plan.stances[:2])
         traj, s = stage(
-            "optimiser.optimise", optimiser.optimise, Trajectory, traj_ex, wall, first_move
+            "optimiser.optimise", kinematics.optimise, Trajectory, traj_ex, wall, first_move
         )
     results.append(s)
     # Both ends of the link on this machine, over loopback: the real code, without the Pi

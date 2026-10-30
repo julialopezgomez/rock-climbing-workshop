@@ -49,7 +49,7 @@ except FileNotFoundError as missing:
     pytest.skip(str(missing), allow_module_level=True)
 
 from rcr import io  # noqa: E402
-from rcr.optimiser.v0 import (  # noqa: E402
+from rcr.optimiser import (  # noqa: E402
     SERVO_KP,
     feasibility,
     iter_plan,
@@ -60,12 +60,12 @@ from rcr.optimiser.v0 import (  # noqa: E402
     to_trajectory,
     validate_plan,
 )
-from rcr.optimiser.v0 import avoidance as av  # noqa: E402
-from rcr.optimiser.v0 import collision as col  # noqa: E402
-from rcr.optimiser.v0 import edge_checks as fe  # noqa: E402
-from rcr.optimiser.v0 import move_cache as mc  # noqa: E402
-from rcr.optimiser.v0 import robot_model as rm  # noqa: E402
-from rcr.optimiser.v0 import transition as tr  # noqa: E402
+from rcr.optimiser import avoidance as av  # noqa: E402
+from rcr.optimiser import collision as col  # noqa: E402
+from rcr.optimiser import edge_checks as fe  # noqa: E402
+from rcr.optimiser import move_cache as mc  # noqa: E402
+from rcr.optimiser import robot_model as rm  # noqa: E402
+from rcr.optimiser import transition as tr  # noqa: E402
 from rcr.robot import hooks  # noqa: E402
 from rcr.types import (  # noqa: E402
     GRID_PITCH,
@@ -613,7 +613,7 @@ def test_feasibility_answers_from_the_cache_and_stores_its_rejections(wall, tmp_
 
 
 def test_targets_are_preloaded_against_sag(results, wall):
-    from rcr.optimiser.v0 import to_trajectory
+    from rcr.optimiser import to_trajectory
 
     traj, r = to_trajectory(results, CFG), results[0]
     assert np.allclose(traj.positions[0], r.q[0][7:] + r.tau[0] / SERVO_KP)

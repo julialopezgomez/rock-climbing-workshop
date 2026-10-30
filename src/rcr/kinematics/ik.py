@@ -4,6 +4,7 @@ IK with an error correction (CLIK) [Ours, after the planner's astar.ik]. No torq
 """
 
 import json
+from math import comb
 from pathlib import Path
 
 import microban_model
@@ -127,17 +128,18 @@ def start_pose(wall: WallModel, stance: Stance):
 
 
 def ball_path(p_a, p_b):
-    """B(s), s in [0, 1]: a cubic Bezier from p_a to p_b that leaves p_a straight off the wall
-    (-y) and arrives at p_b from above and away from the wall.
-    The control points are p_a, p_a + away, p_b + away + up, p_b, with away = (0, -OUT, 0) and
-    up = (0, 0, ABOVE).
+    """B(s), s in [0, 1]: a Bezier from p_a to p_b, of degree len(P) - 1 (Bernstein weights, so
+    any number of control points). The control points are p_a, p_b + away, p_b + away + up,
+    p_b + up, p_b, with away = (0, -OUT, 0) and up = (0, 0, ABOVE): it leaves p_a towards the
+    point in front of socket b, and arrives at p_b straight down from above it.
     """
     away, up = np.array([0.0, -OUT, 0.0]), np.array([0.0, 0.0, ABOVE])
-    P = np.array([p_a, p_a + away, p_b + away + up, p_b])
-    weights = np.array([[1, -3, 3, -1], [0, 3, -6, 3], [0, 0, 3, -3], [0, 0, 0, 1]])
+    P = np.array([p_a, p_b + away, p_b + away + up, p_b + up, p_b])
+    n = len(P) - 1
+    weights = [comb(n, k) for k in range(n + 1)]
 
     def B(s):
-        return (weights @ [1.0, s, s * s, s**3]) @ P
+        return sum(weights[k] * s**k * (1 - s) ** (n - k) * P[k] for k in range(n + 1))
 
     return B
 

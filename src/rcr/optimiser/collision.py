@@ -39,7 +39,7 @@ import numpy as np
 from climbing_sim import scene as sim_scene
 from climbing_sim import wall as sim_wall
 
-from rcr.optimiser.v0 import robot_model as rm
+from rcr.optimiser import robot_model as rm
 from rcr.robot import hooks
 from rcr.types import Hold
 

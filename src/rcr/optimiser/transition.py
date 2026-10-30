@@ -43,10 +43,10 @@ from dataclasses import dataclass, field, replace
 import casadi as ca
 import numpy as np
 
-from rcr.optimiser.v0 import avoidance as av
-from rcr.optimiser.v0 import robot_model as rm
-from rcr.optimiser.v0.collision import HOLD_MESH_OFFSET, SOCKET_RADIUS, Clearance
-from rcr.optimiser.v0.robot_model import GRAVITY, NJ, NQ, NV, RobotModel, load_robot_model
+from rcr.optimiser import avoidance as av
+from rcr.optimiser import robot_model as rm
+from rcr.optimiser.collision import HOLD_MESH_OFFSET, SOCKET_RADIUS, Clearance
+from rcr.optimiser.robot_model import GRAVITY, NJ, NQ, NV, RobotModel, load_robot_model
 from rcr.robot import hooks
 from rcr.types import LIMBS, MICROBAN_JOINTS, Limb, Stance, WallModel
 
