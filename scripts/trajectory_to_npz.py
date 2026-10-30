@@ -6,13 +6,15 @@
 The input is a trajectory the optimiser saved (tests/test_optimiser.py --save, or
 src/rcr/optimiser/run.sh), with its planned motion (trunk_poses and planned_positions). The output:
 
-    q        T x 26  the planned configuration at each tick, as iktrajv0.npz: trunk position [m],
-                     trunk quaternion (w, x, y, z), the 19 joints [rad] in rcr.types.MICROBAN_JOINTS
-                     order (the optimiser's layout)
-    targets  T x 19  what the robot is sent at each tick: the joints pre-loaded against servo sag
-                     (the trajectory's `positions`), same order [rad]
-    times    T       [s] 0, 1/rate, 2/rate, ... up to the trajectory's end
-    rate     the rate [Hz]
+    q          T x 26  FOR THE ROBOT (Microban's move reads it): trunk position [m], trunk
+                       quaternion (w, x, y, z), then the 19 joint targets [rad] in
+                       rcr.types.MICROBAN_JOINTS order, pre-loaded against servo sag (the
+                       trajectory's `positions`: q_cmd = q + tau / kp), so the servos, sagging
+                       under load, end where planned. Without the pre-load, the robot sags.
+    q_planned  T x 26  the planned configuration itself (the joints without the pre-load), for
+                       comparing or playing in the sim; as iktrajv0.npz's q
+    times      T       [s] 0, 1/rate, 2/rate, ... up to the trajectory's end
+    rate       the rate [Hz]
 
 Between the saved samples: linear for the trunk position and the joints (as the controller and the
 sim's playback do), spherical (slerp) for the quaternion.
@@ -65,10 +67,13 @@ def resample(path: Path, rate: float) -> dict[str, np.ndarray]:
     def linear(rows):
         return (1 - s)[:, None] * rows[k] + s[:, None] * rows[k + 1]
 
-    q = np.hstack(
-        [linear(trunk[:, 0:3]), slerp(trunk[k, 3:7], trunk[k + 1, 3:7], s), linear(planned)]
-    )
-    return {"q": q, "targets": linear(sent), "times": ticks, "rate": np.array(rate)}
+    pose = np.hstack([linear(trunk[:, 0:3]), slerp(trunk[k, 3:7], trunk[k + 1, 3:7], s)])
+    return {
+        "q": np.hstack([pose, linear(sent)]),  # what the robot is sent
+        "q_planned": np.hstack([pose, linear(planned)]),
+        "times": ticks,
+        "rate": np.array(rate),
+    }
 
 
 def main() -> None:
