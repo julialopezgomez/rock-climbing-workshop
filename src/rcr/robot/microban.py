@@ -27,17 +27,17 @@ MODEL_COMMIT = "8e42ef7"  # microban_model, as pinned in pyproject.toml
 CLIMBER = True  # the climbing variant of the model (False: the walking one)
 
 
-def urdf_path() -> Path:
-    """The robot's URDF (climbing variant). Raises FileNotFoundError saying what to do."""
-    return _find("MICROBAN_URDF", "urdf")
+def urdf_path(climber: bool = CLIMBER) -> Path:
+    """The robot's URDF (climbing variant by default); raises FileNotFoundError if missing."""
+    return _find("MICROBAN_URDF", "urdf", climber)
 
 
-def mjcf_path() -> Path:
-    """The robot's MJCF (climbing variant). Raises FileNotFoundError saying what to do."""
-    return _find("MICROBAN_XML", "mjcf")
+def mjcf_path(climber: bool = CLIMBER) -> Path:
+    """The robot's MJCF (climbing variant by default); raises FileNotFoundError if missing."""
+    return _find("MICROBAN_XML", "mjcf", climber)
 
 
-def _find(variable: str, kind: str) -> Path:
+def _find(variable: str, kind: str, climber: bool) -> Path:
     if os.environ.get(variable):
         path = Path(os.environ[variable]).expanduser()
         if not path.exists():
@@ -50,7 +50,7 @@ def _find(variable: str, kind: str) -> Path:
             "the robot model (microban_model) is not installed: run `uv sync --group optimiser` "
             "(or --group sim); it needs git-lfs (brew install git-lfs && git lfs install)"
         ) from None
-    path = Path(getattr(microban_model, kind)(CLIMBER))
+    path = Path(getattr(microban_model, kind)(climber))
     if not path.exists():
         raise FileNotFoundError(f"microban_model has no {path}: git-lfs missing when installed?")
     return path

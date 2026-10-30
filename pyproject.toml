@@ -12,6 +12,8 @@ dependencies = [
     "microban-model",
     # the organisers' simulator (third_party/simulator): walls, and the MuJoCo viewer of a plan
     "climbing-sim",
+    # the browser viewer of rcr.controller.robot_replay (the robot as measured, and its target)
+    "viser",
 ]
 
 [dependency-groups]

@@ -1,7 +1,7 @@
 [submodule "third_party/microban"]
 	path = third_party/microban
-	url = https://github.com/Rhoban/microban.git
-	branch = dev_v2
+	url = https://github.com/Kotochleb/microban
+	branch = feature/expose-pid-params
 [submodule "third_party/simulator"]
 	path = third_party/simulator
 	url = https://github.com/rock-climbing-robots/simulator.git
