@@ -1,5 +1,5 @@
 {
-  "scope": "Selected hold, configured robot and persistent RGB cup paths; unused alternative implementations removed",
+  "scope": "Four-type image/geometry hold recovery; configured robot and persistent RGB cup paths retained",
   "source_sha256": {
     "perception.dense_cup_map": "40c8448515dedace04642ce540e36ace8483df05bb144ceb55298e2b458dd3fd",
     "perception.enhanced_live": "8d355da4bab5999d5996b09f009b04896362d89a328137980b2e990ac6f6f05c",
@@ -30,18 +30,21 @@
     "perception.src.calibration": "31c6bf8871a8acdfc206f2c7714850e769e3b83726992c409c952fc06f282cbd",
     "perception.src.camera_io": "7f8397a9e1fd717c45f71466d658aba7cd6ab046398e2d1dbcbfeaccdd84287f",
     "perception.src.geometric_holds": "42c33d0358d592c42d728a0498f93103d2023cc38faeb06e98d5c95d9181dab4",
-    "perception.src.live_estimator": "c78396004e75f1e7f0c6ad9f7486a93bf5846dad5e2538dc2dbacc99aa8a6df6",
-    "perception.src.rcr_candidate_filter": "df7c440ade96bc4ed09b32178c96315106de9e72682599d8458a51601cdcaa21",
-    "perception.src.rcr_contract": "4ba13323c78b45d4c756f721485f7af33cb4e79ef622dace2176538df83820c6",
-    "perception.src.rcr_exact_fit": "4a4622af16893bda0edc5d9dbb4369afec580c954eb19a58f4651eef35c61119",
-    "perception.src.rcr_hackathon": "94733f34f31ad061d2c081b972143c34bdcd9680e46c6795591e292cfa8438d5",
-    "perception.src.rcr_maxfit": "91c3c4f35d22ab23ae1630919acfce8769562a528ff21b91f78befc9f3c81c4c",
-    "perception.src.rcr_methods": "ad022a85f29dc47b15f866e4b0c5092952c0e855c4825c6aafd3638d90cf3824",
-    "perception.src.rcr_native_geometry": "351bccf986438d59a060ce6c83f21c838e04b650c8947f906500c72a826aa551",
-    "perception.src.rcr_seed_recovery": "c3b9dc1543f25b1d884ee6290493dbb4e5af514d4655c57e5151135be0e2df27"
+    "perception.src.live_estimator": "c78396004e75f1e7f0c6ad9f7486a93bf5846dad5e2538dc2dbacc99aa8a6df6"
   },
   "weights": {
     "assets/weights/body/best.pt": "204d78d9bf09229a1c36bedc58956223e909396aba084071e8ddac0958117e6c",
     "assets/weights/body/landmarks.json": "861e86a541349948db23c4cd3adbc03709fefe500d9e5113c52c181ab7c442bb"
+  },
+  "hold_source_commit": "51efe48b9765a0de7c3a4658a8b7bb781faf3459",
+  "hold_runtime_sha256": {
+    "src/rcr/perception/challenge/src/hold_constraints.py": "a4a2e048fccda88b1816cedd622dd0b42ec3dc2cb9bdb00ca67acd25e869e049",
+    "src/rcr/perception/challenge/src/hold_fit.py": "498d0159cd556b72cbb2b8f21089427ee537834f5852c3e6fb6655b73b6cd48a",
+    "src/rcr/perception/challenge/src/hold_geometry.py": "a181822e87afe470a3a203153609c6f4647e6751d3a15759f479edf27250624a",
+    "src/rcr/perception/challenge/src/hold_scene.py": "c634d04c5f38d8eca86c5ed97a05c35603a576c06bb30b09d4d805c4e8443c83",
+    "src/rcr/perception/challenge/src/rcr_contract.py": "158a0919a568668cd538392253d6d8d227f0d5f92e953b584f4d9009c4cd35bb",
+    "src/rcr/perception/challenge/src/rcr_exact_fit.py": "3c47cade920368aa8ce15187c9c3076cd7f8c2c36fd7e02c743f2de01527b275",
+    "src/rcr/perception/challenge/src/rcr_methods.py": "5490cf21e167e2b9020664921f271877fb27d41ffde48b1e35093bc7a0cfb347",
+    "src/rcr/perception/challenge/src/rcr_native_geometry.py": "393ccd81197d6ecec653d98252f253df447e79fd4b484fefcad7e8c5741f5882"
   }
 }

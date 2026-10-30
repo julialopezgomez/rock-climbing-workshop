@@ -6,32 +6,36 @@ The full experiments, alternative models and detailed report remain on
 
 | Task | Retained method | Required observations |
 |---|---|---|
-| Stereo holds to challenge JSON | RGB proposals → dual-view exact CAD fitting → verified public-generator recovery | Stereo PNG and supplied rig calibration |
+| Stereo holds to challenge JSON | RGB proposals → four-mesh dual-view CAD fitting → support and collision recovery | Stereo PNG and declared camera/wall calibration |
 | Robot pose from saved frames | Microban keypoints → configured M3T → protected CAD refinement and partial-boundary fallback (`max`) | Two RGB frames, calibration metadata, all 19 measured joints and timestamps |
 | Continuous robot/cup perception | Persistent M3T + dense RGB cup map + bounded socket correction (`fast`) | Two calibrated RGB streams and synchronized measured joints |
 
-One trained landmark checkpoint and one replay example per challenge are kept.
+One trained landmark checkpoint, two hold fixtures and one robot fixture are kept.
 Image-only robot estimation, robot-marker baselines, experiment sweeps, training
 code and result archives are excluded. The camera SDK, calibration, timing checks
 and team frame adapters remain.
 
 ## Install
 
-Linux x86-64, Python 3.12, Git/Git-LFS, C++ tools, EGL/OpenGL and CUDA 12.8 are
-required for the full runtime. The tested GPU is RTX 5000 Ada, compute capability
-8.9. Installation creates a private Python environment and resource cache.
+For hold inference, use Linux x86-64, Python 3.12 and working EGL/OpenGL drivers.
+MuJoCo renders the CAD hypotheses on the GPU; this path does not require Torch
+or a CUDA compiler. Installation creates a private environment and downloads four
+checksum-verified meshes. The tested GPU is RTX 5000 Ada.
 
 ```bash
-git submodule update --init
-python3.12 scripts/perception/setup.py --robot --cuda
+python3.12 scripts/perception/setup.py
 source .venv-perception/bin/activate
-python scripts/perception/run.py doctor --robot
+python scripts/perception/run.py doctor
 ```
 
+For robot tracking, additionally run `setup.py --robot`; this needs Git/Git-LFS,
+C++ tools and a compatible Torch/CUDA installation. `--cuda` checks the installed
+CUDA compiler; `--cuda-arch` selects the robot extension target (tested: 8.9).
+`setup.py --cameras` installs color-only RealSense capture support.
+
 The default cache is `~/.cache/rcr-perception`; set `RCR_PERCEPTION_HOME`
-consistently for setup and inference to change it. Use `--cuda-arch` during setup
-for another GPU. Dependencies still require several GB; trimming the repository
-does not eliminate Torch, CUDA or native build dependencies.
+consistently for setup and inference to change it. Robot dependencies require
+several GB. They are optional for the stereo hold challenge.
 
 A small clone can select only this branch:
 
@@ -43,7 +47,7 @@ git clone --depth 1 --single-branch --branch perception_challenge_best \
 ## Reproduce the included examples
 
 ```bash
-python scripts/perception/run.py reproduce --out outputs/perception/holds
+python scripts/perception/run.py reproduce --workers 2 --out outputs/perception/holds
 python scripts/perception/run.py replay \
   --dataset data/perception/robot --out outputs/perception/robot
 python scripts/perception/verify_replays.py \
@@ -51,7 +55,9 @@ python scripts/perception/verify_replays.py \
   --out outputs/perception/robot/verification.json
 ```
 
-`reproduce` checks the saved hold reference after inference. Robot references
+`reproduce` checks the saved hold reference after writing predictions. Its exit
+status reports whether inference and scoring completed; inspect `strict_poses`,
+matches, missed holds and false positives for accuracy. Robot references
 are read only by the separate scoring command. The default replay profile is
 `max`. Use `--input path/to/input.json` instead of `--dataset` for one packet.
 
@@ -65,10 +71,80 @@ python scripts/perception/run.py holds \
 `data/perception/holds/000000/calibration.json` documents the declared rig
 schema. The stereo PNG has equal-width left/right panels. Output `holds.json`
 uses CAD backplate anchors in metres and intrinsic XYZ Euler radians.
-Generator recovery applies only to untouched native scenes: ten Microban holds,
-zero to three volumes, released appearance/CAD and supplied rig calibration.
-Unverified recovery retains the independently fitted CAD result. This method
-is not calibrated for photographs or arbitrary edited scenes.
+Supported types are `cube_hold`, `microban_hold`, `sidepull_hold` and
+`fingerpocket_hold`. The mesh manifest pins the public source at
+[`51efe48`](https://github.com/jackybaltes/rcr-perception/tree/51efe48b9765a0de7c3a4658a8b7bb781faf3459).
+The source's `sidehpull_hold.stl` filename is intentional. Geometry uses Blender
+axis conversion, a centred backplate origin and metric dimensions.
+
+Set `wall_width_m` and `wall_height_m` in calibration; optional command-line
+`--wall-width` and `--wall-height` override them. The supplied scenes use a
+3 m × 1.4 m wall, not the former 0.8 m width. Tetrahedral volume base height is
+`min(0.1 * wall_width, wall_height)` unless `volume_base_height_m` is declared.
+Camera intrinsics/extrinsics must describe each actual stereo panel.
+
+### Supplied sample archives
+
+For the declared sample rig (64 mm baseline, 1 m distance, 0.7 m camera height,
+74° vertical field of view), prepare the two ZIP archives and run all cases:
+
+```bash
+python scripts/perception/prepare_samples.py \
+  --samples samples --out data/local/perception_samples
+python scripts/perception/run.py reproduce \
+  --dataset data/local/perception_samples --workers 4 \
+  --out outputs/perception/samples
+```
+
+The preparation script writes separate calibration and scoring files. Change its
+rig flags for images generated with other settings. It does not infer calibration
+from the labelled hold positions. `--only CASE_ID ...` selects a short rerun.
+
+### What the estimator does
+
+Color components provide stereo proposals. Each proposal is compared with all
+four CAD meshes at the three public yaw choices (0°, −45°, +45°). Flat RGB face
+regions estimate the volumes. Both cameras then constrain wall/volume support,
+translation and inclined-pose refinement. Fingerpocket candidates receive an
+additional stereo RGB consistency test using the candidate CAD-rendered depth.
+No sensor depth enters this test.
+
+The final recovery aligns volume-mounted backplates to their estimated support
+faces, applies the source's 1.73 mm clearance, and resolves convex-hull conflicts
+by moving the weaker fit along its support plane. Unresolved fits are rejected.
+This replaces the obsolete ten-Microban seed search. It does not reconstruct a
+random seed or claim source-exact output. The current proposals and geometry
+priors are specific to rendered challenge scenes; photographs need validation.
+
+Outputs are `image_holds.json` (raw image fits), `holds.json` (recovered poses),
+`prediction.json` (viewer scene envelope with estimated volumes) and `debug.json`
+(fit losses, geometry and recovery changes). Preserve the debug file when a
+viewer scene is accepted but the pose score is poor: those are separate checks.
+
+### Measured results
+
+The [benchmark record](benchmark.json) preserves all 40 per-scene summaries.
+Matching uses correct type and ≤50 mm position error; a strict pose additionally
+requires <5 mm and <15°. These are local diagnostics, not an official score.
+
+| Supplied 40 scenes, 1,200 holds | Typed matches | Strict poses | False positives | Viewer accepted |
+|---|---:|---:|---:|---:|
+| Frozen image fit | 1,160 | 999 | 7 | 23/40 |
+| Final support/hull recovery | 1,159 | 1,005 | 8 | 40/40 |
+
+Four scenes guided image-fit development; the other 36 were evaluated after
+freezing those files. The viewer compatibility correction was added after
+inspecting full-set validation failures. Final results are regression results,
+not a new blind test. The correction improves compatibility and some poses,
+while one former match moves outside the matching tolerance.
+
+The supplied archives contain 429 Microban, 349 Sidepull, 422 Fingerpocket and
+**zero Cube** holds. Three additional controls extend only the source sampler's
+type list to include Cube: 47/48 matches, 37/48 strict; Cube alone gives 11/12
+matches and 10/12 strict. These are separate synthetic controls. The dominant
+remaining error is Fingerpocket yaw; 141 matched holds are within 5 mm but fail
+the rotation threshold. Small images, partial visibility and uncertain volume
+faces still cause missing or misplaced instances.
 
 ## Connect two RGB cameras
 
@@ -136,3 +212,5 @@ GPU jobs wait for spare capacity and poll every 30 minutes while externally busy
 
 The [short PDF](perception_report.pdf) summarizes the retained paths.
 `bash docs/perception/build.sh` rebuilds it with standard LaTeX packages.
+After reproducing the two fixtures, `python scripts/perception/report_figures.py
+--predictions outputs/perception/holds` rebuilds the scoring overlays.

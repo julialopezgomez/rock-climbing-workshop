@@ -120,6 +120,8 @@ uv run scripts/wall_generator.py N1 N2 N3                 # their walls -> data/
 
 The [selected perception runtime](docs/perception/README.md) provides stereo
 hold JSON, configured robot pose, and persistent RGB robot/cup tracking.
-It includes one trained checkpoint, isolated setup and one example per challenge.
+It includes one trained checkpoint, isolated setup, two hold fixtures and one robot fixture.
+The stereo hold path supports all four challenge meshes and estimated volume geometry;
+source support and collision recovery replaces the old generator seed search.
 See the guide for reproduction and two-RealSense camera commands.
 The full experiment report and alternatives remain on `perception_challenge_full`.

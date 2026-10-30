@@ -4,107 +4,219 @@
 \usepackage{lmodern,graphicx,booktabs,tabularx,microtype}
 \usepackage[margin=25mm]{geometry}
 \usepackage[hidelinks]{hyperref}
-\hypersetup{pdftitle={Selected Perception Methods},pdfauthor={Ege Gursoy}}
+\hypersetup{pdftitle={Perception: Stereo Holds and Robot Pose},pdfauthor={Ege Gursoy}}
 \setlength{\emergencystretch}{2em}
-\title{Selected Perception Methods}
+\title{Perception: Stereo Holds and Robot Pose}
 \author{Ege Gursoy}
 \date{30 October 2026}
 \begin{document}
 \maketitle
-The \path{perception_challenge_best} branch retains the selected stereo hold
-estimator, configured robot estimator and persistent RGB robot/cup tracker.
-It contains one trained checkpoint, one example per challenge, isolated setup
-and camera calibration. Alternatives and historical experiments remain on
-\path{perception_challenge_full}. The command reference is
-\path{docs/perception/README.md}.
+The \path{perception_challenge_best} branch contains the selected hold estimator,
+robot estimator and RGB robot/cup tracker. The command reference is
+\path{docs/perception/README.md}; historical alternatives remain on
+\path{perception_challenge_full}.
 
-\section{Retained methods}
-\textbf{Stereo holds.} Color proposals initialize dual-view exact CAD fitting.
-A verified public-generator search can recover an untouched native layout;
-failed verification retains the independent CAD estimate. Input is a stereo
-PNG and declared rig calibration. Output is \texttt{holds.json}: CAD backplate
-anchors in metres, intrinsic XYZ Euler radians, hold type and color.
-Exact recovery assumes ten Microban holds, zero to three volumes and the
-released generator geometry/appearance. It does not apply to camera photographs.
+\section{Input, output and geometry}
+The image challenge provides a stereo RGB pair. The estimator returns each
+hold's type, color, backplate-anchor position in metres and intrinsic XYZ Euler
+orientation in radians. The scene frame has its origin at the wall's bottom
+centre: x points right, y up and z out. A mesh centre is different from its
+backplate anchor. These conventions determine the submission coordinates.
 
-\textbf{Saved robot frames.} A 20-point Microban network initializes the known
-joint configuration. M3T tracks the configured links; protected CAD refinement
-and a trimmed boundary fallback estimate the trunk transform. The selected
-\texttt{max} profile requires two RGB images, calibrated intrinsics, synchronized
-timestamps and all 19 measured joints. It does not reconstruct unknown joints.
+The updated public source supports Cube, Microban, Sidepull and Fingerpocket.
+We pin the four meshes and scene geometry to source commit
+\href{https://github.com/jackybaltes/rcr-perception/tree/51efe48b9765a0de7c3a4658a8b7bb781faf3459}{\texttt{51efe48}}.
+The supplied sample rig has a 3\,m by 1.4\,m wall, a 64\,mm stereo baseline,
+1\,m camera distance, 0.7\,m camera height and 74\textdegree\ vertical field of
+view. Each stereo panel is 699 by 318 pixels. These are declared inputs;
+labelled hold positions are never used to estimate camera calibration.
 
-\textbf{Continuous perception.} The \texttt{fast} profile retains persistent M3T,
-a dense RGB cup map and conditional socket correction. Candidate sockets must
-have image support and satisfy geometry gates. Socket proximity does not confirm
-seating or loading. Cup geometry and lattice priors require physical measurement.
+Wall width also changes the tetrahedral volumes. Their base height is
+\(\min(0.1w,h)\), where \(w,h\) are the wall dimensions. The supplied wall
+therefore uses a 0.3\,m base height. The former 0.8\,m wall and 0.08\,m volume
+assumptions displaced inclined support faces. We now use the declared wall
+size throughout rendering, fitting and JSON export.
+
+\section{Selected hold estimator}
+\paragraph{Find and pair instances.}
+Color components initialize hold proposals. Epipolar consistency and projection
+onto the known wall pair observations across cameras. The old 100\,mm clearance
+merge and narrow-instance gate were removed: the new scenes contain closer
+instances and wider Sidepull holds. Proposals still depend on the released
+rendered appearance.
+
+\paragraph{Fit all four meshes in both images.}
+For each proposal, the estimator renders all four normalized CAD meshes at the
+three public in-plane yaw choices: zero and plus/minus 45\textdegree.
+Candidate support surfaces are the wall and image-estimated volume faces.
+MuJoCo renders their silhouettes and occlusions; local optimization fits the
+candidate to both views. Promising inclined candidates receive translation and
+pose refinement. Flat face regions in RGB estimate the volumes, with hold
+pixels excluded from face refinement.
+
+Fingerpocket has weak silhouette differences between yaw choices. A second
+check compares stereo RGB correspondences predicted by each candidate's
+rendered depth. This is CAD hypothesis depth, not a depth-camera measurement.
+The check chooses between close silhouette fits only when the RGB evidence
+has a sufficient gap.
+
+\paragraph{Recover a compatible scene.}
+The previous ten-Microban generator search is removed. The replacement uses
+estimated geometry: align each volume-mounted backplate to its support face,
+apply the source's approximately 1.73\,mm clearance, and check quantized convex
+hulls for overlap. The weaker image fit moves tangentially to its support plane
+when a conflict occurs. Unresolved candidates are rejected. Diagnostics record
+all changes. This stage does not recover a random seed or claim exact source
+JSON.
 
 \begin{figure}[htbp]\centering
-\includegraphics[width=.48\linewidth]{figures/holds.jpg}\hfill
-\includegraphics[width=.48\linewidth]{figures/robot.jpg}
-\caption{The included stereo hold scene (left view) and configured robot scene
-(first camera). Inference uses both views. Saved examples are regression cases.}
+\includegraphics[width=.9\linewidth]{figures/holds.jpg}\\[3mm]
+\includegraphics[width=.9\linewidth]{figures/volumes.jpg}
+\caption{Left-view scoring overlays for the two retained fixtures: a controlled
+four-type scene including four Cubes (top), and a supplied three-volume scene
+(bottom). White crosses mark reference backplate anchors. Circles mark estimated
+anchors: green passes the local strict pose check; amber fails it. A correctly
+placed amber circle can indicate an orientation error. Inference uses both
+views; references are used only for scoring and this overlay.}
 \end{figure}
 
-\section{Install and reproduce}
-Use Linux x86-64, Python 3.12, Git/Git-LFS, C++ tools, EGL/OpenGL and CUDA 12.8.
-The tested GPU is RTX 5000 Ada, compute capability 8.9; change
-\texttt{--cuda-arch} during setup for another supported card.
+\section{Results and remaining errors}
+We evaluated all 40 supplied scenes, containing 1,200 holds. Matching requires
+the correct type and position error at most 50\,mm. A strict pose additionally
+requires position error below 5\,mm and rotation error below 15\textdegree,
+measured on SO(3). Missed holds remain in the denominator. These are local
+diagnostics; the repository does not supply an official weighted scorer.
+
+Four scenes guided image-fit development. We froze the image-fitting files
+before evaluating the remaining 36: these gave 1,041/1,080 matches and 896 strict
+poses. The source-clearance correction was added after observing scene-validator
+failures on the full set. Table~\ref{tab:results} therefore reports final
+regression results, not a fresh blind evaluation.
+
+\begin{table}[htbp]\centering
+\caption{All 40 supplied scenes, with 1,200 reference holds. Viewer acceptance
+checks scene compatibility and is separate from pose accuracy.}
+\label{tab:results}
+\begin{tabular}{lrrrr}\toprule
+Stage & Matches & Strict & False positives & Viewer accepted\\\midrule
+Frozen image fit & 1,160 & 999 & 7 & 23/40\\
+Support/hull recovery & 1,159 & 1,005 & 8 & 40/40\\\bottomrule
+\end{tabular}
+\end{table}
+
+The correction resolves volume overlaps and improves several inclined poses.
+It also moves one former match outside the position tolerance. We retain raw
+image predictions separately so this tradeoff remains inspectable.
+
+\begin{table}[htbp]\centering
+\caption{Final results by type in the supplied archives. Cube requires a
+separate control because it is absent from these archives.}
+\label{tab:types}
+\begin{tabular}{lrrr}\toprule
+Type & Reference holds & Matches & Strict poses\\\midrule
+Microban & 429 & 412 & 405\\
+Sidepull & 349 & 338 & 335\\
+Fingerpocket & 422 & 409 & 265\\
+Cube & 0 & --- & ---\\\bottomrule
+\end{tabular}
+\end{table}
+
+Orientation is the main remaining error. Among matched holds, 141 are within
+5\,mm but fail the rotation check. Table~\ref{tab:types} shows that Fingerpocket
+accounts for most strict-pose failures. At this image resolution, its similar
+yaw appearances remain ambiguous after silhouette and RGB refinement.
+Thirteen matched holds exceed 5\,mm position error. Partial visibility, missed
+components and uncertain volume faces also remain relevant; the current
+experiments do not isolate their individual contributions.
+
+The supplied generator's random type list currently excludes Cube, despite
+supporting its mesh. We generated three additional controls by extending only
+that list. Their renderer, collision rules and volume geometry were unchanged.
+Across 48 holds, the estimator gives 47 matches and 37 strict poses; the 12 Cube
+instances give 11 matches and 10 strict poses. All three scene envelopes pass
+the upstream validator. These controls are separate from the supplied data.
+
+\paragraph{What earlier trials established.}
+The initial mixed-type pilot retained CAD fitting because it produced 51/60
+matches and 45/60 strict poses on two scenes. None of its five volume-mounted
+holds passed the strict check, motivating the geometry update. The legacy
+sampler's assumptions were incompatible with the new source. Earlier
+FoundationPose, SAM-6D and stereo-network experiments remain on the full branch;
+they do not supply a 40-scene comparison against this updated estimator.
+Multiview CAD remains the deployed method. The new evaluation establishes its
+current performance, not superiority over unrun alternatives.
+
+\section{Run and inspect the implementation}
+Hold inference needs Linux x86-64, Python 3.12 and functioning EGL/OpenGL
+rendering. It does not require Torch or a CUDA compiler. Setup downloads the
+four pinned, checksum-verified meshes into a private cache.
 \begin{verbatim}
-git submodule update --init
-python3.12 scripts/perception/setup.py --robot --cuda
+python3.12 scripts/perception/setup.py
 source .venv-perception/bin/activate
-python scripts/perception/run.py doctor --robot
-python scripts/perception/run.py reproduce --out outputs/holds
-python scripts/perception/run.py replay \
-  --dataset data/perception/robot --out outputs/robot
-python scripts/perception/verify_replays.py \
-  --dataset data/perception/robot --predictions outputs/robot \
-  --out outputs/robot/verification.json
+python scripts/perception/run.py doctor
+python scripts/perception/run.py reproduce \
+  --workers 2 --out outputs/perception/holds
 \end{verbatim}
-Setup creates a private environment and cache. Torch/CUDA/native dependencies
-still require several GB. GPU jobs wait for spare capacity and poll every
-30 minutes while externally busy. The runtime does not stop other jobs.
+The two retained fixtures contain 37 holds. A fresh environment and empty cache
+completed installation and reproduction: 36 matches, 31 strict poses, no false
+positives, and both exported scenes accepted by the upstream validator.
+A completed command does not imply that all poses passed.
 
-\section{Cameras and measurements}
-\texttt{capture --list} enumerates devices. Select two serials, capture RGB pairs,
-then run \texttt{calibrate} on varied printed-board poses. The guide gives the
-complete commands. Only color streams are enabled. Intrinsic calibration fits
-SDK-rectified frames and is bound to serial order, resolution and source
-intrinsics. Wall pose is estimated separately from markers or board boundaries.
-
-Supply a measured encoder JSONL log with \texttt{clock: host\_monotonic},
-\texttt{timestamp\_s} and all 19 \texttt{joints\_rad}. Map acquisition times into
-the camera laptop's clock; an independent Pi clock or receipt time is insufficient.
+For the supplied archives, use the declared sample rig:
 \begin{verbatim}
-python scripts/perception/run.py live \
-  --serial LEFT_SERIAL --serial RIGHT_SERIAL \
-  --telemetry-log outputs/encoders.jsonl \
-  --camera-calibration outputs/calibration/calibration.json \
-  --out outputs/live
+python scripts/perception/prepare_samples.py \
+  --samples samples --out data/local/perception_samples
+python scripts/perception/run.py reproduce \
+  --dataset data/local/perception_samples --workers 4 \
+  --out outputs/perception/samples
 \end{verbatim}
-Live defaults to combined robot/cup tracking. Use \texttt{--task robot} for root
-pose alone. Consumers read \texttt{latest.json} and require \texttt{valid} and
-\texttt{fresh}. Poses older than the default 0.25 s limit are suppressed. Inspect
-map timestamps and refresh errors separately; reacquisition may take seconds.
+For another rig, supply measured calibration. A new pair uses
+\texttt{holds --stereo stereo.png --calibration rig.json --out DIR}.
+GPU jobs wait for spare capacity and poll every 30 minutes while externally busy.
 
-The private model reproduces the original simulator. Team main uses the cut-foot
-fork. Physical fitting must use the measured geometry through
-\texttt{RCR\_MICROBAN\_MODEL}. The guide explains this override and team frame
-conversion. A complete team wall model still needs verified start contacts.
+\begin{table}[htbp]\centering
+\caption{Hold implementation under \texttt{src/rcr/perception/challenge/src/}.}
+\begin{tabularx}{\linewidth}{lX}\toprule
+File & Role\\\midrule
+\texttt{hold\_scene.py} & RGB proposals, four-type hypotheses and selection\\
+\texttt{hold\_geometry.py} & Wall dimensions, volume estimation and face refinement\\
+\texttt{hold\_fit.py} & Dual-view losses, local fitting and stereo RGB check\\
+\texttt{hold\_constraints.py} & Support clearance and convex-hull recovery\\
+\texttt{rcr\_exact\_fit.py} & Explicit per-mesh CAD renderer\\
+\texttt{rcr\_contract.py} & Challenge JSON validation and local scoring\\\bottomrule
+\end{tabularx}
+\end{table}
 
-\section{Checks and scope}
-After removing alternatives, the selected code reproduced all 50 source hold
-records on the five saved stereo cases from the full branch. All five robot
-cases passed the local root thresholds (5 mm and 5 degrees) and the 5 mm bound
-for every endpoint. Combined replay produced a valid robot pose and 72 mapped
-cup candidates on the retained example, with no refresh error. Candidate count
-is not an independently scored map-accuracy result.
+Outputs separate raw fits (\texttt{image\_holds.json}), recovered poses
+(\texttt{holds.json}), the viewer scene (\texttt{prediction.json}) and diagnostics
+(\texttt{debug.json}). \path{docs/perception/benchmark.json} preserves per-scene
+summaries and freeze hashes. \texttt{report\_figures.py --predictions DIR}
+rebuilds the overlays.
 
-The repository carries only one case per challenge; the compact
-\path{verification.json} records the broader saved-case check. References are
-opened after inference. These are regression checks, not new blind benchmarks.
-Calibration and timing paths have software tests. No physical cameras were
-attached, so USB reliability, exposure synchronization, physical accuracy and
-a camera-driven climb remain unvalidated. The legacy images-only team functions
-remain stubs; use the explicit packet API to supply calibration and telemetry.
+\section{Robot pose and physical cameras}
+Robot implementations are unchanged. Saved-frame \texttt{max} uses Microban
+keypoints, measured-joint configured M3T and protected CAD/boundary refinement.
+Continuous \texttt{fast} adds persistent tracking, RGB cup mapping and conditional
+socket correction. Both require all 19 measured joints. Add
+\texttt{setup.py --robot} for their dependencies and \texttt{--cameras} for
+color-only RealSense capture.
+
+The retained robot fixture passes root and endpoint checks: 0.879\,mm translation,
+0.297\textdegree\ rotation and 1.759\,mm worst endpoint error. Combined replay
+returns a valid root pose and 72 cup candidates without a refresh error;
+candidate count alone is not map accuracy. Shared team types, submodules,
+planning and controller code are unchanged.
+
+The guide gives capture and chessboard-calibration commands for two selected
+camera serials. Measure the square size and calibrate the actual resolution,
+serial order and capture profile. Estimate wall pose separately. Encoder
+acquisition times must share the camera host's monotonic clock. No physical
+cameras were connected: USB capture, exposure synchronization and physical
+accuracy remain unvalidated.
+
+Keep challenge backplate JSON separate from the physical cup map and team bolt
+coordinates. Socket proximity never confirms loading. The next camera test
+must measure calibration and pose errors on the actual rig. The rendered-scene
+result supports the four-type CAD path; small Fingerpocket images still leave
+substantial orientation ambiguity.
 \end{document}

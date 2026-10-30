@@ -1,40 +1,67 @@
 {
-  "date_utc": "2026-10-30T12:21:42.213816+00:00",
-  "scope": "Regression after trimming; five saved full-branch cases checked, one case per challenge retained here. No new blind or physical-camera benchmark.",
-  "source_fixture_commit": "cee53bcbddd74d9d8ab450980127edae082b462e",
+  "date_utc": "2026-10-30T16:15:39.856482+00:00",
+  "scope": "Four-type hold port and regressions; no physical cameras attached",
+  "source_commit": "51efe48b9765a0de7c3a4658a8b7bb781faf3459",
   "holds": {
-    "passed": true,
-    "cases": 5,
+    "benchmark": "benchmark.json",
+    "final": {
+      "cases": 40,
+      "all_inference_completed": true,
+      "ground_truth_holds": 1200,
+      "matched": 1159,
+      "strict_poses": 1005,
+      "false_positives": 8,
+      "source_exact": false,
+      "scope": "Frozen RGB fitting plus source-derived clearance compatibility correction; cached estimates re-evaluated, not a new blind trial"
+    },
+    "viewer_validation": {
+      "raw_accepted": 23,
+      "final_accepted": 40,
+      "cases": 40,
+      "cube_controls_accepted": 3,
+      "clean_fixtures_accepted": 2
+    },
+    "cube_controls": {
+      "cases": 3,
+      "all_inference_completed": true,
+      "ground_truth_holds": 48,
+      "matched": 47,
+      "strict_poses": 37,
+      "false_positives": 0,
+      "source_exact": false,
+      "scope": "Three fresh controls; only source sampler type list extended to include Cube",
+      "cube_truth": 12,
+      "cube_matched": 11,
+      "cube_strict": 10
+    },
+    "clean_install_fixtures": {
+      "cases": 2,
+      "all_inference_completed": true,
+      "ground_truth_holds": 37,
+      "matched": 36,
+      "strict_poses": 31,
+      "false_positives": 0,
+      "source_exact": false,
+      "scope": "Saved-scene evaluation; completion is distinct from pose success"
+    }
+  },
+  "robot": {
+    "cases": 1,
+    "root_passes": 1,
+    "endpoint_passes": 1,
     "records": [
       {
         "case": "000000",
-        "exact": true,
-        "predicted_holds": 10
-      },
-      {
-        "case": "000024",
-        "exact": true,
-        "predicted_holds": 10
-      },
-      {
-        "case": "000049",
-        "exact": true,
-        "predicted_holds": 10
-      },
-      {
-        "case": "000074",
-        "exact": true,
-        "predicted_holds": 10
-      },
-      {
-        "case": "000099",
-        "exact": true,
-        "predicted_holds": 10
+        "position_mm": 0.8786503840596792,
+        "rotation_deg": 0.29726914462348664,
+        "worst_endpoint_mm": 1.7589764053716326,
+        "passed_root": true,
+        "passed_endpoints": true
       }
     ],
-    "scope": "Replay of published benchmark examples; not a new blind evaluation"
+    "scope": "Saved-case regression under local 5mm/5degree root and all-endpoints-5mm criteria"
   },
-  "robot": {
+  "historical_robot_regression": {
     "cases": 5,
     "root_passes": 5,
     "endpoint_passes": 5,
@@ -89,17 +116,19 @@
     "map_refresh_error": null
   },
   "runtime_tests": {
-    "passed": 6,
-    "command": "python -m pytest tests/test_perception_runtime.py tests/test_perception_team_api.py -q"
+    "passed": 13,
+    "command": "python -m pytest tests/test_hold_scene.py tests/test_perception_runtime.py tests/test_perception_team_api.py -q"
   },
   "repository_tests": {
     "passed": 973,
-    "skipped": 2
+    "skipped": 3
   },
   "checks": [
-    "ruff check and format",
-    "pipeline contract check",
-    "doctor --robot"
+    "Fresh Python environment and empty cache: all four mesh downloads and doctor passed",
+    "Upstream parseSceneData and validateHoldRecords accepted final 40/40 scenes, 3/3 controls and 2/2 clean fixtures",
+    "Ruff check and format",
+    "Pipeline contract check",
+    "Existing robot and combined live fixture regressions"
   ],
   "environment": {
     "core": "Pinned isolated environment",
@@ -109,40 +138,11 @@
     "original_workspace_runtime_dependency": false
   },
   "limitations": [
-    "No attached RealSense cameras; physical accuracy and USB synchronization unvalidated",
-    "All robot profiles on this branch require measured joint angles",
-    "Public-generator recovery only applies to untouched native hold scenes",
-    "Mapped candidate count is not an accuracy score",
-    "Full training data and historical benchmark archives are excluded"
-  ],
-  "included_examples": {
-    "holds": {
-      "passed": true,
-      "cases": 1,
-      "records": [
-        {
-          "case": "000000",
-          "exact": true,
-          "predicted_holds": 10
-        }
-      ],
-      "scope": "Replay of published benchmark examples; not a new blind evaluation"
-    },
-    "robot": {
-      "cases": 1,
-      "root_passes": 1,
-      "endpoint_passes": 1,
-      "records": [
-        {
-          "case": "000000",
-          "position_mm": 0.7384962880200032,
-          "rotation_deg": 0.22986308789494736,
-          "worst_endpoint_mm": 1.2009112538311209,
-          "passed_root": true,
-          "passed_endpoints": true
-        }
-      ],
-      "scope": "Saved-case regression under local 5mm/5degree root and all-endpoints-5mm criteria"
-    }
-  }
+    "Final support correction evaluated on the same 40 supplied scenes after viewer failures were observed",
+    "No Cubes in supplied archives; Cube counts come from separate modified-sampler controls",
+    "No attached RealSense cameras; physical accuracy, capture and synchronization remain unvalidated",
+    "All retained robot profiles require measured joints",
+    "No public-generator seed recovery in this version; no source-exact claim",
+    "Full datasets and historical alternatives remain outside this compact branch"
+  ]
 }

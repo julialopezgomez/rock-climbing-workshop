@@ -8,7 +8,11 @@ replay, RGB camera calibration, measured-joint timing and physical model selecti
 The [team adapters](../../../docs/perception/TEAM_INTEGRATION.md) preserve existing
 SI/WXYZ types and require verified start contacts for a `WallModel`.
 
-One trained checkpoint and one example per challenge are included. Alternative
+The hold path fits Cube, Microban, Sidepull and Fingerpocket meshes in both RGB
+views, estimates volume geometry, and recovers support/collision consistency.
+It uses declared wall/camera calibration and no longer searches generator seeds.
+Two hold regression fixtures and one robot fixture are included, with one trained
+robot checkpoint. Alternative
 models and historical experiments remain on `perception_challenge_full`.
 All retained robot profiles require the 19 measured joints. No image-only robot
 or rigid robot-marker estimator is included.

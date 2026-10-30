@@ -140,9 +140,7 @@ def main():
         "--cameras", action="store_true", help="Install color-only RealSense capture support"
     )
     parser.add_argument("--native", action="store_true", help="Build the M3T executable")
-    parser.add_argument(
-        "--cuda", action="store_true", help="Build the CUDA full-range seed scanner"
-    )
+    parser.add_argument("--cuda", action="store_true", help="Check the CUDA development toolchain")
     parser.add_argument(
         "--cuda-arch", default="8.9+PTX", help="PyTorch extension target architectures"
     )
@@ -178,42 +176,9 @@ def main():
     (cache / "bin").mkdir(parents=True, exist_ok=True)
     for name, spec in json.loads((PACKAGE / "assets/downloads.json").read_text()).items():
         download(spec["url"], cache / "assets/rcr" / name, spec["sha256"])
-    run(
-        [
-            "g++",
-            "-O3",
-            "-std=c++17",
-            "-fopenmp",
-            PACKAGE / "src/rcr_seedscan.cpp",
-            "-o",
-            cache / "bin/rcr-seedscan",
-        ]
-    )
-    run(
-        [
-            "g++",
-            "-O3",
-            "-std=c++17",
-            "-fopenmp",
-            PACKAGE / "src/rcr_seedverify.cpp",
-            "-o",
-            cache / "bin/rcr-seedverify",
-        ]
-    )
     if args.cuda:
         nvcc = shutil.which("nvcc") or "/usr/local/cuda/bin/nvcc"
-        run(
-            [
-                nvcc,
-                "-O3",
-                "--fmad=false",
-                "-std=c++17",
-                "-arch=sm_" + args.cuda_arch.split(";")[0].split("+")[0].replace(".", ""),
-                PACKAGE / "src/rcr_seedscan.cu",
-                "-o",
-                cache / "bin/rcr-seedscan-cuda",
-            ]
-        )
+        run([nvcc, "--version"])
     if args.cameras or args.robot:
         run([*pip, "pyrealsense2==2.59.1.11053"])
     if args.robot:

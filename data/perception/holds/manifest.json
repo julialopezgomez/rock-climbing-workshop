@@ -1,8 +1,13 @@
 {
   "cases": [
     {
-      "id": "000000"
+      "id": "000000",
+      "scope": "Controlled four-type scene, including four Cubes"
+    },
+    {
+      "id": "000001",
+      "scope": "Supplied three-volume development scene"
     }
   ],
-  "scope": "One saved regression example; not a new blind evaluation"
+  "scope": "Two saved regression fixtures; not a blind evaluation"
 }

@@ -1,10 +1,18 @@
 {
   "microban_hold.stl": {
-    "url": "https://raw.githubusercontent.com/jackybaltes/rcr-perception/a8525fb0cc527179d6edfbd050fe042fcf97f0ba/Assets/microban_hold.stl",
+    "url": "https://raw.githubusercontent.com/jackybaltes/rcr-perception/51efe48b9765a0de7c3a4658a8b7bb781faf3459/Assets/microban_hold.stl",
     "sha256": "9b5058f46039c7b82e7e5209697d52e7d9d8c942e9a0d3a4d470f5035e565381"
   },
-  "cubehold_blend.stl": {
-    "url": "https://raw.githubusercontent.com/jackybaltes/rcr-perception/a8525fb0cc527179d6edfbd050fe042fcf97f0ba/Assets/cubehold_blend.stl",
+  "cube_hold.stl": {
+    "url": "https://raw.githubusercontent.com/jackybaltes/rcr-perception/51efe48b9765a0de7c3a4658a8b7bb781faf3459/Assets/cube_hold.stl",
     "sha256": "2bd7b4296879136794fa7a1adc6626860c7fffbf577e16432c6d77971c8afa7f"
+  },
+  "sidehpull_hold.stl": {
+    "url": "https://raw.githubusercontent.com/jackybaltes/rcr-perception/51efe48b9765a0de7c3a4658a8b7bb781faf3459/Assets/sidehpull_hold.stl",
+    "sha256": "556ddb15b6b1f1f5b7af15a3e11c5cb5619343fc47071de78aa7170bd4037e9e"
+  },
+  "fingerpocket_hold.stl": {
+    "url": "https://raw.githubusercontent.com/jackybaltes/rcr-perception/51efe48b9765a0de7c3a4658a8b7bb781faf3459/Assets/fingerpocket_hold.stl",
+    "sha256": "68cf6ef2d8a3964ec787ec24cc2988562e80c446061ef08df14201b61edcbe30"
   }
 }

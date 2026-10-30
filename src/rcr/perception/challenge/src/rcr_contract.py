@@ -17,7 +17,7 @@ import numpy as np
 from scipy.optimize import linear_sum_assignment
 from scipy.spatial.transform import Rotation
 
-TYPES = {"microban_hold", "cube_hold"}
+TYPES = {"microban_hold", "cube_hold", "sidepull_hold", "fingerpocket_hold"}
 HOLD_FIELDS = {"type", "color", "position", "orientation"}
 
 
@@ -60,19 +60,27 @@ def validate_holds(data):
 def versioned_prediction(holds, calibration, seed):
     """Schema-compatible envelope with declared public setup, never copied GT.
 
-    Volumes are unestimated, so export an empty list. Legacy holds.json can be
-    loaded into the upstream viewer to keep its current wall/volume scene.
+    The caller may attach image-estimated volumes through write_prediction.
+    The hold-only JSON preserves an existing viewer scene when loaded.
     """
     validate_holds(holds)
+    width = float(calibration.get("wall_width_m", 0.8))
+    height = float(calibration.get("wall_height_m", 1.4))
+    marker = 0.1 if width < 2 else 1.0
     wall = copy.deepcopy(
         calibration.get(
             "wall",
-            {
-                "width": 0.8,
-                "height": 1.4,
-                "depth": 0.025,
-                "originMarker": {"width": 0.1, "height": 0.1, "x": 0.05, "y": 0.05},
-            },
+            dict(
+                width=width,
+                height=height,
+                depth=0.025,
+                originMarker=dict(
+                    width=min(marker, width),
+                    height=min(marker, height),
+                    x=min(marker, width) / 2,
+                    y=min(marker, height) / 2,
+                ),
+            ),
         )
     )
     return {
@@ -84,7 +92,7 @@ def versioned_prediction(holds, calibration, seed):
     }
 
 
-def write_prediction(folder, holds, calibration, seed, debug=None):
+def write_prediction(folder, holds, calibration, seed, debug=None, *, volumes=None):
     folder = Path(folder)
     folder.mkdir(parents=True, exist_ok=True)
     validate_holds(holds)
@@ -97,7 +105,9 @@ def write_prediction(folder, holds, calibration, seed, debug=None):
         temporary.replace(path)
 
     atomic("holds.json", holds)
-    atomic("prediction.json", versioned_prediction(holds, calibration, seed))
+    prediction = versioned_prediction(holds, calibration, seed)
+    prediction["scene"]["volumes"] = volumes or []
+    atomic("prediction.json", prediction)
     if debug is not None:
         atomic("debug.json", debug)
 
