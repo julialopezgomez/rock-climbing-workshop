@@ -128,8 +128,10 @@ REACH = {
 }
 # the longest step the simulator's routes leave a limb [simulator routes.py]
 STEP = 0.105
-MIN_APART = 1.1  # two balls at least this fraction of their roots' distance apart [Ours]
-MAX_APART = 0.6  # and at most this fraction of their reaches + roots' distance [Ours]
+MIN_APART = 1.0  # two balls at least this fraction of their roots' distance apart [Ours]
+# and at most this fraction of their reaches + roots' distance [Ours]
+HAND_MAX_APART = 0.65  # a pair with a hand (hand-hand, hand-foot)
+FEET_MAX_APART = 0.5  # the two feet
 # [m] most one hand is above the other, and one foot above the other [Ours]: the example
 # plan the optimiser solved has up to 0.195 m (hands) and 0.135 m (feet)
 MAX_LEVEL = 0.15
@@ -142,12 +144,13 @@ BALLS_HANG = np.array([data.oMf[BALL[limb]].translation for limb in LIMBS])
 
 
 def reach(targets):
-    """Two balls are at most MAX_APART of their reaches + the distance between their roots
-    apart, and at least MIN_APART of that root distance."""
+    """Two balls are at most HAND_MAX_APART (FEET_MAX_APART for the two feet) of their reaches +
+    the distance between their roots apart, and at least MIN_APART of that root distance."""
     for i, j in combinations(range(4), 2):
         a, b = LIMBS[i], LIMBS[j]
         roots, apart = norm(ROOT[a] - ROOT[b]), norm(targets[i] - targets[j])
-        most, least = MAX_APART * (REACH[a] + REACH[b] + roots), MIN_APART * roots
+        max_apart = FEET_MAX_APART if "foot" in a and "foot" in b else HAND_MAX_APART
+        most, least = max_apart * (REACH[a] + REACH[b] + roots), MIN_APART * roots
         if apart > most:
             return fail(f"reach: {a}, {b} too far apart ({mm(apart)} > {mm(most)})")
         if apart < least:
