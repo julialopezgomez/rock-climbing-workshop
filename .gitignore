@@ -14,3 +14,6 @@ build/
 .perception/
 outputs/
 MUJOCO_LOG.TXT
+
+# Local wall editor launcher
+/local-tools/
