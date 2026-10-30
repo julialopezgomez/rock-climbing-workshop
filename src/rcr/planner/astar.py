@@ -135,6 +135,7 @@ FEET_MAX_APART = 0.27  # the two feet
 # [m] most one hand is above the other, and one foot above the other [Ours]: the example
 # plan the optimiser solved has up to 0.195 m (hands) and 0.135 m (feet)
 MAX_LEVEL = 0.11
+MAX_TRANSITION_HEIGHT = 0.11
 
 Q_HANG = pin.neutral(model)
 for name, angle in json.loads(HANG.read_text())["joints"].items():
@@ -172,6 +173,26 @@ def reach(targets):
         level = abs(right_foot[2] - left_foot[2])
         return fail(f"reach: one foot too far above the other ({mm(level)} > {mm(MAX_LEVEL)})")
     return None
+
+
+def acceptable_transition_height(wall, a, b):
+    """The highest hand in b is at most MAX_TRANSITION_HEIGHT above the highest hand in a, and the
+    same for the feet."""
+    z = {h.id: h.position[2] for h in wall.holds}
+    hands_a = [z[a.contacts[limb]] for limb in LIMBS if "hand" in limb]
+    hands_b = [z[b.contacts[limb]] for limb in LIMBS if "hand" in limb]
+    feet_a = [z[a.contacts[limb]] for limb in LIMBS if "foot" in limb]
+    feet_b = [z[b.contacts[limb]] for limb in LIMBS if "foot" in limb]
+    if max(hands_b) - max(hands_a) > MAX_TRANSITION_HEIGHT:
+        return fail(
+            f"transition: a hand too high ({mm(max(hands_b) - max(hands_a))} > {mm(MAX_TRANSITION_HEIGHT)})"
+        )
+    if max(feet_b) - max(feet_a) > MAX_TRANSITION_HEIGHT:
+        return fail(
+            f"transition: a foot too high ({mm(max(feet_b) - max(feet_a))} > {mm(MAX_TRANSITION_HEIGHT)})"
+        )
+    return None
+    
 
 
 def mm(metres):
@@ -313,6 +334,7 @@ def solve(
             # holds limb i can reach with the other three where they are
             children = [k[:i] + (hold,) + k[i + 1 :] for hold in z if hold not in k]
             children = [c for c in children if reach(targets(wall, c)) is None]
+            children = [c for c in children if acceptable_transition_height(wall, stance(k), stance(c)) is None]
             for child in children:
                 if g[k] + 1 >= g.get(child, np.inf):
                     continue

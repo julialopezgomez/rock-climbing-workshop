@@ -33,6 +33,10 @@ LOCK_PASSES = 4  # ik_step: solves at most, each locking the joints it would pus
 MAX_ERROR = 0.01  # [m] a held ball further than this from its socket: the move cannot be done
 DAMPING = 0.03  # damped(): the moving ball's and the trunk's tasks [Ours]
 ITERATIONS = 3  # IK steps per sample, toward that sample's targets [Ours]
+# [m] the trunk's origin above the mean height of the four balls' targets [Ours]: the hang pose
+# fitted to the start stance has it 7 mm below; raised 2 cm, the balls still reach their sockets
+# with no joint at a limit (3 cm puts two at one)
+TRUNK_HEIGHT = 0.015
 
 # trunk free: q = (x, y, z, qx, qy, qz, qw, 19 joints)
 model = pin.buildModelFromUrdf(str(microban_model.urdf(climb=True)), pin.JointModelFreeFlyer())
@@ -64,10 +68,11 @@ def damped(A):
     return A.T @ np.linalg.inv(A @ A.T + DAMPING**2 * np.eye(A.shape[0]))
 
 
-def ik_step(q, displacement, moving=None):
+def ik_step(q, displacement, moving=None, height=None):
     """One hierarchical IK step: each limb's ball moved by its displacement (in LIMBS order), the
     held ones first in TASK_ORDER, then the moving one, each in the null space of the ones before;
-    last, the trunk turned upright and facing the wall as far as the balls allow.
+    then, if given, the trunk's origin brought GAIN of the way to that height [m]; last, the trunk
+    turned upright and facing the wall, both as far as the balls allow.
     - The held balls are solved exactly (their sockets are always in reach); the moving ball and
       the trunk with `damped`, so the moving ball gets as close as it can to a target out of reach
       while the held balls stay in their sockets [Ours]. With pinv for all and a fixed order, a
@@ -86,8 +91,10 @@ def ik_step(q, displacement, moving=None):
         )
         for limb in order
     ]
-    trunk = pin.getJointJacobian(model, data, 1, pin.LOCAL_WORLD_ALIGNED)[3:]
+    trunk_J = pin.getJointJacobian(model, data, 1, pin.LOCAL_WORLD_ALIGNED)
+    trunk, rise = trunk_J[3:], trunk_J[2:3]  # its rotation; its origin's height
     turn = GAIN * pin.log3(TRUNK_UPRIGHT @ data.oMi[1].rotation.T)
+    lift = GAIN * np.array([(height or 0.0) - data.oMi[1].translation[2]])
     free = np.ones(model.nv)  # 0: a locked joint (its column out of every Jacobian)
     for _ in range(LOCK_PASSES):
         vq, P = np.zeros(model.nv), np.eye(model.nv)
@@ -95,6 +102,10 @@ def ik_step(q, displacement, moving=None):
             JP = J * free @ P
             vq = vq + (damped(JP) if is_moving else pinv(JP)) @ (displacement[i] - J * free @ vq)
             P = P - pinv(JP) @ JP  # the exact null space, also under a damped task
+        if height is not None:
+            Jz = rise * free
+            vq = vq + damped(Jz @ P) @ (lift - Jz @ vq)
+            P = P - pinv(Jz @ P) @ Jz @ P
         vq = vq + damped(trunk * free @ P) @ (turn - trunk * free @ vq)
         new = pin.integrate(model, q, vq)
         past = (new > model.upperPositionLimit) | (new < model.lowerPositionLimit)
@@ -110,9 +121,16 @@ def projecttojointlimits(q):
 
 
 def start_pose(wall: WallModel, stance: Stance):
+    
+    from rcr.planner import ik
+    
+    ik()
+    
     """The hang posture with its trunk fitted rigidly to the sockets [simulator sim.py
-    reset_hanging], then IK until every ball is within EPSILON of its socket. ValueError if not."""
+    reset_hanging], then IK until every ball is within EPSILON of its socket and the trunk within
+    EPSILON of its height (TRUNK_HEIGHT). ValueError if the balls are not reached."""
     t = sockets(wall, stance)
+    height = t[:, 2].mean() + TRUNK_HEIGHT
     cp, cs = BALLS_HANG.mean(0), t.mean(0)
     U, _, Vt = np.linalg.svd((BALLS_HANG - cp).T @ (t - cs))
     R = Vt.T @ np.diag([1, 1, np.sign(np.linalg.det(Vt.T @ U.T))]) @ U.T
@@ -121,9 +139,12 @@ def start_pose(wall: WallModel, stance: Stance):
     q[3:7] = pin.Quaternion(R).coeffs()
     for _ in range(MAX_ITERATIONS):
         error = t - balls(q)
-        if norm(error, axis=1).max() < EPSILON:
+        reached = norm(error, axis=1).max() < EPSILON
+        if reached and abs(q[2] - height) < EPSILON:
             return q
-        q = ik_step(q, STEP * error)
+        q = ik_step(q, STEP * error, height=height)
+    if reached:
+        return q  # the trunk as high as the balls allow
     raise ValueError(f"start pose: balls {norm(error, axis=1).max() * 1000:.0f} mm from sockets")
 
 
@@ -169,8 +190,9 @@ def track_move(wall: WallModel, a: Stance, b: Stance, q0):
     for k in range(1, round(MOVE_TIME / DT) + 1):
         target = held.copy()
         target[i] = B(timing(k * DT))
+        height = target[:, 2].mean() + TRUNK_HEIGHT
         for _ in range(ITERATIONS):
-            q = ik_step(q, GAIN * (target - balls(q)), moving=limb)
+            q = ik_step(q, GAIN * (target - balls(q)), moving=limb, height=height)
         error = norm(target - balls(q), axis=1)
         if not np.delete(error, i).max() <= MAX_ERROR:  # also NaN: the IK diverged
             move = f"{limb} {a.contacts[limb]} -> {b.contacts[limb]}"
