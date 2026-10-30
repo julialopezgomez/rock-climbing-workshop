@@ -90,7 +90,9 @@ class OptimisationError(RuntimeError):
 class TransitionConfig:
     n_samples: int = 12  # N: samples k = 0..N per transition [Ours]
     release_sample: int = 4  # K: end of phase A, where the moving limb's force reaches 0 [Ours]
-    tau_limit: float = 0.7 * SERVO_TORQUE_LIMIT  # [N·m] 70 % of the servo limit [Ours]
+    # [N·m] 85 % of the servo limit [Ours]; was 70 %, at which an IK climb of N2 (iktrajv0) put a
+    # shoulder at the limit for whole moves and the optimiser bent the motion up to 54 deg away
+    tau_limit: float = 0.85 * SERVO_TORQUE_LIMIT
     # Friction pyramid per limb: contact normal (the direction the hold pushes the ball) and mu.
     # Up (+z) for all four: the hold's socket opens upwards and holds a resting ball up, a foot's
     # as much as a hand's [the sim's hold mesh]. (Feet pushed only out from the wall, -y, made the
@@ -160,6 +162,11 @@ class TransitionConfig:
     # came from below it. 0 = off [Ours].
     w_hook: float = 10.0  # weight on (hook_up - upward component)^2
     hook_up: float = 0.5
+    # Follow a reference motion (rcr.optimiser.reference, e.g. an IK trajectory): the distance
+    # from it at every sample, the trunk's position scaled by track_position_scale [rad/m]. Off
+    # (0) unless a reference is given; reference.tracking_config turns it on [Ours].
+    w_track: float = 0.0
+    track_position_scale: float = 10.0
     phase_a_duration: float = 1.0  # [s] for phase A, chosen after solving (quasi-static) [Ours]
     phase_b_duration: float = 2.0  # [s] for phase B [Ours]
     ipopt: dict = field(
@@ -370,6 +377,7 @@ class _Problem:
     holds: ca.MX  # parameter 3x4: the contact points of the start stance, LIMBS order
     target: ca.MX | None = None  # parameter 3: the moving limb's new contact point
     mid_forces: dict | None = None  # limb -> 3 x N hold forces at the interval midpoints
+    track: ca.MX | None = None  # parameter NV x samples: the reference, as tangents at q0
 
 
 _problems: dict[tuple, _Problem] = {}
@@ -434,7 +442,9 @@ def transition_problem(moving: Limb, cfg: TransitionConfig) -> _Problem:
       + sum posture(q)                        over the samples and midpoints (legs, spine)
       + w_swing * sum ||ball(q) - swing_point||^2  phase B's samples and midpoints (if w_swing)
       + w_keep_out * sum intrusion(q)         over the samples and midpoints (out of the cups)
-      + w_hook * sum hook_tilt(q)             over the samples and midpoints (hooks up)"""
+      + w_hook * sum hook_tilt(q)             over the samples and midpoints (hooks up)
+      + w_track * sum ||S (dq_k - dq_ref_k)||^2  over the samples (near a reference, if given;
+                                              S scales the trunk's position)"""
     n, k_release = cfg.n_samples, cfg.release_sample
     if not 0 < k_release < n - 2:
         raise ValueError(f"need 0 < release_sample < n_samples - 2, got {k_release}, {n}")
@@ -442,6 +452,7 @@ def transition_problem(moving: Limb, cfg: TransitionConfig) -> _Problem:
     def build() -> _Problem:
         model, opti = load_robot_model(), ca.Opti()
         q0, holds, target = opti.parameter(NQ), opti.parameter(3, len(LIMBS)), opti.parameter(3)
+        track = opti.parameter(NV, n + 1) if cfg.w_track else None
         dq = opti.variable(NV, n + 1)
         forces = {limb: opti.variable(3, n + 1) for limb in LIMBS}
         # --- subject to
@@ -485,7 +496,12 @@ def transition_problem(moving: Limb, cfg: TransitionConfig) -> _Problem:
             )
         if cfg.w_hook:  # the hooks pointing up, samples and midpoints
             objective = objective + cfg.w_hook * sum(hook_tilt(model, q, cfg) for q in qs + mid_qs)
-        p = _Problem(opti, dq, forces, qs, taus, objective, q0, holds, target, mid_forces)
+        if cfg.w_track:  # near the reference motion, at the samples
+            scale = ca.DM([cfg.track_position_scale] * 3 + [1.0] * (NV - 3))
+            objective = objective + cfg.w_track * sum(
+                ca.sumsqr(scale * (dq[:, k] - track[:, k])) for k in range(n + 1)
+            )
+        p = _Problem(opti, dq, forces, qs, taus, objective, q0, holds, target, mid_forces, track)
         _minimise(p, cfg)
         return p
 
@@ -609,12 +625,15 @@ def solve_transition(
     cfg: TransitionConfig | None = None,
     index: int = 0,
     rescue: bool = True,
+    reference: np.ndarray | None = None,
 ) -> TransitionResult:
     """Move the one limb that changes from its hold in `a` to its hold in `b`, starting at q0.
 
     q0 must have every ball on its hold of `a` (e.g. stance_pose, or the previous transition's
     end). Only the moving limb's final point is fixed, not the final configuration.
     rescue: if the solve fails, solve the move coarsely (coarse()) and start from that path.
+    reference: (N + 1) x NQ configurations to follow (needed with cfg.w_track, ignored without):
+    the w_track cost's target, and the solve's starting point.
     """
     cfg = cfg or TransitionConfig()
     check_holds(wall, a, index)
@@ -625,16 +644,25 @@ def solve_transition(
     p.opti.set_value(p.q_ref, q0)
     p.opti.set_value(p.holds, contact_points(wall, a, cfg))
     p.opti.set_value(p.target, contact_point(wall, b.contacts[moving], cfg))
-    try:
-        _warm_start(p, wall, b, q0, moving, cfg, index)
-    except OptimisationError as e:
-        raise OptimisationError(f"{what}: the robot cannot hold stance {index + 1} ({e})") from e
+    if cfg.w_track:
+        if reference is None:
+            raise ValueError(f"{what}: w_track is set, but no reference was given")
+        path = np.column_stack([rm.difference(q0, r) for r in reference])
+        p.opti.set_value(p.track, path)
+        _fresh(p)
+        _warm_start(p, wall, b, q0, moving, cfg, index, path)  # start on the reference
+    else:
+        try:
+            _warm_start(p, wall, b, q0, moving, cfg, index)
+        except OptimisationError as e:
+            message = f"{what}: the robot cannot hold stance {index + 1} ({e})"
+            raise OptimisationError(message) from e
     try:
         s = _solve(p, what)
     except OptimisationError as e:
         if not (rescue and _halves(cfg)):
             raise
-        s = _rescue(wall, a, b, q0, cfg, index, p, what, e)
+        s = _rescue(wall, a, b, q0, cfg, index, p, what, e, reference)
     return TransitionResult(
         q=s.q, dq=s.dq, tau=s.tau, forces=s.forces, moving=moving,
         solve_time=s.solve_time, iterations=s.iterations,
@@ -669,11 +697,12 @@ def upsample(dq_coarse: np.ndarray) -> np.ndarray:
     return np.column_stack(cols)
 
 
-def _rescue(wall, a, b, q0, cfg, index, p, what, error) -> _Solution:
+def _rescue(wall, a, b, q0, cfg, index, p, what, error, reference=None) -> _Solution:
     """The solve failed: find a coarse path (fewer, freer samples) and start from it. On the
     example's hard wall this solved a hand move (R3 to R5) that failed from every other start."""
     try:
-        rough = solve_transition(wall, a, b, q0, coarse(cfg), index, rescue=False)
+        half = None if reference is None else reference[::2]  # coarse sample c is full 2c
+        rough = solve_transition(wall, a, b, q0, coarse(cfg), index, False, half)
     except OptimisationError:
         raise error from None  # no coarse path either: report the full solve's failure
     _warm_start(p, wall, b, q0, moving_limb(a, b, index), cfg, index, upsample(rough.dq))

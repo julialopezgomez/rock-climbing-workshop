@@ -12,6 +12,7 @@ Turns a contact plan into the joint motion the robot executes. Runs on the lapto
 |---|---|
 | [`transition.py`](transition.py) | **the solver**: the settings (`TransitionConfig`), the constraints of one pose, the two problems (a static pose and a transition), and how they are solved |
 | [`robot_model.py`](robot_model.py) | the robot's kinematics in CasADi, read from Microban's URDF: ball positions, Jacobians, centre of mass, gravity torques; the body's keep-out points, from its MJCF meshes |
+| [`reference.py`](reference.py) | a reference motion to follow (e.g. an IK trajectory): its wall, plan and timing read from it, cut onto each move's samples |
 | [`__init__.py`](__init__.py) | `optimise`: solves the plan move by move, times the samples, and pre-loads the motor targets against sag |
 
 ## How a plan is solved
@@ -39,7 +40,7 @@ hold pushes its ball with. The torques follow from these through the static bala
 |---|---|
 | sample 0 is the start pose | `dq_0 = 0` |
 | every sample: the trunk balanced (net force and moment zero) | `balanced_pose` → `static_balance(...) == 0` |
-| every sample: joint limits, \|torque\| ≤ `tau_limit` (70 % of the servo limit) | `balanced_pose` → `joint_and_torque_limits` |
+| every sample: joint limits, \|torque\| ≤ `tau_limit` (85 % of the servo limit) | `balanced_pose` → `joint_and_torque_limits` |
 | every sample: the trunk within 0.3 m / 1.2 rad of the start pose | `balanced_pose` → `trunk_bounds` |
 | a held ball on its hold (the moving one up to K) | `balls == holds` |
 | a held ball pushed by its hold within the friction pyramid (the moving one up to K−1) | `friction_pyramid` |
@@ -55,6 +56,7 @@ hold pushes its ball with. The torques follow from these through the static bala
 + w_swing  · Σ ||ball(q) − r(s)||²      phase B's samples and midpoints   (the moving ball near its swing path)
 + w_keep_out · Σ intrusion(q)           over the samples and midpoints    (the body out of the cups' layer)
 + w_hook     · Σ hook_tilt(q)           over the samples and midpoints    (each hook pointing up from its ball)
++ w_track    · Σ ||S (dq − dq_ref)||²   over the samples                  (near a reference motion; only with --track)
 ```
 `posture(q) = w_nominal · Σ (leg joint − its nominal angle)² + w_spine · (spine_z − cos 25°)²`.
 
@@ -106,6 +108,19 @@ hook_tilt(q) = Σ over the four limbs  max(0, hook_up − u_z)²        hook_up 
 The organisers' own hanging pose (`reset_hanging`, N2) costs nothing (hands 51° from up, feet 11°). Without it, the
 solved hands lay flat into the cups from the front (82° from up) or came from below them.
 
+**Following a reference motion** (`--track FILE`, `reference.py`). A whole-body motion made elsewhere, e.g. by IK
+(`q`, T × 26 at 50 Hz, our layout), which places the balls but knows nothing of balance or torques, is made
+feasible: each move stays as close to it as the constraints allow. From the file:
+- its **wall** (N1–N3, the one its balls are on) and its **plan**: a stance wherever all four balls are within 3 mm
+  of holds, a move wherever one changes;
+- each move cut where the moving ball leaves its hold: the held part onto phase A's samples, the part in the air onto
+  phase B's; and its **timing** (the medians over its moves become the phase durations).
+
+The cost gets `w_track · Σ_k ||S (dq_k − dq_ref,k)||²` (`w_track` = 10; `S` counts the trunk's position 1 cm as
+0.1 rad, `track_position_scale`), the reference is the starting point, and the start pose stays near its first pose.
+The costs that shape the motion themselves (swing, keep-out, hooks, posture) are off: the reference decides it. After
+each move, the runner prints how far it ended from the reference.
+
 **The static pose** (`static_pose_problem`) is the same with one sample and all four balls held, and the cost
 `w_tau ||tau||² + w_stay ||dq||² + posture(q) + w_keep_out · intrusion(q) + w_hook · hook_tilt(q)` (`w_stay` keeps it near its guess). Besides the start pose, it gives each
 move its starting guess: phase A stays put, then a straight line to the static pose of the next stance.
@@ -121,6 +136,10 @@ Per sample, the 19 motor targets pre-loaded against servo sag: `q_cmd = q + tau 
 2 s, so a move takes 3 s.
 
 ## How to run
+**Simplest:** set the weights and what to solve at the top of [`run.sh`](run.sh), then `bash src/rcr/optimiser/run.sh`.
+It prints the full command it runs; the options below are what it uses. `--set NAME=VALUE` sets any number setting of
+`TransitionConfig`, last, so it wins.
+
 ```bash
 git submodule update --init                       # Microban and the organisers' simulator (once)
 uv sync --group optimiser --group sim             # casadi (IPOPT), pin (tests), their sim (playback)
@@ -129,7 +148,8 @@ uv run mjpython tests/test_optimiser.py PLAN          # solve the plan, play it 
 uv run mjpython tests/test_optimiser.py PLAN --save   # the same, and save build/trajectory_<wall id>.json
 uv run mjpython tests/test_optimiser.py PLAN --replay # play the saved one, without solving
 ```
-- `PLAN` defaults to `build/plan_N1.json`. `--samples N` changes the number of samples; `--swing W` sets the swing
+- `PLAN` defaults to `build/plan_N1.json`. `--tau-limit F` sets the torque limit as a fraction of the servo's (default 0.85). `--track FILE` follows a reference motion instead of a plan (above):
+  `uv run mjpython tests/test_optimiser.py --track iktrajv0.npz --save`. `--samples N` changes the number of samples; `--swing W` sets the swing
   path's weight (`w_swing`, default 5000; 0 turns it off); `--keep-out W` sets the keep-out's weight (`w_keep_out`, default 20000; 0 turns it off); `--hook W` sets the hooks' (`w_hook`, default 10; 0 turns it off); `--headless` runs without a window; `--send PI` also sends each solved move to
   the robot.
 - The playback shows the planned poses exactly (no physics). The next move is solved while the current one plays.
@@ -153,7 +173,7 @@ the move, IPOPT's status and the largest constraint violation.
 | Setting | Default | Why |
 |---|---|---|
 | `n_samples` (N), `release_sample` (K) | 12, 4 | [Ours] |
-| `tau_limit` | 0.424 N·m | 70 % [Ours] of 0.605 N·m, the servo limit (1.75 A × 0.346 N·m/A) as the organisers' sim clips it [Microban] |
+| `tau_limit` | 0.514 N·m | 85 % [Ours] of 0.605 N·m (`--tau-limit F` for another fraction; it was 70 %, at which the IK climb of N2 put a shoulder at the limit for whole moves), the servo limit (1.75 A × 0.346 N·m/A) as the organisers' sim clips it [Microban] |
 | `normals`, `mu` | +z for every limb, 0.8 | the socket opens upwards and holds a ball up [Ours] |
 | `contact_offset` | (0, −0.026, −0.0142) m from a hold's bolt midpoint | where a ball rests in the socket, from the organisers' sim and the model's ball |
 | `max_trunk_shift`, `max_trunk_turn` | 0.3 m, 1.2 rad | [Ours] |
@@ -163,6 +183,7 @@ the move, IPOPT's status and the largest constraint violation.
 | `midpoints`, `midpoint_play` | on, 1 mm | without them, +8 % torque and 4 mm ball drift between samples [Ours] |
 | `w_swing` | 5000 | not yet tuned [Ours] |
 | `swing_lift`, `swing_out`, `swing_vertical` | 25 mm, 40 mm, 0.25 | clear of every cup on N1 by ≥ 7.7 mm (above) [Ours] |
+| `w_track`, `track_position_scale` | 0 (10 with `--track`), 10 rad/m | at 10, a 3° miss on every joint costs ~0.5 per pose against ~0.075 of torque [Ours] |
 | `w_hook`, `hook_up` | 10, 0.5 (60° from up) | on N2, a too flat hook cost ~1.7 per pose against ~0.075 of torque; not tuned [Ours] |
 | `w_keep_out`, `cup_clearance` | 20000, 5 mm | a corner 1 cm past the limit costs about a whole move's torque (~2 on N2); not tuned further [Ours]; `CUP_FRONT` from the organisers' sim |
 | `phase_a_duration`, `phase_b_duration` | 1 s, 2 s | [Ours] |
@@ -178,7 +199,7 @@ tests check them against Pinocchio to machine precision.
 - **Quasi-static.** No inertia: slow motion is assumed, and the phase durations are chosen, not optimised.
 - **Our contact model.** The holds push only upwards (+z), within friction 0.8; the real socket may hold more.
 - **Not yet measured on the climbing model.** Earlier numbers (e.g. a hand could not reach up from 300 mm above the
-  feet at 70 % torque, so "both hands up, then both feet up") were with the old limbs.
+  feet at 70 % torque (the limit then), so "both hands up, then both feet up") were with the old limbs.
 
 ## Open decisions
 - Whether and how to add collision avoidance back (see below), or whether the swing path is enough; its weight.

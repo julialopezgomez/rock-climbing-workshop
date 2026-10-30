@@ -32,7 +32,7 @@ model, pytest skips this file; without the sim group, the test against their sim
 import os
 import sys
 import time
-from dataclasses import replace
+from dataclasses import fields, replace
 from pathlib import Path
 
 import numpy as np
@@ -330,6 +330,28 @@ def test_the_hooks_point_along_their_shafts(model):
     assert float(tr.hook_tilt(model, np.r_[0, 0, 0, 1, 0, 0, 0, np.zeros(rm.NJ)], up)) == 0
 
 
+def test_a_reference_is_cut_onto_the_samples():
+    from rcr.optimiser import reference
+
+    rng = np.random.default_rng(3)
+    q = rng.normal(size=(200, rm.NQ))
+    q[:, 3:7] /= np.linalg.norm(q[:, 3:7], axis=1, keepdims=True)
+    move = reference.ReferenceMove(start=20, release=50, land=130)
+    s = reference.move_samples(q, move, CFG)
+    assert s.shape == (CFG.n_samples + 1, rm.NQ)
+    k = CFG.release_sample  # phase A ends where the ball leaves, phase B where it lands
+    assert np.allclose(s[[0, k, -1]], q[[20, 50, 130]])
+    assert np.allclose(np.linalg.norm(s[:, 3:7], axis=1), 1)
+
+
+def test_tracking_without_a_reference_is_rejected(wall):
+    start = wall.start
+    other = next(h.id for h in wall.holds if h.id not in start.contacts.values())
+    moved = Stance({**start.contacts, "right_hand": other})
+    with pytest.raises(ValueError, match="no reference"):
+        tr.solve_transition(wall, start, moved, np.zeros(rm.NQ), replace(CFG, w_track=1.0))
+
+
 def test_the_swing_path_goes_up_out_across_in_and_down():
     cfg = replace(CFG, swing_lift=0.025, swing_out=0.04, swing_vertical=0.25)
     start, target = np.array([0.4, -0.03, 0.5]), np.array([0.5, -0.03, 0.62])
@@ -424,11 +446,15 @@ def test_an_impossible_transition_raises_naming_it():
 # --- Run a contact plan in the sim ---------------------------------------------------------------
 
 
-def solve_in_background(wall: WallModel, plan: ContactPlan, out, cfg=None) -> None:
+def solve_in_background(
+    wall: WallModel, plan: ContactPlan, out, cfg=None, references=None, near=None
+) -> None:
     """Worker process: the plan's start pose, then each transition in order, each starting where
     the previous one ended. Each is sent on `out` (one end of a Pipe) as soon as it is solved:
     ("start", q), ("transition", i, TransitionResult, seconds), then ("done",) or ("error", text).
-    Exits as soon as the runner is gone, however it ended.
+    references, near: a reference motion to follow (rcr.optimiser.reference): per transition its
+    samples, and the configuration the start pose stays near; how far each solved transition
+    ended up from it is printed. Exits as soon as the runner is gone, however it ended.
     """
     import threading
 
@@ -442,10 +468,20 @@ def solve_in_background(wall: WallModel, plan: ContactPlan, out, cfg=None) -> No
     threading.Thread(target=watch, daemon=True).start()
     try:
         cfg = cfg or tr.TransitionConfig()
-        q = start_pose(wall, plan, cfg)
+        q = start_pose(wall, plan, cfg, near)
         out.send(("start", q))
         start = time.perf_counter()
-        for i, result in enumerate(iter_plan(wall, plan, q, cfg)):
+        for i, result in enumerate(iter_plan(wall, plan, q, cfg, references)):
+            if references is not None:
+                apart = np.array(
+                    [rm.difference(r, s) for r, s in zip(references[i], result.q, strict=True)]
+                )
+                print(
+                    f"  transition {i} from the reference: trunk up to "
+                    f"{np.abs(apart[:, 0:3]).max() * 1000:.0f} mm, joints up to "
+                    f"{np.degrees(np.abs(apart[:, 6:]).max()):.1f} deg",
+                    flush=True,
+                )
             out.send(("transition", i, result, time.perf_counter() - start))
             start = time.perf_counter()
         out.send(("done",))
@@ -540,12 +576,17 @@ def run_plan(
     save: bool = False,
     send: str = "",
     cfg: tr.TransitionConfig | None = None,
+    references=None,
+    near=None,
+    out: Path | None = None,
 ):
     """Solve the plan in a worker process and play each transition in the sim as it arrives.
-    save: write trajectory_file(wall.id) after every solved transition (what is solved so far).
+    save: write `out` (default trajectory_file(wall.id)) after every solved transition (what is
+    solved so far).
     send: the robot's address; each solved transition goes to it as the trajectory's next
     segment (rcr.link), so it can climb while the rest is solved. It is not started here.
-    cfg: the optimiser's settings (default TransitionConfig())."""
+    cfg: the optimiser's settings (default TransitionConfig()).
+    references, near: a reference motion to follow (see solve_in_background)."""
     import multiprocessing
 
     from rcr import link
@@ -554,7 +595,9 @@ def run_plan(
     messages, worker_end = context.Pipe(duplex=False)
     # stopped in `finally`
     cfg, results = cfg or tr.TransitionConfig(), []
-    worker = context.Process(target=solve_in_background, args=(wall, plan, worker_end, cfg))
+    worker = context.Process(
+        target=solve_in_background, args=(wall, plan, worker_end, cfg, references, near)
+    )
     worker.start()
     worker_end.close()  # this process only reads
     count = len(plan.stances) - 1
@@ -590,10 +633,10 @@ def run_plan(
             if message[0] == "transition":
                 results.append(message[2])
             if message[0] == "transition" and save:
-                out = trajectory_file(wall.id)
-                out.parent.mkdir(parents=True, exist_ok=True)
-                io.save_trajectory(to_trajectory(results, cfg), out)
-                print(f"  saved {len(results)} of {count} transitions in {out}", flush=True)
+                path = out or trajectory_file(wall.id)
+                path.parent.mkdir(parents=True, exist_ok=True)
+                io.save_trajectory(to_trajectory(results, cfg), path)
+                print(f"  saved {len(results)} of {count} transitions in {path}", flush=True)
             if robot is not None and message[0] != "start":
                 to_robot(message)
         player.update(now)
@@ -609,9 +652,10 @@ def run_plan(
     print(f"{player.played} of {player.transitions} transitions played")
 
 
-def replay(wall: WallModel, view: bool = True) -> None:
-    """Play trajectory_file(wall.id) (saved by --save) in the sim, without solving anything."""
-    path = trajectory_file(wall.id)
+def replay(wall: WallModel, view: bool = True, path: Path | None = None) -> None:
+    """Play `path` (default trajectory_file(wall.id), saved by --save) in the sim, without
+    solving anything."""
+    path = path or trajectory_file(wall.id)
     traj = io.load_trajectory(path)
     if traj.trunk_poses is None or traj.planned_positions is None:
         sys.exit(f"{path} has no planned motion to replay: solve it with --save")
@@ -660,20 +704,31 @@ def play(wall: WallModel, pose, done, view: bool) -> None:
             time.sleep(0.02)
 
 
-USAGE = """usage: tests/test_optimiser.py [PLAN] [--save | --replay] [--samples N] [--swing W]
-                                [--keep-out W] [--hook W] [--send PI] [--headless]
+USAGE = """usage: tests/test_optimiser.py [PLAN | --track FILE] [--save | --replay] [--out FILE]
+                                [--samples N] [--tau-limit F] [--swing W] [--keep-out W] [--hook W]
+                                [--set NAME=VALUE ...] [--send PI] [--headless]
     PLAN              the contact plan to solve (default build/plan_N1.json): each move is solved
                       and played in the organisers' sim as it comes
+    --track FILE      instead of a plan: follow the motion in FILE (.npz, q: T x 26 at 50 Hz, e.g.
+                      an IK trajectory), made feasible: its plan, wall (N1-N3) and timing are read
+                      from it, each move stays as close to it as balance and torques allow
+                      (rcr.optimiser.reference); swing, keep-out, hooks and posture are off
     --save            also save it in build/trajectory_<wall id>.json after every move
     --replay          play build/trajectory_<wall id>.json on the plan's wall, without solving
+    --out FILE        the trajectory file --save writes and --replay plays, instead
     --samples N       samples per move (TransitionConfig.n_samples, default 12); more take longer
+    --tau-limit F     the motors' torque limit as a fraction of the servo's 0.605 N·m (default
+                      0.85); higher lets the motion follow a demanding reference more closely
     --swing W         how hard the moving ball is pulled along its path up, out, across, in and
                       down (TransitionConfig.w_swing, default 5000); 0 turns it off
     --keep-out W      how hard the body is pushed out of the cups' layer (TransitionConfig.
                       w_keep_out, default 20000); 0 turns it off
     --hook W          how hard each hook is turned to point up from its ball, so it goes into
                       the cup from above (TransitionConfig.w_hook, default 10); 0 turns it off
-    --send PI         also send each solved move to the robot at PI (rcr.link), move by move"""
+    --set NAME=VALUE  any number setting of TransitionConfig (e.g. w_track=10, w_nominal=0),
+                      applied last, so it wins over the options above; repeatable
+    --send PI         also send each solved move to the robot at PI (rcr.link), move by move
+src/rcr/optimiser/run.sh sets them all in one place."""
 
 if __name__ == "__main__":
     args = sys.argv[1:]
@@ -684,6 +739,13 @@ if __name__ == "__main__":
             sys.exit("--send needs the robot's address\n" + USAGE)
         send = args.pop(i + 1).split("@")[-1]  # pi@172.20.10.8 as for scripts/pi.sh: the address
         args.pop(i)
+    track = None
+    if "--track" in args:
+        i = args.index("--track")
+        if i + 1 >= len(args) or args[i + 1].startswith("--"):
+            sys.exit("--track needs a reference motion (.npz with q)\n" + USAGE)
+        track = Path(args.pop(i + 1))
+        args.pop(i)
     cfg = tr.TransitionConfig()
     if "--samples" in args:
         i = args.index("--samples")
@@ -691,6 +753,30 @@ if __name__ == "__main__":
             cfg = replace(cfg, n_samples=int(args[i + 1]))
         except (IndexError, ValueError):
             sys.exit("--samples needs a number\n" + USAGE)
+        del args[i : i + 2]
+    if track:  # before the weights below, which may still change what tracking_config sets
+        from rcr.optimiser import reference
+
+        q_ref = reference.read(track)
+        walls = [io.load_wall(path) for path in sorted(EXAMPLES.glob("N*.json"))]
+        track_wall = reference.find_wall(walls, q_ref, cfg)
+        track_plan, moves = reference.plan_of(track_wall, q_ref, cfg)
+        cfg = reference.tracking_config(cfg, moves)
+        print(
+            f"reference {track}: {len(q_ref) / reference.REFERENCE_RATE:.1f} s on wall "
+            f"{track_wall.id}, {len(moves)} moves; per move {cfg.phase_a_duration:.2f} s with "
+            f"four held, {cfg.phase_b_duration:.2f} s in the air",
+            flush=True,
+        )
+    if "--tau-limit" in args:
+        i = args.index("--tau-limit")
+        try:
+            fraction = float(args[i + 1])
+        except (IndexError, ValueError):
+            sys.exit("--tau-limit needs a fraction of the servo limit, e.g. 0.85\n" + USAGE)
+        if not 0 < fraction <= 1:
+            sys.exit(f"--tau-limit {fraction}: a fraction of the servo limit, in (0, 1]")
+        cfg = replace(cfg, tau_limit=fraction * tr.SERVO_TORQUE_LIMIT)
         del args[i : i + 2]
     if "--swing" in args:
         i = args.index("--swing")
@@ -713,20 +799,41 @@ if __name__ == "__main__":
         except (IndexError, ValueError):
             sys.exit("--keep-out needs a number (its weight; 0 turns it off)\n" + USAGE)
         del args[i : i + 2]
+    numbers = {f.name for f in fields(cfg) if isinstance(getattr(cfg, f.name), (int, float))}
+    while "--set" in args:
+        i = args.index("--set")
+        name, _, value = (args[i + 1] if i + 1 < len(args) else "").partition("=")
+        if name not in numbers:
+            sys.exit(f"--set {name or '?'}=...: not a number setting; one of {sorted(numbers)}")
+        try:
+            cfg = replace(cfg, **{name: type(getattr(cfg, name))(float(value))})
+        except ValueError:
+            sys.exit(f"--set {name}={value}: not a number")
+        del args[i : i + 2]
+    out = None
+    if "--out" in args:
+        i = args.index("--out")
+        if i + 1 >= len(args) or args[i + 1].startswith("--"):
+            sys.exit("--out needs a file name\n" + USAGE)
+        out = Path(args.pop(i + 1))
+        args.pop(i)
     if {"-h", "--help"} & set(args):
         sys.exit(USAGE)
     if "--hard" in args:  # the former way to ask for the runner: still accepted, not needed
         args.remove("--hard")
     plans = [a for a in args if not a.startswith("-")]
-    if len(plans) > 1:
-        sys.exit(f"one plan at a time, not {plans}\n" + USAGE)
-    plan_file = Path(plans[0]) if plans else RUN_PLAN
-    if plans:
-        args.remove(plans[0])
-    if not plan_file.exists():
-        sys.exit(f"no plan at {plan_file}: plan a wall first (scripts/plan_sim_wall.py --save)")
-    plan = io.load_contact_plan(plan_file)
-    print(f"plan {plan_file}: wall {plan.wall_id}, {len(plan.stances) - 1} moves", flush=True)
+    if len(plans) > 1 or (plans and track):
+        sys.exit(f"one plan at a time, not {plans + ([str(track)] if track else [])}\n" + USAGE)
+    if track:
+        plan = track_plan
+    else:
+        plan_file = Path(plans[0]) if plans else RUN_PLAN
+        if plans:
+            args.remove(plans[0])
+        if not plan_file.exists():
+            sys.exit(f"no plan at {plan_file}: plan a wall first (scripts/plan_sim_wall.py --save)")
+        plan = io.load_contact_plan(plan_file)
+        print(f"plan {plan_file}: wall {plan.wall_id}, {len(plan.stances) - 1} moves", flush=True)
     flags = set(args)
     if not flags <= {"--save", "--replay", "--headless"}:
         sys.exit(
@@ -736,8 +843,16 @@ if __name__ == "__main__":
         sys.exit("--send sends what is solved; to send a saved one: scripts/link_pi.py stream")
     if {"--save", "--replay"} <= flags:
         sys.exit("--save solves and saves, --replay plays what was saved: pick one\n" + USAGE)
-    wall, view = plan_walls(plan), "--headless" not in flags
+    wall, view = (track_wall if track else plan_walls(plan)), "--headless" not in flags
+    if track:
+        _SIM_WALLS[wall.id] = organisers_wall(wall.id)
     if "--replay" in flags:
-        replay(wall, view)
+        replay(wall, view, out)
+    elif track:
+        references = [reference.move_samples(q_ref, move, cfg) for move in moves]
+        run_plan(
+            wall, plan, view, save="--save" in flags, send=send, cfg=cfg,
+            references=references, near=q_ref[moves[0].start], out=out,
+        )  # fmt: skip
     else:
-        run_plan(wall, plan, view, save="--save" in flags, send=send, cfg=cfg)
+        run_plan(wall, plan, view, save="--save" in flags, send=send, cfg=cfg, out=out)

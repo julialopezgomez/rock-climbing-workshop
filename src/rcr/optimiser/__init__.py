@@ -38,23 +38,32 @@ def solve_plan(
     return list(iter_plan(wall, plan, start_pose(wall, plan, cfg), cfg))
 
 
-def start_pose(wall: WallModel, plan: ContactPlan, cfg: TransitionConfig | None = None):
-    """The plan's first configuration: a static pose of its first stance (validates the plan)."""
+def start_pose(wall: WallModel, plan: ContactPlan, cfg: TransitionConfig | None = None, near=None):
+    """The plan's first configuration: a static pose of its first stance (validates the plan).
+    near: a configuration (NQ) to stay close to (a reference's first), weighted by w_track."""
+    from dataclasses import replace
+
     from rcr.optimiser import transition as tr
 
     cfg = cfg or tr.TransitionConfig()
     validate_plan(wall, plan)
+    if near is not None:
+        return tr.static_pose(wall, plan.stances[0], near, replace(cfg, w_stay=cfg.w_track)).q[0]
     return tr.stance_pose(wall, plan.stances[0], cfg)
 
 
-def iter_plan(wall: WallModel, plan: ContactPlan, q, cfg: TransitionConfig | None = None):
+def iter_plan(
+    wall: WallModel, plan: ContactPlan, q, cfg: TransitionConfig | None = None, references=None
+):
     """Yield each transition of the plan as it is solved, the first starting at q, each next one
-    where the previous ended."""
+    where the previous ended. references: per transition, the (N + 1) x NQ configurations to
+    follow (with cfg.w_track; rcr.optimiser.reference)."""
     from rcr.optimiser import transition as tr
 
     cfg = cfg or tr.TransitionConfig()
     for i, (a, b) in enumerate(zip(plan.stances, plan.stances[1:], strict=False)):
-        result = tr.solve_transition(wall, a, b, q, cfg, index=i)
+        reference = None if references is None else references[i]
+        result = tr.solve_transition(wall, a, b, q, cfg, index=i, reference=reference)
         q = result.q[-1]
         yield result
 
