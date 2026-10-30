@@ -14,7 +14,7 @@ sys.path.insert(0, str(SCRIPTS))
 spec = importlib.util.spec_from_file_location("overlay_wall_grid", SCRIPTS / "overlay_wall_grid.py")
 grid = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(grid)
-import robot_pose_aruco as pose
+import robot_pose_aruco as pose  # noqa: E402
 
 
 class WallGridTest(unittest.TestCase):
@@ -28,11 +28,9 @@ class WallGridTest(unittest.TestCase):
         np.testing.assert_allclose(np.diff(rows), 0.015)
 
     def test_homography_recovers_wall_origin_and_marker_center(self):
-        known = np.array([[500.0, 35.0, 70.0], [-20.0, -350.0, 680.0],
-                          [0.03, 0.08, 1.0]])
+        known = np.array([[500.0, 35.0, 70.0], [-20.0, -350.0, 680.0], [0.03, 0.08, 1.0]])
         detections = {
-            mid: grid.project(known, grid._wall_corners(mid)[:, [0, 2]])
-            for mid in (1, 2, 3, 4)
+            mid: grid.project(known, grid._wall_corners(mid)[:, [0, 2]]) for mid in (1, 2, 3, 4)
         }
         fitted, ids, rms = grid.wall_homography(detections)
         self.assertEqual(ids, [1, 2, 3, 4])
@@ -55,13 +53,17 @@ class WallGridTest(unittest.TestCase):
 
     def test_pose_report_records_image_order_and_calibration(self):
         paths = [Path("AruCo4_Color.png"), Path("AruCo3_Color.png")]
-        images = [np.zeros((480, 640, 3), dtype=np.uint8),
-                  np.zeros((720, 1280, 3), dtype=np.uint8)]
+        images = [np.zeros((480, 640, 3), dtype=np.uint8), np.zeros((720, 1280, 3), dtype=np.uint8)]
         serials = ["233722072758", "243222071545"]
-        calibrations = [grid.calibration_for(serial, (image.shape[1], image.shape[0]))
-                        for serial, image in zip(serials, images, strict=True)]
-        result = {"position_m": [0.4, -0.1, 0.6],
-                  "rotation_matrix": np.eye(3).tolist(), "quaternion_wxyz": [1, 0, 0, 0]}
+        calibrations = [
+            grid.calibration_for(serial, (image.shape[1], image.shape[0]))
+            for serial, image in zip(serials, images, strict=True)
+        ]
+        result = {
+            "position_m": [0.4, -0.1, 0.6],
+            "rotation_matrix": np.eye(3).tolist(),
+            "quaternion_wxyz": [1, 0, 0, 0],
+        }
         fits = [(np.eye(3), [1, 2, 3], 0.5), (np.eye(3), [1, 2, 4], 0.6)]
         report = grid.pose_report(paths, images, serials, calibrations, result, fits)
         self.assertEqual([camera["assumed_serial"] for camera in report["cameras"]], serials)
@@ -80,12 +82,12 @@ class WallGridTest(unittest.TestCase):
         marker_rotation = trunk_rotation @ pose.R_TRUNK_MARKER
         marker_center = trunk_position + trunk_rotation @ pose.MARKER_CENTRE
         half = pose.MARKER_SIZE / 2
-        local = np.array([[-half, half, 0], [half, half, 0],
-                          [half, -half, 0], [-half, -half, 0]])
+        local = np.array([[-half, half, 0], [half, half, 0], [half, -half, 0], [-half, -half, 0]])
 
         def project(points):
-            return cv2.projectPoints(points, cv2.Rodrigues(camera_rotation)[0],
-                                     translation, matrix, None)[0][:, 0]
+            return cv2.projectPoints(
+                points, cv2.Rodrigues(camera_rotation)[0], translation, matrix, None
+            )[0][:, 0]
 
         detections = {mid: project(pose._wall_corners(mid)) for mid in (1, 2, 3, 4)}
         detections[5] = project(local @ marker_rotation.T + marker_center)
