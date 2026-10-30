@@ -25,7 +25,7 @@ MAX_ITERATIONS = 200
 WEIGHT = 1.0  # A* heuristic weight: 1.0 = admissible, 0.0 = Dijkstra
 # TODO: order by move: moving arm, diagonal leg, other leg, other arm
 TASK_ORDER = ("right_hand", "left_hand", "right_foot", "left_foot")
-# trunk z up, x into the wall (+y) [simulator README, Frames]
+# trunk z up, x into the wall (+y) 
 TRUNK_UPRIGHT = np.array([[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
 
 # trunk free: q = (x, y, z, qx, qy, qz, qw, 19 joints)
@@ -130,7 +130,7 @@ REACH = {
 STEP = 0.105
 MIN_APART = 1.0  # two balls at least this fraction of their roots' distance apart [Ours]
 # and at most this fraction of their reaches + roots' distance [Ours]
-HAND_MAX_APART = 0.7  # a pair with a hand (hand-hand, hand-foot)
+HAND_MAX_APART = 0.75  # a pair with a hand (hand-hand, hand-foot)
 FEET_MAX_APART = 0.27  # the two feet
 # [m] most one hand is above the other, and one foot above the other [Ours]: the example
 # plan the optimiser solved has up to 0.195 m (hands) and 0.135 m (feet)
@@ -249,9 +249,9 @@ def ik(wall, k):
             P = P - JP_pinv @ J @ P
 
         # last: trunk upright and facing the wall, as far as the balls allow
-        J = pin.getJointJacobian(model, data, 1, pin.LOCAL_WORLD_ALIGNED)[3:]
-        e = pin.log3(TRUNK_UPRIGHT @ data.oMi[1].rotation.T)
-        vq = vq + pinv(J @ P) @ (e - J @ vq)
+        # J = pin.getJointJacobian(model, data, 1, pin.LOCAL_WORLD_ALIGNED)[3:]
+        # e = pin.log3(TRUNK_UPRIGHT @ data.oMi[1].rotation.T)
+        # vq = vq + pinv(J @ P) @ (e - J @ vq)
 
         q = pin.integrate(model, q, vq * DT)
         q = projecttojointlimits(model, q)
