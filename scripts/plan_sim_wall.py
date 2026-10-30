@@ -101,6 +101,9 @@ def main() -> None:
     )
     parser.add_argument("--save-trajectory", help="save the optimiser's trajectory to this file")
     parser.add_argument(
+        "--save-npz", help="save the optimiser's trajectory as a .npz (q: N x 26, every 0.02 s)"
+    )
+    parser.add_argument(
         "--heuristic-weight", type=float, default=astar.WEIGHT, help="A* heuristic weight"
     )
     parser.add_argument(
@@ -141,7 +144,7 @@ def main() -> None:
         print(f"saved {args.save}")
     if args.show:
         show(sim_wall, wall, contact_plan)
-    if (args.play or args.save_trajectory) and len(contact_plan.stances) > 1:
+    if (args.play or args.save_trajectory or args.save_npz) and len(contact_plan.stances) > 1:
         clock = time.perf_counter()
         trajectory = optimiser.optimise(wall, contact_plan)
         seconds = time.perf_counter() - clock
@@ -150,6 +153,10 @@ def main() -> None:
             Path(args.save_trajectory).parent.mkdir(parents=True, exist_ok=True)
             io.save_trajectory(trajectory, args.save_trajectory)
             print(f"saved {args.save_trajectory}")
+        if args.save_npz:
+            Path(args.save_npz).parent.mkdir(parents=True, exist_ok=True)
+            optimiser.convert_trajectory_to_npz(trajectory, args.save_npz)
+            print(f"saved {args.save_npz}")
         if args.play:
             play(sim_wall, trajectory)
 

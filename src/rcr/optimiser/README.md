@@ -37,17 +37,22 @@ first a kinematic motion, then we see. All in `ik.py`.
 
 | Parameter | Value | |
 |---|---|---|
-| `OUT` | 0.03 m | the ball away from the wall at both ends of its path |
-| `ABOVE` | 0.02 m | above socket b, before going in |
+| `OUT` | 0.055 m | the ball away from the wall at both ends of its path |
+| `ABOVE` | 0.10 m | above socket b, before going in |
 | `MOVE_TIME`, `DT` | 2.0 s, 0.02 s | per move; between samples (the robot's 50 Hz loop) |
 | `GAIN` | 0.5 | fraction of a tracking error (and of the trunk's tilt) corrected per sample |
+| `MAX_ERROR` | 0.01 m | a ball further from its target: `ValueError` naming the move (the path out of reach) |
 
-Measured: a level-2 climb (seed 5226, 40 moves) is 80 s of motion, solved in 0.5 s. Every ball stays within
-0.25 mm of its target (0.86 mm on seed 3352), and every move ends with all balls in their sockets.
+Measured, level-2 climbs (about 40 moves, 80 s of motion, solved in 0.5 s):
+- With `OUT` 0.03 m and `ABOVE` 0.02 m, every ball stayed within 1 mm of its target on seeds 1, 2, 4, 6, 7, 3352 and
+  5226, and every move ended with all balls in their sockets.
+- With the current 0.055 m and 0.10 m, the path goes out of some limbs' reach. Seed 5 tracks; seeds 1 and 5226 each stop
+  at a hand move (seed 1: `left_hand r37_c21 -> r44_c18: a ball 17 mm from its target at 1.32 s`).
 
 ```bash
 uv run mjpython scripts/plan_sim_wall.py --level 2 --seed 5226 --heuristic-weight 1.5 --play  # see it
 uv run scripts/plan_sim_wall.py --level 2 --seed 5226 --save-trajectory build/trajectory.json
+uv run scripts/plan_sim_wall.py --level 2 --seed 5 --save-npz build/trajectory.npz  # q: N x 26, every 0.02 s
 ```
 
 ## v0 (reference)

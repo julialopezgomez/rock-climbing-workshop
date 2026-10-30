@@ -145,17 +145,19 @@ def track_move(wall: WallModel, a: Stance, b: Stance, q0):
     i = LIMBS.index(limb)
     held = sockets(wall, a)
     B = ball_path(held[i], sockets(wall, b)[i])
+    n = round(MOVE_TIME / DT)
     q, reference, worst, out = q0, held.copy(), 0.0, []
-    for k in range(1, round(MOVE_TIME / DT) + 2):
+    for k in range(n + 1):  # k: the sample q is at; the last one is only checked
         error = reference - balls(q)
-        worst = max(worst, norm(error, axis=1).max())
-        if not np.isfinite(worst) or worst > MAX_ERROR:
+        e = norm(error, axis=1).max()
+        if not e <= MAX_ERROR:  # also NaN: the IK diverged
             move = f"{limb} {a.contacts[limb]} -> {b.contacts[limb]}"
-            raise ValueError(f"{move}: a ball {worst * 1000:.0f} mm from its target at {k * DT:.2f} s")
-        if k > round(MOVE_TIME / DT):
-            return out, worst  # the last sample's error checked too
+            raise ValueError(f"{move}: a ball {e * 1000:.0f} mm from its target at {k * DT:.2f} s")
+        worst = max(worst, e)
+        if k == n:
+            return out, worst
         target = held.copy()
-        target[i] = B(timing(k * DT))
+        target[i] = B(timing((k + 1) * DT))
         q = ik_step(q, target - reference + GAIN * error)  # feed-forward + correction
         reference = target
         out.append(q)
