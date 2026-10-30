@@ -44,6 +44,10 @@ extend-exclude = ["third_party", "src/rcr/planner/inverse_kin_aro_reference.py"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 
+[tool.ruff.lint.per-file-ignores]
+"scripts/overlay_wall_grid.py" = ["E501"]
+"tests/test_overlay_wall_grid.py" = ["E402"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
