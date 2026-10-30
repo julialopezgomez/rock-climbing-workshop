@@ -132,6 +132,7 @@ MIN_APART = 1.0  # two balls at least this fraction of their roots' distance apa
 # and at most this fraction of their reaches + roots' distance [Ours]
 HAND_MAX_APART = 0.7  # a pair with a hand (hand-hand, hand-foot)
 FEET_MAX_APART = 0.27  # the two feet
+HAND_FEET_MAX_APART = 0.36  # a hand and a foot maximum apart (the example plan the optimiser solved has 0.35 m)
 # [m] most one hand is above the other, and one foot above the other [Ours]: the example
 # plan the optimiser solved has up to 0.195 m (hands) and 0.135 m (feet)
 MAX_LEVEL = 0.1
@@ -172,6 +173,12 @@ def reach(targets):
     if abs(right_foot[2] - left_foot[2]) > MAX_LEVEL:
         level = abs(right_foot[2] - left_foot[2])
         return fail(f"reach: one foot too far above the other ({mm(level)} > {mm(MAX_LEVEL)})")
+    # check max distance between a hand and a foot
+    if abs(max(right_hand[2], left_hand[2]) - min(right_foot[2], left_foot[2])) > HAND_FEET_MAX_APART:
+        level = abs(max(right_hand[2], left_hand[2]) - min(right_foot[2], left_foot[2]))
+        return fail(
+            f"reach: a hand too far above a foot ({mm(level)} > {mm(HAND_FEET_MAX_APART)})"
+        )
     return None
 
 
