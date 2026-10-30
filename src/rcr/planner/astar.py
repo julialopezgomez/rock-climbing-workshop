@@ -126,11 +126,11 @@ REACH = {
 }
 # the longest step the simulator's routes leave a limb [simulator routes.py]
 STEP = 0.105
-MIN_APART = 1.2  # two balls at least this fraction of their roots' distance apart [Ours]
+MIN_APART = 1.1  # two balls at least this fraction of their roots' distance apart [Ours]
 MAX_APART = 0.55  # and at most this fraction of their reaches + roots' distance [Ours]
 # [m] most one hand is above the other, and one foot above the other [Ours]: the example
 # plan the optimiser solved has up to 0.195 m (hands) and 0.135 m (feet)
-MAX_LEVEL = 0.11
+MAX_LEVEL = 0.17
 
 Q_HANG = pin.neutral(model)
 for name, angle in json.loads(HANG.read_text())["joints"].items():
@@ -187,6 +187,10 @@ def ik(wall, k):
         if max(norm(e) for e in error.values()) < EPSILON:
             if jointlimitsviolated(model, q):
                 return Feasibility(False, reason="joint limits"), q
+            for limb, ball in zip(LIMBS, balls, strict=True):
+                side = 1 if limb.startswith("right") else -1  # robot's right is +x
+                if side * (ball[0] - data.oMi[chain(limb)[0]].translation[0]) < 0:
+                    return Feasibility(False, reason=f"{limb} crosses its root"), q
             if collision(wall, k, q):
                 return Feasibility(False, reason="collision"), q
             return Feasibility(True), q
