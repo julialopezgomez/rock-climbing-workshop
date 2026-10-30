@@ -184,6 +184,252 @@ def project_wall(points, K, T_camera_wall, distortion=None):
     )[0].reshape(-1, 2)
 
 
+def detect_wall_texture_core(rgb):
+    """Find the large perforated board region, without reading ArUco patterns.
+
+    This identifies the visible hole-rich interior, not its physical corners.
+    It is tuned to the released board's dense small-hole texture; a second,
+    narrower perforated board may also be present behind it.
+    """
+    if rgb.ndim != 3 or rgb.shape[-1] != 3 or rgb.dtype != np.uint8:
+        raise ValueError("RGB image must have shape HxWx3 and dtype uint8")
+    height, width = rgb.shape[:2]
+    gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
+    dark_spots = cv2.adaptiveThreshold(
+        gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 13, 5
+    )
+    _, _, stats, centroids = cv2.connectedComponentsWithStats(dark_spots)
+    small = (
+        (stats[:, cv2.CC_STAT_AREA] >= 1)
+        & (stats[:, cv2.CC_STAT_AREA] <= 30)
+        & (stats[:, cv2.CC_STAT_WIDTH] <= 7)
+        & (stats[:, cv2.CC_STAT_HEIGHT] <= 7)
+    )
+    small[0] = False
+    density = np.zeros((height, width), dtype=np.float32)
+    centers = centroids[small].astype(int)
+    density[centers[:, 1], centers[:, 0]] = 1.0
+    density = cv2.GaussianBlur(density, (0, 0), width / 100)
+    size = max(3, int(width * 0.025) | 1)
+    kernel = np.ones((size, size), np.uint8)
+    for threshold in (0.025, 0.020, 0.016):
+        dense = (density > threshold).astype(np.uint8) * 255
+        dense = cv2.morphologyEx(dense, cv2.MORPH_CLOSE, kernel)
+        contours, _ = cv2.findContours(dense, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        candidates = []
+        for contour in contours:
+            x, y, box_width, box_height = cv2.boundingRect(contour)
+            area = cv2.contourArea(contour)
+            if (
+                area > width * height * 0.06
+                and box_height > height * 0.55
+                and 0.28 < box_width / box_height < 0.85
+            ):
+                candidates.append((area, contour, (x, y, box_width, box_height)))
+        if candidates:
+            _, contour, bbox = max(candidates, key=lambda item: item[0])
+            mask = np.zeros((height, width), dtype=np.uint8)
+            cv2.drawContours(mask, [contour], -1, 255, thickness=-1)
+            return mask, bbox
+    raise CalibrationError("no large perforated board region found")
+
+
+def detect_wall_corner_squares(rgb):
+    """Locate four unlabeled 100 mm black squares using the board texture as context.
+
+    This uses only each square's outer silhouette and its position relative to
+    the board. It never reads the internal ArUco pattern or decodes an ID.
+    The supplied photos show all four squares; a hidden corner is rejected.
+    """
+    _, (bx, by, bw, bh) = detect_wall_texture_core(rgb)
+    gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
+    height, width = gray.shape
+    black = (gray < 100).astype(np.uint8) * 255
+    contours, _ = cv2.findContours(black, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    groups = {name: [] for name in ("TL", "TR", "BR", "BL")}
+    for contour in contours:
+        area = cv2.contourArea(contour)
+        if not width * height * 0.0003 < area < width * height * 0.02:
+            continue
+        polygon = cv2.approxPolyDP(contour, 0.04 * cv2.arcLength(contour, True), True)
+        if len(polygon) != 4 or not cv2.isContourConvex(polygon):
+            continue
+        x, y, box_width, box_height = cv2.boundingRect(polygon)
+        cx, cy = x + box_width / 2, y + box_height / 2
+        if not 0.6 < box_width / box_height < 1.5:
+            continue
+        if not bx - bw * 0.25 < cx < bx + bw * 1.25:
+            continue
+        if cy < by + bh * 0.28:
+            role = "TL" if cx < bx + bw * 0.5 else "TR"
+        elif cy > by + bh * 0.7:
+            role = "BL" if cx < bx + bw * 0.5 else "BR"
+        else:
+            continue
+        groups[role].append((area, polygon.reshape(4, 2).astype(np.float64)))
+    if any(not candidates for candidates in groups.values()):
+        missing = [role for role, candidates in groups.items() if not candidates]
+        raise CalibrationError(f"missing visible wall corner squares: {missing}")
+    squares = {}
+    for role, candidates in groups.items():
+        polygon = max(candidates, key=lambda candidate: candidate[0])[1]
+        upper = polygon[np.argsort(polygon[:, 1])[:2]]
+        lower = polygon[np.argsort(polygon[:, 1])[2:]]
+        squares[role] = np.array(
+            [
+                upper[np.argmin(upper[:, 0])],
+                upper[np.argmax(upper[:, 0])],
+                lower[np.argmax(lower[:, 0])],
+                lower[np.argmin(lower[:, 0])],
+            ]
+        )
+    return squares
+
+
+def calibrate_wall_corner_squares(
+    rgb,
+    K,
+    distortion=None,
+    wall_width_m=0.8,
+    wall_height_m=1.4,
+    code_size_m=0.1,
+    white_border_m=0.018,
+    code_face_z_m=0.0,
+    max_reprojection_rms_px=3.0,
+):
+    """Fit the wall using four anonymous black-square silhouettes.
+
+    The 136 mm plates touch the wall's outer corners. The known 18 mm white
+    border locates each 100 mm black square relative to those corners. This
+    is geometric use of visible print, not ArUco detection or ID decoding.
+    Returns the calibration and the four observed square corner arrays.
+    """
+    K = np.asarray(K, dtype=np.float64)
+    if K.shape != (3, 3) or not np.isfinite(K).all() or min(K[0, 0], K[1, 1]) <= 0:
+        raise ValueError("K must be a finite 3x3 camera matrix with positive focal lengths")
+    if (
+        wall_width_m <= 0
+        or wall_height_m <= 0
+        or code_size_m <= 0
+        or white_border_m < 0
+        or code_size_m + 2 * white_border_m >= min(wall_width_m, wall_height_m)
+    ):
+        raise ValueError("invalid wall or corner-square dimensions")
+    distortion = np.zeros(5) if distortion is None else np.asarray(distortion, np.float64)
+    squares = detect_wall_corner_squares(rgb)
+    plate = code_size_m + 2 * white_border_m
+    object_points, image_points = [], []
+    for role in ("TL", "TR", "BR", "BL"):
+        x0 = 0.0 if role in ("TL", "BL") else wall_width_m - plate
+        y0 = wall_height_m - plate if role in ("TL", "TR") else 0.0
+        x0 += white_border_m
+        y0 += white_border_m
+        object_points.extend(
+            [
+                [x0, y0 + code_size_m, code_face_z_m],
+                [x0 + code_size_m, y0 + code_size_m, code_face_z_m],
+                [x0 + code_size_m, y0, code_face_z_m],
+                [x0, y0, code_face_z_m],
+            ]
+        )
+        image_points.extend(squares[role])
+    obj = np.asarray(object_points, np.float64)
+    img = np.asarray(image_points, np.float64)
+    success, rvecs, tvecs, _ = cv2.solvePnPGeneric(
+        obj, img, K, distortion, flags=cv2.SOLVEPNP_IPPE
+    )
+    if not success:
+        raise CalibrationError("corner-square PnP failed")
+    candidates = []
+    for rvec, tvec in zip(rvecs, tvecs, strict=False):
+        rvec, tvec = cv2.solvePnPRefineLM(obj, img, K, distortion, rvec, tvec)
+        R = cv2.Rodrigues(rvec)[0]
+        if np.any((obj @ R.T + tvec.ravel())[:, 2] <= 0):
+            continue
+        if (-R.T @ tvec.ravel())[2] <= 0:
+            continue
+        T = np.eye(4)
+        T[:3, :3], T[:3, 3] = R, tvec.ravel()
+        residual = project_wall(obj, K, T, distortion) - img
+        rms = float(np.sqrt(np.mean(np.sum(residual**2, axis=1))))
+        candidates.append((rms, T))
+    if not candidates:
+        raise CalibrationError("no valid front-facing wall pose from corner squares")
+    rms, T = min(candidates, key=lambda candidate: candidate[0])
+    if rms > max_reprojection_rms_px:
+        raise CalibrationError(f"corner-square reprojection RMS {rms:.2f}px exceeds limit")
+    wall = np.array(
+        [
+            [0, wall_height_m, 0],
+            [wall_width_m, wall_height_m, 0],
+            [wall_width_m, 0, 0],
+            [0, 0, 0],
+        ],
+        dtype=np.float64,
+    )
+    board_corners = project_wall(wall, K, T, distortion)
+    return WallCalibration(T, [], rms, {0: board_corners}, len(obj)), squares
+
+
+def calibrate_wall_corners(
+    corners_px, K, image_size, distortion=None, wall_width_m=0.8, wall_height_m=1.4
+):
+    """Estimate wall-to-camera pose from measured outer board corners, without markers.
+
+    Corners are TL, TR, BR, BL in pixels. The challenge wall frame has its
+    origin at bottom-left, X right, Y up, and Z outward. Four fitted points
+    cannot independently establish localization accuracy; check held-out
+    grid holes or a second view before using this pose for a robot.
+    """
+    corners = np.asarray(corners_px, dtype=np.float64)
+    K = np.asarray(K, dtype=np.float64)
+    width, height = image_size
+    if corners.shape != (4, 2) or not np.isfinite(corners).all():
+        raise ValueError("corners_px must be four finite TL, TR, BR, BL pixel pairs")
+    if K.shape != (3, 3) or not np.isfinite(K).all() or min(K[0, 0], K[1, 1]) <= 0:
+        raise ValueError("K must be a finite 3x3 camera matrix with positive focal lengths")
+    if width <= 0 or height <= 0 or wall_width_m <= 0 or wall_height_m <= 0:
+        raise ValueError("image and wall dimensions must be positive")
+    if np.any(corners < 0) or np.any(corners[:, 0] >= width) or np.any(corners[:, 1] >= height):
+        raise CalibrationError("board corners must lie inside the image")
+    if not cv2.isContourConvex(corners.astype(np.float32)) or cv2.contourArea(
+        corners.astype(np.float32)
+    ) < width * height * 0.01:
+        raise CalibrationError("board corners must form a sizable convex quadrilateral")
+    distortion = np.zeros(5) if distortion is None else np.asarray(distortion, np.float64)
+    obj = np.array(
+        [
+            [0.0, wall_height_m, 0.0],
+            [wall_width_m, wall_height_m, 0.0],
+            [wall_width_m, 0.0, 0.0],
+            [0.0, 0.0, 0.0],
+        ],
+        dtype=np.float64,
+    )
+    success, rvecs, tvecs, _ = cv2.solvePnPGeneric(
+        obj, corners, K, distortion, flags=cv2.SOLVEPNP_IPPE
+    )
+    if not success:
+        raise CalibrationError("board-corner PnP failed")
+    candidates = []
+    for rvec, tvec in zip(rvecs, tvecs, strict=False):
+        rvec, tvec = cv2.solvePnPRefineLM(obj, corners, K, distortion, rvec, tvec)
+        R = cv2.Rodrigues(rvec)[0]
+        if np.any((obj @ R.T + tvec.ravel())[:, 2] <= 0):
+            continue
+        T = np.eye(4)
+        T[:3, :3], T[:3, 3] = R, tvec.ravel()
+        if (-R.T @ tvec.ravel())[2] <= 0:
+            continue
+        residual = project_wall(obj, K, T, distortion) - corners
+        rms = float(np.sqrt(np.mean(np.sum(residual**2, axis=1))))
+        candidates.append((rms, T))
+    if not candidates:
+        raise CalibrationError("no valid camera pose in front of the board")
+    rms, T = min(candidates, key=lambda candidate: candidate[0])
+    return WallCalibration(T, [], rms, {0: corners}, 4)
+
+
 def calibrate_wall_boundary(rgb, K, wall_width_m=0.8, wall_height_m=1.4, board_face_z_m=0.0004):
     """Markerless challenger: plywood segmentation and four fitted outer edges.
 
