@@ -93,7 +93,7 @@ def collision(wall, k, q):
     """The first robot contact, but a ball in its own hold or self pairs touching when hanging,
     as 'body into body (depth)'; "" if none."""
     m, d, robot, ball, hold, hanging = scene(wall)
-    own = {(ball[limb], hold[h]) for limb, h in zip(LIMBS, k, strict=True)}
+    own = {(ball[limb], hold[h]) for limb, h in zip(LIMBS, k, strict=True) if h is not None}
     d.qpos[:] = qpos(m, q)
     mujoco.mj_forward(m, d)
     for c in d.contact[: d.ncon]:
@@ -183,9 +183,11 @@ def fail(reason):
 
 
 def initial_q(targets):
-    """Hang posture, trunk fitted rigidly to the targets [simulator sim.py reset_hanging]."""
-    cp, cs = BALLS_HANG.mean(0), targets.mean(0)
-    U, _, Vt = np.linalg.svd((BALLS_HANG - cp).T @ (targets - cs))
+    """Hang posture, trunk fitted rigidly to the targets [simulator sim.py reset_hanging]
+    (a free limb's target is NaN: left out of the fit)."""
+    on = ~np.isnan(targets[:, 0])
+    cp, cs = BALLS_HANG[on].mean(0), targets[on].mean(0)
+    U, _, Vt = np.linalg.svd((BALLS_HANG[on] - cp).T @ (targets[on] - cs))
     R = Vt.T @ np.diag([1, 1, np.sign(np.linalg.det(Vt.T @ U.T))]) @ U.T
     q = Q_HANG.copy()
     q[0:3] = cs - R @ cp
@@ -194,31 +196,37 @@ def initial_q(targets):
 
 
 def ik(wall, k):
-    """Hierarchical IK on the four ball positions, joints clipped; then joint limits, collision."""
+    """Hierarchical IK on the ball positions of the limbs on holds (a free limb, None, is left
+    out), joints clipped; then joint limits, collision. Returns (verdict, q, reached): reached[limb]
+    is whether its ball is within EPSILON of its socket, None for a free limb."""
     t = targets(wall, k)
     q = initial_q(t)
     for _ in range(MAX_ITERATIONS):
         pin.computeJointJacobians(model, data, q)
         pin.updateFramePlacements(model, data)
         balls = [data.oMf[BALL[limb]].translation for limb in LIMBS]
-        error = dict(zip(LIMBS, t - balls, strict=True))
+        error = {limb: t[i] - balls[i] for i, limb in enumerate(LIMBS) if k[i] is not None}
+        reached = {
+            limb: bool(norm(error[limb]) < EPSILON) if limb in error else None for limb in LIMBS
+        }
 
-        if max(norm(e) for e in error.values()) < EPSILON:
+        if all(reached[limb] for limb in error):
             if jointlimitsviolated(model, q):
-                return Feasibility(False, reason="joint limits"), q
-            for limb, ball in zip(LIMBS, balls, strict=True):
+                return Feasibility(False, reason="joint limits"), q, reached
+            for limb in error:
                 side = 1 if limb.startswith("right") else -1  # robot's right is +x
+                ball = balls[LIMBS.index(limb)]
                 past = side * (data.oMi[chain(limb)[0]].translation[0] - ball[0])
                 if past > 0:
-                    return fail(f"{limb} crosses its root (by {mm(past)})"), q
+                    return fail(f"{limb} crosses its root (by {mm(past)})"), q, reached
             if hit := collision(wall, k, q):
-                return fail(f"collision: {hit}"), q
-            return Feasibility(True), q
+                return fail(f"collision: {hit}"), q, reached
+            return Feasibility(True), q, reached
 
         # each task in the null space of the ones before
         vq, P = np.zeros(model.nv), np.eye(model.nv)
 
-        for limb in TASK_ORDER:
+        for limb in (limb for limb in TASK_ORDER if limb in error):
             J = pin.getFrameJacobian(model, data, BALL[limb], pin.LOCAL_WORLD_ALIGNED)[:3]
             JP_pinv = pinv(J @ P)
             vq = vq + JP_pinv @ (error[limb] - J @ vq)
@@ -233,13 +241,15 @@ def ik(wall, k):
         q = projecttojointlimits(model, q)
 
     left = max(norm(e) for e in error.values())
-    return fail(f"ik: balls not reached ({mm(left)} left after {MAX_ITERATIONS} iterations)"), q
+    reason = f"ik: balls not reached ({mm(left)} left after {MAX_ITERATIONS} iterations)"
+    return fail(reason), q, reached
 
 
 def targets(wall, k):
-    """Socket of each limb's hold, in LIMBS order."""
+    """Socket of each limb's hold, in LIMBS order; NaN for a free limb (None), which reach()
+    then ignores (every comparison with NaN is false)."""
     position = {h.id: h.position for h in wall.holds}
-    return np.array([position[hold] for hold in k]) + SOCKET
+    return np.array([position[hold] if hold else (np.nan,) * 3 for hold in k]) + SOCKET
 
 
 _cache = {}
@@ -261,21 +271,32 @@ def stance(k):
     return Stance(contacts=dict(zip(LIMBS, k, strict=True)))
 
 
-def solve(wall: WallModel, feasible: FeasibilityFn, HEURISTIC_WEIGHT: float = 1.0) -> ContactPlan:
+def solve(
+    wall: WallModel,
+    feasible: FeasibilityFn,
+    HEURISTIC_WEIGHT: float = 1.0,
+    start: Stance | None = None,
+    failed_moves=(),
+    failed_stances=(),
+) -> ContactPlan:
     """Moves to a hand on a top hold, or else to the highest hand reachable.
     - z is the height of each hold.
     - k is a node: the tuple of holds for each limb, in LIMBS order.
+    - start: the stance to plan from (wall.start if None). A free limb (None) is placed first.
+    - failed_moves: (a, b) stance pairs never taken again; failed_stances: stances never entered.
     """
     z = {h.id: h.position[2] for h in wall.holds}
     top = max(z.values())
+    failed_moves = {(key(a), key(b)) for a, b in failed_moves}
+    failed_stances = {key(s) for s in failed_stances}
 
-    def hand_z(k):
-        return max(z[k[0]], z[k[1]])
+    def hand_z(k):  # a free limb (None) counts as at the bottom
+        return max(z.get(k[0], 0.0), z.get(k[1], 0.0))
 
     def h(k):  # steps left for all four limbs: not admissible, so not always the fewest moves
-        return sum(top - z[hold] for hold in k) / STEP
+        return sum(top - z.get(hold, 0.0) for hold in k) / STEP
 
-    start = key(wall.start)
+    start = key(start or wall.start)
     g, parent, closed, tie = {start: 0}, {}, set(), count()
     heap = [(h(start), 0, next(tie), start)]  # (f, -g, tie, stance): deeper first on equal f
     best = start
@@ -288,12 +309,14 @@ def solve(wall: WallModel, feasible: FeasibilityFn, HEURISTIC_WEIGHT: float = 1.
             best = k
         if hand_z(k) == top:
             break
-        for i in range(4):
+        for i in [i for i in range(4) if k[i] is None] or range(4):  # a free limb first
             # holds limb i can reach with the other three where they are
             children = [k[:i] + (hold,) + k[i + 1 :] for hold in z if hold not in k]
             children = [c for c in children if reach(targets(wall, c)) is None]
             for child in children:
                 if g[k] + 1 >= g.get(child, np.inf):
+                    continue
+                if child in failed_stances or (k, child) in failed_moves:
                     continue
                 if feasible(wall, stance(k), stance(child)).feasible:
                     g[child], parent[child] = g[k] + 1, k
