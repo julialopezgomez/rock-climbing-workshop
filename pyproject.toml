@@ -7,7 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "numpy",
     # the planner's reach and IK (rcr.planner.astar): Pinocchio on the robot's URDF, from
-    # microban-model (pinned below to the simulator's commit) [Microban]
+    # microban-model (pinned below: our fork of the simulator's commit, feet cut) [Microban, Ours]
     "pin>=4.1.0",
     "microban-model",
     # the organisers' simulator (third_party/simulator): walls, and the MuJoCo viewer of a plan
@@ -17,7 +17,8 @@ dependencies = [
 [dependency-groups]
 # Filled in when the module that needs them gets a v0.
 # microban-model: the robot (Rhoban/microban_model, its URDF and MJCF, meshes in Git LFS), what
-# Microban dev_v2 and the organisers' simulator use; pinned below to the same commit [Microban]
+# Microban dev_v2 and the organisers' simulator use; pinned below to our fork of the same commit,
+# where only the climbing feet are cut as on our robot [Microban, Ours]
 # sim: the organisers' simulator (third_party/simulator, climbing_sim), with Rhoban's robot sim
 sim = ["climbing-sim", "microban-model"]
 perception = [] # e.g. opencv (ArUco)
@@ -47,9 +48,15 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
+[tool.uv]
+# The organisers' simulator asks for Rhoban's microban-model; ours (the fork, in the sources below)
+# replaces it for every package, so their sim loads the same robot as the optimiser [Ours]
+override-dependencies = ["microban-model"]
+
 [tool.uv.sources]
 # the organisers' simulator, the submodule as it is (never edited); its dependencies pinned to
 # the commits of its uv.lock. microban-model needs git-lfs installed
 climbing-sim = { path = "third_party/simulator" }
 microban-sim = { git = "https://github.com/Rhoban/microban_sim", rev = "29234e369e33411ff42276096c6c6af208ad3b65" }
-microban-model = { git = "https://github.com/Rhoban/microban_model", rev = "8e42ef70673b5747dbdca3efaf60bc0f8ec7ea6d", lfs = true }
+# our fork (branch cut-foot): Rhoban's 8e42ef7 with the climbing feet cut, nothing else changed
+microban-model = { git = "https://github.com/MohammadrezaDindarloo/microban_model", rev = "4e8a1f0929f42742e705bcf51e7f93feaa99eca6", lfs = true }
