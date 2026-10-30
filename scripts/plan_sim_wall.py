@@ -76,8 +76,14 @@ def main() -> None:
     parser.add_argument("--seed", type=int, help="random if not given")
     parser.add_argument("--save", help="save the contact plan to this JSON file")
     parser.add_argument("--show", action="store_true", help="show each stance in MuJoCo")
-    parser.add_argument("--heuristic-weight", type=float, default=astar.WEIGHT, help="A* heuristic weight")
-    parser.add_argument("--wall", type=Path, help="load a wall from this JSON file instead of generating one. Options: N1, N2, N3")
+    parser.add_argument(
+        "--heuristic-weight", type=float, default=astar.WEIGHT, help="A* heuristic weight"
+    )
+    parser.add_argument(
+        "--wall",
+        type=Path,
+        help="load a wall from this JSON file instead of generating one. Options: N1, N2, N3",
+    )
     args = parser.parse_args()
 
     seed = random.randrange(10_000) if args.seed is None else args.seed

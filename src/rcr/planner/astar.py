@@ -217,7 +217,7 @@ def ik(wall, k):
 
         # each task in the null space of the ones before
         vq, P = np.zeros(model.nv), np.eye(model.nv)
-        
+
         for limb in TASK_ORDER:
             J = pin.getFrameJacobian(model, data, BALL[limb], pin.LOCAL_WORLD_ALIGNED)[:3]
             JP_pinv = pinv(J @ P)
@@ -261,7 +261,6 @@ def stance(k):
     return Stance(contacts=dict(zip(LIMBS, k, strict=True)))
 
 
-
 def solve(wall: WallModel, feasible: FeasibilityFn, HEURISTIC_WEIGHT: float = 1.0) -> ContactPlan:
     """Moves to a hand on a top hold, or else to the highest hand reachable.
     - z is the height of each hold.
@@ -298,7 +297,9 @@ def solve(wall: WallModel, feasible: FeasibilityFn, HEURISTIC_WEIGHT: float = 1.
                     continue
                 if feasible(wall, stance(k), stance(child)).feasible:
                     g[child], parent[child] = g[k] + 1, k
-                    heapq.heappush(heap, (g[child] + HEURISTIC_WEIGHT*h(child), -g[child], next(tie), child))
+                    heapq.heappush(
+                        heap, (g[child] + HEURISTIC_WEIGHT * h(child), -g[child], next(tie), child)
+                    )
     path = [best]
     while path[-1] in parent:
         path.append(parent[path[-1]])

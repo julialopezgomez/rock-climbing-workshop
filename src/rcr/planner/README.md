@@ -37,8 +37,7 @@ The robot comes only from files Microban and the simulator use:
 - Dangling limbs at the goal and the 3 s hold.
 - How to handle L2 gaps and L3 lateral moves.
 
-## v0 (reference)
-The first planner (reachability A\* with LazySP over the optimiser's feasibility, its reach sets and cache) is in
-[v0/](v0/), with its own [README](v0/README.md), [GUIDE](v0/GUIDE.md) and playground. It still runs:
-`rcr.planner.v0.plan`, `scripts/plan_wall.py`, `scripts/plan_eval.py`, `scripts/make_reach.py` and
-`tests/test_planner_v0.py` use it. `rcr.planner.plan` above starts over from the stub [Ours].
+## v0 (removed)
+The first planner (reachability A\* with LazySP over the optimiser's feasibility, its reach sets and cache) is in git
+history: `src/rcr/planner/` on `main` at commit `b52d553`, with its scripts `plan_wall.py`, `plan_eval.py` and
+`make_reach.py`.

@@ -20,6 +20,7 @@ import numpy as np
 import pytest
 
 mujoco = pytest.importorskip("mujoco")
+pytest.importorskip("cv2")  # rcr.sim's wall texture; mujoco alone now comes with climbing-sim
 
 from rcr import io  # noqa: E402
 from rcr.sim import Sim, levels  # noqa: E402
