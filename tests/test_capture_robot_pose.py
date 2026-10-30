@@ -98,10 +98,16 @@ class CapturePoseTest(unittest.TestCase):
     def test_rejects_duplicate_camera_serials(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "calibration.json"
-            path.write_text(json.dumps({"cameras": [
-                {"serial": "same", "camera_matrix": np.eye(3).tolist()},
-                {"serial": "same", "camera_matrix": np.eye(3).tolist()},
-            ]}))
+            path.write_text(
+                json.dumps(
+                    {
+                        "cameras": [
+                            {"serial": "same", "camera_matrix": np.eye(3).tolist()},
+                            {"serial": "same", "camera_matrix": np.eye(3).tolist()},
+                        ]
+                    }
+                )
+            )
             with self.assertRaisesRegex(ValueError, "must be different"):
                 capture.load_calibration(path)
 

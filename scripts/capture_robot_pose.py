@@ -57,9 +57,10 @@ def load_calibration(path):
         if value is None:
             continue
         coefficients = np.asarray(value, dtype=float)
-        if coefficients.shape not in ((4,), (5,), (8,), (12,), (14,)) or not np.isfinite(
-            coefficients
-        ).all():
+        if (
+            coefficients.shape not in ((4,), (5,), (8,), (12,), (14,))
+            or not np.isfinite(coefficients).all()
+        ):
             raise ValueError("distortion_coeffs must be finite OpenCV coefficient arrays")
     distortion = [None if value is None else np.asarray(value, dtype=float) for value in distortion]
     extrinsics = data.get("camera_extrinsics")

@@ -60,10 +60,10 @@ def hole_coordinates():
 
 def label(image, text, point, scale=0.55):
     x, y = np.rint(point).astype(int)
-    cv2.putText(image, text, (x, y), cv2.FONT_HERSHEY_SIMPLEX, scale, (0, 0, 0), 4,
-                cv2.LINE_AA)
-    cv2.putText(image, text, (x, y), cv2.FONT_HERSHEY_SIMPLEX, scale, (255, 255, 255), 1,
-                cv2.LINE_AA)
+    cv2.putText(image, text, (x, y), cv2.FONT_HERSHEY_SIMPLEX, scale, (0, 0, 0), 4, cv2.LINE_AA)
+    cv2.putText(
+        image, text, (x, y), cv2.FONT_HERSHEY_SIMPLEX, scale, (255, 255, 255), 1, cv2.LINE_AA
+    )
 
 
 def annotate(image, homography):
@@ -85,17 +85,18 @@ def annotate(image, homography):
     output = cv2.addWeighted(major, 0.62, output, 0.38, 0)
 
     board = np.rint(
-        project(homography, [[0, 0], [WALL_WIDTH, 0],
-                             [WALL_WIDTH, WALL_HEIGHT], [0, WALL_HEIGHT]])
+        project(homography, [[0, 0], [WALL_WIDTH, 0], [WALL_WIDTH, WALL_HEIGHT], [0, WALL_HEIGHT]])
     ).astype(int)
     cv2.polylines(output, [board], True, (0, 180, 255), 2, cv2.LINE_AA)
     origin = board[0]
     x_axis, z_axis = np.rint(project(homography, [[0.20, 0], [0, 0.20]])).astype(int)
     cv2.circle(output, tuple(origin), 6, (0, 0, 255), -1, cv2.LINE_AA)
-    cv2.arrowedLine(output, tuple(origin), tuple(x_axis), (0, 0, 255), 2, cv2.LINE_AA,
-                    tipLength=0.17)
-    cv2.arrowedLine(output, tuple(origin), tuple(z_axis), (0, 0, 255), 2, cv2.LINE_AA,
-                    tipLength=0.17)
+    cv2.arrowedLine(
+        output, tuple(origin), tuple(x_axis), (0, 0, 255), 2, cv2.LINE_AA, tipLength=0.17
+    )
+    cv2.arrowedLine(
+        output, tuple(origin), tuple(z_axis), (0, 0, 255), 2, cv2.LINE_AA, tipLength=0.17
+    )
     label(output, "x", x_axis + [5, -5])
     label(output, "z", z_axis + [-14, -5])
     label(output, "(0, 0) mm", origin + [-125, -16])
@@ -180,8 +181,9 @@ def add_pose_annotation(image, detections, matrix, distortion, result, serial):
     marker = trunk + rotation @ MARKER_CENTRE
     trunk_pixel = cv2.projectPoints(trunk[None], rvec, tvec, matrix, distortion)[0][0, 0]
     marker_pixel = detections[5].mean(axis=0)
-    trunk_pixel, marker_pixel = [tuple(np.rint(point).astype(int))
-                                 for point in (trunk_pixel, marker_pixel)]
+    trunk_pixel, marker_pixel = [
+        tuple(np.rint(point).astype(int)) for point in (trunk_pixel, marker_pixel)
+    ]
 
     output = np.full((image.shape[0] + 168, image.shape[1], 3), (26, 29, 32), dtype=np.uint8)
     output[: image.shape[0]] = image
@@ -200,12 +202,23 @@ def add_pose_annotation(image, detections, matrix, distortion, result, serial):
         f"Trunk q (w,x,y,z): {position_text(result['quaternion_wxyz'])}",
         f"Assumed serial {serial}; simulated 42 mm marker and mount",
         "y points into wall; larger y is closer to wall",
-        ("SINGLE CAMERA: depth and orientation ambiguous" if result["method"] == "single_camera"
-         else "STEREO: ID 5 fitted jointly in both images"),
+        (
+            "SINGLE CAMERA: depth and orientation ambiguous"
+            if result["method"] == "single_camera"
+            else "STEREO: ID 5 fitted jointly in both images"
+        ),
     ]
     for index, line in enumerate(lines):
-        cv2.putText(output, line, (12, image.shape[0] + 25 + index * 24),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, (240, 240, 240), 1, cv2.LINE_AA)
+        cv2.putText(
+            output,
+            line,
+            (12, image.shape[0] + 25 + index * 24),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.45,
+            (240, 240, 240),
+            1,
+            cv2.LINE_AA,
+        )
     return output
 
 
@@ -213,20 +226,27 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("images", nargs="+", type=Path)
     parser.add_argument("--output-dir", type=Path, required=True)
-    parser.add_argument("--pose", action="store_true",
-                        help="Estimate pose from one image, or prefer stereo with two images")
-    parser.add_argument("--pose-pairs", action="store_true",
-                        help="Estimate stereo pose from consecutive image pairs")
-    parser.add_argument("--serials", nargs="+", metavar="SERIAL",
-                        help="Assumed camera serials in image order")
+    parser.add_argument(
+        "--pose",
+        action="store_true",
+        help="Estimate pose from one image, or prefer stereo with two images",
+    )
+    parser.add_argument(
+        "--pose-pairs",
+        action="store_true",
+        help="Estimate stereo pose from consecutive image pairs",
+    )
+    parser.add_argument(
+        "--serials", nargs="+", metavar="SERIAL", help="Assumed camera serials in image order"
+    )
     args = parser.parse_args()
     if args.pose and args.pose_pairs:
         parser.error("Choose --pose or --pose-pairs")
-    if args.pose and (len(args.images) > 2 or args.serials is None
-                      or len(args.serials) != len(args.images)):
+    if args.pose and (
+        len(args.images) > 2 or args.serials is None or len(args.serials) != len(args.images)
+    ):
         parser.error("--pose needs one or two images and one --serials entry per image")
-    if args.pose_pairs and (len(args.images) % 2 or args.serials is None
-                            or len(args.serials) != 2):
+    if args.pose_pairs and (len(args.images) % 2 or args.serials is None or len(args.serials) != 2):
         parser.error("--pose-pairs needs an even number of images and --serials FIRST SECOND")
     args.output_dir.mkdir(parents=True, exist_ok=True)
     step = 2 if args.pose_pairs else len(args.images) if args.pose else 1
@@ -236,14 +256,15 @@ def main():
         for path, image in zip(paths, images, strict=True):
             if image is None:
                 parser.exit(1, f"Cannot read image: {path}\n")
-        detections = [detect_markers(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-                      for image in images]
+        detections = [detect_markers(cv2.cvtColor(image, cv2.COLOR_BGR2RGB)) for image in images]
         try:
             fits = [wall_homography(found) for found in detections]
             result = None
             if args.pose or args.pose_pairs:
-                calibrations = [calibration_for(serial, (image.shape[1], image.shape[0]))
-                                for serial, image in zip(args.serials, images, strict=True)]
+                calibrations = [
+                    calibration_for(serial, (image.shape[1], image.shape[0]))
+                    for serial, image in zip(args.serials, images, strict=True)
+                ]
                 matrices = [calibration[0] for calibration in calibrations]
                 distortion = [calibration[1] for calibration in calibrations]
                 rgb = [cv2.cvtColor(image, cv2.COLOR_BGR2RGB) for image in images]
@@ -252,14 +273,16 @@ def main():
                     raise ValueError("Both cameras must see robot marker ID 5 for stereo pose")
         except ValueError as error:
             parser.exit(1, f"{paths[0].name}: {error}\n")
-        for index, (path, image, found, fit) in enumerate(zip(paths, images, detections, fits,
-                                                                strict=True)):
+        for index, (path, image, found, fit) in enumerate(
+            zip(paths, images, detections, fits, strict=True)
+        ):
             homography, ids, rms = fit
             annotated = annotate(image, homography)
             if result is not None and index in result["cameras_used"]:
                 matrix, distortion_coeffs = calibrations[index]
-                annotated = add_pose_annotation(annotated, found, matrix, distortion_coeffs,
-                                                 result, args.serials[index])
+                annotated = add_pose_annotation(
+                    annotated, found, matrix, distortion_coeffs, result, args.serials[index]
+                )
             output = args.output_dir / f"{path.stem}_grid.png"
             if not cv2.imwrite(str(output), annotated):
                 parser.exit(1, f"Cannot write image: {output}\n")
