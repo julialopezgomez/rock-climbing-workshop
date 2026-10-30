@@ -137,6 +137,13 @@ def reach(targets):
         a, b = LIMBS[i], LIMBS[j]
         if norm(targets[i] - targets[j]) > REACH[a] + REACH[b] + norm(ROOT[a] - ROOT[b]):
             return Feasibility(False, reason=f"reach: {a}, {b}")
+    right_hand, left_hand, right_foot, left_foot = targets  # LIMBS order; x right, z up
+    if right_hand[0] <= left_hand[0]:
+        return Feasibility(False, reason="reach: right hand not right of left hand")
+    if right_foot[0] <= left_foot[0]:
+        return Feasibility(False, reason="reach: right foot not right of left foot")
+    if min(right_hand[2], left_hand[2]) <= max(right_foot[2], left_foot[2]):
+        return Feasibility(False, reason="reach: a hand not above the feet")
     return None
 
 
