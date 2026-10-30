@@ -114,7 +114,9 @@ def start_pose(wall: WallModel, stance: Stance):
 
 def ball_path(p_a, p_b):
     """B(s), s in [0, 1]: a cubic Bezier from p_a to p_b that leaves p_a straight off the wall
-    (-y) and arrives at p_b from above and away from the wall."""
+    (-y) and arrives at p_b from above and away from the wall.
+    The control points are p_a, p_a + away, p_b + away + up, p_b, with away = (0, -OUT, 0) and up = (0, 0, ABOVE).
+    """
     away, up = np.array([0.0, -OUT, 0.0]), np.array([0.0, 0.0, ABOVE])
     P = np.array([p_a, p_a + away, p_b + away + up, p_b])
     weights = np.array([[1, -3, 3, -1], [0, 3, -6, 3], [0, 0, 3, -3], [0, 0, 0, 1]])
