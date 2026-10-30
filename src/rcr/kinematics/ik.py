@@ -121,11 +121,6 @@ def projecttojointlimits(q):
 
 
 def start_pose(wall: WallModel, stance: Stance):
-    
-    from rcr.planner import ik
-    
-    ik()
-    
     """The hang posture with its trunk fitted rigidly to the sockets [simulator sim.py
     reset_hanging], then IK until every ball is within EPSILON of its socket and the trunk within
     EPSILON of its height (TRUNK_HEIGHT). ValueError if the balls are not reached."""
