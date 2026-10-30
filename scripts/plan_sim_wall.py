@@ -12,7 +12,7 @@ from itertools import pairwise
 from pathlib import Path
 
 import mujoco
-from climbing_sim import ClimbingSim
+from climbing_sim import ClimbingSim, Wall
 from climbing_sim.routes import generate_wall
 from numpy.linalg import norm
 
@@ -82,11 +82,7 @@ def main() -> None:
 
     seed = random.randrange(10_000) if args.seed is None else args.seed
     if args.wall:
-        sim_wall_dir = Path(__file__).parent.parent / "climbing_sim" / "walls"
-        # add .json to args.wall if not present
-        if args.wall.suffix != ".json":
-            args.wall = args.wall.with_suffix(".json")
-        sim_wall = ClimbingSim.load_wall(sim_wall_dir / args.wall)
+        sim_wall = Wall.load(str(args.wall))  # a bundled name (N1, N2, N3) or a JSON file
         wall = to_wall_model(sim_wall, args.level, seed)
     else:
         sim_wall = generate_wall(args.level, seed)
