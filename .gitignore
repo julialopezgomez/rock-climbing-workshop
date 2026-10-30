@@ -7,3 +7,10 @@ dist/
 runs/
 build/
 .DS_Store
+
+.venv-perception/
+.perception-core/
+.perception-gpu/
+.perception/
+outputs/
+MUJOCO_LOG.TXT

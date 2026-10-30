@@ -4,9 +4,8 @@ This is our team project for the [Rock Climbing Robots](https://rock-climbing-ro
 (Bordeaux, 29 Oct – 1 Nov 2026). The robot is Microban-based ([Rhoban/microban](https://github.com/Rhoban/microban)), and the rules are
 [v1.1](https://github.com/rock-climbing-robots/rules/releases/tag/v1.1).
 
-The repo is a skeleton for the pipeline: contracts, stubs and a check, with no algorithms yet. We have
-**not** chosen the planner, the optimiser or the controller. When we choose or change one, the change
-stays inside its module.
+The repository defines the pipeline contracts and its implementations. Module READMEs
+and the pipeline check identify implemented stages and remaining integration work.
 
 ## Pipeline
 
@@ -116,3 +115,11 @@ uv run mjpython tests/test_sim.py N2                      # the robot on their w
 uv run mjpython tests/test_optimiser.py PLAN       # solve a contact plan, play it in their sim
 uv run scripts/wall_generator.py N1 N2 N3                 # their walls -> data/examples/N*.json
 ```
+
+## Perception
+
+The [selected perception runtime](docs/perception/README.md) provides stereo
+hold JSON, configured robot pose, and persistent RGB robot/cup tracking.
+It includes one trained checkpoint, isolated setup and one example per challenge.
+See the guide for reproduction and two-RealSense camera commands.
+The full experiment report and alternatives remain on `perception_challenge_full`.

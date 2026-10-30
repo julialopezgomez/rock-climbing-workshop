@@ -1,0 +1,92 @@
+{
+  "schema": "robot-input-v1",
+  "timestamp_s": 0.0,
+  "clock": "sim",
+  "joints_rad": {
+    "head": -0.03994009917454871,
+    "right_shoulder_pitch": -1.0139565129087396,
+    "right_shoulder_roll": -0.1891270225619181,
+    "right_elbow": 0.41498112700359036,
+    "right_hip_yaw": 0.039253819366502504,
+    "right_hip_roll": -0.11927763989355702,
+    "right_hip_pitch": -0.06259556520312269,
+    "right_knee": -0.10737598436337664,
+    "right_ankle_pitch": 0.06961729177384751,
+    "right_ankle_roll": -0.024755099317959987,
+    "left_shoulder_pitch": -1.220931788616809,
+    "left_shoulder_roll": 0.07122708656797098,
+    "left_elbow": 0.1324781256546024,
+    "left_hip_yaw": 0.10989619765882302,
+    "left_hip_roll": 0.016610384411080363,
+    "left_hip_pitch": -0.12618681480142183,
+    "left_knee": -0.07197503458722757,
+    "left_ankle_pitch": 0.19861901030369894,
+    "left_ankle_roll": -0.09979436508330251
+  },
+  "cameras": [
+    {
+      "K": [
+        [
+          924.277379745929,
+          0.0,
+          639.5
+        ],
+        [
+          0.0,
+          925.7384642369517,
+          359.5
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "width": 1280,
+      "height": 720,
+      "distortion": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixel_convention": "opencv_centres",
+      "rgb": "rgb_0.png",
+      "camera_id": "cam_0",
+      "timestamp_s": 0.0
+    },
+    {
+      "K": [
+        [
+          924.277379745929,
+          0.0,
+          639.5
+        ],
+        [
+          0.0,
+          925.7384642369517,
+          359.5
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "width": 1280,
+      "height": 720,
+      "distortion": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixel_convention": "opencv_centres",
+      "rgb": "rgb_1.png",
+      "camera_id": "cam_1",
+      "timestamp_s": 0.0
+    }
+  ]
+}
