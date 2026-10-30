@@ -77,11 +77,20 @@ def main() -> None:
     parser.add_argument("--save", help="save the contact plan to this JSON file")
     parser.add_argument("--show", action="store_true", help="show each stance in MuJoCo")
     parser.add_argument("--heuristic-weight", type=float, default=astar.WEIGHT, help="A* heuristic weight")
+    parser.add_argument("--wall", type=Path, help="load a wall from this JSON file instead of generating one. Options: N1, N2, N3")
     args = parser.parse_args()
 
     seed = random.randrange(10_000) if args.seed is None else args.seed
-    sim_wall = generate_wall(args.level, seed)
-    wall = to_wall_model(sim_wall, args.level, seed)
+    if args.wall:
+        sim_wall_dir = Path(__file__).parent.parent / "climbing_sim" / "walls"
+        # add .json to args.wall if not present
+        if args.wall.suffix != ".json":
+            args.wall = args.wall.with_suffix(".json")
+        sim_wall = ClimbingSim.load_wall(sim_wall_dir / args.wall)
+        wall = to_wall_model(sim_wall, args.level, seed)
+    else:
+        sim_wall = generate_wall(args.level, seed)
+        wall = to_wall_model(sim_wall, args.level, seed)
     print(f"wall: level {args.level}, seed {seed}, {len(wall.holds)} holds")
 
     clock = time.perf_counter()
