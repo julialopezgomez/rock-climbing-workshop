@@ -23,12 +23,13 @@ MAX_ITERATIONS = 200  # for the start pose
 STEP = 0.5  # fraction of the error the start pose's IK closes per iteration
 # The ball's path [Ours, to tune]: out of socket a straight off the wall, up and away from it to a
 # bit above socket b, then down into it.
-OUT = 0.06  # [m] away from the wall (-y), at both ends
+OUT = 0.055  # [m] away from the wall (-y), at both ends
 ABOVE = 0.10  # [m] above socket b, before going in
 MOVE_TIME = 2.0  # [s] per move
 DT = 0.02  # [s] between samples: the robot's 50 Hz loop
 GAIN = 0.5  # fraction of a ball's tracking error corrected per sample [Ours]
 LOCK_PASSES = 4  # ik_step: solves at most, each locking the joints it would push past a limit
+MAX_ERROR = 0.01  # [m] a ball further than this from its target: the move cannot be tracked
 
 # trunk free: q = (x, y, z, qx, qy, qz, qw, 19 joints)
 model = pin.buildModelFromUrdf(str(microban_model.urdf(climb=True)), pin.JointModelFreeFlyer())
@@ -137,17 +138,24 @@ def moving_limb(a: Stance, b: Stance) -> str:
 
 def track_move(wall: WallModel, a: Stance, b: Stance, q0):
     """The configurations of the move a -> b, one every DT from q0 (excluded) to the end: the
-    moving ball tracks ball_path, the others their sockets. Also the worst tracking error [m]."""
-    i = LIMBS.index(moving_limb(a, b))
+    moving ball tracks ball_path, the others their sockets. Also the worst tracking error [m].
+    ValueError, naming the move, if a ball gets MAX_ERROR from its target (e.g. the path out of
+    the limb's reach: the IK then diverges)."""
+    limb = moving_limb(a, b)
+    i = LIMBS.index(limb)
     held = sockets(wall, a)
     B = ball_path(held[i], sockets(wall, b)[i])
     q, reference, worst, out = q0, held.copy(), 0.0, []
-    for k in range(1, round(MOVE_TIME / DT) + 1):
-        target = held.copy()
-        target[i] = B(timing(k * DT))
+    for k in range(1, round(MOVE_TIME / DT) + 2):
         error = reference - balls(q)
         worst = max(worst, norm(error, axis=1).max())
+        if not np.isfinite(worst) or worst > MAX_ERROR:
+            move = f"{limb} {a.contacts[limb]} -> {b.contacts[limb]}"
+            raise ValueError(f"{move}: a ball {worst * 1000:.0f} mm from its target at {k * DT:.2f} s")
+        if k > round(MOVE_TIME / DT):
+            return out, worst  # the last sample's error checked too
+        target = held.copy()
+        target[i] = B(timing(k * DT))
         q = ik_step(q, target - reference + GAIN * error)  # feed-forward + correction
         reference = target
         out.append(q)
-    return out, max(worst, norm(reference - balls(q), axis=1).max())

@@ -5,6 +5,8 @@ sockets and the whole body follows by hierarchical IK with an error correction (
 optimiser before it is in v0/, for reference.
 """
 
+import numpy as np
+
 from rcr.types import (
     LIMBS,
     MICROBAN_JOINTS,
@@ -55,3 +57,11 @@ def validate_plan(wall: WallModel, plan: ContactPlan) -> None:
 def feasibility(wall: WallModel, a: Stance, b: Stance) -> Feasibility:
     """Can the robot go from stance a to stance b? Passed to the planner as FeasibilityFn."""
     raise NotImplementedError
+
+
+def convert_trajectory_to_npz(trajectory: Trajectory, filename: str) -> None:
+    """Save the trajectory to a .npz with one array, `q` (N, 26), a row every ik.DT (0.02 s,
+    50 Hz) from t = 0: the free flyer (trunk x, y, z [m], qw, qx, qy, qz, wall frame) then the 19
+    joints [rad] in MICROBAN_JOINTS order [Ours]."""
+    q = np.hstack([np.array(trajectory.trunk_poses), np.array(trajectory.positions)])
+    np.savez(filename, q=q)
