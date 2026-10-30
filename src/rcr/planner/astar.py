@@ -25,6 +25,8 @@ MAX_ITERATIONS = 200
 WEIGHT = 1.0  # A* heuristic weight: 1.0 = admissible, 0.0 = Dijkstra
 # TODO: order by move: moving arm, diagonal leg, other leg, other arm
 TASK_ORDER = ("right_hand", "left_hand", "right_foot", "left_foot")
+# trunk z up, x into the wall (+y) [simulator README, Frames]
+TRUNK_UPRIGHT = np.array([[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
 
 # trunk free: q = (x, y, z, qx, qy, qz, qw, 19 joints)
 model = pin.buildModelFromUrdf(str(microban_model.urdf(climb=True)), pin.JointModelFreeFlyer())
@@ -197,6 +199,11 @@ def ik(wall, k):
             JP_pinv = pinv(J @ P)
             vq = vq + JP_pinv @ (error[limb] - J @ vq)
             P = P - JP_pinv @ J @ P
+
+        # last: trunk upright and facing the wall, as far as the balls allow
+        J = pin.getJointJacobian(model, data, 1, pin.LOCAL_WORLD_ALIGNED)[3:]
+        e = pin.log3(TRUNK_UPRIGHT @ data.oMi[1].rotation.T)
+        vq = vq + pinv(J @ P) @ (e - J @ vq)
 
         q = pin.integrate(model, q, vq * DT)
         q = projecttojointlimits(model, q)
