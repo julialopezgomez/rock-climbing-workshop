@@ -55,6 +55,7 @@ def main() -> None:
     parser.add_argument("--seed", type=int, help="random if not given")
     parser.add_argument("--save", help="save the contact plan to this JSON file")
     parser.add_argument("--show", action="store_true", help="show each stance in MuJoCo")
+    parser.add_argument("--heuristic-weight", type=float, default=astar.WEIGHT, help="A* heuristic weight")
     args = parser.parse_args()
 
     seed = random.randrange(10_000) if args.seed is None else args.seed
@@ -63,7 +64,7 @@ def main() -> None:
     print(f"wall: level {args.level}, seed {seed}, {len(wall.holds)} holds")
 
     clock = time.perf_counter()
-    contact_plan = plan(wall, feasible)
+    contact_plan = plan(wall, feasible, HEURISTIC_WEIGHT=args.heuristic_weight)
     seconds = time.perf_counter() - clock
     for a, b in pairwise(contact_plan.stances):
         (limb,) = [limb for limb in LIMBS if a.contacts[limb] != b.contacts[limb]]

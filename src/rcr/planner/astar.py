@@ -22,6 +22,7 @@ HANG = Path(__file__).parents[3] / "third_party/simulator/climbing_sim/assets/po
 EPSILON = 1e-3  # [m]
 DT = 0.5
 MAX_ITERATIONS = 200
+WEIGHT = 1.0  # A* heuristic weight: 1.0 = admissible, 0.0 = Dijkstra
 # TODO: order by move: moving arm, diagonal leg, other leg, other arm
 TASK_ORDER = ("right_hand", "left_hand", "right_foot", "left_foot")
 
@@ -123,6 +124,8 @@ REACH = {
 }
 # the longest step the simulator's routes leave a limb [simulator routes.py]
 STEP = 0.105
+MIN_APART = 0.8  # two balls at least this fraction of their roots' distance apart [Ours]
+MAX_APART = 0.7  # and at most this fraction of their reaches + roots' distance [Ours]
 
 Q_HANG = pin.neutral(model)
 for name, angle in json.loads(HANG.read_text())["joints"].items():
@@ -132,11 +135,15 @@ BALLS_HANG = np.array([data.oMf[BALL[limb]].translation for limb in LIMBS])
 
 
 def reach(targets):
-    """Two balls are at most their reaches + the distance between their roots apart."""
+    """Two balls are at most MAX_APART of their reaches + the distance between their roots
+    apart, and at least MIN_APART of that root distance."""
     for i, j in combinations(range(4), 2):
         a, b = LIMBS[i], LIMBS[j]
-        if norm(targets[i] - targets[j]) > REACH[a] + REACH[b] + norm(ROOT[a] - ROOT[b]):
+        roots, apart = norm(ROOT[a] - ROOT[b]), norm(targets[i] - targets[j])
+        if apart > MAX_APART * (REACH[a] + REACH[b] + roots):
             return Feasibility(False, reason=f"reach: {a}, {b}")
+        if apart < MIN_APART * roots:
+            return Feasibility(False, reason=f"reach: {a}, {b} too close")
     right_hand, left_hand, right_foot, left_foot = targets  # LIMBS order; x right, z up
     if right_hand[0] <= left_hand[0]:
         return Feasibility(False, reason="reach: right hand not right of left hand")
@@ -215,7 +222,8 @@ def stance(k):
     return Stance(contacts=dict(zip(LIMBS, k, strict=True)))
 
 
-def solve(wall: WallModel, feasible: FeasibilityFn) -> ContactPlan:
+
+def solve(wall: WallModel, feasible: FeasibilityFn, HEURISTIC_WEIGHT: float = 1.0) -> ContactPlan:
     """Moves to a hand on a top hold, or else to the highest hand reachable.
     - z is the height of each hold.
     - k is a node: the tuple of holds for each limb, in LIMBS order.
@@ -251,7 +259,7 @@ def solve(wall: WallModel, feasible: FeasibilityFn) -> ContactPlan:
                     continue
                 if feasible(wall, stance(k), stance(child)).feasible:
                     g[child], parent[child] = g[k] + 1, k
-                    heapq.heappush(heap, (g[child] + h(child), -g[child], next(tie), child))
+                    heapq.heappush(heap, (g[child] + HEURISTIC_WEIGHT*h(child), -g[child], next(tie), child))
     path = [best]
     while path[-1] in parent:
         path.append(parent[path[-1]])
