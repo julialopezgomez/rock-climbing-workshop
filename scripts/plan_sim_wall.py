@@ -58,7 +58,7 @@ def show(sim_wall, wall: WallModel, contact_plan: ContactPlan) -> None:
     viewer = sim.view()
     for n, s in enumerate(contact_plan.stances):
         targets = astar.targets(wall, astar.key(s))
-        _, q, _ = astar.ik(wall, astar.key(s))
+        _, q = astar.ik(wall, astar.key(s))
         sim.data.qpos[:] = astar.qpos(sim.model, q)
         mujoco.mj_forward(sim.model, sim.data)
         viewer.sync()
