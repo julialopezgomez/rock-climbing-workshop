@@ -134,8 +134,8 @@ HAND_MAX_APART = 0.7  # a pair with a hand (hand-hand, hand-foot)
 FEET_MAX_APART = 0.27  # the two feet
 # [m] most one hand is above the other, and one foot above the other [Ours]: the example
 # plan the optimiser solved has up to 0.195 m (hands) and 0.135 m (feet)
-MAX_LEVEL = 0.11
-MAX_TRANSITION_HEIGHT = 0.11
+MAX_LEVEL = 0.09
+MAX_TRANSITION_HEIGHT = 0.09
 
 Q_HANG = pin.neutral(model)
 for name, angle in json.loads(HANG.read_text())["joints"].items():
