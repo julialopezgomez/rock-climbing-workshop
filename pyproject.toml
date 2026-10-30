@@ -24,10 +24,8 @@ perception = [] # e.g. opencv (ArUco)
 dev = ["pytest", "ruff"]
 optimiser = [
     "microban-model",
-    "climbing-sim",  # the hold mesh and its placement, from the organisers' simulator
+    "climbing-sim",  # the hold's socket and its placement, from the organisers' simulator
     "casadi>=3.8.1",
-    "coacd>=1.0.14",
-    "coal>=3.0.3",
     "pin>=4.1.0",
 ]  # pin: only to check our CasADi kinematics in tests
 

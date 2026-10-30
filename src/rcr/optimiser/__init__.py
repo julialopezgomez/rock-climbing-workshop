@@ -1,4 +1,4 @@
-"""Optimiser (laptop): contact plan -> full trajectory; owns feasibility. See README.md.
+"""Optimiser (laptop): contact plan -> full trajectory. See README.md.
 
 Method (D3): quasi-static direct transcription, one NLP per transition (transition.py), solved
 with CasADi + IPOPT, on kinematics written in CasADi from Microban's URDF (robot_model.py).
@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from rcr.types import MICROBAN_JOINTS, ContactPlan, Feasibility, Stance, Trajectory, WallModel
+from rcr.types import MICROBAN_JOINTS, ContactPlan, Trajectory, WallModel
 
 if TYPE_CHECKING:
     from rcr.optimiser.transition import TransitionConfig, TransitionResult
@@ -28,18 +28,14 @@ def optimise(wall: WallModel, plan: ContactPlan) -> Trajectory:
     return to_trajectory(solve_plan(wall, plan, cfg), cfg)
 
 
-DEFAULT = "default"  # cache argument: move_cache.default_cache (none unless RCR_MOVE_CACHE is set)
-
-
 def solve_plan(
-    wall: WallModel, plan: ContactPlan, cfg: TransitionConfig | None = None, cache=DEFAULT
+    wall: WallModel, plan: ContactPlan, cfg: TransitionConfig | None = None
 ) -> list[TransitionResult]:
-    """Solve every transition of the plan in order, each starting where the previous ended
-    (with cfg.settle: each from its stance's own pose; stored moves come from the cache)."""
+    """Solve every transition of the plan in order, each starting where the previous ended."""
     from rcr.optimiser import transition as tr
 
     cfg = cfg or tr.TransitionConfig()
-    return list(iter_plan(wall, plan, start_pose(wall, plan, cfg), cfg, cache))
+    return list(iter_plan(wall, plan, start_pose(wall, plan, cfg), cfg))
 
 
 def start_pose(wall: WallModel, plan: ContactPlan, cfg: TransitionConfig | None = None):
@@ -51,42 +47,14 @@ def start_pose(wall: WallModel, plan: ContactPlan, cfg: TransitionConfig | None 
     return tr.stance_pose(wall, plan.stances[0], cfg)
 
 
-def iter_plan(
-    wall: WallModel, plan: ContactPlan, q, cfg: TransitionConfig | None = None, cache=DEFAULT
-):
+def iter_plan(wall: WallModel, plan: ContactPlan, q, cfg: TransitionConfig | None = None):
     """Yield each transition of the plan as it is solved, the first starting at q, each next one
-    where the previous ended. A move starts from the same limb's last solved motion when the holds
-    are laid out alike (move_cache.same_layout): on a regular wall, most moves repeat a row up.
-    With cfg.settle, each move is tr.solve_move instead: from stance a's own pose to stance b's,
-    the same every run (q, from start_pose, is stance 0's pose). Moves are reused from and
-    stored in `cache`: by default move_cache.default_cache (none unless RCR_MOVE_CACHE is set);
-    None for none."""
+    where the previous ended."""
     from rcr.optimiser import transition as tr
 
     cfg = cfg or tr.TransitionConfig()
-    if cfg.settle:  # each move from stance a's own pose to stance b's: q is stance 0's pose
-        from rcr.optimiser.move_cache import default_cache, solve_move_cached
-
-        if cache == DEFAULT:
-            cache = default_cache()
-
-        for i, (a, b) in enumerate(zip(plan.stances, plan.stances[1:], strict=False)):
-            if cache is None:
-                yield tr.solve_move(wall, a, b, cfg, index=i)
-            else:
-                yield solve_move_cached(wall, a, b, cfg, cache, index=i)[0]
-        return
-    from rcr.optimiser import move_cache as mc
-
-    solved = {}  # limb -> (layout, start point, configurations) of its last move
     for i, (a, b) in enumerate(zip(plan.stances, plan.stances[1:], strict=False)):
-        moving, here = tr.moving_limb(a, b, i), mc.layout(wall, a, b, cfg)
-        start = tr.contact_point(wall, a.contacts[moving], cfg)
-        last, seed = solved.get(moving), None
-        if last is not None and mc.same_layout(last[0], here):
-            seed = mc.shifted_seed(q, last[2], start - last[1], cfg)
-        result = tr.solve_transition(wall, a, b, q, cfg, index=i, seed=seed)
-        solved[moving] = (here, start, result.q)
+        result = tr.solve_transition(wall, a, b, q, cfg, index=i)
         q = result.q[-1]
         yield result
 
@@ -94,8 +62,8 @@ def iter_plan(
 def validate_plan(wall: WallModel, plan: ContactPlan) -> None:
     """ValueError, naming the stance, unless the plan is for this wall, has at least two
     stances, all on known holds, and exactly one limb changes between consecutive stances.
-    Also unless every hold id is unique: the collision check keys holds by id, so a repeated id
-    would hide a hold from it."""
+    Also unless every hold id is unique: holds are found by id, so a repeated id would hide a
+    hold."""
     from collections import Counter
 
     from rcr.optimiser import transition as tr
@@ -141,22 +109,8 @@ def to_trajectory(results: list[TransitionResult], cfg: TransitionConfig) -> Tra
 
 def sample_time(k: int, cfg: TransitionConfig) -> float:
     """[s] time of sample k from the start of its transition: phase A's K steps share
-    phase_a_duration, phase B's N - K steps share phase_b_duration, and a settle's N steps after
-    them (cfg.settle) share settle_duration."""
+    phase_a_duration, phase B's N - K steps share phase_b_duration."""
     n, k_release = cfg.n_samples, cfg.release_sample
-    if k > n:
-        return cfg.phase_a_duration + cfg.phase_b_duration + cfg.settle_duration * (k - n) / n
     if k <= k_release:
         return cfg.phase_a_duration * k / k_release
     return cfg.phase_a_duration + cfg.phase_b_duration * (k - k_release) / (n - k_release)
-
-
-def feasibility(wall: WallModel, a: Stance, b: Stance) -> Feasibility:
-    """Can the robot go from stance a to stance b? Passed to the planner as FeasibilityFn.
-
-    Cheap checks at the move's edges (edge_checks.py, ~1-3 s, cached), not the full transition:
-    failing means it cannot be done; passing means the full solve is worth trying.
-    """
-    from rcr.optimiser.edge_checks import feasibility as check
-
-    return check(wall, a, b)

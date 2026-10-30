@@ -13,8 +13,8 @@ stays inside its module.
 ```
   LAPTOP                                                                       ROBOT (Pi, 50 Hz)
   perception ─► wall model ─► planner ─► contact plan ─► optimiser ─► trajectory ══ link ══► controller ─► joint targets
-                                 ▲          (full)          │           (full)                (a Microban Move)
-                                 └────── feasibility ◄──────┘                     ◄══ robot state ══
+                    (its own feasibility)   (full)                      (full)                (a Microban Move)
+                                                                                  ◄══ robot state ══
 ```
 
 - What crosses each arrow is defined in [INTERFACES.md](INTERFACES.md), which is the single source of truth, and implemented in
@@ -40,7 +40,7 @@ src/rcr/
   walls.py               seeded random walls per level, and the rule checks a wall must pass
   perception/            laptop: camera images -> wall model + robot pose
   planner/               laptop: wall model -> contact plan
-  optimiser/             laptop: contact plan -> trajectory; owns feasibility
+  optimiser/             laptop: contact plan -> trajectory
   controller/            ROBOT:  trajectory + robot state -> joint targets (Pi-safe)
   link/                  both:   trajectory, start/stop, pose ->; <- robot state
   robot/                 how our code meets Microban: where it is (microban.py), the climbing balls (hooks.py),
