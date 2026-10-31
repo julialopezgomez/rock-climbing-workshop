@@ -58,6 +58,7 @@ PI_IMPORT_PROBE = """
 import sys
 before = set(sys.modules)
 import rcr.types, rcr.io, rcr.controller, rcr.robot, rcr.robot.microban
+import rcr.controller.mjlab_policy, rcr.robot.climb_policy_move
 import rcr.link, rcr.link.raspberry_pi
 new = {m.split(".")[0] for m in set(sys.modules) - before}
 print("\\n".join(sorted(new - set(sys.stdlib_module_names))))

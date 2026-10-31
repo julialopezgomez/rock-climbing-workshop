@@ -86,3 +86,36 @@ def test_a_policy_needs_planned_positions():
     q = np.zeros(19)
     with pytest.raises(ValueError, match="planned_positions"):
         Controller(trajectory([q, q]), policy="unused.onnx")
+
+
+def test_shipped_policy_runs_on_the_example_trajectory():
+    """The laptop-over-Wi-Fi default (scripts/robot_policy.py): loads, steps, finite targets."""
+    pytest.importorskip("onnxruntime")
+    from pathlib import Path
+
+    from rcr import io
+
+    root = Path(__file__).resolve().parents[1]
+    traj = io.load_trajectory(root / "data/examples/trajectory.json")
+    c = Controller(traj, root / "data/policies/res_a0.2_kp1000_ls-1_s0.onnx")
+    zeros = dict.fromkeys(tracking.JOINTS, 0.0)
+    out = c.step(RobotState(0.1, zeros, zeros, (1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 0.0))).positions
+    assert set(out) == set(tracking.JOINTS) and np.all(np.isfinite(list(out.values())))
+
+
+def test_laptop_loop_stops_on_a_policy_failure():
+    """scripts/robot_policy.py: the reasons the climb stops and holds [Ours]."""
+    import importlib.util
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parents[1] / "scripts/robot_policy.py"
+    spec = importlib.util.spec_from_file_location("robot_policy", path)
+    rp = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(rp)
+    q, ok = np.zeros(3), {"a": 0.0}
+    assert rp.failure(q, ok, 0.001, 0.0, 0.1) is None
+    assert "non-finite q" in rp.failure(np.array([0.0, np.nan]), ok, 0.001, 0.0, 0.1)
+    assert "no new frame" in rp.failure(q, ok, 0.001, 0.5, 0.1)
+    assert "raised" in rp.failure(q, None, 0.001, 0.0, 0.1)
+    assert "non-finite target" in rp.failure(q, {"a": np.nan}, 0.001, 0.0, 0.1)
+    assert "took" in rp.failure(q, ok, 0.03, 0.0, 0.1)

@@ -34,6 +34,7 @@ rl = [
     "onnx>=1.23.2",
     "onnxruntime>=1.31.1",
     "stable-baselines3>=2.9.2",
+    "wandb>=0.31.0",
 ]
 
 [build-system]

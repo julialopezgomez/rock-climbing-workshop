@@ -51,6 +51,14 @@ class ClimbMove:
 `to_state` ([observation.py](observation.py)) is the same conversion the sim uses: Microban's observation is the
 organisers' simulator's. Start/stop from the laptop instead of the keyboard is still to do.
 
+**First one [Ours]:** [`climb_policy_move.py`](climb_policy_move.py) is the Microban move of
+`rcr.controller.mjlab_policy`. Run it with `make run HOST=<robot> MOVES=<repo>/src/rcr/robot/climb_policy_move.py`.
+`make run` sends only that file, so it finds our code in `~/rcr/src` (`scripts/link_pi.py deploy`). mjlab_microban's
+`train_climbing.sh --deploy --host <robot>` does both and copies the policy bundle to `~/climb_policy`. It handles
+pitfalls 1 and 4 itself: `start_pose = "current"`, then a ramp to the climb's first pose, and when stopped it holds
+the last targets before the torque goes off. It does not handle pitfall 3 (the overcurrent cut-off is still tuned
+for walking) or pitfall 5 (it starts from the dashboard).
+
 ### Pitfalls to handle in the wrapper (found in Microban's code)
 1. **`main.py` ramps all motors to `NEUTRAL_POSE` (standing) at start.** On the wall that is wrong: the start ramp must go
    to the trajectory's first pose. This means we need our own entry point instead of Microban's `main.py`.

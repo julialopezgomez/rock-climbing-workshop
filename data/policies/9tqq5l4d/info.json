@@ -1,0 +1,5 @@
+{
+  "run_path": "kotochleb-cnrs-laas/mjlab_microban_climbing/9tqq5l4d",
+  "checkpoint": "model_3000.pt",
+  "template": "climb_bundle_l1s0"
+}
