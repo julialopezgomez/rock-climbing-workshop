@@ -1,6 +1,17 @@
-"""Kinematic motion of a move: the moving limb's ball follows limb_traj from its socket on hold a to
-its socket on hold b, the other three stay in theirs, and the whole body follows by IK [Ours].
-Starting over from ik_old.py.
+
+"""Kinematic trajectory generation for the climbing robot.
+
+The moving limb follows a piecewise-linear task-space path.
+The other three limbs stay in their holds.
+
+Inverse kinematics uses hierarchical Jacobian pseudoinverses,
+following the Advanced Robotics approach:
+
+1. Keep supporting limbs fixed.
+2. Track the moving limb.
+3. Stay close to the nominal hanging posture.
+
+No dynamics or collision avoidance is included in the IK solver.
 """
 
 import microban_model
@@ -8,9 +19,11 @@ import numpy as np
 import pinocchio as pin
 from numpy.linalg import norm, pinv
 
-from rcr.planner.astar import Q_HANG
-from rcr.planner.astar import ik as ik_astar
-from rcr.planner.astar import targets as stance_targets
+from rcr.planner.astar import (
+    Q_HANG,
+    initial_q,
+    targets as stance_targets,
+)
 from rcr.types import (
     LIMBS,
     MICROBAN_JOINTS,
@@ -21,181 +34,326 @@ from rcr.types import (
     WallModel,
 )
 
-DT = 0.02  # [s] between samples: the robot's 50 Hz loop
+
+# ---------------------------------------------------------------------
+# Parameters
+# ---------------------------------------------------------------------
+
+DT = 0.02
 MOVE_TIME = 2.0
-ABOVE = 0.025  # metres
-OUT = 0.04  # metres
-EPSILON = 1e-4
-MAX_ITERATIONS = 100
+
+ABOVE = 0.025
+OUT = 0.04
+
+EPSILON = 1e-3
+MAX_ITERATIONS = 200
 IK_STEP = 0.2
-# The soft task (solve_ik's priority 3) [Ours]: weights of the trunk's lean and of the joints'
-# gap to the hang pose, and the damping of its inverse
-TRUNK_WEIGHT = 1.0
-POSTURE_WEIGHT = 0.1
-SOFT_GAIN = 0.1  # fraction of its gap the soft task closes per IK iteration
-DAMPING = 0.03
+POSTURE_GAIN = 0.1
 
-# trunk free: q = (x, y, z, qx, qy, qz, qw, 19 joints)
-model = pin.buildModelFromUrdf(str(microban_model.urdf(climb=True)), pin.JointModelFreeFlyer())
+# Numerical safeguard on each integration step.
+MAX_STEP_NORM = 0.1
+
+
+# ---------------------------------------------------------------------
+# Robot model
+# ---------------------------------------------------------------------
+
+model = pin.buildModelFromUrdf(
+    str(microban_model.urdf(climb=True)),
+    pin.JointModelFreeFlyer(),
+)
+
 data = model.createData()
-BALL = {limb: model.getFrameId(f"{limb}_ball") for limb in LIMBS}
-# q's index of each joint, in MICROBAN_JOINTS order (the model's own order differs)
-JOINTS = [model.idx_qs[model.getJointId(name)] for name in MICROBAN_JOINTS]
 
+BALL = {
+    limb: model.getFrameId(f"{limb}_ball")
+    for limb in LIMBS
+}
+
+# Configuration indices in the robot controller's joint order.
+JOINTS = [
+    model.idx_qs[model.getJointId(name)]
+    for name in MICROBAN_JOINTS
+]
+
+
+# ---------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------
+
+def stance_key(stance: Stance):
+    return tuple(stance.contacts[limb] for limb in LIMBS)
+
+
+def project_to_joint_limits(q):
+    """Clamp actuated joints, leaving the free flyer unchanged."""
+    q = q.copy()
+    q[7:] = np.clip(
+        q[7:],
+        model.lowerPositionLimit[7:],
+        model.upperPositionLimit[7:],
+    )
+    return q
+
+
+def ball_positions(q):
+    """World positions of all four balls, in LIMBS order."""
+    pin.framesForwardKinematics(model, data, q)
+
+    return np.array([
+        data.oMf[BALL[limb]].translation.copy()
+        for limb in LIMBS
+    ])
+
+
+# ---------------------------------------------------------------------
+# Task-space trajectory
+# ---------------------------------------------------------------------
 
 def limb_traj(p_a, p_b):
-    """Piecewise-linear end-effector path B(t)."""
+    """Piecewise-linear ball trajectory from socket a to socket b.
+
+    The ball moves up, away from the wall, across, inward, and down.
+    Returns B(t), defined for t in [0, MOVE_TIME].
+    """
+    p_a = np.asarray(p_a, dtype=float)
+    p_b = np.asarray(p_b, dtype=float)
+
     up = np.array([0.0, 0.0, ABOVE])
     out = np.array([0.0, -OUT, 0.0])
 
-    points = np.array(
-        [
-            p_a,
-            p_a + up,
-            p_a + up + out,
-            p_b + up + out,
-            p_b + up,
-            p_b,
-        ]
-    )
+    points = np.array([
+        p_a,
+        p_a + up,
+        p_a + up + out,
+        p_b + up + out,
+        p_b + up,
+        p_b,
+    ])
 
     lengths = norm(np.diff(points, axis=0), axis=1)
-    times = MOVE_TIME * np.r_[0.0, np.cumsum(lengths) / lengths.sum()]
+
+    if lengths.sum() == 0 or np.any(lengths == 0):
+        raise ValueError("Degenerate limb trajectory")
+
+    times = MOVE_TIME * np.r_[
+        0.0,
+        np.cumsum(lengths) / lengths.sum(),
+    ]
 
     def B(t):
         t = np.clip(t, 0.0, MOVE_TIME)
-        i = min(np.searchsorted(times[1:], t), len(points) - 2)
+
+        i = min(
+            np.searchsorted(times[1:], t),
+            len(points) - 2,
+        )
+
         s = (t - times[i]) / (times[i + 1] - times[i])
+
         return (1 - s) * points[i] + s * points[i + 1]
 
     return B
 
 
-def project_to_joint_limits(q):
-    """Clamp actuated joints without modifying the free flyer."""
-    q_proj = q.copy()
-    q_proj[7:] = np.clip(q_proj[7:], model.lowerPositionLimit[7:], model.upperPositionLimit[7:])
-    return q_proj
+# ---------------------------------------------------------------------
+# Inverse kinematics
+# ---------------------------------------------------------------------
 
+def solve_ik(q0, targets, moving=None):
+    """Solve IK from configuration q0.
 
-def damped(A):
-    """Damped least-squares inverse: like pinv, but bounded where A is near singular."""
-    return A.T @ np.linalg.inv(A @ A.T + DAMPING**2 * np.eye(A.shape[0]))
+    targets: dict mapping limb names to desired XYZ positions.
 
+    moving:
+        None  -> all four limbs have equal priority (stance IK).
+        limb  -> other three limbs first, moving limb second.
 
-def solve_ik(q0, targets, moving):
-    """IK from q0 to four ball position targets.
-
-    Supporting limbs have priority over the moving limb.
+    Nominal hanging joint posture is the lowest-priority task.
     """
     q = q0.copy()
-    held = [limb for limb in LIMBS if limb != moving]
+
+    held = [
+        limb for limb in LIMBS
+        if limb != moving
+    ]
 
     for _ in range(MAX_ITERATIONS):
+
         pin.computeJointJacobians(model, data, q)
         pin.updateFramePlacements(model, data)
 
         errors = {}
-        jacobians = {}
+        J = {}
 
         for limb in LIMBS:
             frame = BALL[limb]
-            position = data.oMf[frame].translation
-            errors[limb] = targets[limb] - position
 
-            jacobians[limb] = pin.getFrameJacobian(model, data, frame, pin.LOCAL_WORLD_ALIGNED)[:3]
+            p = data.oMf[frame].translation
+            errors[limb] = targets[limb] - p
 
+            J[limb] = pin.getFrameJacobian(
+                model,
+                data,
+                frame,
+                pin.LOCAL_WORLD_ALIGNED,
+            )[:3]
+
+        # Convergence of all end-effectors
         if max(norm(e) for e in errors.values()) < EPSILON:
             return q
 
-        # Priority 1: supporting contacts
-        Jc = np.vstack([jacobians[limb] for limb in held])
+        # Priority 1: supporting limbs
+        Jc = np.vstack([J[limb] for limb in held])
         ec = np.concatenate([errors[limb] for limb in held])
 
         Jc_inv = pinv(Jc)
-        dq_c = Jc_inv @ ec
+
+        dq = Jc_inv @ ec
         P = np.eye(model.nv) - Jc_inv @ Jc
 
-        # Priority 2: moving end-effector
-        Jm = jacobians[moving]
-        em = errors[moving]
+        # Priority 2: moving limb
+        if moving is not None:
+            Jm = J[moving]
+            em = errors[moving]
 
-        dq = dq_c + pinv(Jm @ P) @ (em - Jm @ dq_c)
-        P = P - pinv(Jm @ P) @ (Jm @ P)
+            dq += pinv(Jm @ P) @ (em - Jm @ dq)
 
-        # Priority 3 (soft): trunk not leaning (its x into the wall, +y; only turning about y
-        # allowed) and the joints toward the hang pose, weighted, in the null space of the balls
-        R = data.oMi[1].rotation
-        lean = np.cross(R[:, 0], [0.0, 1.0, 0.0])[[0, 2]]  # its rotation about x and z
-        Jt = pin.getJointJacobian(model, data, 1, pin.LOCAL_WORLD_ALIGNED)[[3, 5]]
-        posture = pin.difference(model, q, Q_HANG)[6:]
-        A = np.vstack([TRUNK_WEIGHT * Jt, POSTURE_WEIGHT * np.eye(model.nv)[6:]])
-        r = SOFT_GAIN * np.concatenate([TRUNK_WEIGHT * lean, POSTURE_WEIGHT * posture])
-        dq = dq + damped(A @ P) @ (r - A @ dq)
+        # Priority 3: nominal hanging joint posture
+        # Project into the null space of ALL ball constraints.
+        J_all = np.vstack([J[limb] for limb in LIMBS])
+        P_all = np.eye(model.nv) - pinv(J_all) @ J_all
 
-        q = pin.integrate(model, q, IK_STEP * dq)
+        posture_error = np.zeros(model.nv)
+        posture_error[6:] = Q_HANG[7:] - q[7:]
+
+        dq += POSTURE_GAIN * P_all @ posture_error
+
+        # Bounded integration step
+        step = IK_STEP * dq
+        step_norm = norm(step)
+
+        if step_norm > MAX_STEP_NORM:
+            step *= MAX_STEP_NORM / step_norm
+
+        q = pin.integrate(model, q, step)
         q = project_to_joint_limits(q)
+
+        if not np.all(np.isfinite(q)):
+            raise ValueError("IK produced non-finite configuration")
 
     raise ValueError("IK did not converge")
 
 
-def start_pose(wall, stance):
-    k = tuple(stance.contacts[limb] for limb in LIMBS)
-    verdict, q, _ = ik_astar(wall, k)
+# ---------------------------------------------------------------------
+# Initial stance
+# ---------------------------------------------------------------------
 
-    if not verdict.feasible:
-        raise ValueError(verdict.reason)
-    return q
+def start_pose(wall: WallModel, stance: Stance):
+    """Find a configuration with all four balls in their sockets.
+
+    Start from the nominal hanging configuration rigidly fitted to
+    the stance, then solve positional IK.
+    """
+    p = stance_targets(wall, stance_key(stance))
+
+    targets = {
+        limb: p[i]
+        for i, limb in enumerate(LIMBS)
+    }
+
+    q0 = initial_q(p)
+
+    return solve_ik(q0, targets, moving=None)
 
 
-def ik_traj(wall, a, b, q0):
-    """Generate q(t) by solving IK at every sample."""
+# ---------------------------------------------------------------------
+# Single movement
+# ---------------------------------------------------------------------
 
-    moving = [limb for limb in LIMBS if a.contacts[limb] != b.contacts[limb]]
+def ik_traj(wall: WallModel, a: Stance, b: Stance, q0):
+    """Generate a joint trajectory from stance a to stance b.
+
+    The moving ball follows limb_traj; the others remain fixed.
+    Each IK problem is warm-started from the previous configuration.
+
+    Returns an array of shape (N, model.nq), including q0.
+    """
+    moving = [
+        limb for limb in LIMBS
+        if a.contacts[limb] != b.contacts[limb]
+    ]
 
     if len(moving) != 1:
         raise ValueError("Exactly one limb must move")
 
     moving = moving[0]
+    i = LIMBS.index(moving)
 
-    k_a = tuple(a.contacts[limb] for limb in LIMBS)
-    k_b = tuple(b.contacts[limb] for limb in LIMBS)
+    p_a = stance_targets(wall, stance_key(a))
+    p_b = stance_targets(wall, stance_key(b))
 
-    p_a = stance_targets(wall, k_a)
-    p_b = stance_targets(wall, k_b)
-
-    B = limb_traj(p_a[LIMBS.index(moving)], p_b[LIMBS.index(moving)])
+    B = limb_traj(p_a[i], p_b[i])
 
     q = q0.copy()
     qs = [q.copy()]
 
-    times = np.linspace(0, MOVE_TIME, round(MOVE_TIME / DT) + 1)
+    times = np.linspace(
+        0.0,
+        MOVE_TIME,
+        round(MOVE_TIME / DT) + 1,
+    )
 
     for t in times[1:]:
-        targets = {limb: p_a[i].copy() for i, limb in enumerate(LIMBS)}
+
+        targets = {
+            limb: p_a[j].copy()
+            for j, limb in enumerate(LIMBS)
+        }
 
         targets[moving] = B(t)
 
-        # Warm-start IK from the previous configuration
         q = solve_ik(q, targets, moving)
 
         qs.append(q.copy())
 
-    return np.array(qs)
+    return np.asarray(qs)
 
 
-def feasible_ik_traj(wall: WallModel, a: Stance, b: Stance) -> Feasibility:
-    """Check whether IK can generate a trajectory from stance a to b."""
+# ---------------------------------------------------------------------
+# Feasibility
+# ---------------------------------------------------------------------
+
+def feasible_ik_traj(
+    wall: WallModel,
+    a: Stance,
+    b: Stance,
+) -> Feasibility:
+    """Preliminary feasibility check from a nominal starting stance.
+
+    Actual chained trajectories must be validated separately.
+    """
     try:
         q0 = start_pose(wall, a)
         qs = ik_traj(wall, a, b, q0)
 
-        # Check joint limits
-        for q in qs:
-            if np.any(q[7:] < model.lowerPositionLimit[7:]) or np.any(
-                q[7:] > model.upperPositionLimit[7:]
-            ):
-                return Feasibility(False, reason="Joint limits violated")
+        if not np.all(np.isfinite(qs)):
+            return Feasibility(
+                False,
+                reason="Non-finite trajectory",
+            )
+
+        if np.any(qs[:, 7:] < model.lowerPositionLimit[7:] - 1e-8):
+            return Feasibility(
+                False,
+                reason="Lower joint limit violated",
+            )
+
+        if np.any(qs[:, 7:] > model.upperPositionLimit[7:] + 1e-8):
+            return Feasibility(
+                False,
+                reason="Upper joint limit violated",
+            )
 
         return Feasibility(True)
 
@@ -203,32 +361,53 @@ def feasible_ik_traj(wall: WallModel, a: Stance, b: Stance) -> Feasibility:
         return Feasibility(False, reason=str(e))
 
 
+# ---------------------------------------------------------------------
+# Complete climbing trajectory
+# ---------------------------------------------------------------------
+
 def generate_trajectory(wall: WallModel, plan: ContactPlan):
-    """Generate a continuous configuration trajectory for a contact plan."""
-
+    """Chain all movements without resetting configurations."""
     stances = plan.stances
-    q = start_pose(wall, stances[0])
 
+    if not stances:
+        raise ValueError("Contact plan is empty")
+
+    q = start_pose(wall, stances[0])
     qs = [q.copy()]
 
-    for a, b in zip(stances[:-1], stances[1:], strict=True):
+    for a, b in zip(stances[:-1], stances[1:]):
         segment = ik_traj(wall, a, b, q)
 
-        # The first configuration is already in qs.
+        # Avoid duplicating the transition configuration.
         qs.extend(segment[1:])
 
-        # Warm-start the next movement from this endpoint.
         q = segment[-1].copy()
 
     return np.asarray(qs)
 
 
+# ---------------------------------------------------------------------
+# Output
+# ---------------------------------------------------------------------
+
 def to_trajectory(qs: np.ndarray) -> Trajectory:
-    """Convert a sequence of configurations to a Trajectory object."""
-    times = [round(k * DT, 9) for k in range(len(qs))]
-    positions = [[float(q[j]) for j in JOINTS] for q in qs]  # joints, in MICROBAN_JOINTS order
-    # Pinocchio's quaternion is (x, y, z, w); ours (w, x, y, z)
-    trunk_poses = [[float(v) for v in q[[0, 1, 2, 6, 3, 4, 5]]] for q in qs]
+    """Convert Pinocchio configurations to the robot trajectory type."""
+    times = [
+        round(k * DT, 9)
+        for k in range(len(qs))
+    ]
+
+    positions = [
+        [float(q[j]) for j in JOINTS]
+        for q in qs
+    ]
+
+    # Pinocchio quaternion: (x, y, z, w)
+    # Trajectory quaternion: (w, x, y, z)
+    trunk_poses = [
+        [float(v) for v in q[[0, 1, 2, 6, 3, 4, 5]]]
+        for q in qs
+    ]
 
     return Trajectory(
         joint_names=list(MICROBAN_JOINTS),
