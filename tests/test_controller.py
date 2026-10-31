@@ -30,6 +30,8 @@ def test_preload_is_rescaled_to_the_softer_gain():
     ref = tracking.reference(trajectory([preloaded, preloaded], [zero, zero]))
     assert np.allclose(ref.feedforward, 0.1 * 400 / 125)
     assert np.allclose(ref.planned, 0.0)
+    stiff = tracking.reference(trajectory([preloaded, preloaded], [zero, zero]), kp_fw=1000)
+    assert np.allclose(stiff.feedforward, 0.1 * 400 / 1000)  # stiffer servos, less pre-load
 
 
 def test_without_planned_positions_plays_positions_back():

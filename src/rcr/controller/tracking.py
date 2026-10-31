@@ -18,7 +18,9 @@ from rcr.types import MICROBAN_JOINTS, Trajectory
 # The policy's vector order. The sim (climbing_sim.JOINTS) uses another order: convert by name.
 JOINTS = MICROBAN_JOINTS
 KP_PRELOAD = 400.0  # kp_fw the optimiser pre-loads `positions` for [optimiser KP_DEFAULT]
-KP_FW = 125.0  # kp_fw we run the servos at [simulator README: the gain for learned policies]
+# Default kp_fw (P only) [simulator README: the gain for learned policies]. A policy saves the one
+# it was trained at, and the robot must run its climbing move at that gain.
+KP_FW = 125.0
 # The policy's share of the targets [Ours]: 0 plays the reference back, 1 lets the policy choose
 # every target. A curriculum raises it as the policy learns; each policy saves the one it used.
 ALPHA = 0.1
@@ -30,13 +32,13 @@ class Reference:
     """The trajectory as arrays in JOINTS order."""
 
     times: np.ndarray  # (N,) [s]
-    feedforward: np.ndarray  # (N, 19) [rad] targets pre-loaded for KP_FW
+    feedforward: np.ndarray  # (N, 19) [rad] targets pre-loaded for the servos' kp_fw
     planned: np.ndarray  # (N, 19) [rad] where the joints should be
 
 
-def reference(trajectory: Trajectory) -> Reference:
-    """Reorder the joints and rescale the pre-load from KP_PRELOAD to KP_FW: the pre-load is
-    tau / kp, so at a softer gain it grows by KP_PRELOAD / KP_FW. Without planned_positions (the
+def reference(trajectory: Trajectory, kp_fw: float = KP_FW) -> Reference:
+    """Reorder the joints and rescale the pre-load from KP_PRELOAD to kp_fw: the pre-load is
+    tau / kp, so at a softer gain it grows by KP_PRELOAD / kp_fw. Without planned_positions (the
     robot's part sent by rcr.link), `positions` are played back as they are."""
     if len(trajectory.times) < 2:
         raise ValueError("the trajectory needs at least two samples")
@@ -45,7 +47,7 @@ def reference(trajectory: Trajectory) -> Reference:
     if trajectory.planned_positions is None:
         return Reference(np.asarray(trajectory.times, dtype=float), positions, positions)
     planned = np.asarray(trajectory.planned_positions, dtype=float)[:, cols]
-    feedforward = planned + (KP_PRELOAD / KP_FW) * (positions - planned)
+    feedforward = planned + (KP_PRELOAD / kp_fw) * (positions - planned)
     return Reference(np.asarray(trajectory.times, dtype=float), feedforward, planned)
 
 

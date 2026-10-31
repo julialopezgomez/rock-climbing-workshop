@@ -18,15 +18,16 @@ from rcr.types import JointTargets, RobotState, Trajectory
 class Controller:
     """Playback of the trajectory's feedforward, blended with a policy's own targets if given.
 
-    policy: a .onnx file from scripts/train_controller.py, with its .json (alpha, joint order and
-    limits) next to it. None plays the trajectory back.
+    policy: a .onnx file from scripts/train_controller.py, with its .json (alpha, servo gain kp_fw,
+    joint order and limits) next to it; the robot must run at that kp_fw. None plays the
+    trajectory back.
     """
 
     def __init__(self, trajectory: Trajectory, policy: str | Path | None = None) -> None:
         self.trajectory = trajectory
         self.reference = tracking.reference(trajectory)
         self.policy = None
-        if policy is not None:
+        if policy is not None:  # the policy's .json says at which servo gain it was trained
             if trajectory.planned_positions is None:
                 raise ValueError("a policy tracks planned_positions: the trajectory has none")
             import onnxruntime
@@ -35,6 +36,7 @@ class Controller:
             if tuple(meta["joints"]) != tracking.JOINTS:
                 raise ValueError(f"{policy} was trained with another joint order")
             self.alpha = meta["alpha"]
+            self.reference = tracking.reference(trajectory, meta.get("kp_fw", tracking.KP_FW))
             self.low, self.high = np.array(meta["low"]), np.array(meta["high"])
             self.policy = onnxruntime.InferenceSession(str(policy))
 

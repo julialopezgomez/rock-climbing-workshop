@@ -60,12 +60,14 @@ FROM_SIM = [list(SIM_JOINTS).index(n) for n in tracking.JOINTS]  # the sim's -> 
 
 
 class TrackingEnv(gym.Env):
-    def __init__(self, data: Path, alpha: float = tracking.ALPHA, seed: int = 0):
+    def __init__(self, data: Path, alpha: float = tracking.ALPHA, kp_fw: float = tracking.KP_FW,
+                 seed: int = 0):  # fmt: skip
         self.sim = ClimbingSim(Wall.load(str(data / "sim_wall.json")), cameras=[],
-                               kp_fw=tracking.KP_FW, seed=seed)  # fmt: skip
+                               kp_fw=kp_fw, seed=seed)  # fmt: skip
+        self.kp_fw = kp_fw  # the servos' P gain
         self.alpha = alpha  # the policy's share of the targets
         self.trajectory = io.load_trajectory(data / "trajectory.json")
-        self.ref = tracking.reference(self.trajectory)
+        self.ref = tracking.reference(self.trajectory, kp_fw)
         self.low, self.high = self.sim.joint_range[FROM_SIM].T
         self.dt = self.sim.control_dt
         self.balls = reference_balls(self.sim, self.trajectory)
@@ -184,10 +186,12 @@ def import_npz(path: Path, wall: str, data: Path) -> None:
     print(f"saved {data}: {times[-1]:.1f} s, {len(found)} moves")
 
 
-def evaluate(data: Path, episodes: int, policy: Path | None = None, watch: bool = False) -> None:
-    """Episodes with the ONNX policy (at the alpha it was trained with), or playback (alpha 0)
-    without one: what the policy has to beat. Each from a random reference start, or, with watch,
-    in MuJoCo's viewer and chained (a success carries on to the next move) like a climb."""
+def evaluate(data: Path, episodes: int, policy: Path | None = None, watch: bool = False,
+             kp_fw: float = tracking.KP_FW) -> None:  # fmt: skip
+    """Episodes with the ONNX policy (at the alpha and servo gain it was trained with), or
+    playback (alpha 0, at kp_fw) without one: what the policy has to beat. Each from a random
+    reference start, or, with watch, in MuJoCo's viewer and chained (a success carries on to the
+    next move) like a climb."""
     act = lambda obs: np.zeros(len(tracking.JOINTS))  # noqa: E731
     alpha = 0.0
     if policy is not None:
@@ -195,8 +199,9 @@ def evaluate(data: Path, episodes: int, policy: Path | None = None, watch: bool 
 
         session = onnxruntime.InferenceSession(str(policy))
         act = lambda obs: session.run(None, {"obs": obs[None]})[0][0]  # noqa: E731
-        alpha = json.loads(policy.with_suffix(".json").read_text())["alpha"]
-    env = TrackingEnv(data, alpha)
+        meta = json.loads(policy.with_suffix(".json").read_text())
+        alpha, kp_fw = meta["alpha"], meta.get("kp_fw", tracking.KP_FW)  # older: all at 125
+    env = TrackingEnv(data, alpha, kp_fw)
     env.reset(seed=0)
     if watch:
         env.sim.view()
@@ -228,8 +233,8 @@ def evaluate(data: Path, episodes: int, policy: Path | None = None, watch: bool 
               f"|a| > 0.95 on {100 * mean[2]:.0f} % of joint-steps")  # fmt: skip
 
 
-def train(data: Path, steps: int, envs: int, out: Path, alpha: float, norm_reward: bool,
-          seed: int = 0) -> None:  # fmt: skip
+def train(data: Path, steps: int, envs: int, out: Path, alpha: float, kp_fw: float,
+          norm_reward: bool, seed: int = 0) -> None:  # fmt: skip
     """PPO (SB3 defaults: advantages normalised per minibatch). norm_reward: rewards scaled by a
     running estimate of the returns' std (VecNormalize), so the value function learns numbers
     near 1, not thousands; the observations are left as they are, so the ONNX export and
@@ -239,7 +244,7 @@ def train(data: Path, steps: int, envs: int, out: Path, alpha: float, norm_rewar
     from stable_baselines3.common.vec_env import SubprocVecEnv, VecNormalize
 
     vec = make_vec_env(TrackingEnv, envs, seed=seed, vec_env_cls=SubprocVecEnv,
-                       env_kwargs={"data": data, "alpha": alpha})  # fmt: skip
+                       env_kwargs={"data": data, "alpha": alpha, "kp_fw": kp_fw})  # fmt: skip
     if norm_reward:
         vec = VecNormalize(vec, norm_obs=False, norm_reward=True)
     model = PPO("MlpPolicy", vec, verbose=1, seed=seed)
@@ -250,7 +255,7 @@ def train(data: Path, steps: int, envs: int, out: Path, alpha: float, norm_rewar
     rows = history.rows
     columns = {k: np.array([r.get(k, np.nan) for r in rows]) for k in rows[0]}
     np.savez(f"{out}_history.npz", norm_reward=norm_reward, **columns)
-    export(model, out, TrackingEnv(data, alpha))
+    export(model, out, TrackingEnv(data, alpha, kp_fw))
     plot(Path(f"{out}_history.npz"))
 
 
@@ -360,7 +365,7 @@ def export(model, out: Path, env: TrackingEnv) -> None:
     obs = torch.zeros(1, tracking.OBS_SIZE)
     torch.onnx.export(Mean(model.policy), obs, f"{out}.onnx", input_names=["obs"],
                       dynamo=False)  # fmt: skip
-    meta = {"alpha": env.alpha, "joints": list(tracking.JOINTS),
+    meta = {"alpha": env.alpha, "kp_fw": env.kp_fw, "joints": list(tracking.JOINTS),
             "low": env.low.tolist(), "high": env.high.tolist()}  # fmt: skip
     Path(f"{out}.json").write_text(json.dumps(meta, indent=1))
     print(f"saved {out}.onnx and {out}.json")
@@ -381,13 +386,23 @@ if __name__ == "__main__":
     parser.add_argument("--alpha", type=float, default=tracking.ALPHA, help="the policy's share")
     parser.add_argument("--norm-reward", action="store_true", help="train: VecNormalize rewards")
     parser.add_argument("--seed", type=int, default=0, help="train: PPO and environment seed")
+    parser.add_argument("--kp", type=float, default=tracking.KP_FW, help="servo P gain (kp_fw)")
     args = parser.parse_args()
     if args.command == "import":
         import_npz(args.npz, args.wall, args.data)
     elif args.command == "train":
-        train(args.data, args.steps, args.envs, args.out, args.alpha, args.norm_reward, args.seed)
+        train(
+            args.data,
+            args.steps,
+            args.envs,
+            args.out,
+            args.alpha,
+            args.kp,
+            args.norm_reward,
+            args.seed,
+        )
     elif args.command == "plot":
         plot(Path(f"{args.out}_history.npz"))
     else:
         policy = args.policy if args.command == "evaluate" else None
-        evaluate(args.data, args.episodes, policy, args.watch)
+        evaluate(args.data, args.episodes, policy, args.watch, args.kp)
