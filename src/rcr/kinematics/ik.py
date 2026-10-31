@@ -60,7 +60,7 @@ REGULARISATION = DAMPING**2  # on the step, like damped(): bounded where a limb 
 JOINT_MARGIN = 0.1  # [rad] the joints try to stay this far inside their limits (slack)
 SPEED_MARGIN = 0.8  # the joints try to stay under this fraction of their speed limits (slack)
 SLACK_WEIGHT = 1e2  # on the squared slack [rad^2]: inside the margins only if the balls need it
-MANIPULABILITY_GAIN = 1e-5  # on the gradient of the moving limb's log-manipulability
+MANIPULABILITY_GAIN = 1e-3  # on the gradient of the moving limb's log-manipulability
 
 # trunk free: q = (x, y, z, qx, qy, qz, qw, 19 joints)
 model = pin.buildModelFromUrdf(str(microban_model.urdf(climb=True)), pin.JointModelFreeFlyer())
