@@ -320,7 +320,7 @@ def save(model, history, out: Path, env: TrackingEnv, norm_reward: bool = False)
 
 def curriculum(data: Path, init: Path, out: Path, alphas: list[float], chunk_steps: int,
                max_chunks: int, gate_success: float, gate_falls: float, episodes: int,
-               envs: int) -> None:  # fmt: skip
+               envs: int, seed: int = 0) -> None:  # fmt: skip
     """Raise alpha stage by stage [Ours]. Each stage resumes PPO (network, optimiser, value
     function) from the last one at the new alpha, first evaluating the last policy as it is at the
     new alpha (the handover), then trains in chunks of chunk_steps until its evaluation passes the
@@ -357,9 +357,9 @@ def curriculum(data: Path, init: Path, out: Path, alphas: list[float], chunk_ste
         stage = out / f"alpha{alpha:g}"
         handover = evaluate(data, episodes, Path(f"{previous}.onnx"), alpha=alpha)
         record(alpha, "handover", 0, handover, "")
-        vec = make_vec_env(TrackingEnv, envs, seed=0, vec_env_cls=SubprocVecEnv,
+        vec = make_vec_env(TrackingEnv, envs, seed=seed, vec_env_cls=SubprocVecEnv,
                            env_kwargs={"data": data, "alpha": alpha, "kp_fw": kp_fw})  # fmt: skip
-        model = PPO.load(f"{previous}.zip", env=vec, device="cpu")
+        model = PPO.load(f"{previous}.zip", env=vec, device="cpu", seed=seed)
         history, passed = History(), False
         for chunk in range(1, max_chunks + 1):
             model.learn(total_timesteps=chunk_steps, callback=history, reset_num_timesteps=False)
@@ -509,7 +509,7 @@ if __name__ == "__main__":
     parser.add_argument("--out", type=Path, default=Path("build/rl/policy"))
     parser.add_argument("--alpha", type=float, default=tracking.ALPHA, help="the policy's share")
     parser.add_argument("--norm-reward", action="store_true", help="train: VecNormalize rewards")
-    parser.add_argument("--seed", type=int, default=0, help="train: PPO and environment seed")
+    parser.add_argument("--seed", type=int, default=0, help="PPO and environment seed")
     parser.add_argument("--kp", type=float, default=tracking.KP_FW, help="servo P gain (kp_fw)")
     parser.add_argument("--log-std-init", type=float, default=0.0, help="train: log starting noise")
     parser.add_argument("--clone-episodes", type=int, default=0, help="train: start from playback")
@@ -537,8 +537,9 @@ if __name__ == "__main__":
         )
     elif args.command == "curriculum":
         alphas = [float(a) for a in args.alphas.split(",")]
+        gates = (args.gate_success, args.gate_falls)
         curriculum(args.data, args.init, args.out, alphas, args.chunk_steps, args.max_chunks,
-                   args.gate_success, args.gate_falls, args.episodes, args.envs)  # fmt: skip
+                   *gates, args.episodes, args.envs, args.seed)  # fmt: skip
     elif args.command == "plot":
         plot(Path(f"{args.out}_history.npz"))
     else:
