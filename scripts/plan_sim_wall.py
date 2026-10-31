@@ -18,7 +18,8 @@ from climbing_sim.routes import generate_wall
 from numpy.linalg import norm
 
 from rcr import io, kinematics
-from rcr.planner import astar, feasible, plan
+from rcr.planner import astar, feasible_ik_contact, plan, replan
+from rcr.kinematics import feasible_ik_traj #TODO: Implement
 from rcr.types import LIMBS, ContactPlan, Hold, Stance, Trajectory, WallModel
 
 
@@ -33,7 +34,7 @@ def to_wall_model(sim_wall, level: int, seed: int) -> WallModel:
     return WallModel(id=f"l{level}_s{seed}", level=level, holds=holds, start=start)
 
 
-def why_stuck(wall: WallModel, last: Stance) -> None:
+def why_stuck(wall: WallModel, last: Stance, feasible) -> None:
     """The moves from the last stance that would put a hand higher than it has been (a hand to a
     higher free hold), counted by why they fail, with one example of the values."""
     k = astar.key(last)
@@ -111,6 +112,7 @@ def main() -> None:
         type=Path,
         help="load a wall from this JSON file instead of generating one. Options: N1, N2, N3",
     )
+    parser.add_argument("--feasibility", choices=("ik_contact", "ik_traj"), default="ik_contact", help="choose the feasibility function to use") #TODO: in the future, constance's RL feasibility will be added here.
     args = parser.parse_args()
 
     seed = random.randrange(10_000) if args.seed is None else args.seed
@@ -121,6 +123,14 @@ def main() -> None:
         sim_wall = generate_wall(args.level, seed)
         wall = to_wall_model(sim_wall, args.level, seed)
     print(f"wall: level {args.level}, seed {seed}, {len(wall.holds)} holds")
+
+    #TODO: Future: if we have more feasibility checkers, add them here.
+    if args.feasibility == "ik_contact":
+        feasible = feasible_ik_contact
+    elif args.feasibility == "ik_traj":
+        feasible = feasible_ik_traj
+    else:
+        raise ValueError("Invalid feasibility function")
 
     clock = time.perf_counter()
     contact_plan = plan(wall, feasible, HEURISTIC_WEIGHT=args.heuristic_weight)
@@ -136,7 +146,7 @@ def main() -> None:
         f"top {top:.3f} m: {'reached' if hand == top else 'NOT reached'}"
     )
     if hand != top:
-        why_stuck(wall, contact_plan.stances[-1])
+        why_stuck(wall, contact_plan.stances[-1], feasible)
 
     if args.save:
         Path(args.save).parent.mkdir(parents=True, exist_ok=True)

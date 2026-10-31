@@ -12,14 +12,14 @@ import numpy as np
 import pinocchio as pin
 from numpy.linalg import norm, pinv
 
-from rcr.types import LIMBS, Stance, WallModel
+from rcr.types import LIMBS, Stance, WallModel, Feasibility
 
 SOCKET = np.array([0.0, -0.026, -0.014])  # ball centre from Hold.position [simulator wall.py]
 HANG = Path(__file__).parents[3] / "third_party/simulator/climbing_sim/assets/poses/hang.json"
 TASK_ORDER = ("right_hand", "left_hand", "right_foot", "left_foot")
 # trunk z up, x into the wall (+y) [simulator README, Frames]
 TRUNK_UPRIGHT = np.array([[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
-EPSILON = 1e-3  # [m] a ball this close to its target has reached it
+EPSILON = 1e-4  # [m] a ball this close to its target has reached it
 MAX_ITERATIONS = 200  # for the start pose
 STEP = 0.5  # fraction of the error the start pose's IK closes per iteration
 # The ball's path [Ours, to tune]: out of socket a straight off the wall, up and away from it to a
@@ -114,6 +114,9 @@ def ik_step(q, displacement, moving=None, height=None):
             break
         free[6:][past] = 0
     return projecttojointlimits(new)
+#TODO: answer question: how much do this ik step differ from the planners ik. Do we need all these gains on lift etc? do we need the damped value? We should be using hte same helpers if necessary, but the collision chceching is not super necessary.
+# also, this ik_step should just be getting hte joint positions that follow the moving limb's ball trajectory. So we don't need to check for all joints.
+#TODO: Also, we should make sure that at contacts, in later step, we check com constraint and torque manipulability on the forces.
 
 
 def projecttojointlimits(q):
@@ -141,6 +144,7 @@ def start_pose(wall: WallModel, stance: Stance):
     if reached:
         return q  # the trunk as high as the balls allow
     raise ValueError(f"start pose: balls {norm(error, axis=1).max() * 1000:.0f} mm from sockets")
+#TODO: what is this doing? we should check that the start pose maximises for torque manipulability so that the end effectors can push downwards, and then last step check if COM is within the support polygon. For every transition, we should in the later steps check the configuration that the robot arrived to the stance at, and readjust the body configuration to maximise torque manipulability and COM stability before starting hte next transition.
 
 
 def ball_path(p_a, p_b):
@@ -196,3 +200,34 @@ def track_move(wall: WallModel, a: Stance, b: Stance, q0):
         worst = max(worst, error[i])
         out.append(q)
     return out, worst
+
+
+def feasible_ik_traj(wall: WallModel, a: Stance, b: Stance) -> Feasibility:
+    """Reach, then IK, on the trajectory from stance a to stance b (does not depend on a, so cached).
+    The trajectory is feasible if all the held balls stay within MAX_ERROR of their sockets."""
+    # k = (wall.id, *astar.key(b))
+    # if k not in _cache: # TODO: need to check how cache is implemented. Actually, should implement it from scratch.
+    #     try:
+    #         q0 = start_pose(wall, a) # TODO: need to check what this start pose is. In later steps, we should check this to make sure this pose maximises torque manipulability, and possibly COM stability. 
+    #         _, worst = track_move(wall, a, b, q0)
+    #         _cache[k] = Feasibility(reason=None if worst <= MAX_ERROR else "There is not an ik trajectory that satisfies the robot limits and reaches b from a.")
+    #     except ValueError as e:
+    #         _cache[k] = Feasibility(reason=str(e))
+    # return _cache[k]
+    #TODO: recover code above when cache is implemented. For now, just check if the trajectory is feasible without caching.
+    try:
+        q0 = start_pose(wall, a) # TODO: need to check what this start pose is. In later steps, we should check this to make sure this pose maximises torque manipulability, and possibly COM stability. 
+        _, worst = track_move(wall, a, b, q0)
+        if worst <= MAX_ERROR:
+            return Feasibility(feasible=True, reason=None)
+        else:
+            return Feasibility(feasible=False, reason="There is not an ik trajectory that satisfies the robot limits and reaches b from a.")
+    except ValueError as e:
+        return Feasibility(feasible=False, reason=str(e))
+
+
+#TODO: probably in another file that's planner/kinematics/etc agnostic. But we need to come up with a good cache implementation. This should include: 
+# - The level of feasibility it's checking (ik_contact, ik_traj, and in the future possibly RL from constance)
+# - Stance a and b (or just b, since a is not used in the feasibility check). This should be wall agnostic, as different walls can have the same stance transition.
+# - A boolean for whether the feasibility check was successful or not, optionally (but ideally) a reason for failure, and possibly a cost that the astar can have into account. 
+# - The cache is mainly for the planner, so that it can check which nodes are good to expand or not. 

@@ -22,7 +22,7 @@ HANG = Path(__file__).parents[3] / "third_party/simulator/climbing_sim/assets/po
 EPSILON = 1e-3  # [m]
 DT = 0.5
 MAX_ITERATIONS = 200
-WEIGHT = 1.0  # A* heuristic weight: 1.0 = admissible, 0.0 = Dijkstra
+WEIGHT = 1.5  # A* heuristic weight: 1.0 = admissible, 0.0 = Dijkstra
 # TODO: order by move: moving arm, diagonal leg, other leg, other arm
 TASK_ORDER = ("right_hand", "left_hand", "right_foot", "left_foot")
 # trunk z up, x into the wall (+y)
@@ -276,11 +276,14 @@ def targets(wall, k):
 _cache = {}
 
 
-def feasible(wall: WallModel, a: Stance, b: Stance) -> Feasibility:
+
+#TODO: move this to a feasibility file. This feasibility file should deifne different feasible functions for different levels of feasibility. This should
+def feasible_ik_contact(wall: WallModel, a: Stance, b: Stance) -> Feasibility:
     """Reach, then IK, on stance b (does not depend on a, so cached)."""
     k = (wall.id, *key(b))
     if k not in _cache:
-        _cache[k] = reach(targets(wall, key(b))) or ik(wall, key(b))[0]
+        _cache[k] = reach(targets(wall, key(b))) or ik(wall, key(b))[0] # This is because reach returns None if successful. So both reach and ik need to be true.
+        
     return _cache[k]
 
 
