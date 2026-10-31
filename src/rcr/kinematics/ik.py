@@ -446,7 +446,7 @@ def solve_ik(q0, targets, moving=None, dt=None, method="qp"):
 # ---------------------------------------------------------------------
 
 
-def start_pose(wall: WallModel, stance: Stance, method="pinv"):
+def start_pose(wall: WallModel, stance: Stance, method="qp"):
     """Find a configuration with all four balls in their sockets.
 
     Start from the nominal hanging configuration rigidly fitted to
@@ -468,7 +468,7 @@ def start_pose(wall: WallModel, stance: Stance, method="pinv"):
 # Single movement
 # ---------------------------------------------------------------------
 
-def ik_traj(wall: WallModel, a: Stance, b: Stance, q0, method="pinv"):
+def ik_traj(wall: WallModel, a: Stance, b: Stance, q0, method="qp"):
     """Generate a joint trajectory from stance a to stance b.
 
     The moving ball follows limb_traj; the others remain fixed.
@@ -525,7 +525,7 @@ def feasible_ik_traj(
     wall: WallModel,
     a: Stance,
     b: Stance,
-    method="pinv",
+    method="qp",
 ) -> Feasibility:
     """Preliminary feasibility check from a nominal starting stance.
 
@@ -566,7 +566,7 @@ def feasible_ik_traj(
 # Complete climbing trajectory
 # ---------------------------------------------------------------------
 
-def generate_trajectory(wall: WallModel, plan: ContactPlan, method="pinv", q0=None):
+def generate_trajectory(wall: WallModel, plan: ContactPlan, method="qp", q0=None):
     """Chain all movements without resetting configurations."""
     stances = plan.stances
 
