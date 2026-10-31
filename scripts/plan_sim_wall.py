@@ -112,7 +112,7 @@ def main() -> None:
         type=Path,
         help="load a wall from this JSON file instead of generating one. Options: N1, N2, N3",
     )
-    parser.add_argument("--feasibility", choices=("ik_contact", "ik_traj"), default="ik_contact", help="choose the feasibility function to use") #TODO: in the future, constance's RL feasibility will be added here.
+    parser.add_argument("--feasibility", choices=("ik_contact", "ik_traj"), default="ik_traj", help="choose the feasibility function to use") #TODO: in the future, constance's RL feasibility will be added here.
     args = parser.parse_args()
 
     seed = random.randrange(10_000) if args.seed is None else args.seed
