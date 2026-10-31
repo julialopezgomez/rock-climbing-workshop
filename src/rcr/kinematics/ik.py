@@ -12,7 +12,7 @@ import pinocchio as pin
 import quadprog
 from numpy.linalg import norm, pinv
 
-from rcr.kinematics.bezier import Bezier, connecting
+from rcr.kinematics.bezier import Bezier
 from rcr.types import LIMBS, Feasibility, Stance, WallModel
 
 SOCKET = np.array([0.0, -0.026, -0.014])  # ball centre from Hold.position [simulator wall.py]
@@ -35,7 +35,6 @@ ABOVE = 0.025
 # [m] in front of the sockets while going across (66 mm from the wall): 10.5 mm in front of every
 # hold (35 mm: 5.5)
 OUT = 0.04
-CORNER_TIME = 0.3  # [s] each of up, out, in and down; across takes the rest of MOVE_TIME
 MOVE_TIME = 2.0  # [s] per move
 DT = 0.02  # [s] between samples: the robot's 50 Hz loop
 GAIN = 0.5  # fraction of a ball's tracking error corrected per sample [Ours]
@@ -298,22 +297,21 @@ def start_pose(wall: WallModel, stance: Stance):
 
 
 def ball_path(p_a, p_b):
-    """B(t), t in [0, MOVE_TIME]: five Bezier curves through the corridor's corners, each at rest
-    at both ends, so continuous in position, velocity and acceleration where they meet [C-CROC
-    eq. 4, bezier.connecting] and each a straight line (it cannot cut a corner into a hold, nor
-    rise above it): up ABOVE out of socket a, out OUT from the wall, across to in front of socket
-    b, in, and down into socket b.
-    
+    """B(t), t in [0, MOVE_TIME]: the corridor's five straight pieces at one constant speed (the
+    path's length / MOVE_TIME), each a degree-1 Bezier lasting its share of the length (it cannot
+    cut a corner into a hold, nor rise above it): up ABOVE out of socket a, out OUT from the wall,
+    across to in front of socket b, in, and down into socket b.
+
     - p_a, p_b: the moving ball's sockets on holds a and b
-    
-    
+
+
     """
-    rest, up, out = np.zeros(3), np.array([0.0, 0.0, ABOVE]), np.array([0.0, -OUT, 0.0])
+    up, out = np.array([0.0, 0.0, ABOVE]), np.array([0.0, -OUT, 0.0])
     corners = [p_a, p_a + up, p_a + up + out, p_b + up + out, p_b + up, p_b]
-    times = np.cumsum([0.0, CORNER_TIME, CORNER_TIME, MOVE_TIME - 4 * CORNER_TIME, CORNER_TIME])
-    times = [*times, MOVE_TIME]
+    lengths = norm(np.diff(corners, axis=0), axis=1)
+    times = [*(MOVE_TIME * np.cumsum([0.0, *lengths]) / lengths.sum())]
     curves = [
-        Bezier(connecting((p, rest, rest), (q, rest, rest), t1 - t0), t0, t1)
+        Bezier([p, q], t0, t1)
         for p, q, t0, t1 in zip(corners, corners[1:], times, times[1:], strict=False)
     ]
 

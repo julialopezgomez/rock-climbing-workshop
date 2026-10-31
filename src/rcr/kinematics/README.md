@@ -16,10 +16,10 @@ planner receives `rcr.optimiser.feasibility` as an argument and never imports th
 Started over from v0 (below) to keep it minimal. No torques, no servo-sag pre-load, no collisions and no cache yet:
 first a kinematic motion, then we see. All in `ik.py`.
 - **The ball's path, per move:** only the moving limb's ball has one, from its socket on hold a to its socket on
-  hold b (`ball_path`). It's a corridor clear of every hold, five Bézier curves in time (`bezier.py`) through its
-  corners, each at rest at both ends. Their control points come from the states at both ends [C-CROC, Fernbach et
-  al. 2018, eq. 4: `bezier.connecting`], so the path is continuous in position, velocity and acceleration. Each
-  curve is a straight line, so it can't cut a corner into a hold or rise above where it's going:
+  hold b (`ball_path`). It's a corridor clear of every hold: five straight pieces, each a degree-1 Bézier
+  (`bezier.py`), at one constant speed (the corridor's length / `MOVE_TIME`). Each piece lasts its share of the
+  length. The speed is the same everywhere, but the direction turns at each corner, and the ball starts and stops at
+  full speed. The pieces are straight, so the path can't cut a corner into a hold or rise above where it's going:
   - **up** `ABOVE` out of socket a. A ball leaves a socket only within ~10° of vertical [simulator `wall.py`,
     `EXIT_BLOCK`];
   - **out** `OUT` from the wall;
@@ -65,7 +65,6 @@ first a kinematic motion, then we see. All in `ik.py`.
 |---|---|---|
 | `ABOVE` | 0.025 m | up out of socket a before moving out; above socket b before coming down |
 | `OUT` | 0.04 m | in front of the sockets while going across (66 mm from the wall) |
-| `CORNER_TIME` | 0.3 s | each of up, out, in and down; across takes the rest of `MOVE_TIME` |
 | `MOVE_TIME`, `DT` | 2.0 s, 0.02 s | per move; between samples (the robot's 50 Hz loop) |
 | `POSTURE_GAIN`, `JOINT_TOL`, `BLEND_TIME` | 0.1, 0.01 rad, 0.3 s | the stance pose (above); the blend lasts long enough to stay under `SPEED_MARGIN` |
 | `HELD_WEIGHT`, `REGULARISATION` | 1e3, `DAMPING`² | the QP: a held ball's weight (the moving one's is 1); on ‖v‖² |
