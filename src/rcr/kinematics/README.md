@@ -106,6 +106,83 @@ uv run scripts/plan_sim_wall.py --level 2 --seed 5226 --save-trajectory build/tr
 uv run scripts/plan_sim_wall.py --level 2 --seed 5 --save-npz seed5  # npz/<timestamp>_seed5.npz: q N x 26, 50 Hz
 ```
 
+## The same motion with placo [Ours]
+`placo_ik.py` makes the same moves with Rhoban's [placo](https://github.com/rhoban/placo) (MIT, source in
+`third_party/placo`, pinned) instead of `ik_step`: ik.py's ball path, sockets, hang posture, trunk task, timing and
+output; only the IK differs. placo's `KinematicsSolver` is a QP each step: the held balls are **hard** tasks, the
+moving ball (weight `MOVING_WEIGHT` 300), the trunk upright and at its height (1e-2) and the hang posture (1e-3)
+**soft**, the joint and speed limits constraints. After the path, instead of blending in joint space to b's stance
+pose (which pulled a held ball 14 mm out on N3), it settles on b's sockets with all four balls hard.
+
+placo pins pinocchio 3.8 and the project 4.x, so `scripts/placo_trajectory.py` runs in its own environment (its
+inline dependencies, built by uv on first use); the project's environment is untouched. Same input and output as
+`plan_sim_wall.py`'s IK motion: a contact plan in, `build/trajectory_<plan>_placo.json` and `.npz` (q N x 26, 50 Hz)
+out, plus a per-move comparison with ik.py.
+```bash
+uv run scripts/plan_sim_wall.py --wall N3 --level 3 --feasibility ik_contact --save build/plan_N3_wall.json
+uv run scripts/placo_trajectory.py build/plan_N3_wall.json --wall N3          # solve, compare, save
+uv run scripts/placo_trajectory.py build/plan_N3_wall.json --wall N3 --play   # ... and replay it in MuJoCo
+```
+`--wall` is needed for a bundled wall: `plan_sim_wall.py --wall N3` names its plan `l<level>_s<seed>`, and rebuilt
+from that id the wall would be a generated one (a plan whose holds the wall lacks is refused).
+
+On the organisers' N3 (the A* plan with `ik_contact`, 26 moves, the highest hand at 0.715 m of 1.30 m): all 26
+moves; the moving ball within 0.1 mm of its path, the held balls on their sockets, the fastest joint at 27 % of its
+speed limit; 66.1 s of motion. ik.py at fe95f66 did 6 (its stance poses ended 2–37 mm off the sockets on the others,
+two stopped on an undefined `SPEED_MARGIN`, which also stops the planner's default `ik_traj` feasibility).
+**placo shaping the motion (`--generate`)**: before each release the body shifts its CoM into Stéphane Caron's
+static-equilibrium polygon of the three held balls (placo's `CoMPolygonConstraint`, 15 mm margin, soft), and keeps
+it there until the ball lands. **Physics test** (the script's comparison): each move in the organisers' sim with
+gravity at kp_fw 1000, from its own stance pose, the joints sent the motion at 50 Hz; `--ki 2` adds an integral of
+each joint's error to its target (capped at 10°), standing in for the robot servos' I gain, which the sim lacks.
+On the organisers' N3 (26 moves):
+
+| | motions | slot-ins, ki 0 | slot-ins / misses / falls, ki 2 | CoM margin in the air |
+|---|---|---|---|---|
+| ik.py | 7 | 0 | 4 / 2 / 1 | median −5.8 mm, outside on 4 |
+| **placo** | **26** | 6 | **20 / 4 / 2** | median +6.5 mm, outside on 11 |
+| placo + CoM | 26 | 6 | 16 / 4 / 6 | +15 mm on every move |
+
+- Without the integral nearly every move misses its socket by 25–30 mm: the joints sag under load at kp_fw 1000.
+- The CoM constraint holds its margin but makes it worse: the shift before the release drives joints to their
+  speed limit, and those moves fall.
+- Played as one climb (the whole .npz, ki 2), both placo motions slot in the first 3 moves in a row, then fail on
+  move 3 (the right foot misses by 16 mm and the robot ends on fewer than three balls).
+
+Open: some joints sit exactly on their limits (placo's are hard, with no margin as the QP of ik.py had); no
+collisions or torques yet, as ik.py.
+
+### placo making the route too (`--route`) [Ours]
+`placo_motion.py` drops ik.py's corridor path. The moving ball's motion comes from placo itself, with only the start and
+end fixed. The ball goes out of its cup straight from the wall (`EXIT` 40 mm, 0.4 s), across to above the target cup
+(1.2 s), then into it (0.4 s). Each phase is a `CubicSpline3D`, a soft task. placo keeps the limb off the wall and the
+holds: the wall and every hold within `NEAR` 25 cm go into placo's MJCF robot as boxes
+(`AvoidSelfCollisionsConstraint`, 8 mm margin, soft 1e4). They sit on a 6-dof `environment` body held fixed in the
+world by a hard frame task, because placo reads only the robot's body tree. During the transfer a soft pull towards
+y = −70 mm keeps the limb from catching behind a hold (without it, a foot stopped 38 mm short). On N3's test moves:
+7.4 mm clearance at worst, the ball 39 mm out, landing on its socket.
+
+On the organisers' N1 (`plan_sim_wall.py --wall N1 --level 1 --feasibility ik_contact`, 51 moves to the top at
+1.315 m; the plan repeats a 4-move cycle):
+```bash
+uv run scripts/placo_trajectory.py build/plan_N1_wall.json --wall N1 --ki 2 --route --out build/placo_n1/route.json
+```
+
+| ki 2, per move | motions | slot-ins / misses / falls | CoM margin in the air |
+|---|---|---|---|
+| ik.py | 0 | – | – (its start pose ends 5–38 mm off the sockets on every move) |
+| **placo** (ik.py's path) | 51 | **33 / 7 / 11** | median −5.2 mm, outside on 26 |
+| placo + CoM | 51 | 13 / 19 / 19 | +15 mm on every move |
+| placo route | 51 | 26 / 7 / 18 | median −5.7 mm, outside on 26 |
+
+- The hands slot in nearly every time with every placo motion. The falls are the feet: in each cycle the right foot
+  (CoM +28 mm, but it falls) and the left foot after it (CoM −5 mm). The left foot's next move (CoM −16 to −18 mm,
+  outside the polygon) falls on the route and slots in on ik.py's path.
+- The route gets the moving joint to its speed limit (1.00x) on every move, against 0.2x on ik.py's 2 s path. The
+  2 s are the same, but the exit and entry are 0.4 s each. That speed is the likeliest cause of its extra falls.
+- Played as one climb (`route.npz`, ki 2): move 0 lands (right foot on its hold at 2.2 s; the hands lift out of
+  their cups for 1 s while the foot unloads, then hook again), then move 1 (left foot) falls, as in the per-move test.
+
 ## The CasADi optimiser
 Quasi-static direct transcription, one NLP per transition, CasADi + IPOPT, on Microban's URDF: in
 [`rcr.optimiser`](../optimiser/), described in [its README](../optimiser/README.md).

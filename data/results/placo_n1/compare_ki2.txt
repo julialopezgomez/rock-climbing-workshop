@@ -1,0 +1,139 @@
+Loading model: /var/folders/wk/494_ym957sb6r44j34bsm9g40000gp/T/placo_scene_o881r1ac/scene.xml
+Warning - Only texture with files are supported
+Warning - Only texture with files are supported
+Warning - Only texture with files are supported
+WARNING: Robot has the following self collisions in neutral position:
+  -trunk_0 collides with environment_0
+  -trunk_25 collides with shoulder_1
+  -trunk_25 collides with shoulder_4
+  -trunk_25 collides with shoulder_5
+  -trunk_25 collides with shoulder_6
+  -trunk_25 collides with shoulder_7
+  -trunk_25 collides with shoulder_8
+  -trunk_25 collides with shoulder_9
+  -trunk_25 collides with shoulder_10
+  -trunk_25 collides with shoulder_11
+  -trunk_25 collides with shoulder_2_1
+  -trunk_25 collides with shoulder_2_4
+  -trunk_25 collides with shoulder_2_5
+  -trunk_25 collides with shoulder_2_6
+  -trunk_25 collides with shoulder_2_7
+  -trunk_25 collides with shoulder_2_8
+  -trunk_25 collides with shoulder_2_9
+  -trunk_25 collides with shoulder_2_10
+  -trunk_25 collides with shoulder_2_11
+  -trunk_25 collides with environment_0
+  -trunk_26 collides with hip_1
+  -trunk_26 collides with hip_4
+  -trunk_26 collides with hip_5
+  -trunk_26 collides with hip_2_1
+  -trunk_26 collides with hip_2_4
+  -trunk_26 collides with hip_2_5
+  -trunk_26 collides with environment_0
+  -trunk_27 collides with environment_0
+  -head_0 collides with environment_0
+  -shoulder_9 collides with humerus__configuration_right_0
+  -humerus__configuration_right_1 collides with radius_right_0
+  -humerus__configuration_right_1 collides with radius_right_1
+  -humerus__configuration_right_1 collides with radius_right_21
+  -hip_3 collides with hip_block__configuration_right_3
+  -hip_3 collides with hip_block__configuration_right_11
+  -hip_7 collides with hip_block__configuration_right_1
+  -hip_7 collides with hip_block__configuration_right_3
+  -hip_7 collides with hip_block__configuration_right_11
+  -hip_7 collides with hip_block__configuration_right_13
+  -femur__configuration_right_0 collides with tibia__configuration_right_0
+  -femur__configuration_right_1 collides with tibia__configuration_right_0
+  -ankle_block__configuration_left_0 collides with foot_climb_18
+  -ankle_block__configuration_left_1 collides with foot_climb_18
+  -ankle_block__configuration_left_3 collides with foot_climb_18
+  -ankle_block__configuration_left_6 collides with foot_climb_18
+  -ankle_block__configuration_left_8 collides with foot_climb_18
+  -ankle_block__configuration_left_9 collides with foot_climb_18
+  -ankle_block__configuration_left_10 collides with foot_climb_18
+  -ankle_block__configuration_left_11 collides with foot_climb_18
+  -ankle_block__configuration_left_12 collides with foot_climb_18
+  -ankle_block__configuration_left_13 collides with foot_climb_18
+  -shoulder_2_10 collides with humerus__configuration_left_0
+  -humerus__configuration_left_1 collides with radius_left_0
+  -humerus__configuration_left_1 collides with radius_left_1
+  -humerus__configuration_left_1 collides with radius_left_20
+  -hip_2_3 collides with hip_block__configuration_left_3
+  -hip_2_3 collides with hip_block__configuration_left_11
+  -hip_2_7 collides with hip_block__configuration_left_1
+  -hip_2_7 collides with hip_block__configuration_left_3
+  -hip_2_7 collides with hip_block__configuration_left_11
+  -hip_2_7 collides with hip_block__configuration_left_13
+  -femur__configuration_left_3 collides with tibia__configuration_left_0
+  -femur__configuration_left_4 collides with tibia__configuration_left_0
+  -ankle_block__configuration_right_0 collides with foot_climb_2_18
+  -ankle_block__configuration_right_1 collides with foot_climb_2_18
+  -ankle_block__configuration_right_3 collides with foot_climb_2_18
+  -ankle_block__configuration_right_6 collides with foot_climb_2_18
+  -ankle_block__configuration_right_8 collides with foot_climb_2_18
+  -ankle_block__configuration_right_9 collides with foot_climb_2_18
+  -ankle_block__configuration_right_10 collides with foot_climb_2_18
+  -ankle_block__configuration_right_11 collides with foot_climb_2_18
+  -ankle_block__configuration_right_12 collides with foot_climb_2_18
+  -ankle_block__configuration_right_13 collides with foot_climb_2_18
+build/plan_N1_wall.json: wall N1, 51 moves
+per move (physics at kp_fw 1000, ki 2): result [miss: mm from the socket] | CoM margin in the air | fastest joint vs its limit
+move  limb        | ik.py                         | placo                         | placo+CoM                     | placo route                 
+   0  right_foot  | no motion (ValueError)       | miss 18   +26.7 mm  0.21x         | fall      +26.7 mm  0.21x         | slot-in   +27.4 mm  1.00x       
+   1  left_foot   | no motion (ValueError)       | slot-in   -17.7 mm  0.20x         | miss 10   +15.0 mm  1.00x         | fall      -18.2 mm  1.00x       
+   2  right_hand  | no motion (ValueError)       | slot-in   -29.2 mm  0.19x         | fall      +14.9 mm  1.00x         | slot-in   -28.2 mm  1.00x       
+   3  left_hand   | no motion (ValueError)       | slot-in   +14.7 mm  0.26x         | slot-in   +15.0 mm  0.26x         | slot-in   +16.5 mm  1.00x       
+   4  right_foot  | no motion (ValueError)       | fall      +28.3 mm  0.23x         | fall      +28.3 mm  0.23x         | fall      +25.3 mm  1.00x       
+   5  left_foot   | no motion (ValueError)       | fall       -5.2 mm  0.19x         | miss 10   +15.0 mm  1.00x         | fall       -5.7 mm  1.00x       
+   6  left_hand   | no motion (ValueError)       | slot-in   -29.4 mm  0.19x         | fall      +14.9 mm  1.00x         | slot-in   -27.8 mm  1.00x       
+   7  right_hand  | no motion (ValueError)       | slot-in   +14.9 mm  0.26x         | slot-in   +15.0 mm  0.26x         | slot-in   +17.0 mm  1.00x       
+   8  right_foot  | no motion (ValueError)       | miss 14   +16.3 mm  0.21x         | miss 15   +16.3 mm  0.21x         | miss 16   +17.1 mm  1.00x       
+   9  left_foot   | no motion (ValueError)       | slot-in   -17.1 mm  0.21x         | miss 8    +15.0 mm  1.00x         | fall      -16.1 mm  1.00x       
+  10  right_hand  | no motion (ValueError)       | slot-in   -29.2 mm  0.19x         | fall      +14.9 mm  1.00x         | slot-in   -28.2 mm  1.00x       
+  11  left_hand   | no motion (ValueError)       | slot-in   +14.7 mm  0.26x         | slot-in   +15.0 mm  0.26x         | slot-in   +16.6 mm  1.00x       
+  12  right_foot  | no motion (ValueError)       | fall      +29.7 mm  0.20x         | fall      +29.7 mm  0.20x         | miss 19   +27.3 mm  1.00x       
+  13  left_foot   | no motion (ValueError)       | slot-in   -15.7 mm  0.18x         | miss 12   +15.0 mm  1.00x         | fall      -16.2 mm  1.00x       
+  14  right_hand  | no motion (ValueError)       | slot-in   -15.2 mm  0.19x         | slot-in   +15.0 mm  1.00x         | slot-in   -11.2 mm  1.00x       
+  15  left_hand   | no motion (ValueError)       | slot-in   +10.5 mm  0.31x         | slot-in   +15.0 mm  0.41x         | slot-in   +12.4 mm  1.00x       
+  16  right_foot  | no motion (ValueError)       | miss 15   +19.4 mm  0.19x         | miss 15   +19.4 mm  0.19x         | miss 18   +19.3 mm  1.00x       
+  17  left_foot   | no motion (ValueError)       | slot-in   -17.1 mm  0.21x         | miss 8    +15.0 mm  1.00x         | fall      -16.1 mm  1.00x       
+  18  right_hand  | no motion (ValueError)       | slot-in   -29.2 mm  0.19x         | fall      +14.9 mm  1.00x         | slot-in   -28.2 mm  1.00x       
+  19  left_hand   | no motion (ValueError)       | slot-in   +14.7 mm  0.26x         | slot-in   +15.0 mm  0.26x         | slot-in   +16.7 mm  1.00x       
+  20  right_foot  | no motion (ValueError)       | fall      +28.3 mm  0.23x         | fall      +28.3 mm  0.23x         | fall      +25.3 mm  1.00x       
+  21  left_foot   | no motion (ValueError)       | fall       -5.2 mm  0.19x         | miss 10   +15.0 mm  1.00x         | fall       -5.7 mm  1.00x       
+  22  left_hand   | no motion (ValueError)       | slot-in   -29.4 mm  0.19x         | fall      +14.9 mm  1.00x         | slot-in   -27.8 mm  1.00x       
+  23  right_hand  | no motion (ValueError)       | slot-in   +14.9 mm  0.26x         | slot-in   +15.0 mm  0.26x         | slot-in   +17.2 mm  1.00x       
+  24  right_foot  | no motion (ValueError)       | miss 14   +16.3 mm  0.21x         | miss 15   +16.3 mm  0.21x         | miss 16   +17.1 mm  1.00x       
+  25  left_foot   | no motion (ValueError)       | slot-in   -17.1 mm  0.21x         | miss 8    +15.0 mm  1.00x         | fall      -16.1 mm  1.00x       
+  26  right_hand  | no motion (ValueError)       | slot-in   -29.2 mm  0.19x         | fall      +14.9 mm  1.00x         | slot-in   -28.0 mm  1.00x       
+  27  left_hand   | no motion (ValueError)       | slot-in   +14.7 mm  0.26x         | slot-in   +15.0 mm  0.26x         | slot-in   +16.8 mm  1.00x       
+  28  right_foot  | no motion (ValueError)       | fall      +28.3 mm  0.23x         | fall      +28.3 mm  0.23x         | fall      +25.3 mm  1.00x       
+  29  left_foot   | no motion (ValueError)       | fall       -5.2 mm  0.19x         | miss 10   +15.0 mm  1.00x         | fall       -5.7 mm  1.00x       
+  30  left_hand   | no motion (ValueError)       | slot-in   -29.4 mm  0.19x         | fall      +14.9 mm  1.00x         | slot-in   -27.8 mm  1.00x       
+  31  right_hand  | no motion (ValueError)       | slot-in   +14.9 mm  0.26x         | slot-in   +15.0 mm  0.26x         | slot-in   +17.3 mm  1.00x       
+  32  right_foot  | no motion (ValueError)       | miss 14   +16.3 mm  0.21x         | miss 15   +16.3 mm  0.21x         | miss 16   +17.1 mm  1.00x       
+  33  left_foot   | no motion (ValueError)       | slot-in   -17.1 mm  0.21x         | miss 8    +15.0 mm  1.00x         | fall      -16.1 mm  1.00x       
+  34  right_hand  | no motion (ValueError)       | slot-in   -29.2 mm  0.19x         | fall      +14.9 mm  1.00x         | slot-in   -28.2 mm  1.00x       
+  35  left_hand   | no motion (ValueError)       | slot-in   +14.7 mm  0.26x         | slot-in   +15.0 mm  0.26x         | slot-in   +17.0 mm  1.00x       
+  36  right_foot  | no motion (ValueError)       | fall      +28.3 mm  0.23x         | fall      +28.3 mm  0.23x         | fall      +25.3 mm  1.00x       
+  37  left_foot   | no motion (ValueError)       | fall       -5.2 mm  0.19x         | miss 10   +15.0 mm  1.00x         | fall       -5.7 mm  1.00x       
+  38  left_hand   | no motion (ValueError)       | slot-in   -29.4 mm  0.19x         | fall      +14.9 mm  1.00x         | slot-in   -27.8 mm  1.00x       
+  39  right_hand  | no motion (ValueError)       | slot-in   +14.9 mm  0.26x         | slot-in   +15.0 mm  0.26x         | slot-in   +17.3 mm  1.00x       
+  40  right_foot  | no motion (ValueError)       | miss 14   +16.3 mm  0.21x         | miss 15   +16.3 mm  0.21x         | miss 16   +17.1 mm  1.00x       
+  41  left_foot   | no motion (ValueError)       | slot-in   -17.1 mm  0.21x         | miss 8    +15.0 mm  1.00x         | fall      -16.1 mm  1.00x       
+  42  right_hand  | no motion (ValueError)       | slot-in   -29.2 mm  0.19x         | fall      +14.9 mm  1.00x         | slot-in   -28.2 mm  1.00x       
+  43  left_hand   | no motion (ValueError)       | slot-in   +14.7 mm  0.26x         | slot-in   +15.0 mm  0.26x         | slot-in   +17.2 mm  1.00x       
+  44  right_foot  | no motion (ValueError)       | fall      +28.3 mm  0.23x         | fall      +28.3 mm  0.23x         | fall      +25.3 mm  1.00x       
+  45  left_foot   | no motion (ValueError)       | fall       -5.2 mm  0.19x         | miss 10   +15.0 mm  1.00x         | fall       -5.7 mm  1.00x       
+  46  left_hand   | no motion (ValueError)       | slot-in   -29.4 mm  0.19x         | fall      +14.9 mm  1.00x         | slot-in   -27.8 mm  1.00x       
+  47  right_hand  | no motion (ValueError)       | slot-in   +14.9 mm  0.26x         | slot-in   +15.0 mm  0.26x         | slot-in   +17.3 mm  1.00x       
+  48  right_foot  | no motion (ValueError)       | miss 14   +16.3 mm  0.21x         | miss 15   +16.3 mm  0.21x         | miss 16   +17.1 mm  1.00x       
+  49  left_foot   | no motion (ValueError)       | slot-in   -17.1 mm  0.21x         | miss 8    +15.0 mm  1.00x         | fall      -16.1 mm  1.00x       
+  50  right_hand  | no motion (ValueError)       | slot-in   -29.2 mm  0.19x         | fall      +14.9 mm  1.00x         | slot-in   -28.2 mm  1.00x       
+
+total over the plan's moves:
+  ik.py      motion for 0/51; physics: slot-in 0, miss 0, fall 0, no start 0
+  placo      motion for 51/51; physics: slot-in 33, miss 7, fall 11, no start 0; CoM margin in the air: median -5.2 mm, outside the polygon on 26 moves
+  placo+CoM  motion for 51/51; physics: slot-in 13, miss 19, fall 19, no start 0; CoM margin in the air: median +15.0 mm, outside the polygon on 0 moves
+  placo route motion for 51/51; physics: slot-in 26, miss 7, fall 18, no start 0; CoM margin in the air: median -5.7 mm, outside the polygon on 26 moves
+placo_route: 133.8 s of motion in 1895.4 s -> build/placo_n1/route.json and .npz
