@@ -1,5 +1,10 @@
 # Selected perception methods
 
+For the four new `synth_vol0`, `synth_vol3`, `real_vol0` and `real_vol3` archives,
+use the [ten-minute submission guide](SUBMISSION.md). It documents the current
+competition settings, timed launcher and evaluation. The older scored benchmark
+below used a different rendering distribution.
+
 The [31 October scored-benchmark update](SCORED_BENCHMARK.md) adds the released
 hold/volume scorer and an optional native-generator recovery mode. It scores
 zero on 40 supplied scenes, 100 development/regression scenes and 25 separate

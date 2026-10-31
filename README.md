@@ -118,6 +118,10 @@ uv run scripts/wall_generator.py N1 N2 N3                 # their walls -> data/
 
 ## Perception
 
+For the ten-minute image challenge, use the [submission launcher](docs/perception/SUBMISSION.md).
+It accepts the release ZIPs and writes the JSON files and a submission ZIP within
+a fixed computation budget. Install and check its runtime before release.
+
 The [selected perception runtime](docs/perception/README.md) provides stereo
 hold JSON, configured robot pose, and persistent RGB robot/cup tracking.
 It includes one trained checkpoint, isolated setup, two hold fixtures and one robot fixture.

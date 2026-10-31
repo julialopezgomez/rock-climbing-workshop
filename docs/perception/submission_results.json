@@ -1,0 +1,996 @@
+{
+  "date": "2026-10-31",
+  "upstream_commit": "11295d1091a8e038164e93dc8483139e821b6cab",
+  "scorer_main_sha256": "051ef7f50ac91bee10ee087c9aa054214409be232970724c558eb4eb46d937d3",
+  "generator_commit": "b8c607e8dc2749ae2f512ce7265ef3018f32e9f5",
+  "inputs": "RGB images plus the declared competition rig and count; all reference JSON removed before inference",
+  "hardware": "NVIDIA RTX 5000 Ada, four image-fitting workers",
+  "sample_regression": {
+    "state": "complete",
+    "elapsed_s": 242.31408311519772,
+    "under540": true,
+    "total": 40,
+    "inferred": 40,
+    "zip_names_correct": true,
+    "zip_members": 40,
+    "source_main_sha256": "051ef7f50ac91bee10ee087c9aa054214409be232970724c558eb4eb46d937d3",
+    "score": {
+      "holds": 0,
+      "with_volumes": 0
+    },
+    "groups": {
+      "real_zero_volumes": {
+        "cases": 10,
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 300,
+        "volume_matches": 0
+      },
+      "real_three_volumes": {
+        "cases": 10,
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 300,
+        "volume_matches": 30
+      },
+      "synth_zero_volumes": {
+        "cases": 10,
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 300,
+        "volume_matches": 0
+      },
+      "synth_three_volumes": {
+        "cases": 10,
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 300,
+        "volume_matches": 30
+      }
+    },
+    "errors": [],
+    "cases": [
+      {
+        "case": "real_three_volumes_0001",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 3,
+        "source_commit": "11295d1",
+        "upload_sha256": "610ae6c3ddff32d80212aed958bf6fa67e361526dccc1f3a6ddd8d4e3934809e"
+      },
+      {
+        "case": "real_three_volumes_0002",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 3,
+        "source_commit": "11295d1",
+        "upload_sha256": "259fad545f99fa0ac6dd6bb9667217359a86cc89ce81d9e76077af165d8e1698"
+      },
+      {
+        "case": "real_three_volumes_0003",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 3,
+        "source_commit": "11295d1",
+        "upload_sha256": "b5cc5ef759354b118794b6961b0ac501f41ad9dd4c033848d31db03a7adc0905"
+      },
+      {
+        "case": "real_three_volumes_0004",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 3,
+        "source_commit": "11295d1",
+        "upload_sha256": "941954d73f8dce756c07246f7204d664cb3cee5bc2cb5b46eddbbeeeaf8b3fd8"
+      },
+      {
+        "case": "real_three_volumes_0005",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 3,
+        "source_commit": "11295d1",
+        "upload_sha256": "4bede41857cee3c47c0b46d6b3bbaa9791ab32816596f58653eda382d37c9dfd"
+      },
+      {
+        "case": "real_three_volumes_0006",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 3,
+        "source_commit": "11295d1",
+        "upload_sha256": "153386955c880cd0298145578aa8ec6cc2c38c5f70e097da25fa8372c47ba6a4"
+      },
+      {
+        "case": "real_three_volumes_0007",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 3,
+        "source_commit": "11295d1",
+        "upload_sha256": "e3ad19b06862c2e57864f6caf82833a3614ba0c5ec94a155890354cf07cf089e"
+      },
+      {
+        "case": "real_three_volumes_0008",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 3,
+        "source_commit": "11295d1",
+        "upload_sha256": "777dd60f9808c318d3e711a95e49df3164bc0adc8aa058805e89d5a5c1d859e0"
+      },
+      {
+        "case": "real_three_volumes_0009",
+        "status": "refined_gpu",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 3,
+        "source_commit": "11295d1",
+        "upload_sha256": "b8122f1988fcf3a407f8bccf3f50773951c466b03c3b77f71ed5a151c4b24687"
+      },
+      {
+        "case": "real_three_volumes_0010",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 3,
+        "source_commit": "11295d1",
+        "upload_sha256": "291a4e2d8c7d06dc2ac963b7669dafe1ab956f68a004da41b7206dd619b47cc4"
+      },
+      {
+        "case": "real_zero_volumes_0001",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 0,
+        "source_commit": "11295d1",
+        "upload_sha256": "aef44751ce2e77f57124ef59b3a57177bf520f23efcbbd0c6ce46844f77dc30e"
+      },
+      {
+        "case": "real_zero_volumes_0002",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 0,
+        "source_commit": "11295d1",
+        "upload_sha256": "ee951c9058219c168daa70f143e1f62b3da0d6a9ac5ef8055dc4a2e466549cc0"
+      },
+      {
+        "case": "real_zero_volumes_0003",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 0,
+        "source_commit": "11295d1",
+        "upload_sha256": "c011dabbfb5c85b02533a81f7e6f5fdec46b136c90840d4cdc7f6e53761c1aa7"
+      },
+      {
+        "case": "real_zero_volumes_0004",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 0,
+        "source_commit": "11295d1",
+        "upload_sha256": "151818b94e43d4547d13ae809070e88d70d6dd7a333fbe89dd259177e3ac7dfc"
+      },
+      {
+        "case": "real_zero_volumes_0005",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 0,
+        "source_commit": "11295d1",
+        "upload_sha256": "159514b550e226affdba3c803ff0c57f48993f8db6a2e2bfcb376b830334ab3b"
+      },
+      {
+        "case": "real_zero_volumes_0006",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 0,
+        "source_commit": "11295d1",
+        "upload_sha256": "2fac1437a661415faaf420c39748b614aac66f57c71295352ea947b218e12ad3"
+      },
+      {
+        "case": "real_zero_volumes_0007",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 0,
+        "source_commit": "11295d1",
+        "upload_sha256": "636493a67a2bb221883c24b3539eafdc3b8db059c0eb2f1ce90484d80350c5c0"
+      },
+      {
+        "case": "real_zero_volumes_0008",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 0,
+        "source_commit": "11295d1",
+        "upload_sha256": "ebba173c677918aa523d2c0436ad3ef4f7c56963d94ecbba0f53146ad918e2ce"
+      },
+      {
+        "case": "real_zero_volumes_0009",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 0,
+        "source_commit": "11295d1",
+        "upload_sha256": "c529839b2fad336175af01a78b58f4a0adfd13246ed29a6facf273ced091f10d"
+      },
+      {
+        "case": "real_zero_volumes_0010",
+        "status": "refined_gpu",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 0,
+        "source_commit": "11295d1",
+        "upload_sha256": "db6874ed8b13abffad4492445a0e233d9d754324c4123e485a2cb63b17b94403"
+      },
+      {
+        "case": "synth_three_volumes_0001",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 3,
+        "source_commit": "11295d1",
+        "upload_sha256": "0964bc820e105b186c21484cd51263add7861a16e7320ebea9e5153b89480af4"
+      },
+      {
+        "case": "synth_three_volumes_0002",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 3,
+        "source_commit": "11295d1",
+        "upload_sha256": "df5490d425c25fae1b61d8ec76517d57eda7d8a70d019cc2d5253c92b724dba5"
+      },
+      {
+        "case": "synth_three_volumes_0003",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 3,
+        "source_commit": "11295d1",
+        "upload_sha256": "7f3bf1d34769c182820be18d56710a5602a1a77cbe6231c47014c9027f224f12"
+      },
+      {
+        "case": "synth_three_volumes_0004",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 3,
+        "source_commit": "11295d1",
+        "upload_sha256": "8703bdc7968e22101678474f7b670427c6e68b0966505da73bba90b8b86e7132"
+      },
+      {
+        "case": "synth_three_volumes_0005",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 3,
+        "source_commit": "11295d1",
+        "upload_sha256": "38d557ffeec0d8f105463e02a3e858a72c92155da23105e68483fbe918e14484"
+      },
+      {
+        "case": "synth_three_volumes_0006",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 3,
+        "source_commit": "11295d1",
+        "upload_sha256": "bf62361d3d721def1fa88c82875bdf57a2f82ccedddcf3b60b5d8f74a3acd67a"
+      },
+      {
+        "case": "synth_three_volumes_0007",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 3,
+        "source_commit": "11295d1",
+        "upload_sha256": "c637b377abcf3f0be48fae73dcac56b5f58cd73759f32c3794c01519ad7fb83c"
+      },
+      {
+        "case": "synth_three_volumes_0008",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 3,
+        "source_commit": "11295d1",
+        "upload_sha256": "c0b34dc0e0effd106ea25ae6274d17064bc380635064673ad10357c42fcb4104"
+      },
+      {
+        "case": "synth_three_volumes_0009",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 3,
+        "source_commit": "11295d1",
+        "upload_sha256": "863f70ec2c0e7d3336d017abbae943b579638e9ad112d5d6c48f3a2ab9ac7cdc"
+      },
+      {
+        "case": "synth_three_volumes_0010",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 3,
+        "source_commit": "11295d1",
+        "upload_sha256": "96c226737e85348d0994d417cf15b0677f54276e4b2e1bbd11a764cf2b3928e6"
+      },
+      {
+        "case": "synth_zero_volumes_0001",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 0,
+        "source_commit": "11295d1",
+        "upload_sha256": "9ab46985f79043b1c6f75d64942cac547c42d5c56228e7943a6d77b608a0683a"
+      },
+      {
+        "case": "synth_zero_volumes_0002",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 0,
+        "source_commit": "11295d1",
+        "upload_sha256": "09d148598d194d96a2b69771ab0a34e07b68e34ee290a112ab47bbe6398e1fe3"
+      },
+      {
+        "case": "synth_zero_volumes_0003",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 0,
+        "source_commit": "11295d1",
+        "upload_sha256": "50a3fbcffb05314a2736279b4b65abcac9761e01bd4aadfd7e7c24a89fe66964"
+      },
+      {
+        "case": "synth_zero_volumes_0004",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 0,
+        "source_commit": "11295d1",
+        "upload_sha256": "762c71e81d816816feab60895c9b63fe76492195edacb58b8d537bf278150685"
+      },
+      {
+        "case": "synth_zero_volumes_0005",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 0,
+        "source_commit": "11295d1",
+        "upload_sha256": "720c2545d3f8511edf2515aeed4c28ad5154c78aaecd168bbc272aa50bbb590b"
+      },
+      {
+        "case": "synth_zero_volumes_0006",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 0,
+        "source_commit": "11295d1",
+        "upload_sha256": "ebd0c49785fc7d87396e289ddfa66524538bc823d4e24f33c8be7ce3efc81d88"
+      },
+      {
+        "case": "synth_zero_volumes_0007",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 0,
+        "source_commit": "11295d1",
+        "upload_sha256": "292719e495aa29b89e355a5177f3a6fec6b405742b5eae380cda481504ce49fd"
+      },
+      {
+        "case": "synth_zero_volumes_0008",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 0,
+        "source_commit": "11295d1",
+        "upload_sha256": "d39f26e99181246f7af311403568a2ed265ebdabdc4ec6d89f65f5ab7666a96f"
+      },
+      {
+        "case": "synth_zero_volumes_0009",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 0,
+        "source_commit": "11295d1",
+        "upload_sha256": "35a2fa4978e0f7fcaa8cbe2b038a798a75af2e97a01ae39e2e7cc00385fd5f1e"
+      },
+      {
+        "case": "synth_zero_volumes_0010",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 0,
+        "source_commit": "11295d1",
+        "upload_sha256": "e5b16f158ccb8db36c0b9f92ac7e0b85100a78077caa8f469123d9cb688aa079"
+      }
+    ],
+    "approximate_phase_times_s": {
+      "preparation_end": 5.461241245269775,
+      "native_start": 15.564261674880981,
+      "finished": 242.31408311519772
+    },
+    "gpu_refits": 11
+  },
+  "comparisons_on_same_40": [
+    {
+      "method": "Previous CAD frontend and native recovery",
+      "hold_score": 6073.650578935396,
+      "exact_scenes": 10
+    },
+    {
+      "method": "Matte normalization, GPU CAD, original strict verifier",
+      "hold_score": 1263.6367126253908,
+      "exact_scenes": 30,
+      "with_volumes_score": 1443.6367126253908
+    },
+    {
+      "method": "CPU proposals and revised native verification, no GPU fallback",
+      "hold_score": 155.31944453639096,
+      "with_volumes_score": 215.31944453639096,
+      "exact_scenes": 38
+    },
+    {
+      "method": "CPU proposals, native recovery, selective GPU CAD and recovery",
+      "hold_score": 0,
+      "with_volumes_score": 0,
+      "exact_scenes": 40,
+      "elapsed_s": 242.31408311519772
+    }
+  ],
+  "frozen_source_sha256": {
+    "perception_submit.sh": "8f227e6cdd8a3a5f46f6f6b64d6692c34f631ded7ac7fcb60cad6cd6ccb44f00",
+    "scripts/perception/benchmark_max.py": "1719685dd1c337d6260496cc06cb78b852875560868301428178d266721d6b1a",
+    "scripts/perception/submit.py": "a069915fd0bb921a3201ad57f34023776bb205b43316b3c14d50da5388a5860b",
+    "src/rcr/perception/challenge/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/rcr/perception/challenge/__main__.py": "307299fda7b77d22c64cb51430ec75e5f59d78e9c948786afb3b2544fe45e4b7",
+    "src/rcr/perception/challenge/_gpu.py": "38b537667de808b1f6c377c2a7b6fd77fcd2358c22618f0a8821c5c133696e8e",
+    "src/rcr/perception/challenge/_paths.py": "41cba3a3f4dd6f42ba71cc450be86b7cb0e88b2a807df01447cf16d4354904e6",
+    "src/rcr/perception/challenge/camera_calibration.py": "7c1b8f9f7f0ecee2fffb62f965293f3c00eb3612c22494082088b0c8e8e80f14",
+    "src/rcr/perception/challenge/capture_calibration.py": "c625897fb0b96436b32eb900b2b35f5b0001218f8942dff2209e21c80894a158",
+    "src/rcr/perception/challenge/cli.py": "f079853610379456484c09680a3e233dba36302c52e308ba99fb962516d76b26",
+    "src/rcr/perception/challenge/cpu_frontend.py": "afa5e61ec642b7123b931d3d16e9d6e8304401b33bac74bbfc3ae8a412185fc3",
+    "src/rcr/perception/challenge/dense_cup_map.py": "ec51115ec80ffc6e45a1bdf7fb35333bd73281a972737c2b67118c4835802b8e",
+    "src/rcr/perception/challenge/enhanced_live.py": "fe2cf902b962ff911c59a15c2115378b8b14015252d9611d7b95a2fd057b781d",
+    "src/rcr/perception/challenge/gpu_guard.py": "32793e8e83400ee4a31e7730700725d340a7db63f0c6c7059e27fcfd00561e86",
+    "src/rcr/perception/challenge/live_pipeline.py": "e795b74162aa09502e232b9aa21e296a075f3e84e73056a495812befbde102b5",
+    "src/rcr/perception/challenge/native/CMakeLists.txt": "bca300d3fa03d05d5d0d0198cadec81f6dcd8b5d830e2ca6621075071d7ee3a4",
+    "src/rcr/perception/challenge/native/headless.cpp": "35c9006be0700ac7cb6bf64d21374369fceeb8249e80c101bb074ef8ec30f8d0",
+    "src/rcr/perception/challenge/native/hold_generator.mjs": "fc34f8e442730027347b03c5e487ef6a086c22294af55e778566d2cae2a0d1d7",
+    "src/rcr/perception/challenge/native/hold_seedscan.cu": "0ccec992e0ea9dfd2f6880805b39a9c25f25783c70a13e9fc6ac8766c6702976",
+    "src/rcr/perception/challenge/native/main.cpp": "814c9650092a2d03effe942d8833d38a0560a13ef7c595ea4f9228a4776ac7b7",
+    "src/rcr/perception/challenge/native_recovery.py": "92d1b49d346c1807165d1f436f7e6bb161f62a56b9cec426696dde1fd74dcdd3",
+    "src/rcr/perception/challenge/native_verify.py": "0af12d2da755bc3836b67b346ebcf97b5a28d6be99a385abb402dc7261901236",
+    "src/rcr/perception/challenge/official_score.py": "b1149fcf761e7f86dc1888c743af3aacd002a047630351169ff04a479abd7cd6",
+    "src/rcr/perception/challenge/online.py": "1faacb8e576f9bb4890934975e0e6f326448077299dea7d6629a9e393e5bcdb0",
+    "src/rcr/perception/challenge/photo_frontend.py": "5d5f7f85ae01a6feb9442c200a44ea35e2a70c88a558708b86ef34afca7af625",
+    "src/rcr/perception/challenge/physical_calibration.py": "4ce1126f701171eec5357d272fb4fd960df4f8dcd47921b5d4cb0e2099e8e05b",
+    "src/rcr/perception/challenge/physical_frontends.py": "3d2babd2d3248ee5a87a0fbe60d75d6fd37f387684ff9f7a1362a98e8d0d06c3",
+    "src/rcr/perception/challenge/physical_mapping.py": "4648455d037e563213196f1d2f83e81cc0e3ae08385c9aa5a8ddf007cbfda092",
+    "src/rcr/perception/challenge/physical_report.py": "b4c62ea4ebbc35c4e23b27231d4ab6cd01c1c26782f5a9030eff2430600bae16",
+    "src/rcr/perception/challenge/physical_robot.py": "814e2461d2bf1a9147e15094db6017553fd19a07f3b5032047b778e0c2438db7",
+    "src/rcr/perception/challenge/physical_run.py": "0c27f79052e26e680e1a941a938c4f055aada2f0f07991faa448b9bf0f154d30",
+    "src/rcr/perception/challenge/physical_trunk.py": "d59958e0e4ff4c6049d98d95a4e4af3188a9b7d39ed89645458bda904c594d7b",
+    "src/rcr/perception/challenge/real_recordings.py": "7ad062cf7ff18a8621fdfd44e631fa49cb3cbc10e65ae030ad336591cfc8cba0",
+    "src/rcr/perception/challenge/realsense_capture.py": "a2433c1b2139ab6ade1488082effad67cde4d317cec60ab9cc53c6f168a64e88",
+    "src/rcr/perception/challenge/robot_pose/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/rcr/perception/challenge/robot_pose/configured_fit.py": "b43f48428a7a30d69da8fae2b05550ddbb6810ed1ce93f0a026ed3c70033732b",
+    "src/rcr/perception/challenge/robot_pose/contact_pose.py": "1b0ed43edc0b954762f05ed062617be109837d2584ae238f7eb6da3c9310ce48",
+    "src/rcr/perception/challenge/robot_pose/contenders/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/rcr/perception/challenge/robot_pose/contenders/geometry.py": "50a669b600830032fcde84a5f4d5b116782f1b9e69e3850e7b4a0a143bd9d137",
+    "src/rcr/perception/challenge/robot_pose/contenders/keypoint_data.py": "65105edce4774fa41854e212fede0adfdbc2b89ce037bb7eaaaa7faf2f9b60f8",
+    "src/rcr/perception/challenge/robot_pose/contenders/keypoint_predict.py": "09017af9aed37cdde7b05996419e039d90eb5db7deed26b8ff36a149836c9515",
+    "src/rcr/perception/challenge/robot_pose/contenders/m3t_collect.py": "4c0e4c4a545811578e40a9356af95c7333eb3e2f09ceef36f5a17aa138afee57",
+    "src/rcr/perception/challenge/robot_pose/contract.py": "cc3933a853015608e36b75b5db32ffd0a1f087d53fd442b0a4d2b00d39ec06ba",
+    "src/rcr/perception/challenge/robot_pose/differentiable_fit.py": "cfc62295163d74c2e053713e96e2030c61b69fdab5bedadbbfd6526922db6050",
+    "src/rcr/perception/challenge/robot_pose/exact_refine.py": "d8d6680d2e8de2e5174e7390c2a906cc3343e3a39d84a5ff144782e987e9926d",
+    "src/rcr/perception/challenge/robot_pose/frame_conventions.py": "73f8fdfd87e3b3c9b7f5bbc6d7a9c5c8da4844f40bf59c72de8d53de5c75971b",
+    "src/rcr/perception/challenge/robot_pose/keypoint_frontend.py": "24c4ef25476afce50b3cfc36a2454fe8215159c9391a1cb745810fc96c2b1123",
+    "src/rcr/perception/challenge/robot_pose/keypoint_pose.py": "3eb7596ea9738b742efe72e61214f314eb24180ac53f2d5790eb5c61a4b20eb1",
+    "src/rcr/perception/challenge/robot_pose/m3t_tracker.py": "ffac3ce94c14fbf90cc3411598598344c5c178904b977e76522fdf3c03034f78",
+    "src/rcr/perception/challenge/robot_pose/mapped_socket_refine.py": "b3b12f8ff791df2e73b263bd5b6957206cd6835f963bdf12712df6ea6518dc91",
+    "src/rcr/perception/challenge/robot_pose/model_adapter.py": "1a725833fbd518a35f0ca632bad93a2e5b178c83a41ed28215358809c15d1bfe",
+    "src/rcr/perception/challenge/robot_pose/pipeline.py": "2976932e2b468dad885e65b7801b9f22c81a2ebd60204340f13b62c3c3a0aac8",
+    "src/rcr/perception/challenge/robot_pose/refine.py": "f7ac1bc96245c2a39ac6b7ba38f77b3762929a2c22f26af7ad8c93b497530fe7",
+    "src/rcr/perception/challenge/robot_pose/resilient_pipeline.py": "c4c19062cc422c7f1cccd7563aafc1c42f37af4d4fd37834347fd3c4bcdc1f49",
+    "src/rcr/perception/challenge/robot_pose/robust_edges.py": "6badde7e4cec4219f3d695ce18be1d97a62c9beea217c01891f6173f0e041d5d",
+    "src/rcr/perception/challenge/robot_pose/robust_pipeline.py": "d5b83bdab9514091cad6045845a3a64df05d8c259609db3a764b9089e8af6a92",
+    "src/rcr/perception/challenge/scene_cup_map.py": "3d070ae55151d0d4768e13a0e2fd2292926ea21b488b04be5525fa00f888c33a",
+    "src/rcr/perception/challenge/score_pose.py": "6edc76d65ea2d121dba78a7c01208c677175c5f8ee5e01798d09c259eb66c985",
+    "src/rcr/perception/challenge/src/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/rcr/perception/challenge/src/cad_silhouette.py": "600f95892004c0a43b7d4bf99f0af39b689dc3d4441484474bfa65b2c53fb508",
+    "src/rcr/perception/challenge/src/calibration.py": "8c360ce71941b032c8dcf7aaf826f0e8ea1c3d237677ca706da63b638f617464",
+    "src/rcr/perception/challenge/src/camera_io.py": "2b20713eda73e6911ba1aaece697d932684c1016da3313daa97dd99c38c2eeee",
+    "src/rcr/perception/challenge/src/geometric_holds.py": "10c7c8627373b8464fb078177d24e49659988a3613aef159c44ce223a137f173",
+    "src/rcr/perception/challenge/src/hold_constraints.py": "a4a2e048fccda88b1816cedd622dd0b42ec3dc2cb9bdb00ca67acd25e869e049",
+    "src/rcr/perception/challenge/src/hold_fit.py": "498d0159cd556b72cbb2b8f21089427ee537834f5852c3e6fb6655b73b6cd48a",
+    "src/rcr/perception/challenge/src/hold_geometry.py": "a181822e87afe470a3a203153609c6f4647e6751d3a15759f479edf27250624a",
+    "src/rcr/perception/challenge/src/hold_scene.py": "c634d04c5f38d8eca86c5ed97a05c35603a576c06bb30b09d4d805c4e8443c83",
+    "src/rcr/perception/challenge/src/live_estimator.py": "156a5a066954b68d22c4e604434c81b4a2072a4036c6c47ffef5b03e746fadeb",
+    "src/rcr/perception/challenge/src/rcr_contract.py": "34dc3dd3cb1e68a845cb170aae00e301cfdb9c90d959186f2e6e8d5138a21821",
+    "src/rcr/perception/challenge/src/rcr_exact_fit.py": "3c47cade920368aa8ce15187c9c3076cd7f8c2c36fd7e02c743f2de01527b275",
+    "src/rcr/perception/challenge/src/rcr_methods.py": "5490cf21e167e2b9020664921f271877fb27d41ffde48b1e35093bc7a0cfb347",
+    "src/rcr/perception/challenge/src/rcr_native_geometry.py": "393ccd81197d6ecec653d98252f253df447e79fd4b484fefcad7e8c5741f5882",
+    "src/rcr/perception/challenge/team_api.py": "205c16e0dea55267fe5ab65eeae26ee3d00a883a98466c995086cf4e0e6587cf",
+    "src/rcr/perception/challenge/team_frame.py": "7715104f738ca1ddf6e0be8433c1e4dbd729845d3c814709d9b941ac8f7ccf00"
+  },
+  "held_out_validation": {
+    "state": "complete",
+    "elapsed_s": 136.77661303803325,
+    "under540": true,
+    "total": 12,
+    "inferred": 12,
+    "zip_names_correct": true,
+    "zip_members": 12,
+    "source_main_sha256": "051ef7f50ac91bee10ee087c9aa054214409be232970724c558eb4eb46d937d3",
+    "score": {
+      "holds": 0,
+      "with_volumes": 0
+    },
+    "groups": {
+      "fresh_real_zero_volumes": {
+        "cases": 6,
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 180,
+        "volume_matches": 0
+      },
+      "fresh_real_three_volumes": {
+        "cases": 6,
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 180,
+        "volume_matches": 18
+      }
+    },
+    "errors": [],
+    "cases": [
+      {
+        "case": "validation_0000",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 0,
+        "source_commit": "11295d1",
+        "upload_sha256": "9a509eda2e725b097394ed01493df3a8c98ee3223de5a526e76d1bc901d85b03"
+      },
+      {
+        "case": "validation_0001",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 0,
+        "source_commit": "11295d1",
+        "upload_sha256": "8aad494e6221b2fcccfcf2bd9204d7a8ee424db49cc2955343ec89408d411243"
+      },
+      {
+        "case": "validation_0002",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 0,
+        "source_commit": "11295d1",
+        "upload_sha256": "f65fe8e80c0392d7777d70a3d0ef035f0c82461d7435c352b4a809731727e01e"
+      },
+      {
+        "case": "validation_0003",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 0,
+        "source_commit": "11295d1",
+        "upload_sha256": "1ee386941a49f7591de2335a64ce64294470b29b1f7161c4cb575bf28ae65d7d"
+      },
+      {
+        "case": "validation_0004",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 0,
+        "source_commit": "11295d1",
+        "upload_sha256": "ac065f6a7425d20b1bc88ae4a8d213cb5bbbafe81bfba3eff68201b87c2d2413"
+      },
+      {
+        "case": "validation_0005",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 0,
+        "source_commit": "11295d1",
+        "upload_sha256": "ed4a6d266c0f4e7666a720fa865e2aadb9abdabb84204621b102a773d1ad10e2"
+      },
+      {
+        "case": "validation_0006",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 3,
+        "source_commit": "11295d1",
+        "upload_sha256": "bee949e33892f1cb3e68fb1b8d20934811408d1a782d26d829e57f100bb79869"
+      },
+      {
+        "case": "validation_0007",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 3,
+        "source_commit": "11295d1",
+        "upload_sha256": "ce660fc06839bdcc7fa4e2967090ffd6559048f7b40664cbb65827727ae43abe"
+      },
+      {
+        "case": "validation_0008",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 3,
+        "source_commit": "11295d1",
+        "upload_sha256": "e1c85ea0a3f7fe8b1d91e00b6b5184b74e65ea4399a37a16269fd258be72fa60"
+      },
+      {
+        "case": "validation_0009",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 3,
+        "source_commit": "11295d1",
+        "upload_sha256": "92fb36582e5f55488c8b587aac28bd9e170914078e2742f55208cc4956023681"
+      },
+      {
+        "case": "validation_0010",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 3,
+        "source_commit": "11295d1",
+        "upload_sha256": "91546bef50120b23cc12740e0fb24e29434b9655444edd6ce6910a9ed9db8db8"
+      },
+      {
+        "case": "validation_0011",
+        "status": "refined",
+        "hold_score": 0,
+        "with_volumes_score": 0,
+        "hold_matches": 30,
+        "volume_matches": 3,
+        "source_commit": "11295d1",
+        "upload_sha256": "583d7425b8a51ad4abd1eb106bc34e7a96c54ce91562024849d32a8c02af80e6"
+      }
+    ],
+    "approximate_phase_times_s": {
+      "preparation_end": 3.3814687728881836,
+      "native_start": 6.6154749393463135,
+      "finished": 136.77661303803325
+    },
+    "holdout_protocol": "Twelve latest-source real-style scenes generated with independent random seeds before method freeze. Inference received only opaque-name stereo PNGs plus the public rig defaults. References were first opened for this audit after all outputs completed; no tuning on these labels/images.",
+    "scope": "12 unseen real-style rendered scenes; references first opened after inference completed; six scenes each with zero and three volumes",
+    "gpu_refits": 5
+  },
+  "post_validation_changes": [
+    "submit.py: progress heartbeat, confidence reporting and macOS archive-metadata filtering; no estimator or hypothesis-selection change",
+    "benchmark_max.py: whitespace formatting only"
+  ],
+  "delivery_source_sha256": {
+    "scripts/perception/benchmark_max.py": "400d583201e46bb7e3a33687dd06c1f55d72274ed459c9db966c5e3e0e22af4e",
+    "scripts/perception/submit.py": "57b9a97a43d8115e009a23fb1af2e98fc8ddb9c17974c551cacaa8685c173bc3"
+  },
+  "deadline_smoke": {
+    "state": "partial",
+    "elapsed_s": 5.502722815144807,
+    "created_utc": "2026-10-31T22:00:05.409274+00:00",
+    "inferred": 0,
+    "native_recovered": 0,
+    "total": 40,
+    "errors": [
+      {
+        "case": "scene_0000",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0001",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0002",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0003",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0004",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0005",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0006",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0007",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0008",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0009",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0010",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0011",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0012",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0013",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0014",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0015",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0016",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0017",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0018",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0019",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0020",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0021",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0022",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0023",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0024",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0025",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0026",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0027",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0028",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0029",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0030",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0031",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0032",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0033",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0034",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0035",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0036",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0037",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0038",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      },
+      {
+        "case": "scene_0039",
+        "stage": "cad",
+        "reason": "not started before deadline"
+      }
+    ],
+    "uncertain_cases": [
+      "real_three_volumes_0001.json",
+      "real_three_volumes_0002.json",
+      "real_three_volumes_0003.json",
+      "real_three_volumes_0004.json",
+      "real_three_volumes_0005.json",
+      "real_three_volumes_0006.json",
+      "real_three_volumes_0007.json",
+      "real_three_volumes_0008.json",
+      "real_three_volumes_0009.json",
+      "real_three_volumes_0010.json",
+      "real_zero_volumes_0001.json",
+      "real_zero_volumes_0002.json",
+      "real_zero_volumes_0003.json",
+      "real_zero_volumes_0004.json",
+      "real_zero_volumes_0005.json",
+      "real_zero_volumes_0006.json",
+      "real_zero_volumes_0007.json",
+      "real_zero_volumes_0008.json",
+      "real_zero_volumes_0009.json",
+      "real_zero_volumes_0010.json",
+      "synth_three_volumes_0001.json",
+      "synth_three_volumes_0002.json",
+      "synth_three_volumes_0003.json",
+      "synth_three_volumes_0004.json",
+      "synth_three_volumes_0005.json",
+      "synth_three_volumes_0006.json",
+      "synth_three_volumes_0007.json",
+      "synth_three_volumes_0008.json",
+      "synth_three_volumes_0009.json",
+      "synth_three_volumes_0010.json",
+      "synth_zero_volumes_0001.json",
+      "synth_zero_volumes_0002.json",
+      "synth_zero_volumes_0003.json",
+      "synth_zero_volumes_0004.json",
+      "synth_zero_volumes_0005.json",
+      "synth_zero_volumes_0006.json",
+      "synth_zero_volumes_0007.json",
+      "synth_zero_volumes_0008.json",
+      "synth_zero_volumes_0009.json",
+      "synth_zero_volumes_0010.json"
+    ]
+  },
+  "checks": {
+    "repository_pytest": {
+      "passed": 988,
+      "skipped": 8
+    },
+    "perception_runtime_pytest": {
+      "passed": 30
+    },
+    "ruff": "passed",
+    "pipeline_check": "passed; four implemented, two existing stubs and two skips",
+    "runtime_preflight": "passed"
+  }
+}

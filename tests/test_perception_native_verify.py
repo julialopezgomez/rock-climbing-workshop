@@ -30,3 +30,15 @@ def test_visible_missing_hold_has_no_support(monkeypatch):
     loss = native_verify.image_loss(scene, [image, image], {})
     assert loss["minimum_hold_support"] == 0.0
     assert loss["eye_losses"] == [1.0, 1.0]
+
+
+def test_textured_volume_mode_keeps_hold_disagreement(monkeypatch):
+    image = np.full((60, 60, 3), 128, dtype=np.uint8)
+    ids = np.full((60, 60), -1, dtype=np.int16)
+    ids[20:40, 20:40] = 1
+    monkeypatch.setattr(native_verify, "render_ids", lambda *args: [ids, ids])
+    scene = {"holds": {"a": {"color": "#F2554E"}}}
+    loss = native_verify.image_loss(scene, [image, image], {"native_ignore_volume_mask": True})
+    assert not loss["volume_mask_used"]
+    assert loss["volume_loss"] == 0.0
+    assert loss["eye_losses"] == [1.0, 1.0]

@@ -86,6 +86,13 @@ def generate_candidates(
                 counts = (
                     range(11) if broad else ([0] if count == 0 else [count, min(count + 1, 10)])
                 )
+                declared_counts = record["calibration"].get("native_volume_counts")
+                if declared_counts is not None:
+                    if not declared_counts or any(
+                        type(n) is not int or not 0 <= n <= 10 for n in declared_counts
+                    ):
+                        raise ValueError("Native volume counts must be integers from zero to ten")
+                    counts = declared_counts
                 for n in sorted(set(counts)):
                     requests.append(
                         dict(
@@ -96,7 +103,9 @@ def generate_candidates(
                             width=width,
                             height=height,
                             estimate=record["raw_holds"],
-                            estimated_volumes=[] if broad else [v["parameters"] for v in volumes],
+                            estimated_volumes=[]
+                            if broad or declared_counts is not None
+                            else [v["parameters"] for v in volumes],
                         )
                     )
     worker_count = min(workers, max(1, len(requests)))
@@ -140,7 +149,8 @@ def select_candidate(record, candidates):
         if candidate["id"] != record["id"] or "scene" not in candidate:
             continue
         count = consensus(estimate["holds"], candidate["scene"]["holds"])
-        if count >= max(6, int(np.ceil(len(estimate["holds"]) * 0.6))):
+        minimum_fraction = 0.35 if record["calibration"].get("native_partial_paint_masks") else 0.6
+        if count >= max(6, int(np.ceil(len(estimate["holds"]) * minimum_fraction))):
             options.append((count, candidate))
     if options:
         best_count = max(count for count, _ in options)
@@ -164,15 +174,24 @@ def select_candidate(record, candidates):
         if len(ranked) > 1
         else None
     )
+    # In the matte rendering mode, the masks omit shadowed paint and can
+    # retain parts of the reference square. Ten independently fitted anchors
+    # support the generator hypothesis even when the dense mask is incomplete.
+    partial = record["calibration"].get("native_partial_paint_masks", False)
+    loss_limit = 0.7 if partial and ranked and ranked[0]["consensus"] >= 10 else 0.3
     accepted = bool(
         ranked
-        and ranked[0]["verification"]["loss"] < 0.3
+        and ranked[0]["verification"]["loss"] < loss_limit
         and ranked[0]["verification"]["volume_loss"] < 0.3
-        and ranked[0]["verification"]["minimum_hold_support"] > 0.6
+        and (
+            record["calibration"].get("native_partial_paint_masks")
+            or ranked[0]["verification"]["minimum_hold_support"] > 0.6
+        )
         and (gap is None or gap > 0.005)
     )
     debug = dict(
         accepted=accepted,
+        paint_loss_limit=loss_limit,
         gap=gap,
         candidates=[{k: v for k, v in c.items() if k != "scene"} for c in ranked],
         inputs=[

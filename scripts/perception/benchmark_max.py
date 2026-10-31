@@ -157,7 +157,20 @@ def main():
                 dict(accepted=False, reason="Native recovery not requested"),
             )
         )
-    uncertain = [r for r in records if not selected[r["id"]][1]["accepted"]]
+        prediction, native = selected[record["id"]]
+        if native["accepted"]:
+            # Preserve completed improvements if a submission deadline stops
+            # the remaining candidate search.
+            folder = args.out / record["id"]
+            write(folder / "prediction.json", prediction)
+            write(folder / "holds.json", prediction["holds"])
+            write(folder / "debug.json", {"native": native})
+    uncertain = [
+        r
+        for r in records
+        if not selected[r["id"]][1]["accepted"]
+        and r["calibration"].get("native_volume_counts") is None
+    ]
     if generated and uncertain:
         retry = generate_candidates(
             uncertain,
@@ -172,6 +185,11 @@ def main():
             prediction, native = select_candidate(record, generated["results"] + retry["results"])
             native["retried_all_volume_counts"] = True
             selected[record["id"]] = prediction, native
+            if native["accepted"]:
+                folder = args.out / record["id"]
+                write(folder / "prediction.json", prediction)
+                write(folder / "holds.json", prediction["holds"])
+                write(folder / "debug.json", {"native": native})
     summary = []
     for record in records:
         prediction, native = selected[record["id"]]

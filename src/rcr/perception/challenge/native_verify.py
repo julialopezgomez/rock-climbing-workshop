@@ -173,7 +173,9 @@ def image_loss(scene, images, calibration, observations=None):
         )
         volume_rendered = ids < 0
         volume_losses.append(
-            float(
+            0.0
+            if calibration.get("native_ignore_volume_mask")
+            else float(
                 np.count_nonzero(volume_observed ^ volume_rendered)
                 / max(np.count_nonzero(volume_observed | volume_rendered), 1)
             )
@@ -182,6 +184,7 @@ def image_loss(scene, images, calibration, observations=None):
         loss=float(np.mean(losses) + 0.1 * np.mean(volume_losses)),
         eye_losses=losses,
         volume_loss=float(np.mean(volume_losses)),
+        volume_mask_used=not calibration.get("native_ignore_volume_mask", False),
         minimum_hold_support=min([min(s) for s in support if s] or [0]),
         hold_support=support,
     )

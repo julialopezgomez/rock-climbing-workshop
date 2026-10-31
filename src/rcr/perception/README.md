@@ -1,5 +1,12 @@
 # Perception
 
+The [competition launcher](../../../docs/perception/SUBMISSION.md) accepts image
+ZIPs and produces correctly named scene JSON files under a 540-second budget.
+It uses CPU CAD proposals and native recovery first, then GPU CAD fitting for
+uncertain cases. Its calibration and 30-hold, zero-or-three-volume prior target
+the released competition distribution. The general camera and robot APIs below
+are unchanged.
+
 `challenge/` contains the selected stereo hold estimator, configured robot
 estimator (`max` for saved frames), and persistent robot/cup tracking (`fast`).
 
