@@ -176,9 +176,13 @@ def reach(targets):
     if abs(right_foot[2] - left_foot[2]) > MAX_LEVEL:
         level = abs(right_foot[2] - left_foot[2])
         return fail(f"reach: one foot too far above the other ({mm(level)} > {mm(MAX_LEVEL)})")
-    level = abs(max(right_hand[2], left_hand[2]) - min(right_foot[2], left_foot[2]))
-    if level > HAND_FEET_MAX_APART:
+    
+    if abs(max(right_hand[2], left_hand[2]) - min(right_foot[2], left_foot[2])) > HAND_FEET_MAX_APART:
+        level = abs(max(right_hand[2], left_hand[2]) - min(right_foot[2], left_foot[2]))
         return fail(f"reach: a hand too far above a foot ({mm(level)} > {mm(HAND_FEET_MAX_APART)})")
+    if abs(min(right_hand[2], left_hand[2]) - max(right_foot[2], left_foot[2])) < HAND_FEET_MIN_APART:
+        level = abs(min(right_hand[2], left_hand[2]) - max(right_foot[2], left_foot[2]))
+        return fail(f"reach: a hand too close to a foot ({mm(level)} < {mm(HAND_FEET_MIN_APART)})")
     return None
 
 
