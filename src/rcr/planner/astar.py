@@ -25,7 +25,7 @@ MAX_ITERATIONS = 200
 WEIGHT = 1.0  # A* heuristic weight: 1.0 = admissible, 0.0 = Dijkstra
 # TODO: order by move: moving arm, diagonal leg, other leg, other arm
 TASK_ORDER = ("right_hand", "left_hand", "right_foot", "left_foot")
-# trunk z up, x into the wall (+y) 
+# trunk z up, x into the wall (+y)
 TRUNK_UPRIGHT = np.array([[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
 
 # trunk free: q = (x, y, z, qx, qy, qz, qw, 19 joints)
@@ -132,10 +132,12 @@ MIN_APART = 1.0  # two balls at least this fraction of their roots' distance apa
 # and at most this fraction of their reaches + roots' distance [Ours]
 HAND_MAX_APART = 0.7  # a pair with a hand (hand-hand, hand-foot)
 FEET_MAX_APART = 0.27  # the two feet
-HAND_FEET_MAX_APART = 0.36  # a hand and a foot maximum apart (the example plan the optimiser solved has 0.35 m)
 # [m] most one hand is above the other, and one foot above the other [Ours]: the example
 # plan the optimiser solved has up to 0.195 m (hands) and 0.135 m (feet)
 MAX_LEVEL = 0.1
+# [m] most the higher hand is above the lower foot [Ours]: the example plan the optimiser
+# solved has 0.35 m
+HAND_FEET_MAX_APART = 0.36
 MAX_TRANSITION_DISTANCE = 0.09  # [m] most a limb's hold in b is from its hold in a [Ours]
 
 Q_HANG = pin.neutral(model)
@@ -173,12 +175,9 @@ def reach(targets):
     if abs(right_foot[2] - left_foot[2]) > MAX_LEVEL:
         level = abs(right_foot[2] - left_foot[2])
         return fail(f"reach: one foot too far above the other ({mm(level)} > {mm(MAX_LEVEL)})")
-    # check max distance between a hand and a foot
-    if abs(max(right_hand[2], left_hand[2]) - min(right_foot[2], left_foot[2])) > HAND_FEET_MAX_APART:
-        level = abs(max(right_hand[2], left_hand[2]) - min(right_foot[2], left_foot[2]))
-        return fail(
-            f"reach: a hand too far above a foot ({mm(level)} > {mm(HAND_FEET_MAX_APART)})"
-        )
+    level = abs(max(right_hand[2], left_hand[2]) - min(right_foot[2], left_foot[2]))
+    if level > HAND_FEET_MAX_APART:
+        return fail(f"reach: a hand too far above a foot ({mm(level)} > {mm(HAND_FEET_MAX_APART)})")
     return None
 
 
@@ -194,7 +193,6 @@ def acceptable_transition(wall, a, b):
         if step > MAX_TRANSITION_DISTANCE:
             return fail(f"transition: {limb} too far ({mm(step)} > {mm(MAX_TRANSITION_DISTANCE)})")
     return None
-    
 
 
 def mm(metres):

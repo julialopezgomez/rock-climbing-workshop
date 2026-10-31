@@ -17,7 +17,7 @@
 check measures what the link README asks for: the round trip of a command, the time to send the
 trajectory, and the rate and losses of the state coming back, during a dry run (no motors move).
 stream sends the file and starts the robot, then follows the file: each move the optimiser saves
-into it (tests/test_optimiser_v0.py PLAN --save) goes to the robot as the next segment, until
+into it (tests/test_optimiser.py PLAN --save) goes to the robot as the next segment, until
 Ctrl-C. replay sends a saved file in timed segments, as if solved live, and reports how long the
 robot held waiting for them.
 bundle writes the Pi's files (what deploy copies), a run.sh and a README into one folder and a
@@ -185,7 +185,7 @@ def replay(pi: str, port: int, file: Path, seconds: float, every: float) -> int:
 
 def stream(pi: str, port: int, file: Path, poll: float = 0.5) -> int:
     """Send the trajectory file and start the robot, then follow the file: each time it has grown
-    (the optimiser saves it after every move: tests/test_optimiser_v0.py PLAN --save), send what
+    (the optimiser saves it after every move: tests/test_optimiser.py PLAN --save), send what
     is new as the next segment. Until Ctrl-C, which tells the robot nothing more will come."""
 
     def read() -> tuple[float, Trajectory | str] | None:
@@ -363,8 +363,8 @@ def main() -> int:
     p.add_argument("file", nargs="?", type=Path, default=EXAMPLE)
     p = sub.add_parser("replay", parents=[target], help="send a saved file in timed segments")
     p.add_argument("file", nargs="?", type=Path, default=EXAMPLE)
-    # 4 s: one move with the optimiser's TransitionConfig (1 + 2 s, then a 1 s settle)
-    p.add_argument("--segment", type=float, default=4.0, help="[s] of motion per segment")
+    # 3 s: one move with the optimiser's TransitionConfig (phase A 1 s, phase B 2 s)
+    p.add_argument("--segment", type=float, default=3.0, help="[s] of motion per segment")
     p.add_argument("--every", type=float, default=3.0, help="[s] between segments (solve time)")
     sub.add_parser("start", parents=[target], help="start the climb")
     sub.add_parser("stop", parents=[target], help="stop the climb")

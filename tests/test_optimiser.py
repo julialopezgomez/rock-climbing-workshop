@@ -1,18 +1,19 @@
 """Optimiser tests, and a runner that solves a contact plan and plays it in the organisers' sim.
 
-    git submodule update --init                            # Microban and their simulator
+    git submodule update --init                                  # Microban and their simulator
     uv sync --group optimiser --group sim
-    uv run pytest tests/test_optimiser_v0.py               # the checks
-    uv run mjpython tests/test_optimiser_v0.py             # solve build/plan_N1.json, play it
-    uv run mjpython tests/test_optimiser_v0.py --save      # also save build/trajectory_N1.json
-    uv run mjpython tests/test_optimiser_v0.py --replay    # play the saved one, no solving
-    uv run mjpython tests/test_optimiser_v0.py PLAN ...    # another plan file
-    uv run mjpython tests/test_optimiser_v0.py --help      # every option
+    uv run pytest tests/test_optimiser.py                        # the checks
+    uv run mjpython tests/test_optimiser.py                   # solve build/plan_N1.json, play it
+    uv run mjpython tests/test_optimiser.py --save            # also save build/trajectory_N1.json
+    uv run mjpython tests/test_optimiser.py --replay          # play the saved one, no solving
+    uv run mjpython tests/test_optimiser.py PLAN ...          # another plan file
+    uv run mjpython tests/test_optimiser.py --help            # every option
 
 The wall is the organisers' N1 (data/examples/N1.json, from their simulator by
-scripts/wall_generator.py). A plan's wall is data/examples/<its wall_id>.json, and it is played on
-their wall of that name. There is no example contact plan yet: the tests that solve one skip until
-our planner's plan on N1 is saved as data/examples/contact_plan_N1.json.
+scripts/wall_generator.py). A plan's wall is data/examples/<its wall_id>.json, else it is rebuilt
+from the plan saved by scripts/plan_sim_wall.py --save (plan_walls), and it is played on their wall.
+There is no example contact plan yet: the tests that solve one skip until our planner's plan on N1
+is saved as data/examples/contact_plan_N1.json.
 Run directly (not by pytest), it takes each two consecutive stances, solves that transition, and
 plays it in the organisers' sim (the same wall, holds and balls); the robot then stays where it
 ended until the next one is ready.
@@ -23,10 +24,7 @@ angles and trunk poses in it are what --replay plays. The playback is kinematic:
 the optimiser's poses exactly, at the planned times, no physics. Add --headless for no window.
 --send PI also sends each solved move to the robot at PI (rcr.link) as the trajectory's next
 segment, so it can climb while the rest is solved (start it: bash scripts/pi.sh PI --start).
-With --cache, solved moves are kept in the move cache (build/move_cache,
-rcr.optimiser.v0.move_cache), so a move solved once is taken from there next time; without it
-(the default for now), every move is solved afresh. Collisions are ignored unless --collision is
-given (the default for now).
+Collisions with the holds, the wall and the robot itself are not modelled by the optimiser.
 macOS needs `mjpython` for the window (Linux: python). Without the optimiser group or the robot
 model, pytest skips this file; without the sim group, the test against their sim.
 """
@@ -51,7 +49,6 @@ except FileNotFoundError as missing:
 from rcr import io  # noqa: E402
 from rcr.optimiser import (  # noqa: E402
     SERVO_KP,
-    feasibility,
     iter_plan,
     optimise,
     sample_time,
@@ -60,15 +57,10 @@ from rcr.optimiser import (  # noqa: E402
     to_trajectory,
     validate_plan,
 )
-from rcr.optimiser import avoidance as av  # noqa: E402
-from rcr.optimiser import collision as col  # noqa: E402
-from rcr.optimiser import edge_checks as fe  # noqa: E402
-from rcr.optimiser import move_cache as mc  # noqa: E402
 from rcr.optimiser import robot_model as rm  # noqa: E402
 from rcr.optimiser import transition as tr  # noqa: E402
 from rcr.robot import hooks  # noqa: E402
 from rcr.types import (  # noqa: E402
-    GRID_PITCH,
     LIMBS,
     MICROBAN_JOINTS,
     ContactPlan,
@@ -84,7 +76,7 @@ EXAMPLES = Path(__file__).resolve().parent.parent / "data" / "examples"
 # 29 (right); start: feet c21_r2, c26_r2, hands c18_r22, c29_r22. The tests solve the first moves
 # of its plan, once there is one (PLAN).
 WALL, PLAN = EXAMPLES / "N1.json", EXAMPLES / "contact_plan_N1.json"
-# The runner's files: the plan our planner saved (scripts/plan_wall.py --save), and the solved
+# The runner's files: the plan our planner saved (scripts/plan_sim_wall.py --save), and the solved
 # trajectory, build/trajectory_<wall id>.json [Ours]
 BUILD = EXAMPLES.parent.parent / "build"
 RUN_PLAN = BUILD / "plan_N1.json"
@@ -94,22 +86,62 @@ def trajectory_file(wall_id: str) -> Path:
     return BUILD / f"trajectory_{wall_id}.json"
 
 
+# The organisers' wall each loaded plan is on, by wall id, for the playback (plan_walls)
+_SIM_WALLS: dict = {}
+
+
+def plan_walls(plan: ContactPlan) -> WallModel:
+    """The wall a plan is on: data/examples/<wall_id>.json if there is one; else rebuilt from
+    scripts/plan_sim_wall.py's output, whose hold ids are their grid holes, "r<row>_c<col>", so each
+    position is their Hold(col, row).bolt_axis, as that script places it. For the playback, their
+    whole wall: l<level>_s<seed> regenerated, else the bundled wall (N1, N2, N3) with all the plan's
+    holds (--wall N2 still names the wall l<level>_s<seed>), else only the plan's holds."""
+    import re
+
+    from climbing_sim import Wall
+    from climbing_sim.routes import generate_wall
+    from climbing_sim.wall import Hold as TheirHold
+    from climbing_sim.wall import bundled_walls
+
+    example = EXAMPLES / f"{plan.wall_id}.json"
+    if example.exists():
+        _SIM_WALLS[plan.wall_id] = Wall.load(plan.wall_id)
+        return io.load_wall(example)
+    used = {hold for stance in plan.stances for hold in stance.contacts.values()}
+    grid = {}
+    for hold in used:
+        match = re.fullmatch(r"r(\d+)_c(\d+)", hold)
+        if match is None:
+            sys.exit(
+                f"no wall {plan.wall_id}: not in {EXAMPLES}, and hold {hold} is not r<row>_c<col>"
+            )
+        grid[hold] = TheirHold(col=int(match[2]), row=int(match[1]))
+    candidates = [Wall.load(name) for name in bundled_walls()]
+    seeded = re.fullmatch(r"l(\d)_s(\d+)", plan.wall_id)
+    if seeded:
+        candidates.insert(0, generate_wall(int(seeded[1]), int(seeded[2])))
+    sim_wall = next(
+        (w for w in candidates if set(grid.values()) <= set(w.holds)),
+        Wall(name=plan.wall_id, holds=list(grid.values())),
+    )
+    print(f"wall {plan.wall_id}: rebuilt from the plan's holds; played on {sim_wall.name}")
+    _SIM_WALLS[plan.wall_id] = sim_wall
+    holds = [
+        Hold(f"r{h.row}_c{h.col}", tuple(round(float(v), 6) for v in h.bolt_axis))
+        for h in sim_wall.holds
+    ]
+    return WallModel(id=plan.wall_id, level=0, holds=holds, start=plan.stances[0])
+
+
+def organisers_wall(wall_id: str):
+    """Their wall for the sim: the one plan_walls found, else their wall of that name."""
+    from climbing_sim import Wall
+
+    return _SIM_WALLS.get(wall_id) or Wall.load(wall_id)
+
+
 FIRST_MOVES = 4  # the plan's first transitions, solved once for the tests below
-# The tests check the TO that avoids collisions (off by default: the runner's --collision)
-CFG = replace(tr.TransitionConfig(), avoid_collisions=True)
-DENSE = col.Clearance(step=0.0005)  # independent re-checks: 4x denser than the solver's
-
-
-@pytest.fixture(scope="module", autouse=True)
-def solve_for_real():
-    """The tests solve every move: no move cache (move_cache.default_cache), unless one sets it."""
-    before = os.environ.get("RCR_MOVE_CACHE")
-    os.environ["RCR_MOVE_CACHE"] = "off"
-    yield
-    if before is None:
-        os.environ.pop("RCR_MOVE_CACHE")
-    else:
-        os.environ["RCR_MOVE_CACHE"] = before
+CFG = tr.TransitionConfig()
 
 
 @pytest.fixture(scope="module")
@@ -220,178 +252,10 @@ def test_balls_and_contact_point_match_the_organisers_sim(model):
         for i, limb in enumerate(LIMBS):
             assert np.allclose(ours[:, i], theirs[limb], atol=1e-6)
     cfg = CFG
-    sag = np.array([0.0, 0.0, col.SOCKET_RADIUS - hooks.BALL_RADIUS])  # the ball on the bottom
+    sag = np.array([0.0, 0.0, tr.SOCKET_RADIUS - hooks.BALL_RADIUS])  # the ball on the bottom
     for limb, hold in sim.wall.start.items():
         point = tr.contact_point(wall, wall.start.contacts[limb], cfg)
         assert np.allclose(point, hold.socket - sag, atol=1e-9)
-
-
-def test_collision_points_match_microbans_mjcf(model):
-    mujoco = pytest.importorskip("mujoco")
-    mm = mujoco.MjModel.from_xml_path(str(rm.mjcf_path()))
-    md = mujoco.MjData(mm)
-    # the model's boxes and cylinders: its mesh pieces are not points (collision.robot_shapes)
-    kinds = (int(mujoco.mjtGeom.mjGEOM_BOX), int(mujoco.mjtGeom.mjGEOM_CYLINDER))
-    shapes = [g for g in range(mm.ngeom) if int(mm.geom_type[g]) in kinds]
-    q = random_configuration(model, np.random.default_rng(2))
-    md.qpos[:7] = q[:7]  # MuJoCo's free joint is also (position, w, x, y, z)
-    for i, name in enumerate(MICROBAN_JOINTS):
-        md.qpos[mm.jnt_qposadr[mm.joint(name).id]] = q[7 + i]
-    mujoco.mj_kinematics(mm, md)
-    ours = np.array(model.body_points(q)).T
-    assert len(ours) == 8 * len(shapes)
-    for g in shapes:  # every box's farthest corner along each axis is one of our points
-        if mm.geom_type[g] == mujoco.mjtGeom.mjGEOM_BOX:
-            rotation = md.geom_xmat[g].reshape(3, 3)
-            reach = md.geom_xpos[g] + np.abs(rotation) @ mm.geom_size[g]
-            for axis in range(3):
-                assert np.min(np.abs(ours[:, axis] - reach[axis])) < 1e-5  # 6-digit files
-
-
-def test_what_the_sim_draws_is_inside_the_checked_hulls(model):
-    """Every vertex of the model's visual meshes lies in a shape checked on its link: one of its
-    hulls, or on the climbing forearms and feet one of the model's pieces or the ball. The
-    pieces are a decomposition, a little inside the drawn mesh: 0.21 mm at most on the
-    forearms [Microban], 0.6 mm on our cut feet (decimated CoACD pieces, our model fork)."""
-    mujoco = pytest.importorskip("mujoco")
-    mm = mujoco.MjModel.from_xml_path(str(rm.mjcf_path()))
-    md = mujoco.MjData(mm)
-    q = random_configuration(model, np.random.default_rng(3))
-    md.qpos[:7] = q[:7]
-    for i, name in enumerate(MICROBAN_JOINTS):
-        md.qpos[mm.jnt_qposadr[mm.joint(name).id]] = q[7 + i]
-    mujoco.mj_kinematics(mm, md)
-    positions, rotations = (np.array(m) for m in model.link_frames(q))
-    index = {name: i for i, name in enumerate(model.link_names)}
-    hulls: dict[str, list] = {}
-    balls: dict[str, np.ndarray] = {}
-    for shape in col.robot_shapes():
-        i = index[shape.link]
-        r = rotations[:, 3 * i : 3 * i + 3]
-        centre = positions[:, i] + r @ shape.offset
-        if shape.limb is not None:  # a ball, a sphere
-            balls[shape.link] = centre
-            continue
-        normals = np.asarray(shape.geometry.normals()) @ r.T  # world
-        offsets = np.asarray(shape.geometry.offsets()).ravel()
-        hulls.setdefault(shape.link, []).append((normals, offsets - normals @ centre))
-    visual = [g for g in range(mm.ngeom) if mm.geom_group[g] == 2 and mm.geom_dataid[g] >= 0]
-    for g in visual:
-        mesh = mm.geom_dataid[g]
-        start, n = mm.mesh_vertadr[mesh], mm.mesh_vertnum[mesh]
-        world = mm.mesh_vert[start : start + n] @ md.geom_xmat[g].reshape(3, 3).T + md.geom_xpos[g]
-        link = mujoco.mj_id2name(mm, mujoco.mjtObj.mjOBJ_BODY, mm.geom_bodyid[g])
-        foot = link in {hooks.HOOKS[limb].link for limb in ("right_foot", "left_foot")}
-        outside = np.min([(world @ nrm.T + off).max(1) for nrm, off in hulls[link]], axis=0)
-        if link in balls:  # a climbing forearm or foot: its pieces, or its ball
-            ball = np.linalg.norm(world - balls[link], axis=1) - hooks.BALL_RADIUS
-            assert np.minimum(outside, ball).max() < (6e-4 if foot else 3e-4), link
-        else:
-            assert outside.max() < 1e-5, link  # inside one of its link's hulls (6-digit files)
-
-
-# --- Collision geometry ------------------------------------------------------------------------
-
-
-def test_the_hold_mesh_is_closed_and_outward():
-    vertices, triangles = col.read_hold_mesh()
-    edges = np.sort(
-        np.vstack([triangles[:, [0, 1]], triangles[:, [1, 2]], triangles[:, [2, 0]]]), 1
-    )
-    _, uses = np.unique(edges, axis=0, return_counts=True)
-    assert (uses == 2).all()  # watertight: every edge shared by exactly two triangles
-    a, b, c = (vertices[triangles[:, i]] for i in range(3))
-    assert np.einsum("ij,ij->i", a, np.cross(b, c)).sum() / 6 > 0  # normals point out
-
-
-def test_hold_distance_is_exact_outside_and_signed_inside():
-    coal = pytest.importorskip("coal")
-    hold = col.hold_geometry()
-    ball = next(s for s in col.robot_shapes() if s.name == "right_hand_ball")
-
-    def distance(centre):
-        pose = coal.Transform3s(np.eye(3), np.array(centre, dtype=float))
-        return col.hold_distance(ball, pose, hold, np.zeros(3))
-
-    assert distance([0, 0, 0]).value == pytest.approx(0.00016, abs=5e-5)  # 12.66 - 12.5 mm
-    assert abs(distance([0, 0, -0.00016]).value) < col.TOUCHING  # resting: touching
-    assert distance([0, 0, -0.0032]).value == pytest.approx(-0.003, abs=5e-4)  # 3 mm in
-    assert distance([0, -0.05, 0]).value == pytest.approx(0.0205, abs=1e-6)  # 5 cm out
-    rng = np.random.default_rng(0)
-    for _ in range(50):  # the direction `away` is the distance's gradient, outside and inside
-        centre = rng.uniform([-0.03, -0.045, -0.03], [0.03, 0.03, 0.03])
-        d = distance(centre)
-        if abs(d.value) < 2e-4:
-            continue
-        step = rng.normal(size=3) * 1e-7  # small: no seam between two pieces within it
-        change = distance(centre + step).value - d.value
-        assert change == pytest.approx(d.away @ step, rel=0.02, abs=1e-10)
-
-
-def test_point_in_hold_agrees_with_the_pieces():
-    coal = pytest.importorskip("coal")
-    hold, dot = col.hold_geometry(), coal.Sphere(1e-6)
-    rng = np.random.default_rng(1)
-    for point in rng.uniform(hold.centre - 0.022, hold.centre + 0.022, size=(300, 3)):
-        pose = coal.Transform3s(np.eye(3), point)
-        inside = min(col._query(dot, pose, p, coal.Transform3s()).value for p in hold.pieces) < 0
-        assert hold.contains(point) == inside
-
-
-def self_checks(model, dq):
-    """The robot's clearances to itself in one pose (trunk at the origin, no holds)."""
-    q0 = np.zeros(rm.NQ)
-    q0[3] = 1.0
-    checks = col._check_moments(model, {}, q0, dq[:, None], [{}], {}, col.Clearance(), [(0, 0.0)])
-    return [c for c in checks if c.label.endswith("(self)")]
-
-
-def test_the_robot_is_kept_clear_of_itself(model):
-    shapes, kept = col.robot_shapes(), {tuple(p) for p in col.self_pairs()}
-    parent = {j.child: j.parent for j in rm.read_urdf(rm.urdf_path()).joints}
-    left_out = {
-        (shapes[i].name, shapes[j].name)
-        for i in range(len(shapes))
-        for j in range(i + 1, len(shapes))
-        if (i, j) not in kept
-        and shapes[i].link != shapes[j].link
-        and parent.get(shapes[i].link) != shapes[j].link
-        and parent.get(shapes[j].link) != shapes[i].link
-    }
-    assert left_out == {  # beyond one link or one joint: only the shapes that always overlap
-        ("hip_21", "femur__configuration_right_29"),
-        ("hip_2_43", "femur__configuration_left_51"),
-    }
-    crossed = np.zeros(rm.NV)  # legs swung in, across each other
-    crossed[6 + MICROBAN_JOINTS.index("right_hip_roll")] = 0.3
-    crossed[6 + MICROBAN_JOINTS.index("left_hip_roll")] = -0.3
-    worst = min(self_checks(model, crossed), key=lambda c: c.gap)
-    assert worst.value < -0.02 and "tibia" in worst.label
-    rng = np.random.default_rng(1)
-    tested = 0
-    while tested < 5:  # the gradient is the distance's, both shapes moving
-        dq = np.zeros(rm.NV)
-        dq[6:] = rng.uniform(model.lower, model.upper) * 0.6
-        near = [c for c in self_checks(model, dq) if 0.003 < c.value < 0.015]
-        if not near:
-            continue
-        step = rng.normal(size=rm.NV) * 1e-6
-        moved = next(c for c in self_checks(model, dq + step) if c.label == near[0].label)
-        assert moved.value - near[0].value == pytest.approx(near[0].grad_a @ step, rel=0.02)
-        tested += 1
-
-
-def test_limb_reach_bounds_every_pose(model):
-    reach, rng = rm.limb_reach(), np.random.default_rng(2)
-    for _ in range(2000):
-        q = random_configuration(model, rng)
-        balls, frames = np.array(model.limb_positions(q)), model.link_frames(q)
-        trunk = model.link_names.index(rm.ROOT_LINK)
-        position = np.array(frames[0])[:, trunk]
-        rotation = np.array(frames[1])[:, 3 * trunk : 3 * trunk + 3]
-        for i, limb in enumerate(LIMBS):
-            root, far = reach[limb]
-            assert np.linalg.norm(balls[:, i] - (position + rotation @ root)) <= far
 
 
 # --- Inputs -------------------------------------------------------------------------------------
@@ -431,25 +295,6 @@ def test_static_pose_holds_the_start_stance(wall, model):
     balls = np.array(model.limb_positions(s.q[0]))
     assert np.abs(balls - tr.contact_points(wall, wall.start, cfg)).max() < 1e-3
     assert np.abs(s.tau).max() <= cfg.tau_limit + 1e-6
-    assert np.array(model.body_points(s.q[0]))[1].max() <= -cfg.wall_margin + 1e-6
-    contacts = [dict(wall.start.contacts)]
-    own = {limb: {wall.start.contacts[limb]} for limb in LIMBS}
-    holds = {h.id: h for h in wall.holds}
-    checks = col.check_trajectory(model, holds, s.q[0], np.zeros((rm.NV, 1)), contacts, own, DENSE)
-    assert min(c.gap for c in checks) >= -col.TOUCHING  # clear of every hold and the wall
-
-
-def test_edge_poses_unload_and_lift_the_moving_limb(wall, model):
-    cfg, start = CFG, wall.start
-    guess = tr.initial_guess(wall, start, cfg)
-    release = tr.static_pose(wall, start, guess, cfg, unloaded="right_hand")
-    assert np.abs(release.forces["right_hand"]).max() < 1e-6  # the other three carry it
-    assert np.abs(release.tau).max() <= cfg.tau_limit + 1e-6
-    up = (0.0, 0.0, av.LIFT)
-    lift = tr.static_pose(wall, start, release.q[0], cfg, unloaded="right_hand", away=up)
-    ball = np.array(model.limb_positions(lift.q[0]))[:, LIMBS.index("right_hand")]
-    socket = tr.contact_point(wall, start.contacts["right_hand"], cfg)
-    assert ball == pytest.approx(socket + np.array([0.0, 0.0, av.LIFT]), abs=1e-4)
 
 
 def test_a_coarse_path_lands_on_the_full_samples():
@@ -463,22 +308,38 @@ def test_a_coarse_path_lands_on_the_full_samples():
     assert np.allclose(full[:, 1], (dq[:, 0] + dq[:, 1]) / 2)
 
 
-def test_feasibility_passes_the_example_moves_and_says_why_not(wall):
-    stances = first_row(wall).stances
-    for a, b in zip(stances[:2], stances[1:3], strict=True):  # a hand and a foot move
-        verdict = feasibility(wall, a, b)
-        assert verdict.feasible, verdict.reason
-        assert 0 < verdict.cost <= 1  # peak torque over the edge poses, as a fraction of the limit
-    a = stances[0]
-    both = Stance({**a.contacts, "right_hand": "c29_r27", "left_hand": "c18_r27"})
-    assert "exactly one limb" in feasibility(wall, a, both).reason
-    too_high = Stance({**a.contacts, "right_hand": "c29_r37"})  # a hand up 0.225 m: past the torque
-    verdict = feasibility(wall, a, too_high)
-    assert not verdict.feasible and verdict.reason.split(":")[0] in fe.CHECKS
-    high = Hold("HIGH", (0.5, 0.0, 1.0))  # a hand 0.8 m above the feet: no solve needed
-    tall = replace(wall, id="tall", holds=[*wall.holds, high])
-    verdict, ran = fe.trace(tall, a, Stance({**a.contacts, "right_hand": "HIGH"}))
-    assert verdict.reason.startswith("reach: ") and [n for n, _ in ran] == ["rules", "reach"]
+def test_the_keep_out_points_box_each_part_but_the_hook_ends(model):
+    points = rm.keep_out_points()
+    parts = {link for link, _ in points}
+    assert len(points) == 8 * len(parts) and {"head", "trunk", "foot_climb"} <= parts
+    assert tr.CUP_FRONT == pytest.approx(-0.043, abs=1e-3)  # the cups' front, from their sim
+    for limb, hook in hooks.HOOKS.items():  # a forearm's or foot's box leaves out its ball's end
+        corners = np.array([p for link, p in points if link == hook.link])
+        centre = hooks.ball_centre(hook)
+        assert not np.all((corners.min(axis=0) <= centre) & (centre <= corners.max(axis=0))), limb
+    assert np.array(model.body_points(np.zeros(rm.NQ))).shape == (3, len(points))
+
+
+def test_the_hooks_point_along_their_shafts(model):
+    axes = rm.hook_axes()  # from the meshes: the hands' shafts along the forearm, the feet's +y
+    assert axes["right_hand"][0] < -0.9 and axes["left_hand"][0] > 0.9
+    assert axes["right_foot"][1] > 0.9 and axes["left_foot"][1] > 0.9
+    u = np.array(model.hook_directions(np.r_[0, 0, 0, 1, 0, 0, 0, np.zeros(rm.NJ)]))
+    assert np.allclose(np.linalg.norm(u, axis=0), 1)  # unit vectors in the wall frame
+    up = replace(CFG, hook_up=-1.0)  # anything counts as up: no cost
+    assert float(tr.hook_tilt(model, np.r_[0, 0, 0, 1, 0, 0, 0, np.zeros(rm.NJ)], up)) == 0
+
+
+def test_the_swing_path_goes_up_out_across_in_and_down():
+    cfg = replace(CFG, swing_lift=0.025, swing_out=0.04, swing_vertical=0.25)
+    start, target = np.array([0.4, -0.03, 0.5]), np.array([0.5, -0.03, 0.62])
+    up, out = np.array([0.0, 0.0, 0.025]), np.array([0.0, -0.04, 0.0])
+    path = lambda s: tr.swing_point(start, target, s, cfg)  # noqa: E731
+    corners = [start, start + up, start + up + out, target + up + out, target + up, target]
+    for s, corner in zip([0.0, 0.25, 0.375, 0.625, 0.75, 1.0], corners, strict=True):
+        assert np.allclose(path(s), corner)
+    assert np.allclose(path(0.125), start + up / 2)  # straight up out of the old cup
+    assert np.allclose(path(0.875), target + up / 2)  # straight down into the new one
 
 
 def test_a_transition_moves_one_limb_and_keeps_the_rules(wall, results, model):
@@ -495,24 +356,6 @@ def test_a_transition_moves_one_limb_and_keeps_the_rules(wall, results, model):
     for k, b in enumerate(balls):  # the other three never leave their holds
         others = [i for i in range(4) if i != m]
         assert np.abs(b[:, others] - holds[:, others]).max() < 1e-3, f"sample {k}"
-    for k in range(cfg.release_sample + 2, cfg.n_samples - 1):  # clear of the wall in mid-air
-        assert balls[k][1, m] <= -cfg.clearance + 1e-6
-    assert max(np.array(model.body_points(q))[1].max() for q in result.q) <= -cfg.wall_margin + 1e-6
-
-
-def test_the_climb_is_clear_of_every_hold_and_the_wall(wall, results, model):
-    """Checked again, independently and 4x more densely than the solver did (every 0.5 mm of
-    motion): nothing enters a hold or the wall; balls only rest in, and leave and enter, their
-    own sockets."""
-    cfg, plan, holds = CFG, first_row(wall), {h.id: h for h in wall.holds}
-    for i, r in enumerate(results):
-        a, b = plan.stances[i], plan.stances[i + 1]
-        contacts = av.transition_contacts(a, b, r.moving, cfg)
-        contacts += [dict(b.contacts)] * (len(r.q) - len(contacts))  # the settle (cfg.settle)
-        own = {limb: {a.contacts[limb], b.contacts[limb]} for limb in LIMBS}
-        checks = col.check_trajectory(model, holds, r.q[0], r.dq, contacts, own, DENSE)
-        worst = min(checks, key=lambda c: c.gap)
-        assert worst.gap >= -col.TOUCHING, f"transition {i}: {worst.label} {worst.gap * 1e3:.2f} mm"
 
 
 def test_the_limits_hold_between_samples_too(wall, results, model):
@@ -558,60 +401,6 @@ def test_optimise_returns_a_trajectory_that_round_trips(wall, tmp_path):
     assert io.load_trajectory(tmp_path / "t.json") == traj
 
 
-def shifted(wall: WallModel, holes_x: int, holes_z: int) -> WallModel:
-    """The same wall with every hold moved by whole grid holes."""
-    dx, dz = holes_x * GRID_PITCH, holes_z * GRID_PITCH
-    moved = [Hold(h.id, (h.position[0] + dx, 0.0, h.position[2] + dz), h.kind) for h in wall.holds]
-    return replace(wall, holds=moved)
-
-
-def test_the_move_cache_keys_on_the_layout_not_on_the_wall(wall, results, tmp_path, monkeypatch):
-    a, b = first_row(wall).stances[:2]
-    key, ref = mc.MoveCache.key(wall, a, b)
-    there = shifted(wall, 3, 7)
-    assert mc.MoveCache.key(there, a, b)[0] == key  # the same holds, 3 holes right and 7 up
-    assert mc.MoveCache.key(wall, *first_row(wall).stances[1:3])[0] != key  # another move
-    nudged = a.contacts["right_hand"]  # 0.3 mm off the grid: not cached rather than misread
-    off_grid = replace(wall, holds=[
-        Hold(h.id, (h.position[0] + 0.0003, 0.0, h.position[2]), h.kind) if h.id == nudged else h
-        for h in wall.holds
-    ])  # fmt: skip
-    assert mc.MoveCache.key(off_grid, a, b) is None
-
-    cfg, cache = replace(CFG, settle=True), mc.MoveCache(tmp_path)
-    cache.put(wall, a, b, cfg, results[0], solve_time=12.0)
-    entry = cache.get(there, a, b, cfg)  # stored on one wall, read on the shifted one
-    assert entry.feasible and entry.solve_time == 12.0
-    lift = np.array([3 * GRID_PITCH, 0.0, 7 * GRID_PITCH])
-    assert np.allclose(entry.result.q[:, :3], results[0].q[:, :3] + lift)
-    assert np.allclose(entry.result.q[:, 3:], results[0].q[:, 3:])  # the angles stay
-    assert cache.get(wall, a, b, replace(cfg, mu=dict.fromkeys(LIMBS, 0.5))) is None  # new version
-    rejected = first_row(wall).stances[1:3]
-    cache.put(wall, *rejected, cfg, reason="stance: infeasible")  # by default not stored
-    assert cache.get(there, *rejected, cfg) is None and cache.size(cfg) == (1, 0)
-    monkeypatch.setattr(mc, "REJECTIONS", True)
-    cache.put(wall, *rejected, cfg, reason="stance: infeasible")
-    assert not cache.get(there, *rejected, cfg).feasible
-    assert cache.size(cfg) == (1, 1)
-
-
-def test_feasibility_answers_from_the_cache_and_stores_its_rejections(wall, tmp_path, monkeypatch):
-    """With move_cache.REJECTIONS (off by default)."""
-    monkeypatch.setattr(mc, "REJECTIONS", True)
-    a = wall.start
-    far = Stance({**a.contacts, "right_hand": "c29_r37"})  # rejected by the checks (0.225 m up)
-    cfg = CFG
-    os.environ["RCR_MOVE_CACHE"] = str(tmp_path)
-    try:
-        first, ran = fe.trace(wall, a, far)
-        assert not first.feasible and "cache" in [n for n, _ in ran]
-        again, ran = fe.trace(wall, a, far)  # now from the cache: no check runs
-        assert again.reason == f"{first.reason} (cached)" and ran[-1][0] == "cache"
-        assert mc.MoveCache(tmp_path).size(cfg) == (0, 1)
-    finally:
-        os.environ["RCR_MOVE_CACHE"] = "off"
-
-
 def test_targets_are_preloaded_against_sag(results, wall):
     from rcr.optimiser import to_trajectory
 
@@ -639,7 +428,7 @@ def solve_in_background(wall: WallModel, plan: ContactPlan, out, cfg=None) -> No
     """Worker process: the plan's start pose, then each transition in order, each starting where
     the previous one ended. Each is sent on `out` (one end of a Pipe) as soon as it is solved:
     ("start", q), ("transition", i, TransitionResult, seconds), then ("done",) or ("error", text).
-    Exits as soon as the runner is gone, however it ended (its collision workers follow).
+    Exits as soon as the runner is gone, however it ended.
     """
     import threading
 
@@ -656,7 +445,7 @@ def solve_in_background(wall: WallModel, plan: ContactPlan, out, cfg=None) -> No
         q = start_pose(wall, plan, cfg)
         out.send(("start", q))
         start = time.perf_counter()
-        for i, result in enumerate(iter_plan(wall, plan, q, cfg)):  # with the move cache
+        for i, result in enumerate(iter_plan(wall, plan, q, cfg)):
             out.send(("transition", i, result, time.perf_counter() - start))
             start = time.perf_counter()
         out.send(("done",))
@@ -763,7 +552,7 @@ def run_plan(
 
     context = multiprocessing.get_context("spawn")
     messages, worker_end = context.Pipe(duplex=False)
-    # not a daemon: the collision check runs its own worker processes; stopped in `finally`
+    # stopped in `finally`
     cfg, results = cfg or tr.TransitionConfig(), []
     worker = context.Process(target=solve_in_background, args=(wall, plan, worker_end, cfg))
     worker.start()
@@ -844,9 +633,9 @@ def play(wall: WallModel, pose, done, view: bool) -> None:
     """Show pose(now) in the organisers' sim, kinematically (None: nothing to show yet), until the
     window closes or, without one, until done()."""
     import mujoco
-    from climbing_sim import ClimbingSim, Wall
+    from climbing_sim import ClimbingSim
 
-    sim = ClimbingSim(Wall.load(wall.id), cameras=[])  # their wall of that name
+    sim = ClimbingSim(organisers_wall(wall.id), cameras=[])  # their wall of that name
     model, data = sim.model, sim.data
     qpos = [model.jnt_qposadr[model.joint(name).id] for name in MICROBAN_JOINTS]
 
@@ -871,22 +660,19 @@ def play(wall: WallModel, pose, done, view: bool) -> None:
             time.sleep(0.02)
 
 
-USAGE = """usage: tests/test_optimiser_v0.py [PLAN] [--save | --replay] [--samples N]
-                                   [--clearance M] [--approach] [--collision] [--cache]
-                                   [--send PI] [--headless]
+USAGE = """usage: tests/test_optimiser.py [PLAN] [--save | --replay] [--samples N] [--swing W]
+                                [--keep-out W] [--hook W] [--send PI] [--headless]
     PLAN              the contact plan to solve (default build/plan_N1.json): each move is solved
                       and played in the organisers' sim as it comes
     --save            also save it in build/trajectory_<wall id>.json after every move
     --replay          play build/trajectory_<wall id>.json on the plan's wall, without solving
     --samples N       samples per move (TransitionConfig.n_samples, default 12); more take longer
-    --clearance M     [m] how far out from the wall the moving ball keeps in mid-move
-                      (TransitionConfig.clearance, default 0.06); less leaves it a shorter way in
-    --approach        bring the moving ball in in two steps, 35 mm then 10 mm above its socket,
-                      so it ends with a short straight drop (TransitionConfig.approach_from_above)
-    --collision       avoid collisions with the holds, the wall and itself (off by default: the
-                      motion ignores them; TransitionConfig.avoid_collisions)
-    --cache           reuse and store solved moves in build/move_cache (off by default: every
-                      move is solved afresh; RCR_MOVE_CACHE=<folder> for another one)
+    --swing W         how hard the moving ball is pulled along its path up, out, across, in and
+                      down (TransitionConfig.w_swing, default 5000); 0 turns it off
+    --keep-out W      how hard the body is pushed out of the cups' layer (TransitionConfig.
+                      w_keep_out, default 20000); 0 turns it off
+    --hook W          how hard each hook is turned to point up from its ball, so it goes into
+                      the cup from above (TransitionConfig.w_hook, default 10); 0 turns it off
     --send PI         also send each solved move to the robot at PI (rcr.link), move by move"""
 
 if __name__ == "__main__":
@@ -899,32 +685,34 @@ if __name__ == "__main__":
         send = args.pop(i + 1).split("@")[-1]  # pi@172.20.10.8 as for scripts/pi.sh: the address
         args.pop(i)
     cfg = tr.TransitionConfig()
-    for option, field_name, kind in (
-        ("--samples", "n_samples", int),
-        ("--clearance", "clearance", float),
-    ):
-        if option in args:
-            i = args.index(option)
-            try:
-                value = kind(args[i + 1])
-            except (IndexError, ValueError):
-                sys.exit(f"{option} needs a number\n" + USAGE)
-            cfg = replace(cfg, **{field_name: value})
-            del args[i : i + 2]
-    if "--approach" in args:
-        args.remove("--approach")
-        cfg = replace(cfg, approach_from_above=True)
-    if "--collision" in args:
-        args.remove("--collision")
-        cfg = replace(cfg, avoid_collisions=True)
-    if "--cache" in args:  # the solver's worker process inherits it
-        args.remove("--cache")
-        if os.environ.get("RCR_MOVE_CACHE", "off").lower() in ("", "off"):
-            os.environ["RCR_MOVE_CACHE"] = "on"
-    print(
-        "collisions: " + ("avoided" if cfg.avoid_collisions else "ignored (--collision)"),
-        flush=True,
-    )
+    if "--samples" in args:
+        i = args.index("--samples")
+        try:
+            cfg = replace(cfg, n_samples=int(args[i + 1]))
+        except (IndexError, ValueError):
+            sys.exit("--samples needs a number\n" + USAGE)
+        del args[i : i + 2]
+    if "--swing" in args:
+        i = args.index("--swing")
+        try:
+            cfg = replace(cfg, w_swing=float(args[i + 1]))
+        except (IndexError, ValueError):
+            sys.exit("--swing needs a number (its weight; 0 turns it off)\n" + USAGE)
+        del args[i : i + 2]
+    if "--hook" in args:
+        i = args.index("--hook")
+        try:
+            cfg = replace(cfg, w_hook=float(args[i + 1]))
+        except (IndexError, ValueError):
+            sys.exit("--hook needs a number (its weight; 0 turns it off)\n" + USAGE)
+        del args[i : i + 2]
+    if "--keep-out" in args:
+        i = args.index("--keep-out")
+        try:
+            cfg = replace(cfg, w_keep_out=float(args[i + 1]))
+        except (IndexError, ValueError):
+            sys.exit("--keep-out needs a number (its weight; 0 turns it off)\n" + USAGE)
+        del args[i : i + 2]
     if {"-h", "--help"} & set(args):
         sys.exit(USAGE)
     if "--hard" in args:  # the former way to ask for the runner: still accepted, not needed
@@ -948,7 +736,7 @@ if __name__ == "__main__":
         sys.exit("--send sends what is solved; to send a saved one: scripts/link_pi.py stream")
     if {"--save", "--replay"} <= flags:
         sys.exit("--save solves and saves, --replay plays what was saved: pick one\n" + USAGE)
-    wall, view = io.load_wall(EXAMPLES / f"{plan.wall_id}.json"), "--headless" not in flags
+    wall, view = plan_walls(plan), "--headless" not in flags
     if "--replay" in flags:
         replay(wall, view)
     else:

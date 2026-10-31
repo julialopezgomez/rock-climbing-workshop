@@ -80,12 +80,12 @@ with link.LaptopLink("172.20.10.8") as robot:
     robot.append_segment(next_move)  # also while it runs; times go on from the end
     robot.append_segment(last_move, final=True)  # or robot.finish()
 ```
-- **The optimiser runner does this by itself:** `uv run mjpython tests/test_optimiser_v0.py PLAN --send 172.20.10.8`
+- **The optimiser runner does this by itself:** `uv run mjpython tests/test_optimiser.py PLAN --send 172.20.10.8`
   sends each move as soon as it is solved, while the sim plays it. Then start the robot: `bash scripts/pi.sh pi@172.20.10.8 --start`.
 - **`link.segment(trajectory, n)`** cuts the new samples off a growing trajectory.
 - **`stream` follows the trajectory file**, so the optimiser and the link run side by side:
   ```bash
-  uv run mjpython tests/test_optimiser_v0.py PLAN --save   # terminal 1: solves, saves after each move
+  uv run mjpython tests/test_optimiser.py PLAN --save   # terminal 1: solves, saves after each move
   bash scripts/pi.sh pi@172.20.10.8 --stream                # terminal 2: sends the file, starts, then each new move
   ```
   - It sends what the file holds and starts the robot, then checks the file twice a second. Whenever it has grown,
