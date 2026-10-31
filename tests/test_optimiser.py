@@ -48,7 +48,6 @@ except FileNotFoundError as missing:
 
 from rcr import io  # noqa: E402
 from rcr.optimiser import (  # noqa: E402
-    SERVO_KP,
     iter_plan,
     optimise,
     sample_time,
@@ -423,11 +422,11 @@ def test_optimise_returns_a_trajectory_that_round_trips(wall, tmp_path):
     assert io.load_trajectory(tmp_path / "t.json") == traj
 
 
-def test_targets_are_preloaded_against_sag(results, wall):
+def test_targets_are_the_planned_angles(results, wall):
     from rcr.optimiser import to_trajectory
 
     traj, r = to_trajectory(results, CFG), results[0]
-    assert np.allclose(traj.positions[0], r.q[0][7:] + r.tau[0] / SERVO_KP)
+    assert np.allclose(traj.positions[0], r.q[0][7:])  # no pre-load against sag
     last = results[-1].q[-1]  # the planned motion goes along, for an exact replay
     assert np.allclose(traj.planned_positions[-1], last[7:])
     assert np.allclose(traj.trunk_poses[-1], last[:7])

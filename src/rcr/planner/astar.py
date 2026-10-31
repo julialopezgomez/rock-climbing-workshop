@@ -25,7 +25,7 @@ MAX_ITERATIONS = 200
 WEIGHT = 1.0  # A* heuristic weight: 1.0 = admissible, 0.0 = Dijkstra
 # TODO: order by move: moving arm, diagonal leg, other leg, other arm
 TASK_ORDER = ("right_hand", "left_hand", "right_foot", "left_foot")
-# trunk z up, x into the wall (+y) [simulator README, Frames]
+# trunk z up, x into the wall (+y)
 TRUNK_UPRIGHT = np.array([[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
 
 # trunk free: q = (x, y, z, qx, qy, qz, qw, 19 joints)
@@ -132,9 +132,12 @@ MIN_APART = 1.0  # two balls at least this fraction of their roots' distance apa
 # and at most this fraction of their reaches + roots' distance [Ours]
 HAND_MAX_APART = 0.7  # a pair with a hand (hand-hand, hand-foot)
 FEET_MAX_APART = 0.27  # the two feet
+# a hand and a foot maximum apart (the example plan the optimiser solved has 0.35 m)
+HAND_FEET_MAX_APART = 0.36
 # [m] most one hand is above the other, and one foot above the other [Ours]: the example
 # plan the optimiser solved has up to 0.195 m (hands) and 0.135 m (feet)
-MAX_LEVEL = 0.12
+MAX_LEVEL = 0.1
+MAX_TRANSITION_DISTANCE = 0.09  # [m] most a limb's hold in b is from its hold in a [Ours]
 
 Q_HANG = pin.neutral(model)
 for name, angle in json.loads(HANG.read_text())["joints"].items():
@@ -171,6 +174,27 @@ def reach(targets):
     if abs(right_foot[2] - left_foot[2]) > MAX_LEVEL:
         level = abs(right_foot[2] - left_foot[2])
         return fail(f"reach: one foot too far above the other ({mm(level)} > {mm(MAX_LEVEL)})")
+    # check max distance between a hand and a foot
+    if (
+        abs(max(right_hand[2], left_hand[2]) - min(right_foot[2], left_foot[2]))
+        > HAND_FEET_MAX_APART
+    ):
+        level = abs(max(right_hand[2], left_hand[2]) - min(right_foot[2], left_foot[2]))
+        return fail(f"reach: a hand too far above a foot ({mm(level)} > {mm(HAND_FEET_MAX_APART)})")
+    return None
+
+
+def acceptable_transition(wall, a, b):
+    """Each limb's hold in b is at most MAX_TRANSITION_DISTANCE from its hold in a (straight
+    line, so up and sideways both count); a limb off any hold (None) in a or b is left out."""
+    position = {h.id: np.array(h.position) for h in wall.holds}
+    for limb in LIMBS:
+        hold_a, hold_b = a.contacts[limb], b.contacts[limb]
+        if hold_a is None or hold_b is None:
+            continue
+        step = norm(position[hold_b] - position[hold_a])
+        if step > MAX_TRANSITION_DISTANCE:
+            return fail(f"transition: {limb} too far ({mm(step)} > {mm(MAX_TRANSITION_DISTANCE)})")
     return None
 
 
@@ -233,9 +257,9 @@ def ik(wall, k):
             P = P - JP_pinv @ J @ P
 
         # last: trunk upright and facing the wall, as far as the balls allow
-        J = pin.getJointJacobian(model, data, 1, pin.LOCAL_WORLD_ALIGNED)[3:]
-        e = pin.log3(TRUNK_UPRIGHT @ data.oMi[1].rotation.T)
-        vq = vq + pinv(J @ P) @ (e - J @ vq)
+        # J = pin.getJointJacobian(model, data, 1, pin.LOCAL_WORLD_ALIGNED)[3:]
+        # e = pin.log3(TRUNK_UPRIGHT @ data.oMi[1].rotation.T)
+        # vq = vq + pinv(J @ P) @ (e - J @ vq)
 
         q = pin.integrate(model, q, vq * DT)
         q = projecttojointlimits(model, q)
@@ -313,6 +337,9 @@ def solve(
             # holds limb i can reach with the other three where they are
             children = [k[:i] + (hold,) + k[i + 1 :] for hold in z if hold not in k]
             children = [c for c in children if reach(targets(wall, c)) is None]
+            children = [
+                c for c in children if acceptable_transition(wall, stance(k), stance(c)) is None
+            ]
             for child in children:
                 if g[k] + 1 >= g.get(child, np.inf):
                     continue

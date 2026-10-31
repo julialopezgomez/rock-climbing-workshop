@@ -16,21 +16,21 @@ cd "$(dirname "$0")/../../.."  # the repository root
 #        the solver's starting guess for each move it has too (from the same stance to the same
 #        stance), so it converges faster; the other moves start as usual. "" for none. With
 #        W_TRACK > 0 the result is also kept near it (then it must have every move).
-PLAN="build/plan_N1_ik.json"
-GUESS="build/wall-1-ik.npz"
+PLAN="build/plan_N1.json"
+GUESS=""
 
 # --- Constraints -----------------------------------------------------------------------------------
-TAU_LIMIT=0.85   # motor torque limit, as a fraction of the servo's 0.605 N·m
+TAU_LIMIT=0.9   # motor torque limit, as a fraction of the servo's 0.605 N·m
 N_SAMPLES=12     # samples per move (more: finer, slower)
 
 # --- Cost weights (0 turns a term off) -----------------------------------------------------------
-W_TRACK=0        # stay near GUESS's motion (0: GUESS is only the starting guess)
+W_TRACK=50        # stay near GUESS's motion (0: GUESS is only the starting guess)
 W_TAU=1          # low motor torques
 W_SMOOTH=1       # smooth motion between samples
 W_NOMINAL=0.3      # posture: legs near a hand-designed pose (0: trust the reference instead)
 W_SPINE=2        # posture: spine leaning 25 deg from vertical
-W_SWING=60     # moving ball along the swing path (up, out, across, in, down)
-W_KEEP_OUT=10  # body out of the cups' layer
+W_SWING=5000     # moving ball along the swing path (up, out, across, in, down)
+W_KEEP_OUT=20000  # body out of the cups' layer
 W_HOOK=100         # hooks pointing up from their balls (into the cups from above)
 
 # --- Output ----------------------------------------------------------------------------------------

@@ -64,7 +64,7 @@ marked **CHANGE** below are the ones we expect to change.
 | `Trajectory` | `joint_names` | `list[str]` | Microban motor names; joints not listed keep Microban's neutral pose |
 | | `times` | `list[float]` s | from the start of the climb, strictly increasing |
 | | `positions` | `list[list[float]]` rad | one row per time, one column per joint: what the robot executes. **CHANGE** likely additions: velocities, gains, stance index |
-| | `planned_positions` | `list[list[float]] \| None` rad | optional: the optimiser's planned angles, before `positions` were pre-loaded against servo sag. Only for replay; the robot ignores it [Ours] |
+| | `planned_positions` | `list[list[float]] \| None` rad | optional: the optimiser's planned angles (today the same as `positions`: no pre-load against servo sag). Only for replay; the robot ignores it [Ours] |
 | | `trunk_poses` | `list[list[float]] \| None` | optional: the trunk per time, wall frame: `x, y, z` m, `qw, qx, qy, qz`. Only for replay; the robot ignores it [Ours] |
 | `Feasibility` | `feasible` | `bool` | |
 | | `cost` | `float` | lower is better; meaning owned by whoever provides the `FeasibilityFn`. **CHANGE** |

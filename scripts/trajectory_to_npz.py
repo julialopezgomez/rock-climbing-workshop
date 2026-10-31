@@ -6,13 +6,11 @@
 The input is a trajectory the optimiser saved (tests/test_optimiser.py --save, or
 src/rcr/optimiser/run.sh), with its planned motion (trunk_poses and planned_positions). The output:
 
-    q          T x 26  FOR THE ROBOT (Microban's move reads it): trunk position [m], trunk
-                       quaternion (w, x, y, z), then the 19 joint targets [rad] in
-                       rcr.types.MICROBAN_JOINTS order, pre-loaded against servo sag (the
-                       trajectory's `positions`: q_cmd = q + tau / kp), so the servos, sagging
-                       under load, end where planned. Without the pre-load, the robot sags.
-    q_planned  T x 26  the planned configuration itself (the joints without the pre-load), for
-                       comparing or playing in the sim; as iktrajv0.npz's q
+    q          T x 26  FOR THE ROBOT (Microban's move reads it), as the IK trajectories: trunk
+                       position [m], trunk quaternion (w, x, y, z), then the 19 joint targets [rad]
+                       in rcr.types.MICROBAN_JOINTS order (the trajectory's `positions`)
+    q_planned  T x 26  the planned configuration (the same as q now that the optimiser sends the
+                       planned angles as they are; kept for the sim and older files)
     times      T       [s] 0, 1/rate, 2/rate, ... up to the trajectory's end
     rate       the rate [Hz]
 
@@ -58,7 +56,6 @@ def resample(path: Path, rate: float) -> dict[str, np.ndarray]:
     times = np.asarray(traj.times)
     trunk = np.asarray(traj.trunk_poses)
     planned = np.asarray(traj.planned_positions)[:, order]
-    sent = np.asarray(traj.positions)[:, order]
 
     ticks = np.arange(0.0, times[-1] + 1e-9, 1.0 / rate)
     k = np.clip(np.searchsorted(times, ticks, side="right") - 1, 0, len(times) - 2)
@@ -69,7 +66,7 @@ def resample(path: Path, rate: float) -> dict[str, np.ndarray]:
 
     pose = np.hstack([linear(trunk[:, 0:3]), slerp(trunk[k, 3:7], trunk[k + 1, 3:7], s)])
     return {
-        "q": np.hstack([pose, linear(sent)]),  # what the robot is sent
+        "q": np.hstack([pose, linear(planned)]),  # what the robot is sent: the planned angles
         "q_planned": np.hstack([pose, linear(planned)]),
         "times": ticks,
         "rate": np.array(rate),

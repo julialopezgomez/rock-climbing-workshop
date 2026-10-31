@@ -141,10 +141,11 @@ class TransitionConfig:
     # out of its cup, out from the wall, across, in, and straight down into the new cup. Keeps the
     # ball off the cups without collision constraints; not a guarantee. 0 = off [Ours].
     # The ball clears a rim (3.6 mm above the socket centre, the organisers' cup_spheres.json)
-    # ~17 mm up. With 25 mm and 40 mm, the path stays >= 7.7 mm from every cup on N1 for every
-    # move to one of the 8 nearest holds (a cup in between included) [Ours].
+    # ~17 mm up. With 40 mm up (as the IK trajectory that climbed N1 on the robot lifts, 38 mm)
+    # and 40 mm out, the path stays >= 8 mm from every cup on N1 for every move to one of the 8
+    # nearest holds (a cup in between included) [Ours].
     w_swing: float = 5000.0  # weight on ||ball - path||^2 [1/m^2]
-    swing_lift: float = 0.025  # [m] straight up out of the cup, and down into the new one
+    swing_lift: float = 0.04  # [m] straight up out of the cup, and down into the new one
     swing_out: float = 0.04  # [m] out from the wall (-y) while going across
     swing_vertical: float = 0.25  # share of phase B going up (and again down); below 1/3
     # Push the body out of the layer the cups are in (wall-frame y from CUP_FRONT to the wall), at
@@ -161,7 +162,11 @@ class TransitionConfig:
     # feet's 5; without this, the solved hands lay at 82 deg, into the cup from the front, or
     # came from below it. 0 = off [Ours].
     w_hook: float = 10.0  # weight on (hook_up - upward component)^2
-    hook_up: float = 0.5
+    hook_up: float = 0.99  # the hands
+    # The feet, stricter: in the physics sim a foot arriving 30-57 deg from up caught the cup's
+    # rim with the stub above its ball and never went in; the organisers' hanging pose has its
+    # feet 5-11 deg from up. cos(15 deg) [Ours]
+    hook_up_feet: float = 0.966
     # Follow a reference motion (rcr.optimiser.reference, e.g. an IK trajectory): the distance
     # from it at every sample, the trunk's position scaled by track_position_scale [rad/m]. A
     # given reference is always the solve's starting point; w_track also keeps the result near
@@ -308,9 +313,11 @@ def intrusion(model: RobotModel, q, cfg: TransitionConfig):
 
 def hook_tilt(model: RobotModel, q, cfg: TransitionConfig):
     """How much flatter than allowed the hooks are: sum over the four limbs of
-    max(0, hook_up - u_z)^2, u the hook's direction from its ball (robot_model.hook_axes) in the
-    wall frame. Zero when every hook points up at least hook_up."""
-    return ca.sumsqr(ca.fmax(cfg.hook_up - model.hook_directions(q)[2, :], 0))
+    max(0, up - u_z)^2, u the hook's direction from its ball (robot_model.hook_axes) in the wall
+    frame, up = hook_up for the hands and hook_up_feet for the feet. Zero when every hook points
+    up at least that much."""
+    up = ca.DM([[cfg.hook_up_feet if limb.endswith("foot") else cfg.hook_up for limb in LIMBS]])
+    return ca.sumsqr(ca.fmax(up - model.hook_directions(q)[2, :], 0))
 
 
 def swing_point(start, target, s: float, cfg: TransitionConfig):

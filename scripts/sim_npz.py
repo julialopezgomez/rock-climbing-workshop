@@ -14,6 +14,7 @@ as scripts/plan_sim_wall.py names it). macOS needs mjpython for the window.
 import argparse
 import re
 import time
+from pathlib import Path
 
 import numpy as np
 from climbing_sim import JOINTS, ClimbingSim, Wall
@@ -36,6 +37,12 @@ def main() -> None:
     parser.add_argument("--headless", action="store_true", help="no window")
     args = parser.parse_args()
 
+    if not Path(args.npz).exists():
+        source = Path(args.npz).with_suffix(".json")
+        hint = (
+            f"uv run scripts/trajectory_to_npz.py {source}" if source.exists() else "solve it first"
+        )
+        raise SystemExit(f"no {args.npz}: {hint}")
     data = np.load(args.npz)
     sent = data[args.key]
     planned = data["q_planned"] if "q_planned" in data.files else sent

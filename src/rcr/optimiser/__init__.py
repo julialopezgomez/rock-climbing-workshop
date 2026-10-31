@@ -14,11 +14,6 @@ from rcr.types import MICROBAN_JOINTS, ContactPlan, Trajectory, WallModel
 if TYPE_CHECKING:
     from rcr.optimiser.transition import TransitionConfig, TransitionResult
 
-# Servo stiffness, to pre-load each target against its expected sag (q_cmd = q + tau / kp).
-KP_DEFAULT = 400  # [register units] the servos' P gain [Microban constants.py]
-KP_GAIN_PRM = 0.0022  # [N·m/rad per register unit] for the XL330 [Microban constants.py]
-SERVO_KP = KP_DEFAULT * KP_GAIN_PRM  # [N·m/rad], about 0.88
-
 
 def optimise(wall: WallModel, plan: ContactPlan) -> Trajectory:
     """The full joint trajectory the robot executes for this plan."""
@@ -93,9 +88,10 @@ def validate_plan(wall: WallModel, plan: ContactPlan) -> None:
 
 
 def to_trajectory(results: list[TransitionResult], cfg: TransitionConfig) -> Trajectory:
-    """Chain the transitions' samples (each starts on the previous one's last), time them, and
-    pre-load each motor target against its sag: q_cmd = q + tau / SERVO_KP. The planned angles
-    and the trunk poses go along, for replaying the plan exactly in the sim."""
+    """Chain the transitions' samples (each starts on the previous one's last) and time them.
+    The motors are sent the planned angles as they are, as the IK trajectory that climbed N1 on
+    the robot was: no pre-load against servo sag (q + tau / kp made it worse on the robot, its kp
+    being uncertain) [Ours]. The planned angles and the trunk poses go along, for the sim."""
     import numpy as np
 
     times, qs, rows, start = [], [], [], 0.0
@@ -103,7 +99,7 @@ def to_trajectory(results: list[TransitionResult], cfg: TransitionConfig) -> Tra
         for k in range(0 if i == 0 else 1, len(result.q)):
             times.append(start + sample_time(k, cfg))
             qs.append(result.q[k])
-            rows.append(result.q[k][7:] + result.tau[k] / SERVO_KP)
+            rows.append(result.q[k][7:])
         start += sample_time(len(result.q) - 1, cfg)
 
     def table(rows):

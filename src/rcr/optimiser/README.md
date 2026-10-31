@@ -13,14 +13,14 @@ Turns a contact plan into the joint motion the robot executes. Runs on the lapto
 | [`transition.py`](transition.py) | **the solver**: the settings (`TransitionConfig`), the constraints of one pose, the two problems (a static pose and a transition), and how they are solved |
 | [`robot_model.py`](robot_model.py) | the robot's kinematics in CasADi, read from Microban's URDF: ball positions, Jacobians, centre of mass, gravity torques; the body's keep-out points, from its MJCF meshes |
 | [`reference.py`](reference.py) | a reference motion to follow (e.g. an IK trajectory): its wall, plan and timing read from it, cut onto each move's samples |
-| [`__init__.py`](__init__.py) | `optimise`: solves the plan move by move, times the samples, and pre-loads the motor targets against sag |
+| [`__init__.py`](__init__.py) | `optimise`: solves the plan move by move, times the samples, and builds the trajectory |
 
 ## How a plan is solved
 1. **Start pose.** A static pose of the plan's first stance: balanced, four balls on their holds, least torque
    (`stance_pose`).
 2. **One move per pair of stances.** Each move changes one limb's hold. It starts where the previous move ended and
    ends when the moving ball is on its new hold; the rest of the body ends wherever is cheapest (`solve_transition`).
-3. **Trajectory.** The samples of all moves, one after another, timed and pre-loaded (`to_trajectory`).
+3. **Trajectory.** The samples of all moves, one after another, timed (`to_trajectory`).
 
 ## One move: the problem (`transition_problem`)
 Quasi-static: no inertia, every sample is a pose the robot can hold still. Samples k = 0..N (N = 12). The same list is
@@ -76,7 +76,7 @@ hold pushes its ball with. The torques follow from these through the static bala
 
 With v = 0.25 and N − K = 8, that is 2 sample intervals up, 1 out, 2 across, 1 in and 2 down. `ball(q)` is the moving
 ball's centre (forward kinematics). It's a cost, so the ball is pulled towards the path, not held on it: `w_swing` sets
-how hard. The ball clears a cup's rim about 17 mm up; with the defaults, the path stays at least 7.7 mm from every cup
+how hard. The ball clears a cup's rim about 17 mm up; with the defaults, the path stays at least 8 mm from every cup
 of N1 for every move to one of a hold's 8 nearest holds. It only steers the moving ball; the rest of the body can still
 touch.
 
@@ -138,9 +138,10 @@ path (`_rescue`).
 Each problem is built once and re-solved with new numbers (start, holds, target): building costs more than solving.
 
 ## Output
-Per sample, the 19 motor targets pre-loaded against servo sag: `q_cmd = q + tau / kp`, with
-`kp = 400 × 0.0022 = 0.88 N·m/rad` [Microban constants.py]. Times are set after solving: phase A takes 1 s and phase B
-2 s, so a move takes 3 s.
+Per sample, the 19 planned motor angles, sent as they are. There is no pre-load against servo sag (it was
+`q + tau / kp`, `kp` = 0.88 N·m/rad): the IK trajectory that climbed N1 on the robot had none, and with it ours did
+worse on the robot (the sim's servo model has `kp` ≈ 1.2 at 7.5 V, and it changes with the battery). Times are set
+after solving: phase A takes 1 s and phase B 2 s, so a move takes 3 s.
 
 ## How to run
 **Simplest:** set the weights and what to solve at the top of [`run.sh`](run.sh), then `bash src/rcr/optimiser/run.sh`.
@@ -189,7 +190,7 @@ the move, IPOPT's status and the largest constraint violation.
 | `spine_target`, `w_spine` | 25° from vertical; 2 | [Ours] |
 | `midpoints`, `midpoint_play` | on, 1 mm | without them, +8 % torque and 4 mm ball drift between samples [Ours] |
 | `w_swing` | 5000 | not yet tuned [Ours] |
-| `swing_lift`, `swing_out`, `swing_vertical` | 25 mm, 40 mm, 0.25 | clear of every cup on N1 by ≥ 7.7 mm (above) [Ours] |
+| `swing_lift`, `swing_out`, `swing_vertical` | 40 mm, 40 mm, 0.25 | as the IK that climbed N1 on the robot lifts (38 mm); clear of every cup on N1 by ≥ 8 mm [Ours] |
 | `w_track`, `track_position_scale` | 0 (10 with `--track`), 10 rad/m | at 10, a 3° miss on every joint costs ~0.5 per pose against ~0.075 of torque [Ours] |
 | `w_hook`, `hook_up` | 10, 0.5 (60° from up) | on N2, a too flat hook cost ~1.7 per pose against ~0.075 of torque; not tuned [Ours] |
 | `w_keep_out`, `cup_clearance` | 20000, 5 mm | a corner 1 cm past the limit costs about a whole move's torque (~2 on N2); not tuned further [Ours]; `CUP_FRONT` from the organisers' sim |
