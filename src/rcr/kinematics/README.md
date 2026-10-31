@@ -66,6 +66,7 @@ first a kinematic motion, then we see. All in `ik.py`.
 | `ABOVE` | 0.025 m | up out of socket a before moving out; above socket b before coming down |
 | `OUT` | 0.04 m | in front of the sockets while going across (66 mm from the wall) |
 | `MOVE_TIME`, `DT` | 2.0 s, 0.02 s | per move; between samples (the robot's 50 Hz loop) |
+| `WAIT_TIME` | 0.5 s | each move ends holding still in b's stance pose, where the next move starts |
 | `POSTURE_GAIN`, `JOINT_TOL`, `BLEND_TIME` | 0.1, 0.01 rad, 0.3 s | the stance pose (above); the blend lasts long enough to stay under `SPEED_MARGIN` |
 | `HELD_WEIGHT`, `REGULARISATION` | 1e3, `DAMPING`² | the QP: a held ball's weight (the moving one's is 1); on ‖v‖² |
 | `JOINT_MARGIN`, `SPEED_MARGIN`, `SLACK_WEIGHT` | 0.1 rad, 0.8, 1e2 | the QP: how far inside its limits it tries to stay, and at what cost |

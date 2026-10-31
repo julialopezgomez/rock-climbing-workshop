@@ -54,6 +54,7 @@ POSTURE_GAIN = 0.1  # fraction of each joint's gap to the posture closed per IK 
 SETTLED = 1e-5  # an IK step this small (norm of the change of q): q has stopped moving
 JOINT_TOL = 0.01  # [rad] a move ending this close to b's stance pose jumps to it; further, blends
 BLEND_TIME = 0.3  # [s] min-jerk from where a move ended to b's stance pose, balls held, at least
+WAIT_TIME = 0.5  # [s] each move ends holding still in b's stance pose, where b -> c starts [Ours]
 # The QP IK (ik_step_qp) [Ours]: its tasks' weights, and how far inside its limits it tries to stay
 HELD_WEIGHT = 1e3  # a held ball's task, against the moving ball's 1: the held stay in their sockets
 REGULARISATION = DAMPING**2  # on the step, like damped(): bounded where a limb is stretched out
@@ -345,8 +346,9 @@ def track_move(wall: WallModel, a: Stance, b: Stance, q0):
     on ball_path, the others' their sockets), the joints pulled toward the hang pose's. Where the
     path is out of the limb's reach, the moving ball only gets as close as it can (ik_step). It
     ends exactly in b's stance pose, where b -> c starts: from within JOINT_TOL it jumps there,
-    from further it blends there over BLEND_TIME, balls held. Also the moving ball's worst distance
-    from its path [m]. ValueError, naming the move, if a ball gets MAX_ERROR from its socket."""
+    from further it blends there over BLEND_TIME, balls held; then holds still there for
+    WAIT_TIME. Also the moving ball's worst distance from its path [m]. ValueError, naming the
+    move, if a ball gets MAX_ERROR from its socket."""
     limb = moving_limb(a, b)
     move = f"{limb} {a.contacts[limb]} -> {b.contacts[limb]}"
     i = LIMBS.index(limb)
@@ -378,6 +380,7 @@ def track_move(wall: WallModel, a: Stance, b: Stance, q0):
                 raise ValueError(f"{move}: a ball {e * 1000:.0f} mm from its socket in the blend")
             out.append(q)
     out[-1] = qb
+    out += [qb] * round(WAIT_TIME / DT)
     return out, worst
 
 
