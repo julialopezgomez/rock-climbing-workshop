@@ -5,6 +5,7 @@ or labelled hold geometry is read. The former PRNG stage is replaced by bounded
 support-plane and local-pose recovery against the observed images.
 """
 
+import itertools
 import time
 
 import cv2
@@ -105,7 +106,23 @@ def on_face(point, triangle, margin=0.08):
     return bool(min(coordinates) >= -margin and coordinates.sum() <= 1 + margin)
 
 
-def infer(images, calibration):
+def prioritize_pairs(pairs, parts, losses):
+    """Interleave paint groups, visiting their lowest CPU hull losses first."""
+    if len(losses) != len(pairs):
+        raise ValueError("Pair losses must match the number of stereo correspondences")
+    groups = []
+    for hue in range(3):
+        group = [
+            (losses[index], index, pair)
+            for index, pair in enumerate(pairs)
+            if parts[0][pair[0]]["hue_group"] == hue
+        ]
+        groups.append(sorted(group))
+    return [item[2] for row in itertools.zip_longest(*groups) for item in row if item is not None]
+
+
+def infer(images, calibration, *, deadline=None, pair_losses=None):
+    """Fit complete hold hypotheses; an optional deadline stops between holds."""
     started = time.perf_counter()
     geometry = SceneGeometry.from_calibration(calibration)
     k, t = _calibration(calibration)
@@ -115,11 +132,16 @@ def infer(images, calibration):
     )
     planes = support_planes(geometry, volumes)
     pairs = match_proposals(*parts, k, t, geometry)
+    total_pairs = len(pairs)
+    if pair_losses is not None:
+        pairs = prioritize_pairs(pairs, parts, pair_losses)
+    if deadline is not None and time.perf_counter() >= deadline:
+        pairs = []
     maximum_depth = max([v["parameters"][3] for v in volumes] + [0.05]) + 0.08
     renders = {}
     holds, diagnostics = {}, []
     try:
-        for kind in sorted(TYPES):
+        for kind in sorted(TYPES) if pairs else []:
             renders[kind] = ExactRenderer(
                 kind=kind,
                 wall=True,
@@ -128,6 +150,8 @@ def infer(images, calibration):
                 volumes=[v["parameters"] for v in volumes],
             )
         for left, right in pairs:
+            if deadline is not None and time.perf_counter() >= deadline:
+                break
             selected = [parts[0][left], parts[1][right]]
             obs = observations(
                 images, selected, [np.zeros(image.shape[:2], bool) for image in images]
@@ -223,6 +247,9 @@ def infer(images, calibration):
         return holds, dict(
             method="four_type_scene_CAD",
             runtime_s=time.perf_counter() - started,
+            partial=len(diagnostics) < total_pairs,
+            processed_pairs=len(diagnostics),
+            available_pairs=total_pairs,
             left_proposals=len(parts[0]),
             right_proposals=len(parts[1]),
             objects=diagnostics,

@@ -118,6 +118,10 @@ uv run scripts/wall_generator.py N1 N2 N3                 # their walls -> data/
 
 ## Perception
 
+For release ZIPs sorted into `real/` and `sim/`, use `perception_submit_folders.sh`
+from the [submission guide](docs/perception/SUBMISSION.md). It returns matching
+image-plus-JSON ZIPs under one eight-minute budget.
+
 For the ten-minute image challenge, use the [submission launcher](docs/perception/SUBMISSION.md).
 It accepts the release ZIPs and writes the JSON files and a submission ZIP within
 a fixed computation budget. Install and check its runtime before release.

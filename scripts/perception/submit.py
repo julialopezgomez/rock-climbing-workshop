@@ -189,6 +189,14 @@ def stop_process(process):
 
 def run_worker(args):
     task = json.loads(args.worker.read_text())
+    if "fit_seconds" in task:
+        os.environ["RCR_IMAGE_FIT_SECONDS"] = str(task["fit_seconds"])
+    try:
+        import cv2
+    except ImportError:
+        pass
+    else:
+        cv2.setNumThreads(1)
     module, function = task["engine"].split(":", 1)
     getattr(importlib.import_module(module), function)(
         task["stereo"],
@@ -249,7 +257,7 @@ def gpu_preflight(args):
         raise
 
 
-def run(args, started):
+def run(args, started, on_package=None):
     lock = gpu_preflight(args)
     if args.check:
         lock.close()
@@ -287,6 +295,8 @@ def run(args, started):
             errors=errors,
             native_enabled=bool(args.native_hold_count),
         )
+        if on_package is not None:
+            on_package(report)
         print(
             f"{report['inferred']}/{len(cases)} inferred; {report['elapsed_s']:.1f}s; "
             f"ZIP: {report['submission']}",
@@ -308,6 +318,7 @@ def run(args, started):
                         stereo=str(source / "stereo.png"),
                         calibration=str(source / "calibration.json"),
                         output=str(folder),
+                        fit_seconds=args.case_seconds,
                     ),
                 )
                 process = launch(
@@ -382,6 +393,11 @@ def run(args, started):
                 str(args.native_hold_count),
                 "--workers",
                 str(args.workers),
+                *(
+                    ["--native-workers", str(args.native_workers)]
+                    if getattr(args, "native_workers", None)
+                    else []
+                ),
                 "--out",
                 str(refined),
                 "--gpu-confirmed",
@@ -514,6 +530,8 @@ def run(args, started):
                 errors=errors,
                 native_enabled=bool(args.native_hold_count),
             )
+            if on_package is not None:
+                on_package(report)
             print(
                 json.dumps({k: v for k, v in report.items() if k != "cases"}, indent=2), flush=True
             )

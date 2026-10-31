@@ -42,7 +42,13 @@ def render_ids(scene, calibration):
     for kind in kinds:
         path = cache / (kind + ".stl")
         if not path.exists():
-            normalized_mesh(kind).export(path)
+            # Parallel verifiers must never open a partly written shared mesh.
+            temporary = cache / f".{kind}.{os.getpid()}.stl"
+            try:
+                normalized_mesh(kind).export(temporary)
+                temporary.replace(path)
+            finally:
+                temporary.unlink(missing_ok=True)
         spec.add_mesh(name=kind, file=str(path))
     wall = scene["scene"]["wall"]
     spec.worldbody.add_geom(

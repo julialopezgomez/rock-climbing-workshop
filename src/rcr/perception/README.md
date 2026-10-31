@@ -1,5 +1,10 @@
 # Perception
 
+`perception_submit_folders.sh` processes `real/` and `sim/` ZIPs together under
+one eight-minute budget, preserves their images and archive names, and adds
+predicted JSONs. GPU fitting stops after completed hold pairs; eight worker processes
+handle native candidates. See the submission guide below.
+
 The [competition launcher](../../../docs/perception/SUBMISSION.md) accepts image
 ZIPs and produces correctly named scene JSON files under a 540-second budget.
 It uses CPU CAD proposals and native recovery first, then GPU CAD fitting for

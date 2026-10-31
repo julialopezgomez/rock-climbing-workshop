@@ -1,5 +1,95 @@
 # Ten-minute perception submission
 
+## Real/sim folders: eight-minute batch
+
+Put the release ZIPs in two directories:
+
+```text
+/workspace/perception/samples/
+    real/
+        real_batch.zip
+    sim/
+        sim_batch.zip
+```
+
+These directories are ready in this workspace. Each ZIP may contain several
+stereo images. Run both groups together:
+
+```bash
+cd /workspace/students/rock-climbing-workshop
+export RCR_GPU_LOCK=/workspace/development/outputs/perception/gpu_experiment.lock
+./perception_submit_folders.sh /workspace/perception/samples --out outputs
+```
+
+The result preserves the group and archive names:
+
+```text
+outputs/
+    real/real_batch.zip
+    sim/sim_batch.zip
+    perception_manifest.json
+```
+
+Each output ZIP contains the original images, byte for byte, and their predicted
+JSON files at the original internal directory paths. For example,
+`real_batch/scene_cam1_0001.png` is paired with
+`real_batch/scene_0001.json`. Input JSON files are ignored and replaced by
+predictions. Image basenames may repeat in different archives. Existing output
+archives are protected; use a fresh `--out` directory for another attempt.
+
+The command counts stereo images across both folders, including every ZIP.
+Its total budget is `min(480, 24 × image_count)` seconds from command startup,
+including input preparation and output packaging. The image-fit cap is
+`min(24, total_budget / image_count)` seconds. Twenty images therefore allow
+24 seconds per fit; forty allow 12. The generator search shares the batch budget
+and is not run independently for each image.
+
+Four image jobs run concurrently. The GPU fitter prioritizes well-supported
+components across all three paint colours and saves completed hold fits before
+its timeout. Eight worker processes generate and verify native-scene candidates.
+A partial fit replaces the current submission only after native verification
+accepts a complete scene. The manifest records errors and unresolved cases;
+output ZIPs update throughout the run. `--seconds 360` reduces the shared limit
+if less time remains. Increasing `--seconds` cannot exceed the eight-minute cap.
+
+### Timed folder tests
+
+The final code completed both groups within the same budget. Scores below use
+the supplied upstream scoring function, applied to the JSONs inside the actual
+delivered ZIPs. Zero is the minimum error in both modes.
+
+| Run | Images | Per-image fitting cap | Total elapsed | Hold score | With volumes |
+|---|---:|---:|---:|---:|---:|
+| Initial strict cap | 10 real + 10 sim | 24 s | 148.02 s | 0 | 0 |
+| Optimized | 10 real + 10 sim | 24 s | **118.38 s** | **0** | **0** |
+| Optimized | 20 real + 20 sim | 12 s | **169.35 s** | **0** | **0** |
+
+The initial run killed one optional GPU fit and retained a correct earlier
+prediction, leaving an uncertainty warning. Both optimized runs completed with
+no errors or uncertain outputs. The 40-image run used partial CAD anchors in ten
+of its eleven GPU refinements; native recovery then reconstructed each complete
+scene. Its slowest saved GPU fit took 10.64 s from task creation to prediction.
+The slowest fit in the 20-image run took 13.65 s, below its 24 s cap.
+
+Repeated raster results are reused without changing the fitting objective.
+Completed hold pairs survive the internal fitting cutoff. Candidate generation
+and verification run in separate worker processes, while each OpenCV worker uses
+one thread to avoid competing thread pools. A cached 20-case check produced
+identical predictions and diagnostics with serial and eight-worker verification;
+that stage took 17.95 s and 8.34 s respectively on the GPU renderer.
+
+The 20-case subset deliberately includes both prior CPU failure cases and overlaps
+the 40-case set. These are regression tests of this distribution, not 60 independent
+scenes. All original image bytes, archive paths and predicted JSON names were
+checked. [Detailed results](grouped_submission_results.json) retain errors from
+the initial trial, per-image times, scores and source hashes.
+
+An eight-second-budget interruption test finished in 3.97 s with all
+20 original images and explicit empty JSON fallbacks packaged into the four
+archives. It returned exit code 2 and a partial manifest.
+
+## Single submission ZIP
+
 Run from the team repository. The runtime and model assets must already be
 installed before the competition starts.
 
@@ -106,7 +196,10 @@ export RCR_GPU_LOCK=/workspace/development/outputs/perception/gpu_experiment.loc
 The timed rehearsals below test estimation accuracy. Keep the GPU available at
 release time, and allow time to download the images and upload the resulting ZIP.
 
-## Measured results
+## Earlier full-fit measurements
+
+These measurements precede the grouped, bounded-anchor changes above. Their
+source hashes and outputs are preserved separately.
 
 The final launcher processed all four supplied archives together after every
 reference JSON had been removed. The actual upload ZIP was evaluated with the

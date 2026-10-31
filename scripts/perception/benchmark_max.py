@@ -12,7 +12,7 @@ import os
 import subprocess
 import sys
 import time
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from multiprocessing import get_context
 from pathlib import Path
 
@@ -35,6 +35,43 @@ def write(path, value):
     temporary.replace(path)
 
 
+def verify_record(task):
+    record, candidates = task
+    if candidates is None:
+        prediction, native = (
+            record["prediction"],
+            dict(accepted=False, reason="Native recovery not requested"),
+        )
+    else:
+        import cv2
+
+        from rcr.perception.challenge.native_recovery import select_candidate
+
+        cv2.setNumThreads(1)
+        prediction, native = select_candidate(record, candidates)
+    return record["id"], prediction, native
+
+
+def verify_records(records, candidates, workers=1):
+    """Keep each case's candidate order, and publish completed cases promptly."""
+    grouped = {}
+    for candidate in candidates or []:
+        grouped.setdefault(candidate["id"], []).append(candidate)
+    tasks = [
+        (record, grouped.get(record["id"], []) if candidates is not None else None)
+        for record in records
+    ]
+    if workers == 1 or len(tasks) < 2 or candidates is None:
+        yield from map(verify_record, tasks)
+        return
+    with ProcessPoolExecutor(
+        max_workers=min(workers, len(tasks)), mp_context=get_context("spawn")
+    ) as pool:
+        futures = [pool.submit(verify_record, task) for task in tasks]
+        for future in as_completed(futures):
+            yield future.result()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     group = parser.add_mutually_exclusive_group(required=True)
@@ -44,6 +81,12 @@ def main():
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--only", nargs="*")
     parser.add_argument("--workers", type=int, choices=range(1, 5), default=4)
+    parser.add_argument(
+        "--native-workers",
+        type=int,
+        choices=range(1, 33),
+        help="CPU workers for native generation and verification; image workers are separate",
+    )
     parser.add_argument(
         "--native-hold-count",
         type=int,
@@ -96,10 +139,13 @@ def main():
         if result.returncode and (args.out / "run.log").exists():
             print((args.out / "run.log").read_text()[-6000:], file=sys.stderr)
         return result.returncode
-    from rcr.perception.challenge.native_recovery import generate_candidates, select_candidate
+    from rcr.perception.challenge.native_recovery import generate_candidates
     from rcr.perception.challenge.score_pose import shrink_finger_yaw
 
     started = time.perf_counter()
+    if args.native_workers:
+        os.environ["OPENBLAS_NUM_THREADS"] = "1"
+        os.environ["OMP_NUM_THREADS"] = "1"
     if args.dataset:
         manifest = json.loads((args.dataset / "manifest.json").read_text())
         cases = [c["id"] for c in manifest["cases"] if not args.only or c["id"] in args.only]
@@ -141,27 +187,21 @@ def main():
             records,
             hold_count=args.native_hold_count,
             out=args.out / "search",
-            workers=args.workers,
+            workers=args.native_workers or args.workers,
             **{key: runtime[key] for key in ("node", "source", "scanner", "three")},
         )
         if runtime
         else None
     )
     selected = {}
-    for record in records:
-        selected[record["id"]] = (
-            select_candidate(record, generated["results"])
-            if generated
-            else (
-                record["prediction"],
-                dict(accepted=False, reason="Native recovery not requested"),
-            )
-        )
-        prediction, native = selected[record["id"]]
+    for identifier, prediction, native in verify_records(
+        records, generated["results"] if generated else None, args.native_workers or 1
+    ):
+        selected[identifier] = prediction, native
         if native["accepted"]:
             # Preserve completed improvements if a submission deadline stops
             # the remaining candidate search.
-            folder = args.out / record["id"]
+            folder = args.out / identifier
             write(folder / "prediction.json", prediction)
             write(folder / "holds.json", prediction["holds"])
             write(folder / "debug.json", {"native": native})
@@ -176,17 +216,18 @@ def main():
             uncertain,
             hold_count=args.native_hold_count,
             out=args.out / "retry",
-            workers=args.workers,
+            workers=args.native_workers or args.workers,
             seed_candidates=generated["seed_candidates"],
             broad=True,
             **{key: runtime[key] for key in ("node", "source", "scanner", "three")},
         )
-        for record in uncertain:
-            prediction, native = select_candidate(record, generated["results"] + retry["results"])
+        for identifier, prediction, native in verify_records(
+            uncertain, generated["results"] + retry["results"], args.native_workers or 1
+        ):
             native["retried_all_volume_counts"] = True
-            selected[record["id"]] = prediction, native
+            selected[identifier] = prediction, native
             if native["accepted"]:
-                folder = args.out / record["id"]
+                folder = args.out / identifier
                 write(folder / "prediction.json", prediction)
                 write(folder / "holds.json", prediction["holds"])
                 write(folder / "debug.json", {"native": native})

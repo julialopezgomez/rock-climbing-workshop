@@ -213,6 +213,29 @@ def test_empty_estimator_result_is_not_reported_as_inferred(runner, tmp_path):
     assert cases[0]["status"] == "empty_prediction"
 
 
+def test_worker_forwards_image_fit_budget(runner, tmp_path, monkeypatch):
+    received = []
+
+    def predict(*args):
+        received.append((os.environ["RCR_IMAGE_FIT_SECONDS"], args))
+
+    monkeypatch.setitem(sys.modules, "budget_frontend", SimpleNamespace(predict=predict))
+    monkeypatch.setenv("RCR_IMAGE_FIT_SECONDS", "old")
+    task = tmp_path / "task.json"
+    runner.write_json(
+        task,
+        dict(
+            engine="budget_frontend:predict",
+            fit_seconds=24,
+            stereo="rgb.png",
+            calibration="rig.json",
+            output="out",
+        ),
+    )
+    assert runner.run_worker(SimpleNamespace(worker=task)) == 0
+    assert received == [("24", ("rgb.png", "rig.json", "out"))]
+
+
 def test_adaptive_pass_refines_uncertain_case_and_protects_native_output(
     runner, tmp_path, monkeypatch
 ):

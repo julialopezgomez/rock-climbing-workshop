@@ -31,8 +31,8 @@ def fit_plane(initial, r, normal, plane_point, obs, k, t, rounds=3, *, render):
     p[2] = plane_point[2] - (n[0] * (p[0] - plane_point[0]) + n[1] * (p[1] - plane_point[1])) / n[2]
     center = r @ render.center
     yy, xx = np.mgrid[:64, :64].astype(np.float32)
+    softs = render_pair(p, r, obs, k, t, render=render)
     for it in range(rounds):
-        softs = render_pair(p, r, obs, k, t, render=render)
         uv0 = [_project(p + center, ki, ti)[0] for ki, ti in zip(k, t, strict=False)]
 
         def unpack(x, *, p=p):
@@ -72,13 +72,12 @@ def fit_plane(initial, r, normal, plane_point, obs, k, t, rounds=3, *, render):
             options={"maxiter": 6, "xtol": 0.001, "ftol": 1e-06},
         )
         q = unpack(fit.x)
-        if (
-            loss_images(render_pair(q, r, obs, k, t, render=render), obs) > loss_images(softs, obs)
-            and it > 0
-        ):
+        trial_softs = render_pair(q, r, obs, k, t, render=render)
+        if loss_images(trial_softs, obs) > loss_images(softs, obs) and it > 0:
             break
         p = q
-    return (p, r, loss_images(render_pair(p, r, obs, k, t, render=render), obs))
+        softs = trial_softs
+    return (p, r, loss_images(softs, obs))
 
 
 def plane_initial(props, k, t, r, n, a, *, render):

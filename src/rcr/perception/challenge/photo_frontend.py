@@ -6,6 +6,8 @@ fitter. Native recovery receives these same observations, never reference JSON.
 """
 
 import json
+import os
+import time
 from pathlib import Path
 
 import cv2
@@ -62,25 +64,87 @@ def canonical_rgb(rgb):
     return result
 
 
-def hold_prediction(stereo, calibration, out):
-    """Fit a stereo pair and save observations for optional native recovery."""
-    from .cli import hold_prediction as fit_cad
-
+def _prepare_inputs(stereo, calibration, out):
     out = Path(out)
     out.mkdir(parents=True, exist_ok=True)
     rgb = np.asarray(Image.open(stereo).convert("RGB"))
+    calibration = json.loads(Path(calibration).read_text())
+    if rgb.shape[1] % 2 or (rgb.shape[1] // 2, rgb.shape[0]) != (
+        calibration["image_width"],
+        calibration["image_height"],
+    ):
+        raise ValueError("Stereo dimensions differ from declared calibration")
     style, fraction = appearance(rgb)
     normalized = canonical_rgb(rgb) if style == "real" else rgb
     native_stereo = out / "native_stereo.png"
     Image.fromarray(normalized).save(native_stereo)
-    native_calibration = json.loads(Path(calibration).read_text())
+    native_calibration = dict(calibration)
     native_calibration["appearance"] = style
     native_calibration["competition_rendering"] = True
     native_calibration["native_volume_counts"] = [0, 3]
     native_calibration["native_ignore_volume_mask"] = True
     native_calibration["native_partial_paint_masks"] = True
     (out / "native_calibration.json").write_text(json.dumps(native_calibration, indent=2) + "\n")
-    prediction, debug = fit_cad(native_stereo, calibration, out)
+    return normalized, calibration, style, fraction
+
+
+def hold_prediction(stereo, calibration, out):
+    """Fit a stereo pair and save observations for optional native recovery."""
+    from .cli import hold_prediction as fit_cad
+
+    out = Path(out)
+    _, _, style, fraction = _prepare_inputs(stereo, calibration, out)
+    prediction, debug = fit_cad(out / "native_stereo.png", calibration, out)
     debug["appearance"] = dict(style=style, bright_paint_fraction=fraction)
     (out / "debug.json").write_text(json.dumps(debug, indent=2, allow_nan=False) + "\n")
     return prediction, debug
+
+
+def budgeted_hold_prediction(stereo, calibration, out):
+    """Save completed CAD anchors within the declared per-image time budget.
+
+    RCR_IMAGE_FIT_SECONDS includes normalization and CPU proposal ranking.
+    Two seconds are reserved for process startup, the final hold and file output.
+    Partial anchors require subsequent native verification before replacing a
+    previously accepted full-scene prediction.
+    """
+    from .cpu_frontend import estimate as cpu_estimate
+    from .src.hold_scene import infer
+    from .src.rcr_contract import write_prediction
+
+    started = time.perf_counter()
+    budget = float(os.environ.get("RCR_IMAGE_FIT_SECONDS", "12"))
+    if not np.isfinite(budget) or budget <= 2:
+        raise ValueError("Image fitting budget must exceed two seconds")
+    deadline = started + budget - 2.0
+    out = Path(out)
+    normalized, calibration, style, fraction = _prepare_inputs(stereo, calibration, out)
+    _, cpu_debug = cpu_estimate(normalized, calibration)
+    width = normalized.shape[1] // 2
+    holds, debug = infer(
+        [normalized[:, :width], normalized[:, width:]],
+        calibration,
+        deadline=deadline,
+        pair_losses=cpu_debug["losses"],
+    )
+    debug.update(
+        appearance=dict(style=style, bright_paint_fraction=fraction),
+        image_fit_runtime_s=debug["runtime_s"],
+        runtime_s=time.perf_counter() - started,
+        requested_engine_budget_s=budget,
+        reserve_s=2.0,
+        ordering="CPU hull loss, interleaved paint groups",
+    )
+    (out / "image_holds.json").write_text(json.dumps(holds, indent=2) + "\n")
+    volumes = [
+        dict(
+            name=f"Volume_{i}",
+            center=dict(x=v["parameters"][0], y=v["parameters"][1]),
+            baseWidth=v["parameters"][2],
+            baseHeight=v["base_height"],
+            depth=v["parameters"][3],
+        )
+        for i, v in enumerate(debug["volumes"])
+    ]
+    write_prediction(out, holds, calibration, 0, debug, volumes=volumes)
+    return holds, debug
