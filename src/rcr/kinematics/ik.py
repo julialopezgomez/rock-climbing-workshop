@@ -41,8 +41,7 @@ DT = 0.02  # [s] between samples: the robot's 50 Hz loop
 GAIN = 0.5  # fraction of a ball's tracking error corrected per sample [Ours]
 LOCK_PASSES = 4  # ik_step: solves at most, each locking the joints it would push past a limit
 MAX_ERROR = 0.01  # [m] a held ball further than this from its socket: the move cannot be done
-DAMPING = 0.03  # damped(): the moving ball's and the trunk's tasks [Ours]
-ITERATIONS = 3  # IK steps per sample, toward that sample's targets [Ours]
+ITERATIONS = 10  # IK steps per sample, toward that sample's targets [Ours]
 # [m] the trunk's origin above the mean height of the four balls' targets [Ours]: the hang pose
 # fitted to the start stance has it 7 mm below; raised 2 cm, the balls still reach their sockets
 # with no joint at a limit (3 cm puts two at one)
@@ -56,11 +55,10 @@ SETTLED = 1e-5  # an IK step this small (norm of the change of q): q has stopped
 JOINT_TOL = 0.01  # [rad] a move ending this close to b's stance pose jumps to it; further, blends
 BLEND_TIME = 0.3  # [s] min-jerk from where a move ended to b's stance pose, balls held, at least
 # The QP IK (ik_step_qp) [Ours]: its tasks' weights, and how far inside its limits it tries to stay
-HELD_WEIGHT = 1e3  # a held ball's task, against the moving ball's 1: the held stay in their sockets
-REGULARISATION = DAMPING**2  # on the step, like damped(): bounded where a limb is stretched out
+HELD_WEIGHT = 10  # a held ball's task, against the moving ball's 1: the held stay in their sockets
 JOINT_MARGIN = 0.1  # [rad] the joints try to stay this far inside their limits (slack)
 SPEED_MARGIN = 0.8  # the joints try to stay under this fraction of their speed limits (slack)
-SLACK_WEIGHT = 1e2  # on the squared slack [rad^2]: inside the margins only if the balls need it
+SLACK_WEIGHT = 10  # on the squared slack [rad^2]: inside the margins only if the balls need it
 MANIPULABILITY_GAIN = 1e-5  # on the gradient of the moving limb's log-manipulability
 
 # trunk free: q = (x, y, z, qx, qy, qz, qw, 19 joints)
@@ -104,10 +102,10 @@ def balls(q) -> np.ndarray:
     return np.array([data.oMf[BALL[limb]].translation for limb in LIMBS])
 
 
-def damped(A):
-    """Damped least-squares inverse: like pinv, but the step stays bounded where A is near
-    singular (a limb stretched out), so a target out of reach is only approached."""
-    return A.T @ np.linalg.inv(A @ A.T + DAMPING**2 * np.eye(A.shape[0]))
+# def damped(A):
+#     """Damped least-squares inverse: like pinv, but the step stays bounded where A is near
+#     singular (a limb stretched out), so a target out of reach is only approached."""
+#     return A.T @ np.linalg.inv(A @ A.T + DAMPING**2 * np.eye(A.shape[0]))
 
 
 def quadprog_solve_qp(H, q, G=None, h=None, C=None, d=None, verbose=False):
@@ -139,14 +137,17 @@ def quadprog_solve_qp(H, q, G=None, h=None, C=None, d=None, verbose=False):
 
 
 def ik_step(q, displacement, moving=None, height=None, posture=None):
-    try:
-        return ik_step_qp(q, displacement, moving)
-    except NotImplementedError:
-        return ik_step_pinv(q, displacement, moving, height, posture)
+    ik_step_qp(q, displacement, moving, height, posture)
+    # try:
+    #     return ik_step_qp(q, displacement, moving)
+    # except NotImplementedError:
+    #     return ik_step_pinv(q, displacement, moving, height, posture)
 
 
 def manipulability(q, limb):
-    """Yoshikawa's w = sqrt(det(J J^T)) of the limb's ball over the limb's own joints."""
+    """Yoshikawa's w = sqrt(det(J J^T)) of the limb's ball over the limb's own joints.
+    -- high w: the limb can move its ball in any direction, so it can push downwards on a hold.
+    -- low w: the limb is stretched out, so it can only move its ball in"""
     pin.computeJointJacobians(model, data, q)
     pin.updateFramePlacements(model, data)
     J = pin.getFrameJacobian(model, data, BALL[limb], pin.LOCAL_WORLD_ALIGNED)[:3, CHAIN[limb]]
@@ -163,29 +164,22 @@ def manipulability_gradient(q, limb, h=1e-6):
     return gradient
 
 
-def ik_step_qp(q, displacement, moving=None):
-    """One IK step as a QP [after the ediadvancedrobotics tutorials], over the step v (model.nv)
-    and two slacks per joint s = (s_q, s_v) >= 0:
-        min  sum_balls weight ||J v - displacement||^2 + REGULARISATION ||v||^2
-             + SLACK_WEIGHT ||s||^2 - MANIPULABILITY_GAIN grad(log w_moving) . v
-        s.t. q- <= q + v <= q+,   |v| <= SPEED_LIMIT DT / ITERATIONS          (joints: hard)
-             q- + JOINT_MARGIN - s_q <= q + v <= q+ - JOINT_MARGIN + s_q        (soft)
-             |v| <= SPEED_MARGIN SPEED_LIMIT DT / ITERATIONS + s_v              (soft)
-    A held ball weighs HELD_WEIGHT, the moving one 1. The balls only, for now: no trunk or
-    posture task (height and posture are ignored)."""
-    nv, nj = model.nv, model.nv - 6
+def ik_step_qp(q, displacement, moving=None, height=None, posture=None):
+    """
+    moving: the limb whose ball is moved by its displacement; the others stay in their sockets."""
+    nv, nj = model.nv, model.nv - 6 #nj is the number of joints (the free flyer has no limits)
     gradient = manipulability_gradient(q, moving) if moving else np.zeros(nv)
     pin.computeJointJacobians(model, data, q)
     pin.updateFramePlacements(model, data)
-    H, c = REGULARISATION * np.eye(nv), np.zeros(nv)  # cost: v' H v - 2 c' v
+    H, c = 1e-6 * np.eye(nv), np.zeros(nv)  # cost: v' H v - 2 c' v
     for limb in TASK_ORDER:
         J = pin.getFrameJacobian(model, data, BALL[limb], pin.LOCAL_WORLD_ALIGNED)[:3]
         weight = 1.0 if limb == moving else HELD_WEIGHT
         H += weight * J.T @ J
         c += weight * J.T @ displacement[LIMBS.index(limb)]
-    c += MANIPULABILITY_GAIN / 2 * gradient
     # x = (v, s_q, s_v): the quadprog helper's (1/2) x' P x + p' x
     zero = np.zeros((nv, 2 * nj))
+    SLACK_WEIGHT = 0  
     P = 2 * np.block([[H, zero], [zero.T, SLACK_WEIGHT * np.eye(2 * nj)]])
     p = np.concatenate([-2 * c, np.zeros(2 * nj)])
     S = np.hstack([np.zeros((nj, 6)), np.eye(nj)])  # the joints' part of v
@@ -208,58 +202,58 @@ def ik_step_qp(q, displacement, moving=None):
     v = quadprog_solve_qp(P, p, G, h)[:nv]
     return projecttojointlimits(pin.integrate(model, q, v))
 
-def ik_step_pinv(q, displacement, moving=None, height=None, posture=None):
-    """One hierarchical IK step: each limb's ball moved by its displacement (in LIMBS order), the
-    held ones first in TASK_ORDER, then the moving one, each in the null space of the ones before;
-    then, if given, the trunk's origin brought GAIN of the way to that height [m]; then the trunk
-    turned upright and facing the wall, both as far as the balls allow; last, if given, the joints
-    brought POSTURE_GAIN of the way to posture's, as far as all the above allows.
-    - The held balls are solved exactly (their sockets are always in reach); the moving ball and
-      the trunk with `damped`, so the moving ball gets as close as it can to a target out of reach
-      while the held balls stay in their sockets [Ours]. With pinv for all and a fixed order, a
-      long hand move with OUT 0.05 / ABOVE 0.10 diverged (NaN), or pulled a held hand 6 mm out.
-    - A joint the step would push past a limit is locked there and the step solved again without
-      it [Ours]: with clipping alone (the planner's), a held ball drifted up to 10 mm off its
-      socket on a level-2 climb (seed 5226)."""
-    pin.computeJointJacobians(model, data, q)
-    pin.updateFramePlacements(model, data)
-    order = [limb for limb in TASK_ORDER if limb != moving] + ([moving] if moving else [])
-    tasks = [
-        (
-            pin.getFrameJacobian(model, data, BALL[limb], pin.LOCAL_WORLD_ALIGNED)[:3],
-            LIMBS.index(limb),
-            limb == moving,
-        )
-        for limb in order
-    ]
-    trunk_J = pin.getJointJacobian(model, data, 1, pin.LOCAL_WORLD_ALIGNED)
-    trunk, rise = trunk_J[3:], trunk_J[2:3]  # its rotation; its origin's height
-    turn = GAIN * pin.log3(TRUNK_UPRIGHT @ data.oMi[1].rotation.T)
-    lift = GAIN * np.array([(height or 0.0) - data.oMi[1].translation[2]])
-    free = np.ones(model.nv)  # 0: a locked joint (its column out of every Jacobian)
-    for _ in range(LOCK_PASSES):
-        vq, P = np.zeros(model.nv), np.eye(model.nv)
-        for J, i, is_moving in tasks:
-            JP = J * free @ P
-            vq = vq + (damped(JP) if is_moving else pinv(JP)) @ (displacement[i] - J * free @ vq)
-            P = P - pinv(JP) @ JP  # the exact null space, also under a damped task
-        if height is not None:
-            Jz = rise * free
-            vq = vq + damped(Jz @ P) @ (lift - Jz @ vq)
-            P = P - pinv(Jz @ P) @ Jz @ P
-        vq = vq + damped(trunk * free @ P) @ (turn - trunk * free @ vq)
-        if posture is not None:
-            TP = trunk * free @ P
-            P = P - pinv(TP) @ TP
-            joints = np.eye(model.nv)[6:] * free
-            vq = vq + damped(joints @ P) @ (POSTURE_GAIN * (posture[7:] - q[7:]) - joints @ vq)
-        new = pin.integrate(model, q, vq)
-        past = (new > model.upperPositionLimit) | (new < model.lowerPositionLimit)
-        past = past[7:]  # the joints' (the free flyer has no limits)
-        if not past.any():
-            break
-        free[6:][past] = 0
-    return projecttojointlimits(new)
+# def ik_step_pinv(q, displacement, moving=None, height=None, posture=None):
+#     """One hierarchical IK step: each limb's ball moved by its displacement (in LIMBS order), the
+#     held ones first in TASK_ORDER, then the moving one, each in the null space of the ones before;
+#     then, if given, the trunk's origin brought GAIN of the way to that height [m]; then the trunk
+#     turned upright and facing the wall, both as far as the balls allow; last, if given, the joints
+#     brought POSTURE_GAIN of the way to posture's, as far as all the above allows.
+#     - The held balls are solved exactly (their sockets are always in reach); the moving ball and
+#       the trunk with `damped`, so the moving ball gets as close as it can to a target out of reach
+#       while the held balls stay in their sockets [Ours]. With pinv for all and a fixed order, a
+#       long hand move with OUT 0.05 / ABOVE 0.10 diverged (NaN), or pulled a held hand 6 mm out.
+#     - A joint the step would push past a limit is locked there and the step solved again without
+#       it [Ours]: with clipping alone (the planner's), a held ball drifted up to 10 mm off its
+#       socket on a level-2 climb (seed 5226)."""
+#     pin.computeJointJacobians(model, data, q)
+#     pin.updateFramePlacements(model, data)
+#     order = [limb for limb in TASK_ORDER if limb != moving] + ([moving] if moving else [])
+#     tasks = [
+#         (
+#             pin.getFrameJacobian(model, data, BALL[limb], pin.LOCAL_WORLD_ALIGNED)[:3],
+#             LIMBS.index(limb),
+#             limb == moving,
+#         )
+#         for limb in order
+#     ]
+#     trunk_J = pin.getJointJacobian(model, data, 1, pin.LOCAL_WORLD_ALIGNED)
+#     trunk, rise = trunk_J[3:], trunk_J[2:3]  # its rotation; its origin's height
+#     turn = GAIN * pin.log3(TRUNK_UPRIGHT @ data.oMi[1].rotation.T)
+#     lift = GAIN * np.array([(height or 0.0) - data.oMi[1].translation[2]])
+#     free = np.ones(model.nv)  # 0: a locked joint (its column out of every Jacobian)
+#     for _ in range(LOCK_PASSES):
+#         vq, P = np.zeros(model.nv), np.eye(model.nv)
+#         for J, i, is_moving in tasks:
+#             JP = J * free @ P
+#             vq = vq + (damped(JP) if is_moving else pinv(JP)) @ (displacement[i] - J * free @ vq)
+#             P = P - pinv(JP) @ JP  # the exact null space, also under a damped task
+#         if height is not None:
+#             Jz = rise * free
+#             vq = vq + damped(Jz @ P) @ (lift - Jz @ vq)
+#             P = P - pinv(Jz @ P) @ Jz @ P
+#         vq = vq + damped(trunk * free @ P) @ (turn - trunk * free @ vq)
+#         if posture is not None:
+#             TP = trunk * free @ P
+#             P = P - pinv(TP) @ TP
+#             joints = np.eye(model.nv)[6:] * free
+#             vq = vq + damped(joints @ P) @ (POSTURE_GAIN * (posture[7:] - q[7:]) - joints @ vq)
+#         new = pin.integrate(model, q, vq)
+#         past = (new > model.upperPositionLimit) | (new < model.lowerPositionLimit)
+#         past = past[7:]  # the joints' (the free flyer has no limits)
+#         if not past.any():
+#             break
+#         free[6:][past] = 0
+#     return projecttojointlimits(new)
 #TODO: answer question: how much do this ik step differ from the planners ik. Do we need all these gains on lift etc? do we need the damped value? We should be using hte same helpers if necessary, but the collision chceching is not super necessary.
 # also, this ik_step should just be getting hte joint positions that follow the moving limb's ball trajectory. So we don't need to check for all joints.
 #TODO: Also, we should make sure that at contacts, in later step, we check com constraint and torque manipulability on the forces.
@@ -349,18 +343,18 @@ def track_move(wall: WallModel, a: Stance, b: Stance, q0):
     ends exactly in b's stance pose, where b -> c starts: from within JOINT_TOL it jumps there,
     from further it blends there over BLEND_TIME, balls held. Also the moving ball's worst distance
     from its path [m]. ValueError, naming the move, if a ball gets MAX_ERROR from its socket."""
-    limb = moving_limb(a, b)
+    limb = moving_limb(a, b) # the limb that moves
     move = f"{limb} {a.contacts[limb]} -> {b.contacts[limb]}"
     i = LIMBS.index(limb)
     held = sockets(wall, a)
     B = ball_path(held[i], sockets(wall, b)[i])
-    q, worst, out = q0, 0.0, []
+    q, worst, out = q0, 0.0, [] # out will contain the configurations of the move, one every DT from q0 (excluded) to the end
     for k in range(1, round(MOVE_TIME / DT) + 1):
         target = held.copy()
         target[i] = B(k * DT)
         height = target[:, 2].mean() + TRUNK_HEIGHT
         for _ in range(ITERATIONS):
-            q = ik_step(q, GAIN * (target - balls(q)), moving=limb, height=height, posture=Q_HANG)
+            q = ik_step(q, (target - balls(q)), moving=limb, height=height, posture=Q_HANG)
         error = norm(target - balls(q), axis=1)
         if not np.delete(error, i).max() <= MAX_ERROR:  # also NaN: the IK diverged
             e = np.delete(error, i).max() * 1000
