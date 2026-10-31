@@ -59,13 +59,13 @@ uv run scripts/plan_sim_wall.py --level 2 --seed 5226 --save-trajectory build/tr
 uv run scripts/plan_sim_wall.py --level 2 --seed 5 --save-npz build/trajectory.npz  # q: N x 26, every 0.02 s
 ```
 
-## v0 (reference)
-Quasi-static direct transcription, one NLP per transition, CasADi + IPOPT, on Microban's URDF: in [`v0/`](v0/),
-described in [`v0/README.md`](v0/README.md). It still runs as it did:
+## The CasADi optimiser
+Quasi-static direct transcription, one NLP per transition, CasADi + IPOPT, on Microban's URDF: in
+[`rcr.optimiser`](../optimiser/), described in [its README](../optimiser/README.md).
 ```bash
 uv sync --group optimiser --group sim
-uv run pytest tests/test_optimiser_v0.py
-uv run mjpython tests/test_optimiser_v0.py PLAN    # solve a contact plan, play it in the sim
+uv run pytest tests/test_optimiser.py
+uv run mjpython tests/test_optimiser.py PLAN    # solve a contact plan, play it in the sim
 ```
 
 ## Open decisions

@@ -2,7 +2,7 @@
 
 Method (D3): a kinematic motion. Per move, the moving ball follows a polynomial path between its
 sockets and the whole body follows by hierarchical IK with an error correction (ik.py). The CasADi
-optimiser before it is in v0/, for reference.
+optimiser is rcr.optimiser.
 """
 
 import numpy as np

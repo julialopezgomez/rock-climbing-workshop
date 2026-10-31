@@ -13,10 +13,10 @@ One thing is ours, for the optimiser only:
 
     neck   the direction the forearm or foot comes into the ball, in the link's frame (unit). The
            optimiser's first solve lowers each ball into its socket from above along it
-           (rcr.optimiser.v0.transition.NECK_CONE). [Ours, measured on the model: from its collision
+           (rcr.optimiser.transition.NECK_CONE). [Ours, measured on the model: from its collision
            pieces 10-20 mm from the ball centre to the centre, averaged]
 
-The organisers' sim has the same balls (tests/test_optimiser_v0.py checks it).
+The organisers' sim has the same balls (tests/test_optimiser.py checks it).
 
 Pi-safe: stdlib and numpy (the model files are read only when HOOKS or BALL_RADIUS is asked for).
 """

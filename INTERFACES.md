@@ -67,9 +67,9 @@ marked **CHANGE** below are the ones we expect to change.
 | | `planned_positions` | `list[list[float]] \| None` rad | optional: the optimiser's planned angles, before `positions` were pre-loaded against servo sag. Only for replay; the robot ignores it [Ours] |
 | | `trunk_poses` | `list[list[float]] \| None` | optional: the trunk per time, wall frame: `x, y, z` m, `qw, qx, qy, qz`. Only for replay; the robot ignores it [Ours] |
 | `Feasibility` | `feasible` | `bool` | |
-| | `cost` | `float` | lower is better; meaning owned by the optimiser. **CHANGE** |
+| | `cost` | `float` | lower is better; meaning owned by whoever provides the `FeasibilityFn`. **CHANGE** |
 | | `reason` | `str` | human-readable, for debugging |
-| `FeasibilityFn` | | `(WallModel, Stance, Stance) -> Feasibility` | the optimiser owns it and passes it to the planner |
+| `FeasibilityFn` | | `(WallModel, Stance, Stance) -> Feasibility` | passed to the planner; today the planner's own `planner.feasible` (reach, then IK). The optimiser no longer provides one |
 | `Pose` | `position` | `(x, y, z)` m | robot base, wall frame |
 | | `quat` | `(w, x, y, z)` | |
 | `RobotState` | `time` | `float` s | since the start of the climb |
@@ -90,7 +90,7 @@ ours and Microban's, for the robot and the organisers' sim alike ([src/rcr/robot
 |---|---|---|
 | perception | laptop | `wall_model(images) -> WallModel`, `robot_pose(images) -> Pose` |
 | planner | laptop | `plan(wall, feasible: FeasibilityFn) -> ContactPlan` |
-| optimiser | laptop | `optimise(wall, plan) -> Trajectory`, `feasibility(wall, a, b) -> Feasibility` |
+| optimiser | laptop | `optimise(wall, plan) -> Trajectory` |
 | link | both | `send_trajectory(trajectory or file, robot)`; `segment(trajectory, start)`; `LaptopLink(robot)`: `send_trajectory(final=True)`, `append_segment`, `finish`, `start`, `stop`, `send_pose`, `robot_state`, `ping`, `close`; `RobotLink()`: `trajectory`, `trajectory_complete`, `run_requested`, `pose`, `send_state`, `close`. Wire format: [link/protocol.py](src/rcr/link/protocol.py) |
 | controller | robot | `Controller(trajectory).step(state: RobotState) -> JointTargets` |
 | sim | laptop | the organisers' `climbing_sim.ClimbingSim` on their wall (`Wall.load(name)`), used as it is; their wall as ours: `walls.from_organisers(wall, level)`; `robot.to_targets(targets, JOINTS, last)` -> their `step()`; `robot.to_state(obs, JOINTS)` -> `RobotState` |
@@ -148,4 +148,4 @@ midpoint, start their start holds.)
 `trajectory/2` adds the two optional replay fields to `trajectory/1`; `null` when absent. The
 [example](data/examples/trajectory.json) is kept only as a sample file for the link and the Pi: it was solved
 for our former example wall and the old robot model, so it does not climb any current wall. A new one comes from
-`tests/test_optimiser_v0.py --hard PLAN --save`, once there is a plan on the organisers' walls.
+`tests/test_optimiser.py --hard PLAN --save`, once there is a plan on the organisers' walls.
