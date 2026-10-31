@@ -234,11 +234,12 @@ def evaluate(data: Path, episodes: int, policy: Path | None = None, watch: bool 
 
 
 def train(data: Path, steps: int, envs: int, out: Path, alpha: float, kp_fw: float,
-          norm_reward: bool, seed: int = 0) -> None:  # fmt: skip
+          norm_reward: bool, seed: int = 0, log_std_init: float = 0.0) -> None:  # fmt: skip
     """PPO (SB3 defaults: advantages normalised per minibatch). norm_reward: rewards scaled by a
     running estimate of the returns' std (VecNormalize), so the value function learns numbers
     near 1, not thousands; the observations are left as they are, so the ONNX export and
-    Controller need nothing more."""
+    Controller need nothing more. log_std_init: the log of the starting exploration noise (0: an
+    std of 1 on actions in [-1, 1]; -1: 0.37)."""
     from stable_baselines3 import PPO
     from stable_baselines3.common.env_util import make_vec_env
     from stable_baselines3.common.vec_env import SubprocVecEnv, VecNormalize
@@ -247,7 +248,8 @@ def train(data: Path, steps: int, envs: int, out: Path, alpha: float, kp_fw: flo
                        env_kwargs={"data": data, "alpha": alpha, "kp_fw": kp_fw})  # fmt: skip
     if norm_reward:
         vec = VecNormalize(vec, norm_obs=False, norm_reward=True)
-    model = PPO("MlpPolicy", vec, verbose=1, seed=seed)
+    kwargs = {"log_std_init": log_std_init}
+    model = PPO("MlpPolicy", vec, verbose=1, seed=seed, policy_kwargs=kwargs)
     history = History()
     model.learn(total_timesteps=steps, callback=history)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -387,6 +389,7 @@ if __name__ == "__main__":
     parser.add_argument("--norm-reward", action="store_true", help="train: VecNormalize rewards")
     parser.add_argument("--seed", type=int, default=0, help="train: PPO and environment seed")
     parser.add_argument("--kp", type=float, default=tracking.KP_FW, help="servo P gain (kp_fw)")
+    parser.add_argument("--log-std-init", type=float, default=0.0, help="train: log starting noise")
     args = parser.parse_args()
     if args.command == "import":
         import_npz(args.npz, args.wall, args.data)
@@ -400,6 +403,7 @@ if __name__ == "__main__":
             args.kp,
             args.norm_reward,
             args.seed,
+            args.log_std_init,
         )
     elif args.command == "plot":
         plot(Path(f"{args.out}_history.npz"))
