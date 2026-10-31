@@ -429,7 +429,7 @@ def ik_qp(q0, targets, moving=None, dt=None):
 
 
 
-def solve_ik(q0, targets, moving=None, dt=None, method="pinv"):
+def solve_ik(q0, targets, moving=None, dt=None, method="qp"):
     """Choose between the two solvers, without changing the IK task.
 
     method="pinv" : hierarchical pseudoinverse + bounded joint clipping.
@@ -444,8 +444,6 @@ def solve_ik(q0, targets, moving=None, dt=None, method="pinv"):
 # ---------------------------------------------------------------------
 # Initial stance
 # ---------------------------------------------------------------------
-
-ik_solve = solve_ik  # optional ARO-style name for the same selector
 
 
 def start_pose(wall: WallModel, stance: Stance, method="pinv"):
