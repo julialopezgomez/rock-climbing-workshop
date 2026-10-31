@@ -42,10 +42,10 @@ from rcr.types import (
 DT = 0.02
 MOVE_TIME = 2.0
 
-ABOVE = 0.025
+ABOVE = 0.02
 OUT = 0.04
 
-EPSILON = 1e-3
+EPSILON = 1e-5
 MAX_ITERATIONS = 200
 IK_STEP = 0.2
 POSTURE_GAIN = 0.1
