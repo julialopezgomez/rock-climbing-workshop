@@ -12,14 +12,14 @@ import numpy as np
 import pinocchio as pin
 from numpy.linalg import norm, pinv
 
-from rcr.types import LIMBS, Stance, WallModel, Feasibility
+from rcr.types import LIMBS, Feasibility, Stance, WallModel
 
 SOCKET = np.array([0.0, -0.026, -0.014])  # ball centre from Hold.position [simulator wall.py]
 HANG = Path(__file__).parents[3] / "third_party/simulator/climbing_sim/assets/poses/hang.json"
 TASK_ORDER = ("right_hand", "left_hand", "right_foot", "left_foot")
 # trunk z up, x into the wall (+y) [simulator README, Frames]
 TRUNK_UPRIGHT = np.array([[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
-EPSILON = 1e-4  # [m] a ball this close to its target has reached it
+EPSILON = 1e-3  # [m] a ball this close to its target has reached it (1e-4: 6 % of start poses fail)
 MAX_ITERATIONS = 200  # for the start pose
 STEP = 0.5  # fraction of the error the start pose's IK closes per iteration
 # The ball's path [Ours, to tune]: out of socket a straight off the wall, up and away from it to a
@@ -37,6 +37,14 @@ ITERATIONS = 3  # IK steps per sample, toward that sample's targets [Ours]
 # fitted to the start stance has it 7 mm below; raised 2 cm, the balls still reach their sockets
 # with no joint at a limit (3 cm puts two at one)
 TRUNK_HEIGHT = 0.015
+# The stance pose [Ours]: every move starts and ends in its stances' (start_pose), so a move checked
+# alone (feasible_ik_traj) is the move optimise makes. The joints are pulled toward the hang pose's,
+# last and lowest, also during the move: 0.1 ended 195 of 243 level-2/3 moves already within
+# JOINT_TOL of b's (0.3: 186; without, none).
+POSTURE_GAIN = 0.1  # fraction of each joint's gap to the posture closed per IK step
+SETTLED = 1e-5  # an IK step this small (norm of the change of q): q has stopped moving
+JOINT_TOL = 0.01  # [rad] a move ending this close to b's stance pose jumps to it; further, blends
+BLEND_TIME = 0.3  # [s] min-jerk from where a move ended to b's stance pose, balls held
 
 # trunk free: q = (x, y, z, qx, qy, qz, qw, 19 joints)
 model = pin.buildModelFromUrdf(str(microban_model.urdf(climb=True)), pin.JointModelFreeFlyer())
@@ -56,6 +64,10 @@ def sockets(wall: WallModel, stance: Stance) -> np.ndarray:
     return np.array([position[stance.contacts[limb]] for limb in LIMBS]) + SOCKET
 
 
+def key(stance: Stance) -> tuple:
+    return tuple(stance.contacts[limb] for limb in LIMBS)
+
+
 def balls(q) -> np.ndarray:
     """Ball centres at q, in LIMBS order."""
     pin.framesForwardKinematics(model, data, q)
@@ -68,11 +80,12 @@ def damped(A):
     return A.T @ np.linalg.inv(A @ A.T + DAMPING**2 * np.eye(A.shape[0]))
 
 
-def ik_step(q, displacement, moving=None, height=None):
+def ik_step(q, displacement, moving=None, height=None, posture=None):
     """One hierarchical IK step: each limb's ball moved by its displacement (in LIMBS order), the
     held ones first in TASK_ORDER, then the moving one, each in the null space of the ones before;
-    then, if given, the trunk's origin brought GAIN of the way to that height [m]; last, the trunk
-    turned upright and facing the wall, both as far as the balls allow.
+    then, if given, the trunk's origin brought GAIN of the way to that height [m]; then the trunk
+    turned upright and facing the wall, both as far as the balls allow; last, if given, the joints
+    brought POSTURE_GAIN of the way to posture's, as far as all the above allows.
     - The held balls are solved exactly (their sockets are always in reach); the moving ball and
       the trunk with `damped`, so the moving ball gets as close as it can to a target out of reach
       while the held balls stay in their sockets [Ours]. With pinv for all and a fixed order, a
@@ -107,6 +120,11 @@ def ik_step(q, displacement, moving=None, height=None):
             vq = vq + damped(Jz @ P) @ (lift - Jz @ vq)
             P = P - pinv(Jz @ P) @ Jz @ P
         vq = vq + damped(trunk * free @ P) @ (turn - trunk * free @ vq)
+        if posture is not None:
+            TP = trunk * free @ P
+            P = P - pinv(TP) @ TP
+            joints = np.eye(model.nv)[6:] * free
+            vq = vq + damped(joints @ P) @ (POSTURE_GAIN * (posture[7:] - q[7:]) - joints @ vq)
         new = pin.integrate(model, q, vq)
         past = (new > model.upperPositionLimit) | (new < model.lowerPositionLimit)
         past = past[7:]  # the joints' (the free flyer has no limits)
@@ -123,28 +141,38 @@ def projecttojointlimits(q):
     return np.minimum(np.maximum(model.lowerPositionLimit, q), model.upperPositionLimit)
 
 
+_poses = {}  # (wall id, stance) -> its stance pose
+
+
 def start_pose(wall: WallModel, stance: Stance):
-    """The hang posture with its trunk fitted rigidly to the sockets [simulator sim.py
-    reset_hanging], then IK until every ball is within EPSILON of its socket and the trunk within
-    EPSILON of its height (TRUNK_HEIGHT). ValueError if the balls are not reached."""
-    t = sockets(wall, stance)
-    height = t[:, 2].mean() + TRUNK_HEIGHT
-    cp, cs = BALLS_HANG.mean(0), t.mean(0)
-    U, _, Vt = np.linalg.svd((BALLS_HANG - cp).T @ (t - cs))
-    R = Vt.T @ np.diag([1, 1, np.sign(np.linalg.det(Vt.T @ U.T))]) @ U.T
-    q = Q_HANG.copy()
-    q[0:3] = cs - R @ cp
-    q[3:7] = pin.Quaternion(R).coeffs()
-    for _ in range(MAX_ITERATIONS):
-        error = t - balls(q)
-        reached = norm(error, axis=1).max() < EPSILON
-        if reached and abs(q[2] - height) < EPSILON:
-            return q
-        q = ik_step(q, STEP * error, height=height)
-    if reached:
-        return q  # the trunk as high as the balls allow
-    raise ValueError(f"start pose: balls {norm(error, axis=1).max() * 1000:.0f} mm from sockets")
-#TODO: what is this doing? we should check that the start pose maximises for torque manipulability so that the end effectors can push downwards, and then last step check if COM is within the support polygon. For every transition, we should in the later steps check the configuration that the robot arrived to the stance at, and readjust the body configuration to maximise torque manipulability and COM stability before starting hte next transition.
+    """The stance pose: the hang posture with its trunk fitted rigidly to the sockets [simulator
+    sim.py reset_hanging], then IK, the joints pulled toward the hang pose's (posture), until every
+    ball is within EPSILON of its socket and q has SETTLED. If q still moves after MAX_ITERATIONS
+    (joints locking and unlocking at a limit), the last q, the balls within EPSILON. Deterministic,
+    so cached. ValueError if the balls are not reached."""
+    k = (wall.id, key(stance))
+    if k not in _poses:
+        t = sockets(wall, stance)
+        height = t[:, 2].mean() + TRUNK_HEIGHT
+        cp, cs = BALLS_HANG.mean(0), t.mean(0)
+        U, _, Vt = np.linalg.svd((BALLS_HANG - cp).T @ (t - cs))
+        R = Vt.T @ np.diag([1, 1, np.sign(np.linalg.det(Vt.T @ U.T))]) @ U.T
+        q = Q_HANG.copy()
+        q[0:3] = cs - R @ cp
+        q[3:7] = pin.Quaternion(R).coeffs()
+        for _ in range(MAX_ITERATIONS):
+            error = t - balls(q)
+            new = ik_step(q, STEP * error, height=height, posture=Q_HANG)
+            settled = norm(pin.difference(model, q, new)) < SETTLED
+            q = new
+            if settled and norm(error, axis=1).max() < EPSILON:
+                break
+        error = norm(t - balls(q), axis=1).max()
+        if not error < EPSILON:
+            raise ValueError(f"start pose: balls {error * 1000:.0f} mm from sockets")
+        _poses[k] = q
+    return _poses[k]
+#TODO: we should check that the start pose maximises for torque manipulability so that the end effectors can push downwards, and then last step check if COM is within the support polygon. For every transition, we should in the later steps check the configuration that the robot arrived to the stance at, and readjust the body configuration to maximise torque manipulability and COM stability before starting hte next transition.
 
 
 def ball_path(p_a, p_b):
