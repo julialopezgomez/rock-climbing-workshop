@@ -4,13 +4,47 @@ Pi-safe: stdlib, numpy, and later placo / onnxruntime only. Never mujoco or open
 step() mirrors Microban's Move.step(); it does not know whether it runs on the sim or the robot.
 """
 
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import numpy as np
+
+from rcr.controller import tracking
 from rcr.types import JointTargets, RobotState, Trajectory
 
 
 class Controller:
-    def __init__(self, trajectory: Trajectory) -> None:
+    """Playback of the trajectory's feedforward, blended with a policy's own targets if given.
+
+    policy: a .onnx file from scripts/train_controller.py, with its .json (alpha, joint order and
+    limits) next to it. None plays the trajectory back.
+    """
+
+    def __init__(self, trajectory: Trajectory, policy: str | Path | None = None) -> None:
         self.trajectory = trajectory
+        self.reference = tracking.reference(trajectory)
+        self.policy = None
+        if policy is not None:
+            if trajectory.planned_positions is None:
+                raise ValueError("a policy tracks planned_positions: the trajectory has none")
+            import onnxruntime
+
+            meta = json.loads(Path(policy).with_suffix(".json").read_text())
+            if tuple(meta["joints"]) != tracking.JOINTS:
+                raise ValueError(f"{policy} was trained with another joint order")
+            self.alpha = meta["alpha"]
+            self.low, self.high = np.array(meta["low"]), np.array(meta["high"])
+            self.policy = onnxruntime.InferenceSession(str(policy))
 
     def step(self, state: RobotState) -> JointTargets:
         """Called every 20 ms with the latest state; must return well within the tick."""
-        raise NotImplementedError
+        q_target, planned = tracking.at(self.reference, state.time)
+        if self.policy is not None:
+            q = [state.joint_positions[n] for n in tracking.JOINTS]
+            dq = [state.joint_velocities[n] for n in tracking.JOINTS]
+            obs = tracking.observation(planned, q, dq, state.imu_quat, state.gyro)
+            action = self.policy.run(None, {"obs": obs[None]})[0][0]
+            q_target = tracking.targets(q_target, action, self.alpha, self.low, self.high)
+        return JointTargets(dict(zip(tracking.JOINTS, map(float, q_target), strict=True)))

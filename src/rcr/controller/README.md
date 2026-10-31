@@ -26,6 +26,15 @@
 ## v0 could be
 Trajectory playback: interpolate `positions` at `state.time` and return them.
 
+## Residual tracking (exploring on `controller/rl-tracking`, D4 still open) [Ours]
+`Controller(trajectory, policy=None)`: every tick, targets = (1 − α) × feedforward + α × the policy's own targets
+(its action mapped onto the joint ranges), the feedforward being `positions` with the pre-load rescaled from kp_fw
+400 to `KP_FW` = 125 (the simulator's gain for learned policies). α is a curriculum: small first, so the
+feedforward decides, raised as the policy learns; each policy's `.json` records its α. Without a policy it is playback; without `planned_positions` (the link's robot part) it plays
+`positions` back as they are. [tracking.py](tracking.py) holds the numbers training and the robot must share
+(joint order, interpolation, observation, targets); `scripts/train_controller.py` trains the policy with PPO in the
+organisers' sim and exports it to ONNX, with a `.json` (alpha, joint order, limits) that `Controller` checks.
+
 ## Candidates later (not decided)
 - Playback plus feedforward sag compensation (≈ τ / kp, see optimiser README);
 - a PD correction on top of the servo P loop;

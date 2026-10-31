@@ -28,6 +28,13 @@ optimiser = [
     "casadi>=3.8.1",
     "pin>=4.1.0",
 ]  # pin: only to check our CasADi kinematics in tests
+rl = [
+    "gymnasium>=1.4.0",
+    "matplotlib>=3.11.2",
+    "onnx>=1.23.2",
+    "onnxruntime>=1.31.1",
+    "stable-baselines3>=2.9.2",
+]
 
 [build-system]
 requires = ["uv_build>=0.12.17,<0.14"]
