@@ -244,12 +244,14 @@ def evaluate(data: Path, episodes: int, policy: Path | None = None, watch: bool 
 
 
 def train(data: Path, steps: int, envs: int, out: Path, alpha: float, kp_fw: float,
-          norm_reward: bool, seed: int = 0, log_std_init: float = 0.0) -> None:  # fmt: skip
+          norm_reward: bool, seed: int = 0, log_std_init: float = 0.0,
+          clone_episodes: int = 0) -> None:  # fmt: skip
     """PPO (SB3 defaults: advantages normalised per minibatch). norm_reward: rewards scaled by a
     running estimate of the returns' std (VecNormalize), so the value function learns numbers
     near 1, not thousands; the observations are left as they are, so the ONNX export and
     Controller need nothing more. log_std_init: the log of the starting exploration noise (0: an
-    std of 1 on actions in [-1, 1]; -1: 0.37)."""
+    std of 1 on actions in [-1, 1]; -1: 0.37). clone_episodes > 0: start from playback (see
+    clone_feedforward) instead of an untrained policy, whose targets lean towards mid-range."""
     from stable_baselines3 import PPO
     from stable_baselines3.common.env_util import make_vec_env
     from stable_baselines3.common.vec_env import SubprocVecEnv, VecNormalize
@@ -260,9 +262,49 @@ def train(data: Path, steps: int, envs: int, out: Path, alpha: float, kp_fw: flo
         vec = VecNormalize(vec, norm_obs=False, norm_reward=True)
     kwargs = {"log_std_init": log_std_init}
     model = PPO("MlpPolicy", vec, verbose=1, seed=seed, policy_kwargs=kwargs)
+    if clone_episodes:
+        clone_feedforward(model, data, kp_fw, clone_episodes, seed)
     history = History()
     model.learn(total_timesteps=steps, callback=history)
     save(model, history, out, TrackingEnv(data, alpha, kp_fw), norm_reward)
+
+
+def clone_feedforward(model, data: Path, kp_fw: float, episodes: int, seed: int = 0,
+                      updates: int = 4000) -> None:  # fmt: skip
+    """Behaviour cloning onto playback [Ours]: fit the policy's mean action to the action whose
+    own target is the feedforward, a* = 2 (q_ff - low) / (high - low) - 1, on the observations of
+    playback episodes (random reference starts). Then targets = (1 - alpha) q_ff + alpha q_ff =
+    q_ff at any alpha: the policy starts as playback. Only the actor is fitted; PPO's value
+    function and optimiser start as before."""
+    import torch
+
+    env = TrackingEnv(data, 0.0, kp_fw)
+    env.reset(seed=seed)
+    observations, labels = [], []
+    for _ in range(episodes):
+        env.chain = False
+        obs, _ = env.reset()
+        done = False
+        while not done:
+            ff = tracking.at(env.ref, env.t + env.dt)[0]  # the target the next step sends
+            observations.append(obs)
+            labels.append(np.clip(2 * (ff - env.low) / (env.high - env.low) - 1, -1.0, 1.0))
+            obs, _, terminated, truncated, _ = env.step(np.zeros(len(tracking.JOINTS)))
+            done = terminated or truncated
+    x = torch.tensor(np.array(observations), dtype=torch.float32)
+    y = torch.tensor(np.array(labels), dtype=torch.float32)
+    policy = model.policy
+    optimiser = torch.optim.Adam(policy.parameters(), lr=1e-3)
+    for _ in range(updates):
+        batch = torch.randint(len(x), (256,))
+        mean = policy.get_distribution(x[batch]).distribution.mean
+        loss = ((mean - y[batch]) ** 2).mean()
+        optimiser.zero_grad()
+        loss.backward()
+        optimiser.step()
+    with torch.no_grad():
+        error = (policy.get_distribution(x).distribution.mean - y).abs().mean().item()
+    print(f"cloned playback: {len(x)} samples, mean |a - a*| {error:.4f}")
 
 
 def save(model, history, out: Path, env: TrackingEnv, norm_reward: bool = False) -> None:
@@ -470,6 +512,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=0, help="train: PPO and environment seed")
     parser.add_argument("--kp", type=float, default=tracking.KP_FW, help="servo P gain (kp_fw)")
     parser.add_argument("--log-std-init", type=float, default=0.0, help="train: log starting noise")
+    parser.add_argument("--clone-episodes", type=int, default=0, help="train: start from playback")
     parser.add_argument("--init", type=Path, help="curriculum: the alpha 0.1 policy, no extension")
     parser.add_argument("--alphas", default="0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0")
     parser.add_argument("--chunk-steps", type=int, default=1_000_000, help="curriculum")
@@ -490,6 +533,7 @@ if __name__ == "__main__":
             args.norm_reward,
             args.seed,
             args.log_std_init,
+            args.clone_episodes,
         )
     elif args.command == "curriculum":
         alphas = [float(a) for a in args.alphas.split(",")]
