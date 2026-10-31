@@ -48,9 +48,9 @@ TRUNK_HEIGHT = 0.015
 # The stance pose (start_pose) [Ours]: the four balls in their sockets, the joints moved up the
 # gradient of the four limbs' sum of log manipulability until a step is under SETTLED. Every move
 # starts exactly in its stance a's pose and ends exactly in its stance b's, so a move checked alone
-# (feasible_ik_traj) is the move optimise makes.
+# (feasible_ik_traj) is the move optimise makes. 
 SETTLED = 1e-5  # an IK step this small (norm of the change of q): q has stopped moving
-MANIPULABILITY_STEP = 0.01  # [rad per unit of gradient] the ascent's step size
+MANIPULABILITY_STEP = 0.05  # [rad per unit of gradient] the ascent's step size (0.01: less in 500)
 POSE_ITERATIONS = 500  # the most steps of the ascent
 ARRIVAL_TOL = 1e-4  # [rad] a move ending further than this from b's stance pose cannot be done
 # The QP IK (ik_step_qp) [Ours]: the four balls are exact (equality constraints); how far inside
@@ -134,8 +134,8 @@ def quadprog_solve_qp(H, q, G=None, h=None, C=None, d=None, verbose=False):
     return res[0]
 
 
-def ik_step(q, displacement, reference=None, start=None):
-    return ik_step_qp(q, displacement, reference, start)
+def ik_step(q, displacement, reference=None, start=None, hard_margin=False):
+    return ik_step_qp(q, displacement, reference, start, hard_margin)
     # try:
     #     return ik_step_qp(q, displacement, moving)
     # except NotImplementedError:
@@ -162,7 +162,7 @@ def manipulability_gradient(q, limb, h=1e-6):
     return gradient
 
 
-def ik_step_qp(q, displacement, reference=None, start=None):
+def ik_step_qp(q, displacement, reference=None, start=None, hard_margin=False):
     """One IK step as a QP [after the ediadvancedrobotics tutorials], over the step v (model.nv)
     and two slacks per joint s = (s_q, s_v) >= 0:
         min  ||S v - reference||^2 (S: v's joints; no term without a reference) + 1e-6 ||v||^2
@@ -172,7 +172,8 @@ def ik_step_qp(q, displacement, reference=None, start=None):
              q- + JOINT_MARGIN - s_q <= q + v <= q+ - JOINT_MARGIN + s_q    (soft)
     and, given start (the sample's first configuration), the joints within their speed limits
     from it over one DT: |q + v - start| <= SPEED_LIMIT DT (hard), SPEED_MARGIN of it + s_v (soft).
-    ValueError (quadprog) if the balls cannot all be met within the hard limits."""
+    hard_margin: JOINT_MARGIN as hard as the limits (s_q left out). ValueError (quadprog) if the
+    balls cannot all be met within the hard limits."""
     nv, nj = model.nv, model.nv - 6 #nj is the number of joints (the free flyer has no limits)
     pin.computeJointJacobians(model, data, q)
     pin.updateFramePlacements(model, data)
@@ -180,7 +181,8 @@ def ik_step_qp(q, displacement, reference=None, start=None):
     if reference is not None:
         H[6:, 6:] += np.eye(nj)
         c[6:] += reference
-    J = np.vstack([pin.getFrameJacobian(model, data, BALL[l], pin.LOCAL_WORLD_ALIGNED)[:3] for l in LIMBS])
+    frame = pin.LOCAL_WORLD_ALIGNED
+    J = np.vstack([pin.getFrameJacobian(model, data, BALL[limb], frame)[:3] for limb in LIMBS])
     # x = (v, s_q, s_v): the quadprog helper's (1/2) x' P x + p' x
     zero = np.zeros((nv, 2 * nj))
     SLACK_WEIGHT = 10
@@ -192,8 +194,8 @@ def ik_step_qp(q, displacement, reference=None, start=None):
     rows = [  # (G, h) of G x <= h
         (np.hstack([S, Z, Z]), upper),  # joint limits
         (np.hstack([-S, Z, Z]), lower),
-        (np.hstack([S, -E, Z]), upper - JOINT_MARGIN),  # JOINT_MARGIN inside the joint limits
-        (np.hstack([-S, -E, Z]), lower - JOINT_MARGIN),
+        (np.hstack([S, Z if hard_margin else -E, Z]), upper - JOINT_MARGIN),  # inside the limits
+        (np.hstack([-S, Z if hard_margin else -E, Z]), lower - JOINT_MARGIN),
         (np.hstack([np.zeros((2 * nj, nv)), -np.eye(2 * nj)]), np.zeros(2 * nj)),  # slacks >= 0
     ]
     if start is not None:  # speed limits, from the sample's first configuration
@@ -279,7 +281,8 @@ def start_pose(wall: WallModel, stance: Stance):
     sim.py reset_hanging]; IK steps (each STEP of the balls' error, exact) until every ball is
     within EPSILON of its socket; then, the balls held exactly, steps up the gradient of the four
     limbs' sum of log manipulability (MANIPULABILITY_STEP), until a step is under SETTLED or
-    POSE_ITERATIONS. Deterministic, so cached. ValueError if the balls are not reached."""
+    POSE_ITERATIONS. The joints outside JOINT_MARGIN throughout. Deterministic, so cached.
+    ValueError if the balls are not reached."""
     k = (wall.id, key(stance))
     if k not in _poses:
         t = sockets(wall, stance)
@@ -294,10 +297,11 @@ def start_pose(wall: WallModel, stance: Stance):
                 error = t - balls(q)
                 if norm(error, axis=1).max() < EPSILON:
                     break
-                q = ik_step(q, STEP * error)
+                q = ik_step(q, STEP * error, hard_margin=True)
             for _ in range(POSE_ITERATIONS):
                 gradient = sum(manipulability_gradient(q, limb) for limb in LIMBS)
-                new = ik_step(q, t - balls(q), MANIPULABILITY_STEP * gradient[6:])
+                reference = MANIPULABILITY_STEP * gradient[6:]
+                new = ik_step(q, t - balls(q), reference, hard_margin=True)
                 settled = norm(pin.difference(model, q, new)) < SETTLED
                 q = new
                 if settled:

@@ -28,15 +28,15 @@ first a kinematic motion, then we see. All in `ik.py`.
   - **down** into socket b.
 - **The IK step is a QP** (`ik_step_qp`, solved with `quadprog` through the ediadvancedrobotics tutorials' helper
   `quadprog_solve_qp`). Each step chooses the change of configuration v that:
-  - **minimises** the four balls' errors (`‖J v − displacement‖²`; a held ball weighs `HELD_WEIGHT`, the moving
-    one 1), plus `REGULARISATION ‖v‖²` (as `DAMPING` did), minus a gradient step up the moving limb's log
-    manipulability (Yoshikawa's `w = √det(J Jᵀ)` over its own joints, forward differences, `MANIPULABILITY_GAIN`);
-  - **must stay within** the joint limits (one Euler step) and the URDF's speed limits (6.6 rad/s, per IK step: over
-    `DT / ITERATIONS`);
+  - **meets the four balls exactly:** equality constraints `J v = displacement`. The held balls stay in their
+    sockets and the moving ball is on its path. If no step can, the move is infeasible;
+  - **minimises** the joints' distance to a reference, `‖S v − reference‖²`. During a move the reference goes from
+    a's stance pose to b's at constant joint speed; in `start_pose` it's a step up the manipulability gradient. A
+    `1e-6 ‖v‖²` term keeps the QP strictly convex;
+  - **must stay within** the joint limits (one Euler step) and, during a move, the URDF's speed limits from the
+    sample before (6.6 rad/s over `DT`);
   - **tries to stay** `JOINT_MARGIN` inside the joint limits and under `SPEED_MARGIN` of the speed limits, through
-    slack variables ≥ 0 penalised by `SLACK_WEIGHT`.
-  For now it has the balls only: no trunk or posture task, so `height` and `posture` are ignored.
-  `ik_step_pinv` (below) is the previous IK, kept for comparison.
+    slack variables ≥ 0 penalised by `SLACK_WEIGHT`. In `start_pose` the joint margin is hard (`hard_margin`).
 - **`ik_step_pinv`, the previous IK:** the whole body follows by the planner's hierarchical IK (`astar.ik`, copied here, not imported). The held
   balls' tasks come first, in `TASK_ORDER`, then the moving ball's, each in the null space of the ones before, then
   the trunk upright and facing the wall. At each sample, `ITERATIONS` steps each close `GAIN` of every ball's error
@@ -48,12 +48,15 @@ first a kinematic motion, then we see. All in `ik.py`.
 - **Joint limits:** a joint the step would push past a limit is locked there and the step solved again without it,
   then the joints are clipped (`projecttojointlimits`, as in the planner). With the clipping alone, the ankles and
   the shoulder roll saturate and a held ball drifted up to 10 mm off its socket on a level-2 climb.
-- **Stance pose** (`start_pose`, cached per stance): the hang pose with its trunk fitted to the stance's sockets,
-  then IK to 1 mm, the joints pulled toward the hang pose's (`POSTURE_GAIN`, last and lowest), until q stops moving.
-  The same posture task runs during each move, and **every move ends exactly in its stance pose**:
-  - within `JOINT_TOL`, it jumps there;
-  - further, it blends there over `BLEND_TIME`, with the balls checked.
-  So each move starts from its stance's pose, whatever came before.
+- **Stance pose** (`start_pose`, cached per stance):
+  1. the hang pose with its trunk fitted to the stance's sockets;
+  2. IK until the balls are in their sockets;
+  3. with the balls held exactly, steps up the gradient of the four limbs' sum of `log w` (manipulability,
+     `MANIPULABILITY_STEP`), until a step is under `SETTLED` or `POSE_ITERATIONS`.
+
+  **Every move starts exactly at a's pose and ends exactly at b's:** the joint reference arrives at b's pose and
+  the balls at b's sockets. At the last sample the QP steps until it settles, so the next move starts where this
+  one ended. There is no blend. If a move ends more than `ARRIVAL_TOL` from b's pose, it's infeasible.
 - **Output:** `optimise(wall, plan) -> Trajectory`: the start pose, then every move's samples every `DT`, each move
   from where the previous one ended. `positions` = `planned_positions` = the IK's joint angles (kinematic);
   `trunk_poses` for replaying it.
@@ -66,10 +69,9 @@ first a kinematic motion, then we see. All in `ik.py`.
 | `ABOVE` | 0.025 m | up out of socket a before moving out; above socket b before coming down |
 | `OUT` | 0.04 m | in front of the sockets while going across (66 mm from the wall) |
 | `MOVE_TIME`, `DT` | 2.0 s, 0.02 s | per move; between samples (the robot's 50 Hz loop) |
-| `POSTURE_GAIN`, `JOINT_TOL`, `BLEND_TIME` | 0.1, 0.01 rad, 0.3 s | the stance pose (above); the blend lasts long enough to stay under `SPEED_MARGIN` |
-| `HELD_WEIGHT`, `REGULARISATION` | 1e3, `DAMPING`² | the QP: a held ball's weight (the moving one's is 1); on ‖v‖² |
-| `JOINT_MARGIN`, `SPEED_MARGIN`, `SLACK_WEIGHT` | 0.1 rad, 0.8, 1e2 | the QP: how far inside its limits it tries to stay, and at what cost |
-| `MANIPULABILITY_GAIN` | 1e-5 | the QP: on the gradient of the moving limb's log manipulability |
+| `MANIPULABILITY_STEP`, `POSE_ITERATIONS`, `SETTLED` | 0.05, 500, 1e-5 | the stance pose's ascent |
+| `ARRIVAL_TOL` | 1e-4 rad | a move ending further from b's pose is infeasible (measured: 0) |
+| `JOINT_MARGIN`, `SPEED_MARGIN`, `SLACK_WEIGHT` | 0.1 rad, 0.8, 10 | the QP: how far inside its limits it tries to stay, and at what cost |
 | `GAIN`, `ITERATIONS` | 0.5, 3 | fraction of each error (and of the trunk's tilt) closed per IK step; steps per sample |
 | `DAMPING` | 0.03 | the moving ball's and the trunk's damped inverse |
 | `MAX_ERROR` | 0.01 m | a held ball further from its socket: `ValueError` naming the move |
@@ -85,19 +87,15 @@ paths of the 1113 moves A* asks about on L1 s1, L2 s5226, s7 and s66102, and L3 
 - **Any single curve over** (up, one Bézier over, down) cut its corner into the next hold, by up to 14 mm. That held
   for every `ABOVE` from 30 to 45 mm, `OUT` 40 or 60 mm, and junction speed.
 
-**QP vs pinv IK**, on 279 of those moves (every fourth):
-
-| | moves doable | fastest joint vs its speed limit | closest to a joint limit | moving limb's mean log w |
-|---|---|---|---|---|
-| pinv | 279 | 3.72× (84 moves over) | 0 rad (277 moves within 0.1) | −7.46 |
-| QP, `MANIPULABILITY_GAIN` 0 | 276 | 0.78× | 0.100 rad | −7.27 |
-| **QP, 1e-5** | **279** | **0.77×** | **0.100 rad** | **−7.17** |
-| QP, 1e-4 | 267 | 0.80× | 0.100 rad | −7.06 |
-| QP, 1e-3 | 200 | 0.80× | 0.100 rad | −7.28 |
-
-- **Cost:** with no posture task, every QP move ends away from b's stance pose and needs the blend. The L2 s66102 climb
-  (35 moves) lasts 80.5 s instead of 74.5 s.
-- **Speed:** the QP takes 48 ms a move against 139, and planning that wall with `ik_traj` takes 18 s against 40.
+**The QP IK with the stance poses**, on 36 moves (12 from each of L2 s66102, L2 s5226 and L3 s1):
+- **Moves:** all 36 doable, each starting exactly at a's pose and ending exactly at b's. The gap before snapping to
+  b's pose is 0.
+- **Tracking and speed:** the moving ball stays within 2.2 mm of its path. The fastest joint uses 0.36× its speed
+  limit, and no joint gets closer than 0.039 rad to a limit.
+- **Stance poses:** the ascent raises the four limbs' sum of `log w` by about 0.45 (their product ×1.6).
+- **Joint velocity:** the largest change between samples is 1.85 rad/s, at the corners and at the start and end of
+  a move: the ball goes at constant speed and turns sharply at the corridor's corners.
+- **Time:** 0.32 s a move.
 
 ```bash
 uv run mjpython scripts/plan_sim_wall.py --level 2 --seed 5226 --heuristic-weight 1.5 --play  # see it
