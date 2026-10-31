@@ -4,7 +4,6 @@ IK with an error correction (CLIK) [Ours, after the planner's astar.ik]. No torq
 """
 
 import json
-from math import comb
 from pathlib import Path
 
 import microban_model
@@ -12,6 +11,7 @@ import numpy as np
 import pinocchio as pin
 from numpy.linalg import norm, pinv
 
+from rcr.kinematics.bezier import Bezier, connecting
 from rcr.types import LIMBS, Feasibility, Stance, WallModel
 
 SOCKET = np.array([0.0, -0.026, -0.014])  # ball centre from Hold.position [simulator wall.py]
@@ -22,10 +22,15 @@ TRUNK_UPRIGHT = np.array([[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
 EPSILON = 1e-3  # [m] a ball this close to its target has reached it (1e-4: 6 % of start poses fail)
 MAX_ITERATIONS = 200  # for the start pose
 STEP = 0.5  # fraction of the error the start pose's IK closes per iteration
-# The ball's path [Ours, to tune]: out of socket a straight off the wall, up and away from it to a
-# bit above socket b, then down into it.
-OUT = 0.06  # [m] away from the wall (-y), at both ends
-ABOVE = 0.06  # [m] above socket b, before going in
+# The ball's path [Ours, to tune]: straight up out of socket a (a ball leaves a socket only within
+# ~10 deg of vertical [simulator wall.py, EXIT_BLOCK]), out from the wall and over to above socket
+# b, then straight down into it (ball_path).
+OUT = 0.06  # [m] the way over's middle control points, away from the wall (-y): 33 mm off at most
+ABOVE = 0.03  # [m] straight above a socket: where the ball has left it, and comes into it from
+VERTICAL_TIME = 0.4  # [s] up out of socket a; also down into socket b
+# [m/s] straight up (down) where the curves meet, on level-2/3 moves: 440 of 442 doable. Twice as
+# fast: 416, the way over overshoots 51 mm above socket b (hands out of reach); 0 stops it there.
+JUNCTION_SPEED = ABOVE / VERTICAL_TIME
 MOVE_TIME = 2.0  # [s] per move
 DT = 0.02  # [s] between samples: the robot's 50 Hz loop
 GAIN = 0.5  # fraction of a ball's tracking error corrected per sample [Ours]
@@ -176,18 +181,29 @@ def start_pose(wall: WallModel, stance: Stance):
 
 
 def ball_path(p_a, p_b):
-    """B(s), s in [0, 1]: a Bezier from p_a to p_b, of degree len(P) - 1 (Bernstein weights, so
-    any number of control points). The control points are p_a, p_b + away, p_b + away + up,
-    p_b + up, p_b, with away = (0, -OUT, 0) and up = (0, 0, ABOVE): it leaves p_a towards the
-    point in front of socket b, and arrives at p_b straight down from above it.
-    """
-    away, up = np.array([0.0, -OUT, 0.0]), np.array([0.0, 0.0, ABOVE])
-    P = np.array([p_a, p_b + away, p_b + away + up, p_b + up, p_b])
-    n = len(P) - 1
-    weights = [comb(n, k) for k in range(n + 1)]
+    """B(t), t in [0, MOVE_TIME]: three Bezier curves, continuous in position, velocity and
+    acceleration where they meet [C-CROC eq. 4, bezier.connecting]:
+    - up: from p_a, at rest, straight up to ABOVE it, in VERTICAL_TIME;
+    - over: out from the wall, over and up to ABOVE p_b; its middle control points are OUT in
+      front of the two ends;
+    - down: straight down into p_b, at rest, in VERTICAL_TIME.
+    Where they meet the ball moves straight up (down) at JUNCTION_SPEED, without acceleration
+    [Ours]: over leaves going up and arrives coming down."""
+    rest, up = np.zeros(3), np.array([0.0, 0.0, 1.0])
+    speed = JUNCTION_SPEED * up
+    left, over_b = p_a + ABOVE * up, p_b + ABOVE * up
+    away = np.array([0.0, -OUT, 0.0])
+    middle = [left + away, over_b + away]
+    t1, t2, end = VERTICAL_TIME, MOVE_TIME - VERTICAL_TIME, MOVE_TIME
+    curves = [
+        Bezier(connecting((p_a, rest, rest), (left, speed, rest), t1), 0.0, t1),
+        Bezier(connecting((left, speed, rest), (over_b, -speed, rest), t2 - t1, middle), t1, t2),
+        Bezier(connecting((over_b, -speed, rest), (p_b, rest, rest), end - t2), t2, end),
+    ]
 
-    def B(s):
-        return sum(weights[k] * s**k * (1 - s) ** (n - k) * P[k] for k in range(n + 1))
+    def B(t):
+        t = min(max(t, 0.0), MOVE_TIME)
+        return next(curve for curve in curves if t <= curve.T_max_)(t)
 
     return B
 
@@ -211,7 +227,7 @@ def track_move(wall: WallModel, a: Stance, b: Stance, q0):
     ends exactly in b's stance pose, where b -> c starts: from within JOINT_TOL it jumps there,
     from further it blends there over BLEND_TIME, balls held. Also the moving ball's worst distance
     from its path [m]. ValueError, naming the move, if a ball gets MAX_ERROR from its socket."""
-    limb = moving_limb(a, b)
+    limb = moving_limb(a, b)u
     move = f"{limb} {a.contacts[limb]} -> {b.contacts[limb]}"
     i = LIMBS.index(limb)
     held = sockets(wall, a)
@@ -219,7 +235,7 @@ def track_move(wall: WallModel, a: Stance, b: Stance, q0):
     q, worst, out = q0, 0.0, []
     for k in range(1, round(MOVE_TIME / DT) + 1):
         target = held.copy()
-        target[i] = B(timing(k * DT))
+        target[i] = B(k * DT)
         height = target[:, 2].mean() + TRUNK_HEIGHT
         for _ in range(ITERATIONS):
             q = ik_step(q, GAIN * (target - balls(q)), moving=limb, height=height, posture=Q_HANG)
@@ -236,7 +252,7 @@ def track_move(wall: WallModel, a: Stance, b: Stance, q0):
             q = pin.interpolate(model, q_end, qb, timing(k * DT, BLEND_TIME))
             e = norm(sockets_b - balls(q), axis=1).max()
             if not e <= MAX_ERROR:
-                raise ValueError(f"{move}: a ball {e * 1000:.0f} mm from its socket, blending into b")
+                raise ValueError(f"{move}: a ball {e * 1000:.0f} mm from its socket in the blend")
             out.append(q)
     out[-1] = qb
     return out, worst

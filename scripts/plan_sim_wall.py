@@ -22,6 +22,8 @@ from rcr.kinematics import feasible_ik_traj
 from rcr.planner import astar, feasible_ik_contact, plan, replan
 from rcr.types import LIMBS, ContactPlan, Hold, Stance, Trajectory, WallModel
 
+NPZ = Path(__file__).parents[1] / "npz"  # where --save-npz saves the trajectories
+
 
 def feasible_ik_contact_traj(wall: WallModel, a: Stance, b: Stance):
     """The planner's check of stance b (reach, IK, collision; cached and quick) first, then the IK
@@ -121,7 +123,11 @@ def main() -> None:
     )
     parser.add_argument("--save-trajectory", help="save the optimiser's trajectory to this file")
     parser.add_argument(
-        "--save-npz", help="save the optimiser's trajectory as a .npz (q: N x 26, every 0.02 s)"
+        "--save-npz",
+        nargs="?",
+        const="",
+        metavar="NAME",
+        help="save the trajectory as npz/<timestamp>[_NAME].npz (q: N x 26, every 0.02 s)",
     )
     parser.add_argument(
         "--heuristic-weight", type=float, default=astar.WEIGHT, help="A* heuristic weight"
@@ -176,7 +182,8 @@ def main() -> None:
     if args.show:
         print("showing the stances in MuJoCo...", flush=True)
         show(sim_wall, wall, contact_plan)
-    if (args.play or args.save_trajectory or args.save_npz) and len(contact_plan.stances) > 1:
+    wanted = args.play or args.save_trajectory or args.save_npz is not None
+    if wanted and len(contact_plan.stances) > 1:
         print("generating the trajectory (kinematics.optimise)...", flush=True)
         clock = time.perf_counter()
         trajectory = kinematics.optimise(wall, contact_plan)
@@ -186,10 +193,12 @@ def main() -> None:
             Path(args.save_trajectory).parent.mkdir(parents=True, exist_ok=True)
             io.save_trajectory(trajectory, args.save_trajectory)
             print(f"saved {args.save_trajectory}")
-        if args.save_npz:
-            Path(args.save_npz).parent.mkdir(parents=True, exist_ok=True)
-            kinematics.convert_trajectory_to_npz(trajectory, args.save_npz)
-            print(f"saved {args.save_npz}")
+        if args.save_npz is not None:  # "" when --save-npz is given without a name
+            name = Path(args.save_npz).stem
+            path = NPZ / f"{time.strftime('%Y%m%d-%H%M%S')}{f'_{name}' if name else ''}.npz"
+            NPZ.mkdir(exist_ok=True)
+            kinematics.convert_trajectory_to_npz(trajectory, path)
+            print(f"saved {path}")
         if args.play:
             print("playing the trajectory in MuJoCo...", flush=True)
             play(sim_wall, trajectory)
