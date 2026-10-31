@@ -49,6 +49,7 @@ TRUNK_HEIGHT = 0.015
 # alone (feasible_ik_traj) is the move optimise makes. The joints are pulled toward the hang pose's,
 # last and lowest, also during the move: 0.1 ended 195 of 243 level-2/3 moves already within
 # JOINT_TOL of b's (0.3: 186; without, none).
+SPEED_MARGIN = 0.8  # fraction of URDF speed limit used in final stance blending
 POSTURE_GAIN = 0.1  # fraction of each joint's gap to the posture closed per IK step
 SETTLED = 1e-5  # an IK step this small (norm of the change of q): q has stopped moving
 JOINT_TOL = 0.01  # [rad] a move ending this close to b's stance pose jumps to it; further, blends
