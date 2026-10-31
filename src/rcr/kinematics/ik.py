@@ -137,7 +137,7 @@ def quadprog_solve_qp(H, q, G=None, h=None, C=None, d=None, verbose=False):
 
 
 def ik_step(q, displacement, moving=None, height=None, posture=None):
-    ik_step_qp(q, displacement, moving, height, posture)
+    return ik_step_qp(q, displacement, moving, height, posture)
     # try:
     #     return ik_step_qp(q, displacement, moving)
     # except NotImplementedError:
@@ -179,7 +179,7 @@ def ik_step_qp(q, displacement, moving=None, height=None, posture=None):
         c += weight * J.T @ displacement[LIMBS.index(limb)]
     # x = (v, s_q, s_v): the quadprog helper's (1/2) x' P x + p' x
     zero = np.zeros((nv, 2 * nj))
-    SLACK_WEIGHT = 10 
+    SLACK_WEIGHT = 0
     P = 2 * np.block([[H, zero], [zero.T, SLACK_WEIGHT * np.eye(2 * nj)]])
     p = np.concatenate([-2 * c, np.zeros(2 * nj)])
     S = np.hstack([np.zeros((nj, 6)), np.eye(nj)])  # the joints' part of v
