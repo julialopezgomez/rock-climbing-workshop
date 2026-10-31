@@ -27,6 +27,7 @@ optimiser = [
     "climbing-sim",  # the hold's socket and its placement, from the organisers' simulator
     "casadi>=3.8.1",
     "pin>=4.1.0",
+    "static-balance",  # the CoM's static-equilibrium polygon (scripts/compare_com.py)
 ]  # pin: only to check our CasADi kinematics in tests
 
 [build-system]
@@ -51,3 +52,5 @@ testpaths = ["tests"]
 climbing-sim = { path = "third_party/simulator" }
 microban-sim = { git = "https://github.com/Rhoban/microban_sim", rev = "29234e369e33411ff42276096c6c6af208ad3b65" }
 microban-model = { git = "https://github.com/Rhoban/microban_model", rev = "8e42ef70673b5747dbdca3efaf60bc0f8ec7ea6d", lfs = true }
+# Stéphane Caron's static balance (the workshop's tutorial, GPL-3.0): used, never copied here
+static-balance = { git = "https://github.com/stephane-caron/rock-climbing-robots-tutorial", subdirectory = "static_balance", rev = "913fdede5f8765c9fa93b8942c0f51a13e82f6b8" }

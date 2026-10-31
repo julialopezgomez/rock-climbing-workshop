@@ -6,14 +6,16 @@
 Both motions are put on the same samples per move: the optimiser's own (k = 0..N, the moving ball
 let go at K), and the IK's moves matched to the plan's by stance (rcr.optimiser.reference.guesses)
 and resampled there. At every sample: the CoM of each, the supports (the balls still on their
-holds: all four up to K, the three others after), and how far the CoM is inside them sideways.
+holds: all four up to K, the three others after) and their static-equilibrium polygon.
 
-Sideways (x) is what "the CoM inside the support polygon" means here: gravity is along z, so the
-support polygon is the contacts' projection on the floor plane (x, y), and the holds are all on the
-wall face, so it is a thin strip and only its extent in x tells anything. The margin is the
-CoM's distance inside [min x, max x] of the supports (negative: outside, on the side of the
-moving limb). Writes build/com_<plan name>.json (every sample, for plots) and prints, per move, the
-CoM's shift towards the supports before the release and the margin at it.
+The polygon is Stéphane Caron's, from the workshop's tutorial (static_balance; Bretl and Lall,
+2008): the region, seen from above (x, y), where the CoM can be while the supporting balls hold
+the robot still. Each ball is a point contact pushing up within a cone of half-angle 80° (the
+cup's surface normals) with at most 5 N (what an XL330 can hold at a ball) [the tutorial's
+values; --friction-deg, --max-force]. The margin is the CoM's signed distance to the polygon's
+edge: positive inside, negative outside, NaN where no polygon exists (the supports cannot hold
+the robot whatever the CoM). Writes build/com_<plan name>.json (every sample, for plots) and
+prints, per move, the margin at the release and its smallest value in the air, both motions.
 """
 
 import argparse
@@ -33,6 +35,9 @@ from rcr.optimiser import robot_model as rm  # noqa: E402
 from rcr.optimiser import transition as tr  # noqa: E402
 from rcr.types import LIMBS, MICROBAN_JOINTS  # noqa: E402
 
+FRICTION_DEG = 80.0  # [deg] the cups' normals around the vertical [Caron's tutorial]
+MAX_FORCE = 5.0  # [N] a ball's largest force [Caron's tutorial]
+
 
 def optimiser_moves(path: Path, n_moves: int, n: int) -> np.ndarray:
     """The saved trajectory's configurations, per move: n_moves x (n + 1) x NQ."""
@@ -45,9 +50,30 @@ def optimiser_moves(path: Path, n_moves: int, n: int) -> np.ndarray:
     return np.array([q[i * n : i * n + n + 1] for i in range(min(solved, n_moves))])
 
 
-def margin(x: float, supports: np.ndarray) -> float:
-    """[m] how far x is inside [min, max] of the supports' x (negative outside)."""
-    return float(min(x - supports.min(), supports.max() - x))
+def polygon(balls: np.ndarray, mass: float, friction: float, max_force: float):
+    """The static-equilibrium polygon (vertices x, y, counterclockwise) of balls (B x 3) in cups,
+    or None if they cannot hold the robot."""
+    import pypoman
+    from scipy.spatial import QhullError
+    from static_balance import ContactSet, PointContact, compute_static_equilibrium_polygon
+
+    contacts = ContactSet(PointContact(p, [0.0, 0.0, 1.0], friction, max_force) for p in balls)
+    try:
+        return compute_static_equilibrium_polygon(contacts, mass)
+    except (pypoman.Exception, QhullError, ValueError):
+        return None
+
+
+def signed_margin(point: np.ndarray, vertices) -> float:
+    """[m] distance from point (x, y) to the polygon's edge: positive inside, negative outside."""
+    if vertices is None:
+        return float("nan")
+    a, b = vertices, np.roll(vertices, -1, axis=0)
+    edge = b - a
+    s = np.clip(np.einsum("ij,ij->i", point - a, edge) / np.einsum("ij,ij->i", edge, edge), 0, 1)
+    distance = np.linalg.norm(point - (a + s[:, None] * edge), axis=1).min()
+    inside = np.all(edge[:, 0] * (point[1] - a[:, 1]) - edge[:, 1] * (point[0] - a[:, 0]) >= 0)
+    return float(distance if inside else -distance)
 
 
 def main() -> None:
@@ -55,19 +81,19 @@ def main() -> None:
     parser.add_argument("plan", type=Path, help="e.g. build/plan_N1.json")
     parser.add_argument("optimised", type=Path, help="e.g. build/trajectory_plan_N1.json")
     parser.add_argument("ik", type=Path, help="e.g. build/wall-1-ik.npz (q: T x 26 at 50 Hz)")
+    parser.add_argument("--friction-deg", type=float, default=FRICTION_DEG, help="cone half-angle")
+    parser.add_argument("--max-force", type=float, default=MAX_FORCE, help="[N] per ball")
     parser.add_argument("--out", type=Path, help="default: build/com_<plan name>.json")
     args = parser.parse_args()
 
     cfg = tr.TransitionConfig()
     n, k_release = cfg.n_samples, cfg.release_sample
+    friction = float(np.tan(np.radians(args.friction_deg)))
     plan = io.load_contact_plan(args.plan)
     wall = plan_walls(plan)
     model = rm.load_robot_model()
     ours = optimiser_moves(args.optimised, len(plan.stances) - 1, n)
     theirs = reference.guesses(plan, wall, reference.read(args.ik), cfg)
-
-    def com(q):
-        return np.array(model.com(q)).ravel()
 
     moves, rows = [], []
     for i, (a, b) in enumerate(zip(plan.stances, plan.stances[1 : len(ours) + 1], strict=False)):
@@ -75,54 +101,75 @@ def main() -> None:
             print(f"move {i}: not in the IK motion, skipped")
             continue
         limb = tr.moving_limb(a, b, i)
-        held = [m for m in LIMBS if m != limb]
-        point = {m: tr.contact_point(wall, a.contacts[m], cfg) for m in LIMBS}
-        support_x = np.array([point[m][0] for m in held])
-        # towards the supports: from the moving limb's hold to the others' middle, in x
-        towards = np.sign(support_x.mean() - point[limb][0]) or 1.0
+        held = [LIMBS.index(m) for m in LIMBS if m != limb]
         per = {}
         for name, qs in (("optimiser", ours[i]), ("ik", theirs[i])):
-            c = np.array([com(q) for q in qs])
+            com, polygons, margins = [], [], []
+            for k, q in enumerate(qs):
+                c = np.array(model.com(q)).ravel()
+                balls = np.array(model.limb_positions(q)).T  # 4 x 3, LIMBS order
+                vertices = polygon(
+                    balls if k < k_release else balls[held], model.mass, friction, args.max_force
+                )
+                com.append(c.tolist())
+                polygons.append(None if vertices is None else vertices.tolist())
+                margins.append(signed_margin(c[:2], vertices))
+            air = np.array(margins[k_release:])
             per[name] = {
-                "com": c.tolist(),
-                "shift": float((c[k_release, 0] - c[0, 0]) * towards),
-                "margin_release": margin(c[k_release, 0], support_x),
-                "margin_min_air": min(margin(x, support_x) for x in c[k_release:, 0]),
+                "com": com,
+                "polygons": polygons,
+                "margins": margins,
+                "margin_release": margins[k_release],
+                "margin_min_air": float(np.nanmin(air)) if np.isfinite(air).any() else None,
+                "no_polygon": int(np.isnan(margins).sum()),
             }
-        gap = np.linalg.norm(np.array(per["optimiser"]["com"]) - np.array(per["ik"]["com"]), axis=1)
         moves.append(
             {
                 "move": i,
                 "limb": limb,
-                "holds": {m: point[m].tolist() for m in LIMBS},
                 "from": a.contacts[limb],
                 "to": b.contacts[limb],
+                "holds": {m: tr.contact_point(wall, a.contacts[m], cfg).tolist() for m in LIMBS},
                 "target": tr.contact_point(wall, b.contacts[limb], cfg).tolist(),
-                "gap": gap.tolist(),
                 **per,
             }
         )
+
+        def mm(v):
+            return "    -- " if v is None or np.isnan(v) else f"{v * 1000:+7.1f}"
+
         o, k = per["optimiser"], per["ik"]
         rows.append(
-            f"{i:4d} {limb:10s} {o['shift'] * 1000:+7.1f} {k['shift'] * 1000:+7.1f}   "
-            f"{o['margin_release'] * 1000:+7.1f} {k['margin_release'] * 1000:+7.1f}   "
-            f"{o['margin_min_air'] * 1000:+7.1f} {k['margin_min_air'] * 1000:+7.1f}   "
-            f"{gap.max() * 1000:6.1f}"
+            f"{i:4d} {limb:10s} {mm(o['margin_release'])} {mm(k['margin_release'])}   "
+            f"{mm(o['margin_min_air'])} {mm(k['margin_min_air'])}"
         )
 
-    print("[mm]          shift before release   margin at release   min margin in air   max gap")
-    print("move limb          TO      IK          TO      IK          TO      IK    TO-IK")
+    print(f"static-equilibrium polygon: cone {args.friction_deg:g} deg, {args.max_force:g} N/ball")
+    print("[mm]          margin at release   min margin in air")
+    print("move limb          TO      IK          TO      IK")
     print("\n".join(rows))
     for name in ("optimiser", "ik"):
-        shifts = [m[name]["shift"] for m in moves]
-        inside = [m[name]["margin_release"] for m in moves]
+        release = np.array([m[name]["margin_release"] for m in moves], dtype=float)
+        air = np.array([np.nan if m[name]["margin_min_air"] is None else m[name]["margin_min_air"]
+                        for m in moves])  # fmt: skip
         print(
-            f"{name:9s}: shift median {np.median(shifts) * 1000:+.1f} mm; margin at release "
-            f"median {np.median(inside) * 1000:+.1f} mm, outside in {sum(x < 0 for x in inside)}"
-            f" of {len(moves)} moves"
+            f"{name:9s}: at release median {np.nanmedian(release) * 1000:+.1f} mm, outside in "
+            f"{int((release < 0).sum())} of {len(moves)} moves; in the air outside in "
+            f"{int((air < 0).sum())}; samples with no polygon "
+            f"{sum(m[name]['no_polygon'] for m in moves)}"
         )
     out = args.out or Path("build") / f"com_{args.plan.stem}.json"
-    out.write_text(json.dumps({"plan": str(args.plan), "release": k_release, "moves": moves}))
+    out.write_text(
+        json.dumps(
+            {
+                "plan": str(args.plan),
+                "release": k_release,
+                "friction_deg": args.friction_deg,
+                "max_force": args.max_force,
+                "moves": moves,
+            }
+        )
+    )
     print(f"-> {out}")
 
 
