@@ -52,7 +52,7 @@ DT = 0.02  # the robot's control tick (50 Hz)
 TRUNK_HEIGHT = 0.168
 TRAJECTORY = Path(__file__).resolve().parents[3] / "data/trajectories/wall-1-ik.npz"
 SHADOW_COLOR = (0.2, 0.85, 0.35, 0.35)  # RGBA of the target robot
-SPEEDS = (0.5, 1.0, 1.25, 1.5, 2.0)  # the replay speeds offered on the page (with --speed)
+SPEEDS = (0.5, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0)  # the replay speeds offered on the page (with --speed)
 LOG_DIR = Path(__file__).resolve().parents[3] / "runs/replay"  # runs/ is git-ignored
 TARGET_COLOR, MEASURED_COLOR = "#2a9d4b", "#1f5fbf"
 AXIS_COLORS = ("#d1495b", "#2a9d4b", "#1f5fbf", "#555555")  # roll, pitch, yaw, total
@@ -66,8 +66,8 @@ CHART_SCALES = {"x": uplot.Scale(time=False), "y": uplot.Scale(auto=True), "A": 
 # requests are rejected explicitly.
 GAIN_OPTIONS = {
     "kp": (2000, 16383, "position P gain"),
-    "ki": (2000, 16383, "position I gain"),
-    "kd": (1000, 16383, "position D gain"),
+    "ki": (100, 16383, "position I gain"),
+    "kd": (10, 16383, "position D gain"),
 }
 
 # The joints of the npz's columns 7.. (the robot's joint order, not the model's).
