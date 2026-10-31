@@ -237,21 +237,33 @@ def evaluate(data: Path, episodes: int, policy: Path | None = None, watch: bool 
               f"|a| > 0.95 on {100 * mean[2]:.0f} % of joint-steps")  # fmt: skip
 
 
-def train(data: Path, steps: int, envs: int, out: Path, alpha: float, kp_fw: float,
+def train(data: list[Path], steps: int, envs: int, out: Path, alpha: float, kp_fw: float,
           norm_reward: bool, seed: int = 0, log_std_init: float = 0.0,
           only: list[int] | None = None) -> None:  # fmt: skip
     """PPO (SB3 defaults: advantages normalised per minibatch). norm_reward: rewards scaled by a
     running estimate of the returns' std (VecNormalize), so the value function learns numbers
     near 1, not thousands; the observations are left as they are, so the ONNX export and
     Controller need nothing more. log_std_init: the log of the starting exploration noise (0: an
-    std of 1 on actions in [-1, 1]; -1: 0.37)."""
+    std of 1 on actions in [-1, 1]; -1: 0.37). Several data folders (walls and references) share
+    the parallel sims in turn: sim i runs data[i % len(data)] [Ours]."""
     import torch
     from stable_baselines3 import PPO
-    from stable_baselines3.common.env_util import make_vec_env
+    from stable_baselines3.common.monitor import Monitor
     from stable_baselines3.common.vec_env import SubprocVecEnv, VecNormalize
 
-    kwargs = {"data": data, "alpha": alpha, "kp_fw": kp_fw, "only": only}
-    vec = make_vec_env(TrackingEnv, envs, seed=seed, vec_env_cls=SubprocVecEnv, env_kwargs=kwargs)
+    if only is not None and len(data) > 1:
+        raise SystemExit("--moves numbers one reference's moves: give a single --data with it")
+
+    def make(i: int):
+        def env():
+            e = Monitor(TrackingEnv(data[i % len(data)], alpha, kp_fw, only=only))
+            e.reset(seed=seed + i)  # as make_vec_env seeds its sims
+            e.action_space.seed(seed + i)
+            return e
+
+        return env
+
+    vec = SubprocVecEnv([make(i) for i in range(envs)])
     if norm_reward:
         vec = VecNormalize(vec, norm_obs=False, norm_reward=True)
     model = PPO("MlpPolicy", vec, verbose=1, seed=seed,
@@ -259,14 +271,14 @@ def train(data: Path, steps: int, envs: int, out: Path, alpha: float, kp_fw: flo
     with torch.no_grad():  # the residual starts at 0: training starts from playback [Silver 2018]
         model.policy.action_net.weight.zero_()
         model.policy.action_net.bias.zero_()
-    history = History(out, TrackingEnv(data, alpha, kp_fw))
+    history = History(out, TrackingEnv(data[0], alpha, kp_fw), data)
     model.learn(total_timesteps=steps, callback=history)
     out.parent.mkdir(parents=True, exist_ok=True)
     model.save(f"{out}.zip")  # out may hold dots (alpha0.1): append, never replace
     rows = history.rows
     columns = {k: np.array([r.get(k, np.nan) for r in rows]) for k in rows[0]}
     np.savez(f"{out}_history.npz", norm_reward=norm_reward, **columns)
-    export(model, out, TrackingEnv(data, alpha, kp_fw))
+    export(model, out, TrackingEnv(data[0], alpha, kp_fw), data)
     plot(Path(f"{out}_history.npz"))
 
 
@@ -277,9 +289,9 @@ class History(BaseCallback):
     is exported as <out>_<k>k.onnx, so a run can be evaluated before it ends or if it is cut."""
 
     def __init__(self, out: Path | None = None, env: "TrackingEnv | None" = None,
-                 every: int = 100_000) -> None:  # fmt: skip
+                 data: list[Path] | None = None, every: int = 100_000) -> None:  # fmt: skip
         super().__init__()
-        self.out, self.env, self.every = out, env, every
+        self.out, self.env, self.data, self.every = out, env, data, every
 
     def _on_training_start(self) -> None:
         self.rows, self.ends, self.errors, self.balls = [], [], [], []
@@ -318,7 +330,7 @@ class History(BaseCallback):
         self.logger.record("climb/ball_mm", round(1000 * float(np.mean(self.balls)), 1))
         self.ends, self.errors, self.balls = [], [], []
         if self.out is not None and self.num_timesteps >= self.next_save:
-            export(self.model, Path(f"{self.out}_{self.next_save // 1000}k"), self.env)
+            export(self.model, Path(f"{self.out}_{self.next_save // 1000}k"), self.env, self.data)
             self.next_save += self.every
 
 
@@ -379,7 +391,7 @@ def plot(history: Path) -> None:
     print(f"saved {history.with_suffix('.png')}")
 
 
-def export(model, out: Path, env: TrackingEnv) -> None:
+def export(model, out: Path, env: TrackingEnv, data: list[Path] | None = None) -> None:
     """The policy's mean action as ONNX (input "obs"), and what Controller checks next to it."""
     import torch
 
@@ -396,7 +408,8 @@ def export(model, out: Path, env: TrackingEnv) -> None:
                       dynamo=False)  # fmt: skip
     meta = {"action": tracking.ACTION, "alpha": env.alpha, "kp_fw": env.kp_fw,
             "joints": list(tracking.JOINTS),
-            "low": env.low.tolist(), "high": env.high.tolist()}  # fmt: skip
+            "low": env.low.tolist(), "high": env.high.tolist(),
+            "trained_on": [str(d) for d in data or []]}  # fmt: skip
     Path(f"{out}.json").write_text(json.dumps(meta, indent=1))
     print(f"saved {out}.onnx and {out}.json")
 
@@ -406,7 +419,8 @@ if __name__ == "__main__":
     parser.add_argument("command", choices=["import", "baseline", "evaluate", "train", "plot"])
     parser.add_argument("npz", type=Path, nargs="?", help="import: the teammate's .npz")
     parser.add_argument("--wall", default="N1", help="import: the organisers' wall it is on")
-    parser.add_argument("--data", type=Path, default=Path("build/rl"))
+    parser.add_argument("--data", type=Path, nargs="+", default=[Path("build/rl")],
+                        help="the data folder; train: one or more, sharing the sims")  # fmt: skip
     parser.add_argument("--episodes", type=int, default=20, help="evaluation episodes")
     parser.add_argument("--policy", type=Path, default=Path("build/rl/policy.onnx"))
     parser.add_argument("--watch", action="store_true", help="in MuJoCo's viewer (macOS: mjpython)")
@@ -420,6 +434,10 @@ if __name__ == "__main__":
     parser.add_argument("--log-std-init", type=float, default=0.0, help="train: log starting noise")
     parser.add_argument("--moves", help="train: only these moves, e.g. 6,18,26 (default: all)")
     args = parser.parse_args()
+    if args.command != "train":
+        if len(args.data) > 1:
+            parser.error("only train takes several --data")
+        args.data = args.data[0]
     if args.command == "import":
         import_npz(args.npz, args.wall, args.data)
     elif args.command == "train":
