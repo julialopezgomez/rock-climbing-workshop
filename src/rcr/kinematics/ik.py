@@ -8,6 +8,7 @@ import numpy as np
 import pinocchio as pin
 from numpy.linalg import norm, pinv
 
+from rcr.planner.astar import Q_HANG
 from rcr.planner.astar import ik as ik_astar
 from rcr.planner.astar import targets as stance_targets
 from rcr.types import (
@@ -27,6 +28,12 @@ OUT = 0.04  # metres
 EPSILON = 1e-4
 MAX_ITERATIONS = 100
 IK_STEP = 0.2
+# The soft task (solve_ik's priority 3) [Ours]: weights of the trunk's lean and of the joints'
+# gap to the hang pose, and the damping of its inverse
+TRUNK_WEIGHT = 1.0
+POSTURE_WEIGHT = 0.1
+SOFT_GAIN = 0.1  # fraction of its gap the soft task closes per IK iteration
+DAMPING = 0.03
 
 # trunk free: q = (x, y, z, qx, qy, qz, qw, 19 joints)
 model = pin.buildModelFromUrdf(str(microban_model.urdf(climb=True)), pin.JointModelFreeFlyer())
@@ -71,6 +78,11 @@ def project_to_joint_limits(q):
     return q_proj
 
 
+def damped(A):
+    """Damped least-squares inverse: like pinv, but bounded where A is near singular."""
+    return A.T @ np.linalg.inv(A @ A.T + DAMPING**2 * np.eye(A.shape[0]))
+
+
 def solve_ik(q0, targets, moving):
     """IK from q0 to four ball position targets.
 
@@ -109,6 +121,17 @@ def solve_ik(q0, targets, moving):
         em = errors[moving]
 
         dq = dq_c + pinv(Jm @ P) @ (em - Jm @ dq_c)
+        P = P - pinv(Jm @ P) @ (Jm @ P)
+
+        # Priority 3 (soft): trunk not leaning (its x into the wall, +y; only turning about y
+        # allowed) and the joints toward the hang pose, weighted, in the null space of the balls
+        R = data.oMi[1].rotation
+        lean = np.cross(R[:, 0], [0.0, 1.0, 0.0])[[0, 2]]  # its rotation about x and z
+        Jt = pin.getJointJacobian(model, data, 1, pin.LOCAL_WORLD_ALIGNED)[[3, 5]]
+        posture = pin.difference(model, q, Q_HANG)[6:]
+        A = np.vstack([TRUNK_WEIGHT * Jt, POSTURE_WEIGHT * np.eye(model.nv)[6:]])
+        r = SOFT_GAIN * np.concatenate([TRUNK_WEIGHT * lean, POSTURE_WEIGHT * posture])
+        dq = dq + damped(A @ P) @ (r - A @ dq)
 
         q = pin.integrate(model, q, IK_STEP * dq)
         q = project_to_joint_limits(q)
