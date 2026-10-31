@@ -7,14 +7,10 @@ optimiser is rcr.optimiser.
 
 import numpy as np
 
-from rcr.kinematics.ik import feasible_ik_traj
-
+from rcr.kinematics.ik import feasible_ik_traj as feasible_ik_traj
 from rcr.types import (
     LIMBS,
-    MICROBAN_JOINTS,
     ContactPlan,
-    Feasibility,
-    Stance,
     Trajectory,
     WallModel,
 )
@@ -26,19 +22,7 @@ def optimise(wall: WallModel, plan: ContactPlan) -> Trajectory:
     from rcr.kinematics import ik
 
     validate_plan(wall, plan)
-    qs = [ik.start_pose(wall, plan.stances[0])]
-    for a, b in zip(plan.stances, plan.stances[1:], strict=False):
-        qs += ik.track_move(wall, a, b, qs[-1])[0]
-    joints = [ik.model.idx_qs[ik.model.getJointId(name)] for name in MICROBAN_JOINTS]
-    positions = [[float(q[j]) for j in joints] for q in qs]
-    return Trajectory(
-        joint_names=list(MICROBAN_JOINTS),
-        times=[round(k * ik.DT, 9) for k in range(len(qs))],
-        positions=positions,
-        planned_positions=[row.copy() for row in positions],
-        # Pinocchio's quaternion is (x, y, z, w); ours (w, x, y, z)
-        trunk_poses=[[float(v) for v in q[[0, 1, 2, 6, 3, 4, 5]]] for q in qs],
-    )
+    return ik.to_trajectory(ik.generate_trajectory(wall, plan))
 
 
 def validate_plan(wall: WallModel, plan: ContactPlan) -> None:
@@ -54,7 +38,6 @@ def validate_plan(wall: WallModel, plan: ContactPlan) -> None:
         moved = [limb for limb in LIMBS if a.contacts[limb] != b.contacts[limb]]
         if len(moved) != 1:
             raise ValueError(f"stances {n} -> {n + 1}: {len(moved)} limbs move, not 1")
-
 
 
 def convert_trajectory_to_npz(trajectory: Trajectory, filename: str) -> None:

@@ -22,7 +22,11 @@ dependencies = [
 # sim: the organisers' simulator (third_party/simulator, climbing_sim), with Rhoban's robot sim
 sim = ["climbing-sim", "microban-model"]
 perception = [] # e.g. opencv (ArUco)
-dev = ["pytest", "ruff"]
+dev = [
+    "matplotlib>=3.11.2",
+    "pytest",
+    "ruff",
+]
 optimiser = [
     "microban-model",
     "climbing-sim",  # the hold's socket and its placement, from the organisers' simulator
