@@ -9,12 +9,11 @@ from pathlib import Path
 import microban_model
 import numpy as np
 import pinocchio as pin
+import quadprog
 from numpy.linalg import norm, pinv
 
 from rcr.kinematics.bezier import Bezier, connecting
 from rcr.types import LIMBS, Feasibility, Stance, WallModel
-
-import quadprog
 
 SOCKET = np.array([0.0, -0.026, -0.014])  # ball centre from Hold.position [simulator wall.py]
 HANG = Path(__file__).parents[3] / "third_party/simulator/climbing_sim/assets/poses/hang.json"
@@ -24,15 +23,19 @@ TRUNK_UPRIGHT = np.array([[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
 EPSILON = 1e-3  # [m] a ball this close to its target has reached it (1e-4: 6 % of start poses fail)
 MAX_ITERATIONS = 200  # for the start pose
 STEP = 0.5  # fraction of the error the start pose's IK closes per iteration
-# The ball's path [Ours, to tune]: straight up out of socket a (a ball leaves a socket only within
-# ~10 deg of vertical [simulator wall.py, EXIT_BLOCK]), out from the wall and over to above socket
-# b, then straight down into it (ball_path).
-OUT = 0.06  # [m] the way over's middle control points, away from the wall (-y): 33 mm off at most
-ABOVE = 0.03  # [m] straight above a socket: where the ball has left it, and comes into it from
-VERTICAL_TIME = 0.4  # [s] up out of socket a; also down into socket b
-# [m/s] straight up (down) where the curves meet, on level-2/3 moves: 440 of 442 doable. Twice as
-# fast: 416, the way over overshoots 51 mm above socket b (hands out of reach); 0 stops it there.
-JUNCTION_SPEED = ABOVE / VERTICAL_TIME
+# The ball's path [Ours]: a corridor clear of every hold (ball_path). Measured on the simulator's
+# collision shapes (ball radius 12.5 mm, holds 43 mm out of the wall): the 440 hold -> hold paths
+# of 1113 moves on 6 walls clear every hold by 6.3 mm, and so does the ball as the IK tracks it.
+# A single curve over cut the corner into the next hold (down to -14 mm), whatever its parameters.
+# [m] straight up out of socket a before moving out (a ball leaves a socket only within ~10 deg of
+# vertical [simulator wall.py, EXIT_BLOCK]); also above socket b, before coming down into it.
+# Moving out at 25 mm, the ball clears its own hold by 7.9 mm (20 mm: 2.9), and a hold 60 mm
+# above and 15 mm beside (the routes allow one there) by 8.5 mm (30 mm: 3.8).
+ABOVE = 0.025
+# [m] in front of the sockets while going across (66 mm from the wall): 10.5 mm in front of every
+# hold (35 mm: 5.5)
+OUT = 0.04
+CORNER_TIME = 0.3  # [s] each of up, out, in and down; across takes the rest of MOVE_TIME
 MOVE_TIME = 2.0  # [s] per move
 DT = 0.02  # [s] between samples: the robot's 50 Hz loop
 GAIN = 0.5  # fraction of a ball's tracking error corrected per sample [Ours]
@@ -51,12 +54,32 @@ TRUNK_HEIGHT = 0.015
 POSTURE_GAIN = 0.1  # fraction of each joint's gap to the posture closed per IK step
 SETTLED = 1e-5  # an IK step this small (norm of the change of q): q has stopped moving
 JOINT_TOL = 0.01  # [rad] a move ending this close to b's stance pose jumps to it; further, blends
-BLEND_TIME = 0.3  # [s] min-jerk from where a move ended to b's stance pose, balls held
+BLEND_TIME = 0.3  # [s] min-jerk from where a move ended to b's stance pose, balls held, at least
+# The QP IK (ik_step_qp) [Ours]: its tasks' weights, and how far inside its limits it tries to stay
+HELD_WEIGHT = 1e3  # a held ball's task, against the moving ball's 1: the held stay in their sockets
+REGULARISATION = DAMPING**2  # on the step, like damped(): bounded where a limb is stretched out
+JOINT_MARGIN = 0.1  # [rad] the joints try to stay this far inside their limits (slack)
+SPEED_MARGIN = 0.8  # the joints try to stay under this fraction of their speed limits (slack)
+SLACK_WEIGHT = 1e2  # on the squared slack [rad^2]: inside the margins only if the balls need it
+MANIPULABILITY_GAIN = 1e-5  # on the gradient of the moving limb's log-manipulability
 
 # trunk free: q = (x, y, z, qx, qy, qz, qw, 19 joints)
 model = pin.buildModelFromUrdf(str(microban_model.urdf(climb=True)), pin.JointModelFreeFlyer())
 data = model.createData()
 BALL = {limb: model.getFrameId(f"{limb}_ball") for limb in LIMBS}
+SPEED_LIMIT = model.velocityLimit[6:]  # [rad/s] the joints' (6.6) [microban model URDF]
+
+
+def chain(limb):
+    """The velocity indices of the limb's joints, trunk to ball."""
+    j, out = model.frames[BALL[limb]].parentJoint, []
+    while j > 1:
+        out.insert(0, model.idx_vs[j])
+        j = model.parents[j]
+    return out
+
+
+CHAIN = {limb: chain(limb) for limb in LIMBS}
 
 Q_HANG = pin.neutral(model)
 for name, angle in json.loads(HANG.read_text())["joints"].items():
@@ -85,9 +108,6 @@ def damped(A):
     """Damped least-squares inverse: like pinv, but the step stays bounded where A is near
     singular (a limb stretched out), so a target out of reach is only approached."""
     return A.T @ np.linalg.inv(A @ A.T + DAMPING**2 * np.eye(A.shape[0]))
-
-
-import quadprog
 
 
 def quadprog_solve_qp(H, q, G=None, h=None, C=None, d=None, verbose=False):
@@ -120,32 +140,73 @@ def quadprog_solve_qp(H, q, G=None, h=None, C=None, d=None, verbose=False):
 
 def ik_step(q, displacement, moving=None, height=None, posture=None):
     try:
-        return ik_step_qp(q, displacement)
+        return ik_step_qp(q, displacement, moving)
     except NotImplementedError:
         return ik_step_pinv(q, displacement, moving, height, posture)
 
-def ik_step_qp(q, displacement):
-    
+
+def manipulability(q, limb):
+    """Yoshikawa's w = sqrt(det(J J^T)) of the limb's ball over the limb's own joints."""
     pin.computeJointJacobians(model, data, q)
     pin.updateFramePlacements(model, data)
-    order = [limb for limb in TASK_ORDER]
-    tasks = [
-        (
-            pin.getFrameJacobian(model, data, BALL[limb], pin.LOCAL_WORLD_ALIGNED)[:3],
-            LIMBS.index(limb),
-        )
-        for limb in order
+    J = pin.getFrameJacobian(model, data, BALL[limb], pin.LOCAL_WORLD_ALIGNED)[:3, CHAIN[limb]]
+    return np.sqrt(max(np.linalg.det(J @ J.T), 1e-30))
+
+
+def manipulability_gradient(q, limb, h=1e-6):
+    """d log(w) / dq over the limb's joints (forward differences), 0 elsewhere."""
+    gradient, w = np.zeros(model.nv), np.log(manipulability(q, limb))
+    for v in CHAIN[limb]:
+        dq = np.zeros(model.nv)
+        dq[v] = h
+        gradient[v] = (np.log(manipulability(pin.integrate(model, q, dq), limb)) - w) / h
+    return gradient
+
+
+def ik_step_qp(q, displacement, moving=None):
+    """One IK step as a QP [after the ediadvancedrobotics tutorials], over the step v (model.nv)
+    and two slacks per joint s = (s_q, s_v) >= 0:
+        min  sum_balls weight ||J v - displacement||^2 + REGULARISATION ||v||^2
+             + SLACK_WEIGHT ||s||^2 - MANIPULABILITY_GAIN grad(log w_moving) . v
+        s.t. q- <= q + v <= q+,   |v| <= SPEED_LIMIT DT / ITERATIONS          (joints: hard)
+             q- + JOINT_MARGIN - s_q <= q + v <= q+ - JOINT_MARGIN + s_q        (soft)
+             |v| <= SPEED_MARGIN SPEED_LIMIT DT / ITERATIONS + s_v              (soft)
+    A held ball weighs HELD_WEIGHT, the moving one 1. The balls only, for now: no trunk or
+    posture task (height and posture are ignored)."""
+    nv, nj = model.nv, model.nv - 6
+    gradient = manipulability_gradient(q, moving) if moving else np.zeros(nv)
+    pin.computeJointJacobians(model, data, q)
+    pin.updateFramePlacements(model, data)
+    H, c = REGULARISATION * np.eye(nv), np.zeros(nv)  # cost: v' H v - 2 c' v
+    for limb in TASK_ORDER:
+        J = pin.getFrameJacobian(model, data, BALL[limb], pin.LOCAL_WORLD_ALIGNED)[:3]
+        weight = 1.0 if limb == moving else HELD_WEIGHT
+        H += weight * J.T @ J
+        c += weight * J.T @ displacement[LIMBS.index(limb)]
+    c += MANIPULABILITY_GAIN / 2 * gradient
+    # x = (v, s_q, s_v): the quadprog helper's (1/2) x' P x + p' x
+    zero = np.zeros((nv, 2 * nj))
+    P = 2 * np.block([[H, zero], [zero.T, SLACK_WEIGHT * np.eye(2 * nj)]])
+    p = np.concatenate([-2 * c, np.zeros(2 * nj)])
+    S = np.hstack([np.zeros((nj, 6)), np.eye(nj)])  # the joints' part of v
+    Z, E = np.zeros((nj, nj)), np.eye(nj)
+    upper, lower = model.upperPositionLimit[7:] - q[7:], q[7:] - model.lowerPositionLimit[7:]
+    speed = SPEED_LIMIT * DT / ITERATIONS
+    rows = [  # (G, h) of G x <= h
+        (np.hstack([S, Z, Z]), upper),  # joint limits
+        (np.hstack([-S, Z, Z]), lower),
+        (np.hstack([S, Z, Z]), speed),  # speed limits
+        (np.hstack([-S, Z, Z]), speed),
+        (np.hstack([S, -E, Z]), upper - JOINT_MARGIN),  # JOINT_MARGIN inside the joint limits
+        (np.hstack([-S, -E, Z]), lower - JOINT_MARGIN),
+        (np.hstack([S, Z, -E]), SPEED_MARGIN * speed),  # under SPEED_MARGIN of the speed limits
+        (np.hstack([-S, Z, -E]), SPEED_MARGIN * speed),
+        (np.hstack([np.zeros((2 * nj, nv)), -np.eye(2 * nj)]), np.zeros(2 * nj)),  # slacks >= 0
     ]
-    
-    # ignore trunk and now.
-    # solve with quadprog
-    
-    
-    
-    
-    
-    
-    raise NotImplementedError("ik_step_qp not implemented yet")
+    G = np.vstack([g for g, _ in rows])
+    h = np.concatenate([b for _, b in rows])
+    v = quadprog_solve_qp(P, p, G, h)[:nv]
+    return projecttojointlimits(pin.integrate(model, q, v))
 
 def ik_step_pinv(q, displacement, moving=None, height=None, posture=None):
     """One hierarchical IK step: each limb's ball moved by its displacement (in LIMBS order), the
@@ -243,24 +304,23 @@ def start_pose(wall: WallModel, stance: Stance):
 
 
 def ball_path(p_a, p_b):
-    """B(t), t in [0, MOVE_TIME]: three Bezier curves, continuous in position, velocity and
-    acceleration where they meet [C-CROC eq. 4, bezier.connecting]:
-    - up: from p_a, at rest, straight up to ABOVE it, in VERTICAL_TIME;
-    - over: out from the wall, over and up to ABOVE p_b; its middle control points are OUT in
-      front of the two ends;
-    - down: straight down into p_b, at rest, in VERTICAL_TIME.
-    Where they meet the ball moves straight up (down) at JUNCTION_SPEED, without acceleration
-    [Ours]: over leaves going up and arrives coming down."""
-    rest, up = np.zeros(3), np.array([0.0, 0.0, 1.0])
-    speed = JUNCTION_SPEED * up
-    left, over_b = p_a + ABOVE * up, p_b + ABOVE * up
-    away = np.array([0.0, -OUT, 0.0])
-    middle = [left + away, over_b + away]
-    t1, t2, end = VERTICAL_TIME, MOVE_TIME - VERTICAL_TIME, MOVE_TIME
+    """B(t), t in [0, MOVE_TIME]: five Bezier curves through the corridor's corners, each at rest
+    at both ends, so continuous in position, velocity and acceleration where they meet [C-CROC
+    eq. 4, bezier.connecting] and each a straight line (it cannot cut a corner into a hold, nor
+    rise above it): up ABOVE out of socket a, out OUT from the wall, across to in front of socket
+    b, in, and down into socket b.
+    
+    - p_a, p_b: the moving ball's sockets on holds a and b
+    
+    
+    """
+    rest, up, out = np.zeros(3), np.array([0.0, 0.0, ABOVE]), np.array([0.0, -OUT, 0.0])
+    corners = [p_a, p_a + up, p_a + up + out, p_b + up + out, p_b + up, p_b]
+    times = np.cumsum([0.0, CORNER_TIME, CORNER_TIME, MOVE_TIME - 4 * CORNER_TIME, CORNER_TIME])
+    times = [*times, MOVE_TIME]
     curves = [
-        Bezier(connecting((p_a, rest, rest), (left, speed, rest), t1), 0.0, t1),
-        Bezier(connecting((left, speed, rest), (over_b, -speed, rest), t2 - t1, middle), t1, t2),
-        Bezier(connecting((over_b, -speed, rest), (p_b, rest, rest), end - t2), t2, end),
+        Bezier(connecting((p, rest, rest), (q, rest, rest), t1 - t0), t0, t1)
+        for p, q, t0, t1 in zip(corners, corners[1:], times, times[1:], strict=False)
     ]
 
     def B(t):
@@ -308,10 +368,13 @@ def track_move(wall: WallModel, a: Stance, b: Stance, q0):
         worst = max(worst, error[i])
         out.append(q)
     qb, sockets_b = start_pose(wall, b), sockets(wall, b)
-    if np.abs(q[7:] - qb[7:]).max() > JOINT_TOL:
+    gap = np.abs(q[7:] - qb[7:])
+    if gap.max() > JOINT_TOL:
+        # min-jerk peaks at 1.875 x the mean speed: no joint over SPEED_MARGIN of its speed limit
+        blend = max(BLEND_TIME, 1.875 * (gap / SPEED_LIMIT).max() / SPEED_MARGIN)
         q_end = q
-        for k in range(1, round(BLEND_TIME / DT) + 1):
-            q = pin.interpolate(model, q_end, qb, timing(k * DT, BLEND_TIME))
+        for k in range(1, int(np.ceil(blend / DT)) + 1):
+            q = pin.interpolate(model, q_end, qb, timing(k * DT, blend))
             e = norm(sockets_b - balls(q), axis=1).max()
             if not e <= MAX_ERROR:
                 raise ValueError(f"{move}: a ball {e * 1000:.0f} mm from its socket in the blend")
