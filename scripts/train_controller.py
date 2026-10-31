@@ -4,6 +4,7 @@
     uv run --group rl scripts/train_controller.py train --steps 2000000    # PPO, then ONNX export
     uv run --group rl scripts/train_controller.py evaluate                 # the ONNX policy
     uv run --group rl mjpython scripts/train_controller.py evaluate --watch   # in MuJoCo's viewer
+    uv run --group rl scripts/train_controller.py curriculum --init POLICY --out DIR   # alpha up
     (--watch on baseline shows playback. macOS needs mjpython for the viewer.)
 
 The data folder (--data, build/rl by default) holds the reference: sim_wall.json (the organisers'
@@ -187,21 +188,21 @@ def import_npz(path: Path, wall: str, data: Path) -> None:
 
 
 def evaluate(data: Path, episodes: int, policy: Path | None = None, watch: bool = False,
-             kp_fw: float = tracking.KP_FW) -> None:  # fmt: skip
-    """Episodes with the ONNX policy (at the alpha and servo gain it was trained with), or
-    playback (alpha 0, at kp_fw) without one: what the policy has to beat. Each from a random
-    reference start, or, with watch, in MuJoCo's viewer and chained (a success carries on to the
-    next move) like a climb."""
+             kp_fw: float = tracking.KP_FW, alpha: float | None = None) -> dict:  # fmt: skip
+    """Episodes with the ONNX policy (at the alpha and servo gain it was trained with, or at the
+    alpha given), or playback (alpha 0, at kp_fw) without one: what the policy has to beat. Each
+    from a random reference start, or, with watch, in MuJoCo's viewer and chained (a success
+    carries on to the next move) like a climb. Prints each move, returns the totals."""
     act = lambda obs: np.zeros(len(tracking.JOINTS))  # noqa: E731
-    alpha = 0.0
+    own_alpha = 0.0
     if policy is not None:
         import onnxruntime
 
         session = onnxruntime.InferenceSession(str(policy))
         act = lambda obs: session.run(None, {"obs": obs[None]})[0][0]  # noqa: E731
         meta = json.loads(policy.with_suffix(".json").read_text())
-        alpha, kp_fw = meta["alpha"], meta.get("kp_fw", tracking.KP_FW)  # older: all at 125
-    env = TrackingEnv(data, alpha, kp_fw)
+        own_alpha, kp_fw = meta["alpha"], meta.get("kp_fw", tracking.KP_FW)  # older: all at 125
+    env = TrackingEnv(data, own_alpha if alpha is None else alpha, kp_fw)
     env.reset(seed=0)
     if watch:
         env.sim.view()
@@ -231,6 +232,15 @@ def evaluate(data: Path, episodes: int, policy: Path | None = None, watch: bool 
               f"success, {ends.count('failed')} failed, {ends.count('timeout')} timeout; "
               f"joint error {mean[0]:.3f} rad, ball {1000 * mean[1]:.0f} mm from the reference, "
               f"|a| > 0.95 on {100 * mean[2]:.0f} % of joint-steps")  # fmt: skip
+    runs = [r for moves_runs in results.values() for r in moves_runs]
+    ends = [r[0] for r in runs]
+    mean = np.mean(np.array([r[1:] for r in runs]), axis=0)
+    n = len(runs)
+    totals = {"success": ends.count("success") / n, "failed": ends.count("failed") / n,
+              "timeout": ends.count("timeout") / n, "joint_error": float(mean[0]),
+              "ball_mm": float(1000 * mean[1]), "saturation": float(mean[2])}  # fmt: skip
+    print("all moves: " + ", ".join(f"{k} {v:.3f}" for k, v in totals.items()))
+    return totals
 
 
 def train(data: Path, steps: int, envs: int, out: Path, alpha: float, kp_fw: float,
@@ -252,20 +262,88 @@ def train(data: Path, steps: int, envs: int, out: Path, alpha: float, kp_fw: flo
     model = PPO("MlpPolicy", vec, verbose=1, seed=seed, policy_kwargs=kwargs)
     history = History()
     model.learn(total_timesteps=steps, callback=history)
+    save(model, history, out, TrackingEnv(data, alpha, kp_fw), norm_reward)
+
+
+def save(model, history, out: Path, env: TrackingEnv, norm_reward: bool = False) -> None:
+    """The model (.zip, to resume), its history and plot, and the ONNX policy with its .json."""
     out.parent.mkdir(parents=True, exist_ok=True)
     model.save(f"{out}.zip")  # out may hold dots (alpha0.1): append, never replace
     rows = history.rows
     columns = {k: np.array([r.get(k, np.nan) for r in rows]) for k in rows[0]}
     np.savez(f"{out}_history.npz", norm_reward=norm_reward, **columns)
-    export(model, out, TrackingEnv(data, alpha, kp_fw))
+    export(model, out, env)
     plot(Path(f"{out}_history.npz"))
+
+
+def curriculum(data: Path, init: Path, out: Path, alphas: list[float], chunk_steps: int,
+               max_chunks: int, gate_success: float, gate_falls: float, episodes: int,
+               envs: int) -> None:  # fmt: skip
+    """Raise alpha stage by stage [Ours]. Each stage resumes PPO (network, optimiser, value
+    function) from the last one at the new alpha, first evaluating the last policy as it is at the
+    new alpha (the handover), then trains in chunks of chunk_steps until its evaluation passes the
+    gate (slot-ins >= gate_success and falls <= gate_falls, as fractions of the episodes), at most
+    max_chunks times; a stage that never passes stops the curriculum. init: a trained policy (path
+    without extension: its .zip, .onnx, .json), whose servo gain every stage keeps. Every
+    evaluation is a row of out/curriculum.tsv; out/STATUS.md shows them all."""
+    import time
+
+    from stable_baselines3 import PPO
+    from stable_baselines3.common.env_util import make_vec_env
+    from stable_baselines3.common.vec_env import SubprocVecEnv
+
+    kp_fw = json.loads(Path(f"{init}.json").read_text()).get("kp_fw", tracking.KP_FW)
+    out.mkdir(parents=True, exist_ok=True)
+    columns = ["time", "alpha", "phase", "steps", "success", "failed", "timeout", "joint_error",
+               "ball_mm", "saturation", "gate"]  # fmt: skip
+    rows = []
+
+    def record(alpha, phase, steps, result, gate):
+        rows.append([time.strftime("%H:%M"), f"{alpha:g}", phase, str(steps)]
+                    + [f"{result[c]:.3f}" for c in columns[4:10]] + [gate])  # fmt: skip
+        (out / "curriculum.tsv").write_text(
+            "\n".join("\t".join(r) for r in [columns, *rows]) + "\n"
+        )
+        table = ["| " + " | ".join(columns) + " |", "|" + "---|" * len(columns)]
+        table += ["| " + " | ".join(r) + " |" for r in rows]
+        (out / "STATUS.md").write_text(
+            f"# Curriculum from {init} (kp_fw {kp_fw:g})\n\n" + "\n".join(table) + "\n"
+        )
+
+    previous = init
+    for alpha in alphas:
+        stage = out / f"alpha{alpha:g}"
+        handover = evaluate(data, episodes, Path(f"{previous}.onnx"), alpha=alpha)
+        record(alpha, "handover", 0, handover, "")
+        vec = make_vec_env(TrackingEnv, envs, seed=0, vec_env_cls=SubprocVecEnv,
+                           env_kwargs={"data": data, "alpha": alpha, "kp_fw": kp_fw})  # fmt: skip
+        model = PPO.load(f"{previous}.zip", env=vec, device="cpu")
+        history, passed = History(), False
+        for chunk in range(1, max_chunks + 1):
+            model.learn(total_timesteps=chunk_steps, callback=history, reset_num_timesteps=False)
+            save(model, history, stage, TrackingEnv(data, alpha, kp_fw))
+            result = evaluate(data, episodes, Path(f"{stage}.onnx"))
+            passed = result["success"] >= gate_success and result["failed"] <= gate_falls
+            record(
+                alpha, f"chunk {chunk}", model.num_timesteps, result, "pass" if passed else "fail"
+            )
+            if passed:
+                break
+        vec.close()
+        if not passed:
+            print(f"alpha {alpha:g} did not pass its gate in {max_chunks} chunks: stopping")
+            return
+        previous = stage
+    print(f"curriculum done: {out / 'STATUS.md'}")
 
 
 class History(BaseCallback):
     """Per PPO rollout: the step rewards, the advantages before PPO normalises them, the value
-    targets (returns), the episodes' outcomes, and the previous update's losses."""
+    targets (returns), the episodes' outcomes, and the previous update's losses. Kept across
+    learn() calls (a curriculum stage trains in chunks)."""
 
-    def _on_training_start(self) -> None:
+    def __init__(self) -> None:
+        super().__init__()
         self.rows, self.ends = [], []
 
     def _on_step(self) -> bool:
@@ -375,7 +453,9 @@ def export(model, out: Path, env: TrackingEnv) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    parser.add_argument("command", choices=["import", "baseline", "evaluate", "train", "plot"])
+    parser.add_argument(
+        "command", choices=["import", "baseline", "evaluate", "train", "plot", "curriculum"]
+    )
     parser.add_argument("npz", type=Path, nargs="?", help="import: the teammate's .npz")
     parser.add_argument("--wall", default="N1", help="import: the organisers' wall it is on")
     parser.add_argument("--data", type=Path, default=Path("build/rl"))
@@ -390,6 +470,12 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=0, help="train: PPO and environment seed")
     parser.add_argument("--kp", type=float, default=tracking.KP_FW, help="servo P gain (kp_fw)")
     parser.add_argument("--log-std-init", type=float, default=0.0, help="train: log starting noise")
+    parser.add_argument("--init", type=Path, help="curriculum: the alpha 0.1 policy, no extension")
+    parser.add_argument("--alphas", default="0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0")
+    parser.add_argument("--chunk-steps", type=int, default=1_000_000, help="curriculum")
+    parser.add_argument("--max-chunks", type=int, default=3, help="curriculum: per stage")
+    parser.add_argument("--gate-success", type=float, default=0.5, help="curriculum: fraction")
+    parser.add_argument("--gate-falls", type=float, default=0.2, help="curriculum: fraction")
     args = parser.parse_args()
     if args.command == "import":
         import_npz(args.npz, args.wall, args.data)
@@ -405,6 +491,10 @@ if __name__ == "__main__":
             args.seed,
             args.log_std_init,
         )
+    elif args.command == "curriculum":
+        alphas = [float(a) for a in args.alphas.split(",")]
+        curriculum(args.data, args.init, args.out, alphas, args.chunk_steps, args.max_chunks,
+                   args.gate_success, args.gate_falls, args.episodes, args.envs)  # fmt: skip
     elif args.command == "plot":
         plot(Path(f"{args.out}_history.npz"))
     else:
