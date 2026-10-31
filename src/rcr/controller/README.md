@@ -26,6 +26,20 @@
 ## v0 could be
 Trajectory playback: interpolate `positions` at `state.time` and return them.
 
+## Replay on the real robot (laptop-driven, PID only)
+Run it with `uv run robot-replay --host <robot> --kp <P> --ki <I> --kd <D>` (the `[project.scripts]` entry in
+`pyproject.toml`). `robot_replay.py` streams each frame's joint targets to the robot-side `replay` move (our Microban
+fork, `src/moves/replay.py`). The servos' goal is the target alone: no feedforward torque offset, and the XL330's
+velocity / acceleration feedforward gains held at 0. The servo firmware's P, I and D gains (register units, 0..16383)
+do all the tracking. [Ours]
+
+Each replay is logged tick by tick (target sent, `q` measured, the robot's `q_target`, the IMU's `imu_quat`, the
+trajectory's base quaternion) to `runs/replay/replay-<date>-<time>.npz` (git-ignored). When it ends, the page plots
+each joint's measured position against its target and the base rotation error (IMU trunk vs trajectory base,
+roll / pitch / yaw in the trunk frame), and the terminal prints per-joint RMS / max errors. The IMU's yaw is arbitrary,
+so the trajectory's base is turned about z to match it at the replay's first tick [Ours]. Replot a saved log with
+`uv run robot-replay --plot runs/replay/<log>.npz`.
+
 ## Candidates later (not decided)
 - Playback plus feedforward sag compensation (≈ τ / kp, see optimiser README);
 - a PD correction on top of the servo P loop;

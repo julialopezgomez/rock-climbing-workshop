@@ -16,6 +16,9 @@ dependencies = [
     "viser",
 ]
 
+[project.scripts]
+robot-replay = "rcr.controller.robot_replay:main"
+
 [dependency-groups]
 # Filled in when the module that needs them gets a v0.
 # microban-model: the robot (Rhoban/microban_model, its URDF and MJCF, meshes in Git LFS), what
