@@ -18,6 +18,7 @@ REPO = Path(__file__).resolve().parents[2]
 PACKAGE = REPO / "src/rcr/perception/challenge"
 M3T_COMMIT = "f02106186a1e756450226b3b793e309506817c58"
 MODEL_COMMIT = "8e42ef70673b5747dbdca3efaf60bc0f8ec7ea6d"
+BENCHMARK_COMMIT = "b8c607e8dc2749ae2f512ce7265ef3018f32e9f5"
 
 
 def run(command, **kwargs):
@@ -125,6 +126,55 @@ def native(cache, micromamba=None):
     shutil.copy2(build / "adapter/microban_m3t", cache / "bin/microban_m3t")
 
 
+def benchmark(cache, node=None):
+    """Keep the optional sampler tools in the perception cache."""
+    node = Path(node or shutil.which("node") or "node").absolute()
+    if not node.is_file():
+        raise RuntimeError("Install Node.js 20+ or pass --node /path/to/node")
+    version = subprocess.check_output([str(node), "--version"], text=True).strip()
+    if int(version.lstrip("v").split(".")[0]) < 20:
+        raise RuntimeError("Native benchmark recovery requires Node.js 20+")
+    env = dict(os.environ, PATH=str(node.parent) + os.pathsep + os.environ.get("PATH", ""))
+    npm = shutil.which("npm", path=env["PATH"])
+    if not npm:
+        raise RuntimeError("The Node.js installation must include npm")
+    source = cache / "sources/rcr-perception-score"
+    if (source / ".git").exists() and subprocess.run(
+        ["git", "-C", str(source), "cat-file", "-e", BENCHMARK_COMMIT + "^{commit}"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    ).returncode:
+        run(["git", "-C", source, "fetch", "origin", BENCHMARK_COMMIT])
+    clone("https://github.com/jackybaltes/rcr-perception.git", source, BENCHMARK_COMMIT)
+    run(
+        [
+            npm,
+            "install",
+            "--prefix",
+            cache / "benchmark_js",
+            "--ignore-scripts",
+            "--no-audit",
+            "--no-fund",
+            "three@0.180.0",
+        ],
+        env=env,
+    )
+    scanner = cache / "bin/rcr-four-seedscan"
+    nvcc = shutil.which("nvcc") or "/usr/local/cuda/bin/nvcc"
+    run([nvcc, "-O3", "-arch=native", PACKAGE / "native/hold_seedscan.cu", "-o", scanner])
+    spec = dict(
+        node=str(node),
+        source=str(source),
+        scanner=str(scanner),
+        three=str(cache / "benchmark_js/node_modules/three"),
+        source_commit=BENCHMARK_COMMIT,
+        scanner_source_sha256=hashlib.sha256(
+            (PACKAGE / "native/hold_seedscan.cu").read_bytes()
+        ).hexdigest(),
+    )
+    (cache / "benchmark_runtime.json").write_text(json.dumps(spec, indent=2) + "\n")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--env", type=Path, default=REPO / ".venv-perception")
@@ -141,6 +191,12 @@ def main():
     )
     parser.add_argument("--native", action="store_true", help="Build the M3T executable")
     parser.add_argument("--cuda", action="store_true", help="Check the CUDA development toolchain")
+    parser.add_argument(
+        "--benchmark",
+        action="store_true",
+        help="Prepare optional native-scene recovery for the scored hold benchmark",
+    )
+    parser.add_argument("--node", type=Path, help="Node.js 20+ executable for --benchmark")
     parser.add_argument(
         "--cuda-arch", default="8.9+PTX", help="PyTorch extension target architectures"
     )
@@ -225,6 +281,8 @@ def main():
         run([*pip, "--no-deps", model])
     if args.native or args.robot:
         native(cache, args.micromamba)
+    if args.benchmark:
+        benchmark(cache, args.node)
     (environment / "runtime.json").write_text(
         json.dumps(
             {

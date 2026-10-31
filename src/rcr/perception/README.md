@@ -10,7 +10,11 @@ SI/WXYZ types and require verified start contacts for a `WallModel`.
 
 The hold path fits Cube, Microban, Sidepull and Fingerpocket meshes in both RGB
 views, estimates volume geometry, and recovers support/collision consistency.
-It uses declared wall/camera calibration and no longer searches generator seeds.
+It uses declared wall/camera calibration. The optional
+[scored benchmark mode](../../../docs/perception/SCORED_BENCHMARK.md) adds
+verified recovery of unedited native scenes with a declared hold count. The
+general image path supports Cube and manually edited scenes; native recovery
+assumes the pinned three-type random sampler. Its verifier can miss manual edits.
 Two hold regression fixtures and one robot fixture are included, with one trained
 robot checkpoint. Alternative
 models and historical experiments remain on `perception_challenge_full`.

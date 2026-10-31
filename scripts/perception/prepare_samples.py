@@ -88,8 +88,13 @@ def main():
                 (folder / "calibration.json").write_text(json.dumps(rig, indent=2) + "\n")
                 # Labels are separate scoring files; no label fields enter calibration.
                 expected = json.loads(source.read(label))
-                expected = expected.get("holds", expected)
-                (folder / "expected_holds.json").write_text(json.dumps(expected, indent=2) + "\n")
+                if expected.get("formatVersion") == 1:
+                    (folder / "expected_scene.json").write_text(
+                        json.dumps(expected, indent=2) + "\n"
+                    )
+                (folder / "expected_holds.json").write_text(
+                    json.dumps(expected.get("holds", expected), indent=2) + "\n"
+                )
                 cases.append(
                     dict(id=identifier, split="development" if int(number) <= 2 else "validation")
                 )

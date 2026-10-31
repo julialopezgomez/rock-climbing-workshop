@@ -1,0 +1,4546 @@
+{
+  "source_commit": "b8c607e8dc2749ae2f512ce7265ef3018f32e9f5",
+  "initial_source_commit": "0112f95b24cd5d6afe2422a567d22791e730fcd3",
+  "source_main_sha256": "54240e2ba03fb9a8c3ddf13e1458d2110a8140a8db899ce0a93dd3d8d0fb1a4b",
+  "source_change": "Scoring/generation code unchanged; volume scoring now disabled by default",
+  "datasets": {
+    "supplied40": {
+      "scope": "Development/regression; 1200 holds and 60 volumes; no Cube",
+      "methods": {
+        "cad": {
+          "cases": 40,
+          "hold_score": 565.221434212333,
+          "hold_volume_score": 595.2619090717747,
+          "holds": {
+            "matched": 1165,
+            "missing": 35,
+            "extra": 2,
+            "score": 565.221434212333,
+            "position_score": 9.248041347261205,
+            "orientation_score": 169.9733928650718,
+            "type_score": 16.0
+          },
+          "volumes": {
+            "matched": 57,
+            "missing": 3,
+            "extra": 0,
+            "score": 30.040474859441623,
+            "position_score": 0.040474859441622844,
+            "orientation_score": 0.0,
+            "type_score": 0.0
+          },
+          "per_scene": [
+            {
+              "case": "three_volumes_0001",
+              "hold_score": 14.578991875600963,
+              "hold_volume_score": 14.581707724995415,
+              "prediction_sha256": "0f5284b5bbad25154264e568c8bcf7106b6fc8056f29a6996652ba8f1f2b8876"
+            },
+            {
+              "case": "three_volumes_0002",
+              "hold_score": 7.031414153860354,
+              "hold_volume_score": 7.03201268162424,
+              "prediction_sha256": "e3ca000522b8e19319bac53b0aa41a22647da5e6ccd2f8d8e3c6ca542007a9e3"
+            },
+            {
+              "case": "three_volumes_0003",
+              "hold_score": 17.547075156696316,
+              "hold_volume_score": 17.549925454361126,
+              "prediction_sha256": "54cc73d7a1c9471a9e8eb758c48cafbdb2cbbbd24a5b828731d2cbfa2b92624c"
+            },
+            {
+              "case": "three_volumes_0004",
+              "hold_score": 20.501926765433208,
+              "hold_volume_score": 20.502638683278928,
+              "prediction_sha256": "5c301557d228622121330f0f994e4e2b2e58813ad2070e77fdf08e4c3fd41081"
+            },
+            {
+              "case": "three_volumes_0005",
+              "hold_score": 41.57787567632018,
+              "hold_volume_score": 41.578599603712505,
+              "prediction_sha256": "0ce5da2f883995141da7ad97d304f87faee33f65b033fa67be0e10f0349d1ced"
+            },
+            {
+              "case": "three_volumes_0006",
+              "hold_score": 43.369275290796175,
+              "hold_volume_score": 53.37288896429641,
+              "prediction_sha256": "7eb2e8f5a22081c263efe79762e0dfaca9c31a464d17465d2f5315eb405ee8b7"
+            },
+            {
+              "case": "three_volumes_0007",
+              "hold_score": 50.49224436275533,
+              "hold_volume_score": 50.494009940770916,
+              "prediction_sha256": "09cd224e8550301a74c175a21c567872030d38862955ed50454d1cc4c905c3d0"
+            },
+            {
+              "case": "three_volumes_0008",
+              "hold_score": 40.3942680553303,
+              "hold_volume_score": 50.39559444429109,
+              "prediction_sha256": "4de89898ca6e606b76d6274153d7fc191d914bd718f04da481864cd17b2e3073"
+            },
+            {
+              "case": "three_volumes_0009",
+              "hold_score": 15.025261640489783,
+              "hold_volume_score": 15.027251923575227,
+              "prediction_sha256": "038bf9a49c8ace46523fad45f7f53b1fdfe3411d7297248918ad8377ae3a4295"
+            },
+            {
+              "case": "three_volumes_0010",
+              "hold_score": 6.006587315916394,
+              "hold_volume_score": 16.00917869950584,
+              "prediction_sha256": "2a8607e5ece738606a0c5773a484198e54c6654f32cc3d6b6c61af2c4c5790a1"
+            },
+            {
+              "case": "three_volumes_0011",
+              "hold_score": 3.5181968707969964,
+              "hold_volume_score": 3.5216548480273353,
+              "prediction_sha256": "4c846af2e27afefba6f028a1d0cfb28717c89e5192728e979dcc54ee97daf79a"
+            },
+            {
+              "case": "three_volumes_0012",
+              "hold_score": 13.02547850919447,
+              "hold_volume_score": 13.02724432466735,
+              "prediction_sha256": "bda981af2b61cf7bf58dec40bfb0f59e5183b148529c56b0822aa242ee44ce78"
+            },
+            {
+              "case": "three_volumes_0013",
+              "hold_score": 14.35687145256884,
+              "hold_volume_score": 14.358554686422023,
+              "prediction_sha256": "ef7461214c1d1b4afe3e0678407f5dfba847259767178572d5757e397d822a2d"
+            },
+            {
+              "case": "three_volumes_0014",
+              "hold_score": 23.459694153981168,
+              "hold_volume_score": 23.4608669235581,
+              "prediction_sha256": "f58ebb4708fbcd642246c6c4cf6c07fdc2b23df82050f04104736c9c00bbc456"
+            },
+            {
+              "case": "three_volumes_0015",
+              "hold_score": 7.934695295551492,
+              "hold_volume_score": 7.93805204030638,
+              "prediction_sha256": "c6f3cc8456ad366445668e2b67b1d531738a28de6eb422ba2598c84191d1a24c"
+            },
+            {
+              "case": "three_volumes_0016",
+              "hold_score": 33.04364530187001,
+              "hold_volume_score": 33.0451965026652,
+              "prediction_sha256": "4cd2b09d74059e9a65edf798fe11589d3b8afac4b076dec50ef7d8c966e844e7"
+            },
+            {
+              "case": "three_volumes_0017",
+              "hold_score": 1.5532933337962682,
+              "hold_volume_score": 1.5550648849547155,
+              "prediction_sha256": "4469e724907986d673915d391b8252a9c879222ed8d9fb67f5634dbfea574500"
+            },
+            {
+              "case": "three_volumes_0018",
+              "hold_score": 15.501979489043526,
+              "hold_volume_score": 15.50360141046365,
+              "prediction_sha256": "629a719b83b8a09f1a38926d46303ff5cfbc7aa5971c09e53ea6f81399e518c9"
+            },
+            {
+              "case": "three_volumes_0019",
+              "hold_score": 2.010646188245336,
+              "hold_volume_score": 2.0143434561610207,
+              "prediction_sha256": "cd1b6fed364082454bd12edf12f2006204a7c1bad597eba470336009143cef5c"
+            },
+            {
+              "case": "three_volumes_0020",
+              "hold_score": 7.051685964609881,
+              "hold_volume_score": 7.053194514661138,
+              "prediction_sha256": "22570abfcd007b658ac11840f1dd6646e3d306e9868d9b8840554d001f87d1ab"
+            },
+            {
+              "case": "zero_volumes_0001",
+              "hold_score": 0.5026061539933181,
+              "hold_volume_score": 0.5026061539933181,
+              "prediction_sha256": "b001687d94c9c4ac3ee64e077f94a597cdba64d221e7b2c0d4c4b4e18e9b398c"
+            },
+            {
+              "case": "zero_volumes_0002",
+              "hold_score": 6.504991914303302,
+              "hold_volume_score": 6.504991914303302,
+              "prediction_sha256": "bd58f5fcc43a1f51597411dea6bf6dd1ccdcc43c97edb3e4d68f17d4d47db1bc"
+            },
+            {
+              "case": "zero_volumes_0003",
+              "hold_score": 5.502135144563453,
+              "hold_volume_score": 5.502135144563453,
+              "prediction_sha256": "4e7ba6031e079e49bcb857e41d8f80022d827d93f83d53128bbd9a6216d48d5c"
+            },
+            {
+              "case": "zero_volumes_0004",
+              "hold_score": 13.50287596780999,
+              "hold_volume_score": 13.50287596780999,
+              "prediction_sha256": "6fd4880ee9c1749524e10ebed59952b3a2a6ea9cb79ba0e473914dbe0f233e75"
+            },
+            {
+              "case": "zero_volumes_0005",
+              "hold_score": 0.5022389999327609,
+              "hold_volume_score": 0.5022389999327609,
+              "prediction_sha256": "aea59a35482a4fcd8d7b268b938204a0de3b4000f3264e692626a57ece14c1c6"
+            },
+            {
+              "case": "zero_volumes_0006",
+              "hold_score": 15.007304348295037,
+              "hold_volume_score": 15.007304348295037,
+              "prediction_sha256": "39b6d3004995e973e3dadcd57743e9e4931ec10c80da833a00d5c32ec3e96830"
+            },
+            {
+              "case": "zero_volumes_0007",
+              "hold_score": 2.5014637805309525,
+              "hold_volume_score": 2.5014637805309525,
+              "prediction_sha256": "fa13755efc4d328051572a69af3a2f6e0f38dc89c85a7bdca5576b35cec759b3"
+            },
+            {
+              "case": "zero_volumes_0008",
+              "hold_score": 5.504051288720306,
+              "hold_volume_score": 5.504051288720306,
+              "prediction_sha256": "c5109174bf8cf35c4d8cbd621e565f5264cb31e90feb3d4146076db203682da6"
+            },
+            {
+              "case": "zero_volumes_0009",
+              "hold_score": 24.681407882268545,
+              "hold_volume_score": 24.681407882268545,
+              "prediction_sha256": "84d929a694ec65be0fd14f6c37668e8658d8604803c762788b99f65d901513d8"
+            },
+            {
+              "case": "zero_volumes_0010",
+              "hold_score": 2.0019509123996424,
+              "hold_volume_score": 2.0019509123996424,
+              "prediction_sha256": "3b14942ceaacba40af840e067df8dc2115ebca33e0a2830de6fc474c2dd42d79"
+            },
+            {
+              "case": "zero_volumes_0011",
+              "hold_score": 1.0019089892927022,
+              "hold_volume_score": 1.0019089892927022,
+              "prediction_sha256": "e6e6c928fa01afa04be261c16947a8dab7df6ad703d11746d33331a2473c3c8e"
+            },
+            {
+              "case": "zero_volumes_0012",
+              "hold_score": 13.502511697543572,
+              "hold_volume_score": 13.502511697543572,
+              "prediction_sha256": "fcaa552b4e07abdb8c2f976dfcfc8d45cf42c2c4f4ed5d543cf788c3abe084a1"
+            },
+            {
+              "case": "zero_volumes_0013",
+              "hold_score": 3.001556984302247,
+              "hold_volume_score": 3.001556984302247,
+              "prediction_sha256": "0d1aaf68bd15516e2ae2aa1afa6dc77ab39f727d41f89c37b90307adcd7fad13"
+            },
+            {
+              "case": "zero_volumes_0014",
+              "hold_score": 21.502642187710958,
+              "hold_volume_score": 21.502642187710958,
+              "prediction_sha256": "4a78f757e20f9c45231d682b5e711b0099fa1eeb2ddc6c2e46f8259ad4b11a8b"
+            },
+            {
+              "case": "zero_volumes_0015",
+              "hold_score": 12.003980874625373,
+              "hold_volume_score": 12.003980874625373,
+              "prediction_sha256": "f0307be7e57174a5fb602fea42092e7036540b73aa6af8145f135bd1c0a86b43"
+            },
+            {
+              "case": "zero_volumes_0016",
+              "hold_score": 2.502649376383291,
+              "hold_volume_score": 2.502649376383291,
+              "prediction_sha256": "8285e741de98bd2b46c873602263f717050c4f4fc64217d00333dd41c628f7c2"
+            },
+            {
+              "case": "zero_volumes_0017",
+              "hold_score": 2.004591484321373,
+              "hold_volume_score": 2.004591484321373,
+              "prediction_sha256": "71898aa1c0b4641af27d486aad62c2ffd14fde7b0203568076beaf12cb5664e5"
+            },
+            {
+              "case": "zero_volumes_0018",
+              "hold_score": 6.002758313613218,
+              "hold_volume_score": 6.002758313613218,
+              "prediction_sha256": "ff9b043abd9768c12597b51c5412130d4877254204231b14dd0474c3262c927c"
+            },
+            {
+              "case": "zero_volumes_0019",
+              "hold_score": 15.00474974365267,
+              "hold_volume_score": 15.00474974365267,
+              "prediction_sha256": "70fcc47ae70c5fd94a731f3981bdc69537895d20d7f527538302bbe130ca4bef"
+            },
+            {
+              "case": "zero_volumes_0020",
+              "hold_score": 34.50195131521328,
+              "hold_volume_score": 34.50195131521328,
+              "prediction_sha256": "ce75f1b63209e0877c8b60fd9e9bac67d1f5ce6b9c5b0764e5bc24f385215155"
+            }
+          ]
+        },
+        "yaw": {
+          "cases": 40,
+          "hold_score": 529.4471470536898,
+          "hold_volume_score": 559.4876219131314,
+          "holds": {
+            "matched": 1165,
+            "missing": 35,
+            "extra": 2,
+            "score": 529.4471470536898,
+            "position_score": 9.248041347261205,
+            "orientation_score": 134.19910570642864,
+            "type_score": 16.0
+          },
+          "volumes": {
+            "matched": 57,
+            "missing": 3,
+            "extra": 0,
+            "score": 30.040474859441623,
+            "position_score": 0.040474859441622844,
+            "orientation_score": 0.0,
+            "type_score": 0.0
+          },
+          "per_scene": [
+            {
+              "case": "three_volumes_0001",
+              "hold_score": 13.953991459512775,
+              "hold_volume_score": 13.956707308907227,
+              "prediction_sha256": "a485656b621d847b0894e99ecc19703adc715f4547aadf188078636dd8e0f38c"
+            },
+            {
+              "case": "three_volumes_0002",
+              "hold_score": 5.531414153860354,
+              "hold_volume_score": 5.53201268162424,
+              "prediction_sha256": "1d3c7aff4b7ecda0f33d81c670c3051a8238e386b669fb672f83cf554eaa0e3b"
+            },
+            {
+              "case": "three_volumes_0003",
+              "hold_score": 15.047075052674268,
+              "hold_volume_score": 15.04992535033908,
+              "prediction_sha256": "97295bd31a0639fa2bc2045f7f64d197af2375f4102c89dc0d8e2b75d846849a"
+            },
+            {
+              "case": "three_volumes_0004",
+              "hold_score": 20.751926557389115,
+              "hold_volume_score": 20.752638475234836,
+              "prediction_sha256": "d8a38c1d2abf5633293dda8cd93c24469f5d1e1441ead1487625d55e7574661e"
+            },
+            {
+              "case": "three_volumes_0005",
+              "hold_score": 41.57787536425404,
+              "hold_volume_score": 41.57859929164636,
+              "prediction_sha256": "739807a2b06a1550c6415b8949af57f519c38e9a205eebac08415a0eb8d3f682"
+            },
+            {
+              "case": "three_volumes_0006",
+              "hold_score": 40.86927518677413,
+              "hold_volume_score": 50.872888860274365,
+              "prediction_sha256": "432788e7a0e54aea63cdb1019cd36004a2de37da9a87db49411b0cf25ef8df6a"
+            },
+            {
+              "case": "three_volumes_0007",
+              "hold_score": 49.49224425873328,
+              "hold_volume_score": 49.494009836748866,
+              "prediction_sha256": "9ac32aef5bacfe77a8a27f2d7865581860146e3ccf973a56bffbbfa758c463c6"
+            },
+            {
+              "case": "three_volumes_0008",
+              "hold_score": 40.269267535220074,
+              "hold_volume_score": 50.27059392418087,
+              "prediction_sha256": "24dd393d97a1089aad5b0a1e7967d611f8e11827d89309a2289f1702d9cedc6a"
+            },
+            {
+              "case": "three_volumes_0009",
+              "hold_score": 14.025261224401596,
+              "hold_volume_score": 14.02725150748704,
+              "prediction_sha256": "92b395ee42cd61d490a2cf5b062bbafd86ba5544feecbcc43a5c70598547232d"
+            },
+            {
+              "case": "three_volumes_0010",
+              "hold_score": 5.381586899828208,
+              "hold_volume_score": 15.384178283417654,
+              "prediction_sha256": "096ecc566ee627292b447fd25e5aac9cddcae0fa068ae12bf935dd5f897e246f"
+            },
+            {
+              "case": "three_volumes_0011",
+              "hold_score": 3.3931963506867646,
+              "hold_volume_score": 3.3966543279171035,
+              "prediction_sha256": "454057ac6728778706de091bcfc59fcb2902a0ddba9e04443158a6db4dcc55e8"
+            },
+            {
+              "case": "three_volumes_0012",
+              "hold_score": 12.27547819712833,
+              "hold_volume_score": 12.27724401260121,
+              "prediction_sha256": "7be16baba807e79e1acd708a615e211def59be1a02e3b562f440314cc5ed6483"
+            },
+            {
+              "case": "three_volumes_0013",
+              "hold_score": 11.731871452568837,
+              "hold_volume_score": 11.733554686422021,
+              "prediction_sha256": "d77b335a921689624ff8daf72c2f125e62f8a84426782a38ef119aa5bc94e13e"
+            },
+            {
+              "case": "three_volumes_0014",
+              "hold_score": 22.959693633870934,
+              "hold_volume_score": 22.960866403447866,
+              "prediction_sha256": "29e8e08efa719ccb171c66f55d968b641fb37e448a742e0f347975fb917c05ac"
+            },
+            {
+              "case": "three_volumes_0015",
+              "hold_score": 7.934694983485353,
+              "hold_volume_score": 7.938051728240241,
+              "prediction_sha256": "66a410442213f1e4be0c6af258d9db26d00bb2da1704fbf2f1130c7d3ff20693"
+            },
+            {
+              "case": "three_volumes_0016",
+              "hold_score": 32.168645093825916,
+              "hold_volume_score": 32.17019629462111,
+              "prediction_sha256": "1ad150d8da8fa6d38174275c7d0eb97ab2dbf903125c79e530473b796c324356"
+            },
+            {
+              "case": "three_volumes_0017",
+              "hold_score": 1.3032929177080825,
+              "hold_volume_score": 1.3050644688665298,
+              "prediction_sha256": "ead7dda6454e28511ca8b193557d40b324332d15eada3bdd90615b38c8bab760"
+            },
+            {
+              "case": "three_volumes_0018",
+              "hold_score": 13.251979489043524,
+              "hold_volume_score": 13.253601410463649,
+              "prediction_sha256": "a90796a1f256b9bd337467ab0e7b4c38b44d3a698f5ac86b9ac002572d8e152f"
+            },
+            {
+              "case": "three_volumes_0019",
+              "hold_score": 1.7606457721571502,
+              "hold_volume_score": 1.7643430400728348,
+              "prediction_sha256": "7d06051875568492e1b56340721665f16e3ea94d42d1120eefd5a48c9b07bf37"
+            },
+            {
+              "case": "three_volumes_0020",
+              "hold_score": 4.777411496656434,
+              "hold_volume_score": 4.778920046707691,
+              "prediction_sha256": "f860fe2170df438007a8095bf767c93de88f85098c9e17fb0bbf3c47dfab2b9b"
+            },
+            {
+              "case": "zero_volumes_0001",
+              "hold_score": 0.7526056338830862,
+              "hold_volume_score": 0.7526056338830862,
+              "prediction_sha256": "570e3337c4f7b8de95f440725c89fbfcd84533f8a4e154a2dc02ea68b395b602"
+            },
+            {
+              "case": "zero_volumes_0002",
+              "hold_score": 3.8799919143033006,
+              "hold_volume_score": 3.8799919143033006,
+              "prediction_sha256": "f69619c08227275902c4d70f217b552fd468607535e25a61b12cb6fc8a9b2b0e"
+            },
+            {
+              "case": "zero_volumes_0003",
+              "hold_score": 4.25213462445322,
+              "hold_volume_score": 4.25213462445322,
+              "prediction_sha256": "3dfac5c18f9dd949fe7897eac537719bc503ceb45a6e63da2d27fbfe1ee48e00"
+            },
+            {
+              "case": "zero_volumes_0004",
+              "hold_score": 12.37787565574385,
+              "hold_volume_score": 12.37787565574385,
+              "prediction_sha256": "7d60a9e27b5b33c5e75071f8044726339007ef03f8d5bfbbc22c4b96ea0f6311"
+            },
+            {
+              "case": "zero_volumes_0005",
+              "hold_score": 1.0022382717784364,
+              "hold_volume_score": 1.0022382717784364,
+              "prediction_sha256": "236e573b7902fd9ea6b9dd003372775b4dcfd933915f4bf2c6e34d8737b7d1ca"
+            },
+            {
+              "case": "zero_volumes_0006",
+              "hold_score": 13.25730424427299,
+              "hold_volume_score": 13.25730424427299,
+              "prediction_sha256": "d703729a6d30e02f57368dc6e05e538238406d8879bdb487a1622c59fa8b6d8d"
+            },
+            {
+              "case": "zero_volumes_0007",
+              "hold_score": 1.0014634684648125,
+              "hold_volume_score": 1.0014634684648125,
+              "prediction_sha256": "68ffdf7792145140115d553fb14d2a132c61bf58a21a9ca712c983b1230b36e3"
+            },
+            {
+              "case": "zero_volumes_0008",
+              "hold_score": 4.754050664588027,
+              "hold_volume_score": 4.754050664588027,
+              "prediction_sha256": "6c2384c8351ee1dfca3abc149c6c597acafe2f46562e78d740e181e63d5d5d4c"
+            },
+            {
+              "case": "zero_volumes_0009",
+              "hold_score": 22.681407986290587,
+              "hold_volume_score": 22.681407986290587,
+              "prediction_sha256": "94281fb9c3a7387c357c13c66ac59a2e77fbe5bd3f29d2ef4a67343cdc909b4b"
+            },
+            {
+              "case": "zero_volumes_0010",
+              "hold_score": 3.251949872179179,
+              "hold_volume_score": 3.251949872179179,
+              "prediction_sha256": "1538e37b7111ec10f6a1e674abac44dbc62b2416f5c3ffd1332f59ac6acc9d60"
+            },
+            {
+              "case": "zero_volumes_0011",
+              "hold_score": 1.5019082611383778,
+              "hold_volume_score": 1.5019082611383778,
+              "prediction_sha256": "670a4995b267d0f71941f256a0573586fd4b00063cf56e05d4158ce77ec8e4e0"
+            },
+            {
+              "case": "zero_volumes_0012",
+              "hold_score": 12.752511385477433,
+              "hold_volume_score": 12.752511385477433,
+              "prediction_sha256": "fbd21bd71fc54a4a23d37e1eef189ae33fd5075eaec923f52c6acfd03d410ea3"
+            },
+            {
+              "case": "zero_volumes_0013",
+              "hold_score": 2.376556568214061,
+              "hold_volume_score": 2.376556568214061,
+              "prediction_sha256": "bd252f95d8da4f92a7a788535c1606025c1e487881e59a8ea929264ec44fcbf8"
+            },
+            {
+              "case": "zero_volumes_0014",
+              "hold_score": 20.752641875644816,
+              "hold_volume_score": 20.752641875644816,
+              "prediction_sha256": "af351b5ca7df1c97a10f68222aaf24b3369003af2756266065f2ed1a5c8512ce"
+            },
+            {
+              "case": "zero_volumes_0015",
+              "hold_score": 11.753980458537187,
+              "hold_volume_score": 11.753980458537187,
+              "prediction_sha256": "123e66a1adaa2991a7ccbd1d1ea925dbe043ceb61705a473fd0373ad05e7d465"
+            },
+            {
+              "case": "zero_volumes_0016",
+              "hold_score": 2.1276490643171515,
+              "hold_volume_score": 2.1276490643171515,
+              "prediction_sha256": "19decbd98b3c3b577da5f2119a6b0bf34f8951398b50a681ac92e0afba1ad306"
+            },
+            {
+              "case": "zero_volumes_0017",
+              "hold_score": 2.129590756167048,
+              "hold_volume_score": 2.129590756167048,
+              "prediction_sha256": "116f3ebec7cc85f915bfbf8e488814b8e8415459f0c607810741a6c5d6c63f58"
+            },
+            {
+              "case": "zero_volumes_0018",
+              "hold_score": 3.627758417635263,
+              "hold_volume_score": 3.627758417635263,
+              "prediction_sha256": "fad6fc6fe424927c8c05b7e93c73ed8383117363328903c9df888013ae9adadd"
+            },
+            {
+              "case": "zero_volumes_0019",
+              "hold_score": 13.504749743652669,
+              "hold_volume_score": 13.504749743652669,
+              "prediction_sha256": "9128a1f9b6692cfac07ac1c8871a7924f0a007fd553b228b81093e8a77f68467"
+            },
+            {
+              "case": "zero_volumes_0020",
+              "hold_score": 33.251951107169184,
+              "hold_volume_score": 33.251951107169184,
+              "prediction_sha256": "eb216bdc05c1004c9c8cf315fb03584b3fe1f31a4fc66cdcbbcc36b1c5ab1f82"
+            }
+          ]
+        },
+        "native": {
+          "cases": 40,
+          "hold_score": 0.0,
+          "hold_volume_score": 0.0,
+          "holds": {
+            "matched": 1200,
+            "missing": 0,
+            "extra": 0,
+            "score": 0.0,
+            "position_score": 0.0,
+            "orientation_score": 0.0,
+            "type_score": 0.0
+          },
+          "volumes": {
+            "matched": 60,
+            "missing": 0,
+            "extra": 0,
+            "score": 0.0,
+            "position_score": 0.0,
+            "orientation_score": 0.0,
+            "type_score": 0.0
+          },
+          "per_scene": [
+            {
+              "case": "three_volumes_0001",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "2596b3e553d435a971ff77e8f2e04d6dc3a78b829efd57dfc8f9e09acf3d58dd"
+            },
+            {
+              "case": "three_volumes_0002",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "6f5c0c4db27377978dba91db68222b56f6b7910fc0accaf2b8a5a7208d005204"
+            },
+            {
+              "case": "three_volumes_0003",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "672f8505a289476a1e1a953d718f3d7047ae4f8371749174b18742b245951062"
+            },
+            {
+              "case": "three_volumes_0004",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "8d329e82b7299304a66880e378bcb0c4b3c2c939e1b6dfe1e14e3d17cf13a7be"
+            },
+            {
+              "case": "three_volumes_0005",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "af91379a63f06b339bed8546fb0418c04b88b2900fc70da9b3dbf566d0c755ce"
+            },
+            {
+              "case": "three_volumes_0006",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "f6c1593eaebdf693575380c5b3c54ea4747e2dfa0fbef31f0b634d9925cec6a2"
+            },
+            {
+              "case": "three_volumes_0007",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "d61915e8b170c3799106bc41c2ffea26a3ba897967a91e72819e7f5cf297dab0"
+            },
+            {
+              "case": "three_volumes_0008",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "88577ccbba56d16a3f30720d637c1d29dd086a07b21781165217c974a631a93d"
+            },
+            {
+              "case": "three_volumes_0009",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "17e743187f208a51dd0b229e918c90be157f89aabf1340aa8be8886e4bbca9f2"
+            },
+            {
+              "case": "three_volumes_0010",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "be6705512f88d83f0b978b6557de5771079d879bd2f1fce12dd2a4b849479629"
+            },
+            {
+              "case": "three_volumes_0011",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "ff4b7b2ed1d0a4e3eba52368cd4ab18113181fa50c60bb0595c493d912123151"
+            },
+            {
+              "case": "three_volumes_0012",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "91f182afcaf0c5fb83fb0923578fae775661f8f7f36b8c10d9f6e6e32f20f565"
+            },
+            {
+              "case": "three_volumes_0013",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "391455a0e5e648c688d80cd8895f6456decbaee6a861c4ff88feeb7019db39e4"
+            },
+            {
+              "case": "three_volumes_0014",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "368d38976a5631cbe269f12096e1e5fd031f4c9e90c047c0a8771dbe3ed14346"
+            },
+            {
+              "case": "three_volumes_0015",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "0e2b73ca1f4cea53d44a88441a88dded6e69942ce2168bf779360e0d2456d593"
+            },
+            {
+              "case": "three_volumes_0016",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "171523353ebecaf752071454bbe555f3d73c467b5d1a5e1f8ab038f5bd8e15ec"
+            },
+            {
+              "case": "three_volumes_0017",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "12f9456e4f18967dc37683a423314b53f117656eeb44f30a908cb9d891ae8b3f"
+            },
+            {
+              "case": "three_volumes_0018",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "150eb5fc84cd53f8b1757e299cdf90b0e7740e62807611ef861885ff86baadd7"
+            },
+            {
+              "case": "three_volumes_0019",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "7e18b4de504b09e339cf83e3a1d84bdce75b80cd1ba148c0f50c5cf4d6a982c3"
+            },
+            {
+              "case": "three_volumes_0020",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "b8ff6539a32d62cc8d7963f8a36f3681c80f1c480aff9cfbd04bea6bc849fda1"
+            },
+            {
+              "case": "zero_volumes_0001",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "62b469ded63a9ffd54ee3191d0ef43a5a56f2e47739aed3037dc6874a6445a5e"
+            },
+            {
+              "case": "zero_volumes_0002",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "2b063de3f3ffe6b89066b38aa44faa40c86ecade7ace7835a87977c8d27b7eee"
+            },
+            {
+              "case": "zero_volumes_0003",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "14dc9550ec10a69bedcb886da3f41a2d6cdfcf50503ce4f425c0ae21dd886333"
+            },
+            {
+              "case": "zero_volumes_0004",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "126a389294dcc12d3274a561a5c77936f1a86fa65f4586524055c36174822d9e"
+            },
+            {
+              "case": "zero_volumes_0005",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "381deff2ba64797ea9ca0295d845935cea56105afc40f07a0d085599c6117315"
+            },
+            {
+              "case": "zero_volumes_0006",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "14f9881d39bda9f15120f49ead8abe395f902b6459b9aa86bffef459fb6646da"
+            },
+            {
+              "case": "zero_volumes_0007",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "460e10063242a17aeeaa35cb1d02ecd3412a4f2b09ecf40ae6f3caa2e5d558aa"
+            },
+            {
+              "case": "zero_volumes_0008",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "7420691754dc72dcb794a00f19cd09c3dc1509b7f01b1551edadd1fe2095a738"
+            },
+            {
+              "case": "zero_volumes_0009",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "a40bbaeb99de4a726ae9b0c8c1f4ada07728bdd4ecd04baa6384b92286bc83a8"
+            },
+            {
+              "case": "zero_volumes_0010",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "6c475cd47f5603a8c1482f29b972f999b1e2553f1f02b4f0fa85aeead9683a8e"
+            },
+            {
+              "case": "zero_volumes_0011",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "73adea579355b292d0ca59cd86e7533a577270548742fba7f8b95145347cd0c7"
+            },
+            {
+              "case": "zero_volumes_0012",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "0d1425a99908cca37927d9776f2dbed91eb32a43c77f2cc609cdaf6e1289da2a"
+            },
+            {
+              "case": "zero_volumes_0013",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "d75307657b51da8778032bc129e29f39b192682a8c0560d354c39702b0a00417"
+            },
+            {
+              "case": "zero_volumes_0014",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "1a3a640be82a4fad40c87ac17e36190e9d122369d76eaff54b1d2316b047284f"
+            },
+            {
+              "case": "zero_volumes_0015",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "2e1f814352a8b49892eaaba73cc77fb83fd75783358e68a2e3ae164472fca26f"
+            },
+            {
+              "case": "zero_volumes_0016",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "b09a967af38fb37912ca9ee6bf61b6cd69a79d22c2e2108263ea8c3dc299e64e"
+            },
+            {
+              "case": "zero_volumes_0017",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "123bd0f75270ee6ab51065c8b1fbdb3c2331befc6b493ba902e04e6fa250997a"
+            },
+            {
+              "case": "zero_volumes_0018",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "539f67818db07b2d59617cf56a0e81f6c3c120b6b9fb56fe29068752150d3af6"
+            },
+            {
+              "case": "zero_volumes_0019",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "04b2e4d12cd6c40e9716554d9a66e9d818035f5570b68d81124831f52584ea10"
+            },
+            {
+              "case": "zero_volumes_0020",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "4c27129a6146b01a1e7fd1f3c68bb0f3129551b350821ab83ec20cfec262548e"
+            }
+          ]
+        }
+      }
+    },
+    "random100": {
+      "scope": "Frozen v1 test, then development/regression for v2/v3; 3000 holds and 150 volumes; no Cube",
+      "methods": {
+        "cad": {
+          "cases": 100,
+          "hold_score": 1350.0611686542468,
+          "hold_volume_score": 1470.219998368236,
+          "holds": {
+            "matched": 2916,
+            "missing": 84,
+            "extra": 10,
+            "score": 1350.0611686542468,
+            "position_score": 37.78066448907751,
+            "orientation_score": 332.28050416516936,
+            "type_score": 40.0
+          },
+          "volumes": {
+            "matched": 139,
+            "missing": 11,
+            "extra": 1,
+            "score": 120.15882971398919,
+            "position_score": 0.1588297139891882,
+            "orientation_score": 0.0,
+            "type_score": 0.0
+          },
+          "per_scene": [
+            {
+              "case": "fresh_0000",
+              "hold_score": 11.502577028598374,
+              "hold_volume_score": 11.502577028598374,
+              "prediction_sha256": "f410c77b2aacfa41d5a44782ea8b49032911e89362b45637863b3d4a518b027f"
+            },
+            {
+              "case": "fresh_0001",
+              "hold_score": 2.002571743269763,
+              "hold_volume_score": 2.002571743269763,
+              "prediction_sha256": "b9325bf293fec505e55e7e31036a8be68dc7778373fec4f41d70db40d48e2b3f"
+            },
+            {
+              "case": "fresh_0002",
+              "hold_score": 3.0010946496364785,
+              "hold_volume_score": 3.0010946496364785,
+              "prediction_sha256": "fcdeef02fc388a0578623997a4c20e3e6390e7b079d736727343f77a14e85f06"
+            },
+            {
+              "case": "fresh_0003",
+              "hold_score": 3.0020254827728707,
+              "hold_volume_score": 3.0020254827728707,
+              "prediction_sha256": "1fac0df3e170c6e3d8c03e329eec706ed5f20585beed83e6c36f7408b9be8754"
+            },
+            {
+              "case": "fresh_0004",
+              "hold_score": 2.0028780495361196,
+              "hold_volume_score": 2.0028780495361196,
+              "prediction_sha256": "e784dff5fad074d2af6764dd50fa7de7a9c90ccabb4f89786d83b7fd9d2fd3b2"
+            },
+            {
+              "case": "fresh_0005",
+              "hold_score": 2.006405027360261,
+              "hold_volume_score": 2.006405027360261,
+              "prediction_sha256": "072a786fa33b88be09ce7d8a93b3ea399a74f56cf6306ca9a58fd8f599838411"
+            },
+            {
+              "case": "fresh_0006",
+              "hold_score": 0.5030305513288502,
+              "hold_volume_score": 0.5030305513288502,
+              "prediction_sha256": "3d9cd60aedf950ed6eccee905255e9e1cbe523370774f4ecc90232b1a8416053"
+            },
+            {
+              "case": "fresh_0007",
+              "hold_score": 1.5013206850801255,
+              "hold_volume_score": 1.5013206850801255,
+              "prediction_sha256": "47ac70fd30f05420d3e5b95bb8488171edd0c96d6317ca649308bc0f2606ad5a"
+            },
+            {
+              "case": "fresh_0008",
+              "hold_score": 16.004236852742498,
+              "hold_volume_score": 16.004236852742498,
+              "prediction_sha256": "25423813648fcfb349823585080f6f72743beaef96952871bd7dc51a8d8c545a"
+            },
+            {
+              "case": "fresh_0009",
+              "hold_score": 1.0031859826560798,
+              "hold_volume_score": 1.0031859826560798,
+              "prediction_sha256": "7675681f6422f2c155ae87094a00e07591e91cf13a893989502b7b0a8ba1ac54"
+            },
+            {
+              "case": "fresh_0010",
+              "hold_score": 2.501896289385169,
+              "hold_volume_score": 2.501896289385169,
+              "prediction_sha256": "d197de1f4431fe5f6e1c5ec79b9f904f89898deb0ac7e16e40724009cb392169"
+            },
+            {
+              "case": "fresh_0011",
+              "hold_score": 5.003130792125737,
+              "hold_volume_score": 5.003130792125737,
+              "prediction_sha256": "0e0437a52e76c527269c6f072b528cab9883120ec3c69d2828d9b08c0bd83b9a"
+            },
+            {
+              "case": "fresh_0012",
+              "hold_score": 14.001373982471911,
+              "hold_volume_score": 14.001373982471911,
+              "prediction_sha256": "d0f74406d187039af43c5307acae4d46f0b39b38741752b0f5b842f6a518448f"
+            },
+            {
+              "case": "fresh_0013",
+              "hold_score": 3.005189910456241,
+              "hold_volume_score": 3.005189910456241,
+              "prediction_sha256": "7074b0bfe53e413052c495e7a2a8c881b92f0ecc40d5cc8728727fb521ade742"
+            },
+            {
+              "case": "fresh_0014",
+              "hold_score": 12.501964715000396,
+              "hold_volume_score": 12.501964715000396,
+              "prediction_sha256": "c033ca46844027c51bf08681ac0d66cc358a10ce8586075b62ae72d99441d773"
+            },
+            {
+              "case": "fresh_0015",
+              "hold_score": 11.005092233319258,
+              "hold_volume_score": 11.005092233319258,
+              "prediction_sha256": "02094e70f718cd729d69fe764b2045d0ff970e191d6ddecc616885489caa194b"
+            },
+            {
+              "case": "fresh_0016",
+              "hold_score": 1.0027290140103986,
+              "hold_volume_score": 1.0027290140103986,
+              "prediction_sha256": "43e54198723958dad66b8060e9eff2bac0f67a5495cd8cc162b1507dad43a996"
+            },
+            {
+              "case": "fresh_0017",
+              "hold_score": 21.002030723156622,
+              "hold_volume_score": 21.002030723156622,
+              "prediction_sha256": "2cf1ef6c768e7a7c28f97c4090266c2181e0de0294f6b4240f9007e58e3835bf"
+            },
+            {
+              "case": "fresh_0018",
+              "hold_score": 1.0020472973119616,
+              "hold_volume_score": 1.0020472973119616,
+              "prediction_sha256": "dbd08c41b4cab64ce63da399f5bd29f0cd67764fee0a877479ae0323bea8e88c"
+            },
+            {
+              "case": "fresh_0019",
+              "hold_score": 12.501708853389172,
+              "hold_volume_score": 12.501708853389172,
+              "prediction_sha256": "8af6b1daa2757cc78a496c3640871b63454cf8cc4ec381c229096728d193a461"
+            },
+            {
+              "case": "fresh_0020",
+              "hold_score": 4.002772174609531,
+              "hold_volume_score": 4.002772174609531,
+              "prediction_sha256": "22a4fe9a51084db10c58c70f68ee502786dce1d481ae49b573748c853aef1a78"
+            },
+            {
+              "case": "fresh_0021",
+              "hold_score": 3.5046053492752036,
+              "hold_volume_score": 3.5046053492752036,
+              "prediction_sha256": "ec7aba41b2164bd1fd81bd97becfc68dcc6ec8fdfee08c8f45f83e796b14b1b5"
+            },
+            {
+              "case": "fresh_0022",
+              "hold_score": 1.5023773783140024,
+              "hold_volume_score": 1.5023773783140024,
+              "prediction_sha256": "1bef6c7491b6ec88d0342fcd79afa4316f1d6a463f383cc42f48cebcebe98120"
+            },
+            {
+              "case": "fresh_0023",
+              "hold_score": 3.502345126651748,
+              "hold_volume_score": 3.502345126651748,
+              "prediction_sha256": "6b26e16731f9b7df56eebfc20af7a2ddfb68be619abdd07ea2e8602daf3338b6"
+            },
+            {
+              "case": "fresh_0024",
+              "hold_score": 3.0019979812281083,
+              "hold_volume_score": 3.0019979812281083,
+              "prediction_sha256": "0c556d190b3bc41b374c03b30a2a7fcd6206b6ef188c0c6ba6c82bff435e85b9"
+            },
+            {
+              "case": "fresh_0025",
+              "hold_score": 0.5020485815032113,
+              "hold_volume_score": 0.5020485815032113,
+              "prediction_sha256": "cf32c4a9e772b1600abd5e1de74c9efc4589f929af07fd3b793b9f0a13ca2f83"
+            },
+            {
+              "case": "fresh_0026",
+              "hold_score": 3.50185207517245,
+              "hold_volume_score": 3.50185207517245,
+              "prediction_sha256": "5f4b7310449b4616d2332dc7ff7ee4b1924d5cd43a8cf13e11e818e9428dfe20"
+            },
+            {
+              "case": "fresh_0027",
+              "hold_score": 10.502489443143162,
+              "hold_volume_score": 10.502489443143162,
+              "prediction_sha256": "09265244ebcefa4e515e894939fa16f07e7a500d23515996efdcf418f5e7b188"
+            },
+            {
+              "case": "fresh_0028",
+              "hold_score": 16.00365085960321,
+              "hold_volume_score": 16.00365085960321,
+              "prediction_sha256": "919173076a80d2644e0e71f1ea5c919b24841bda5970c1eb939969c664f8f8eb"
+            },
+            {
+              "case": "fresh_0029",
+              "hold_score": 4.501702494945734,
+              "hold_volume_score": 4.501702494945734,
+              "prediction_sha256": "3dbae1389772938993badaed71194cade04f1fd0225665834cd3fc6aa1248ba3"
+            },
+            {
+              "case": "fresh_0030",
+              "hold_score": 3.003123976384157,
+              "hold_volume_score": 3.003123976384157,
+              "prediction_sha256": "55984ef2ffc620901c22f04159102f74180cec4d13c22d25c4c16e0a64abd1ea"
+            },
+            {
+              "case": "fresh_0031",
+              "hold_score": 8.502083348508142,
+              "hold_volume_score": 8.502083348508142,
+              "prediction_sha256": "da2658d702caa2096c82131e09b4b300714ccb484451d63b9e48bc3c70966136"
+            },
+            {
+              "case": "fresh_0032",
+              "hold_score": 7.501364997925303,
+              "hold_volume_score": 7.501364997925303,
+              "prediction_sha256": "41b7f1c224c32fe2827d1480e6b74c15b6b4971cebccff77b21707800494bf69"
+            },
+            {
+              "case": "fresh_0033",
+              "hold_score": 0.5022273082964919,
+              "hold_volume_score": 0.5022273082964919,
+              "prediction_sha256": "700fd702008ad180ed8faef385ea7535d01301bbebedaf432adaf600e73ba502"
+            },
+            {
+              "case": "fresh_0034",
+              "hold_score": 4.503640250703853,
+              "hold_volume_score": 4.503640250703853,
+              "prediction_sha256": "4e28cc7a3d97cac75ce9f5f432079d7ace006320d3d37874afd7003fb4577d40"
+            },
+            {
+              "case": "fresh_0035",
+              "hold_score": 22.00325732936677,
+              "hold_volume_score": 22.00325732936677,
+              "prediction_sha256": "80474b5bec97f17d9c4bcdb3673f359032afaa6d55d7407f5f4967eedc30e0d9"
+            },
+            {
+              "case": "fresh_0036",
+              "hold_score": 3.002356650110267,
+              "hold_volume_score": 3.002356650110267,
+              "prediction_sha256": "1c45156142387b305e4d140a2486c34abbdbe15cbcbbb8c83a3e8407cfe34fe1"
+            },
+            {
+              "case": "fresh_0037",
+              "hold_score": 3.5024540267009483,
+              "hold_volume_score": 3.5024540267009483,
+              "prediction_sha256": "f02307a8ba11a5be45c7d56d82404a9d7c23da9402a4f1d88f722aa91c59eb8f"
+            },
+            {
+              "case": "fresh_0038",
+              "hold_score": 4.003166495582578,
+              "hold_volume_score": 4.003166495582578,
+              "prediction_sha256": "447a739f8e34991fb9c9c0f4f857a8bffc50032c58282232a61f1365c8b495e9"
+            },
+            {
+              "case": "fresh_0039",
+              "hold_score": 0.0023450495831155004,
+              "hold_volume_score": 0.0023450495831155004,
+              "prediction_sha256": "62a01c9e01bfb58bece5d3a2905657e2aa14d88dc62f3af6d15c0354163ed9c6"
+            },
+            {
+              "case": "fresh_0040",
+              "hold_score": 6.002780318334579,
+              "hold_volume_score": 6.002780318334579,
+              "prediction_sha256": "9004807f5d3720f1b6fbd9c926d14c4024561f582cd7cf7f9383698640230004"
+            },
+            {
+              "case": "fresh_0041",
+              "hold_score": 32.503575657240916,
+              "hold_volume_score": 32.503575657240916,
+              "prediction_sha256": "2f27e696ca2d4c98ce87b62065dd8930cab285aa041c76557b3d3dffd338b2b5"
+            },
+            {
+              "case": "fresh_0042",
+              "hold_score": 6.001904747220822,
+              "hold_volume_score": 6.001904747220822,
+              "prediction_sha256": "163bd39c66438b9595c822ce508408f9e900633cdcc4275b409892c53bd99ecc"
+            },
+            {
+              "case": "fresh_0043",
+              "hold_score": 3.5014570617909313,
+              "hold_volume_score": 3.5014570617909313,
+              "prediction_sha256": "110237cbb44eb38348e3371697b029ef481f4e99ec6142788d793a8facd21bb8"
+            },
+            {
+              "case": "fresh_0044",
+              "hold_score": 23.502672420057657,
+              "hold_volume_score": 23.502672420057657,
+              "prediction_sha256": "4970cfb8ecdfa827be81269913501230b6760ed12c34f43e5a84bc734c415d45"
+            },
+            {
+              "case": "fresh_0045",
+              "hold_score": 1.5022808792845117,
+              "hold_volume_score": 1.5022808792845117,
+              "prediction_sha256": "18f7f80da562b2188a657ca6b44743a72a4e0c64a8b429b5befb1234a72770be"
+            },
+            {
+              "case": "fresh_0046",
+              "hold_score": 3.5027043094776382,
+              "hold_volume_score": 3.5027043094776382,
+              "prediction_sha256": "56aa3f37905942c3208416e570b425bf359007dbab06dc6c0b983a8c9915cec4"
+            },
+            {
+              "case": "fresh_0047",
+              "hold_score": 22.01139566189751,
+              "hold_volume_score": 22.01139566189751,
+              "prediction_sha256": "42aca0e349e0190599286fb040e272e2480d5c3da191da31947e5b77c3dc2d42"
+            },
+            {
+              "case": "fresh_0048",
+              "hold_score": 26.00340835597336,
+              "hold_volume_score": 26.00340835597336,
+              "prediction_sha256": "bd93e47e6e7007a967f3ade42664bbfc734a484c379dfacd1f5d68d36b1e1302"
+            },
+            {
+              "case": "fresh_0049",
+              "hold_score": 2.5019328065599167,
+              "hold_volume_score": 2.5019328065599167,
+              "prediction_sha256": "0f5f6013f3bda076f2b6f30a76dffd6416122072e8439d8ac81737e537f83310"
+            },
+            {
+              "case": "fresh_0050",
+              "hold_score": 21.27934244856922,
+              "hold_volume_score": 21.283955514261,
+              "prediction_sha256": "cfe6c679150a67f16ca7a1f7d21d7dc8e9adb98a9a2bba84d21ef78a73a58566"
+            },
+            {
+              "case": "fresh_0051",
+              "hold_score": 21.66083082296906,
+              "hold_volume_score": 21.66305877191351,
+              "prediction_sha256": "341f24753c49287b3672b96b293110d0ae81a7f949d2c63631e3aaa1ff1a6b12"
+            },
+            {
+              "case": "fresh_0052",
+              "hold_score": 37.15905284174732,
+              "hold_volume_score": 37.16471869354975,
+              "prediction_sha256": "f587b82ff32616f6bc7d33265882cac6d82b296e7ce649cdc816593d09314490"
+            },
+            {
+              "case": "fresh_0053",
+              "hold_score": 44.588785668355875,
+              "hold_volume_score": 44.58927809362904,
+              "prediction_sha256": "72a00088b06880c25169fa68b2cb36bf12bc985ab17438b1ee030ac982c8cea0"
+            },
+            {
+              "case": "fresh_0054",
+              "hold_score": 18.242662513640944,
+              "hold_volume_score": 18.245363361203246,
+              "prediction_sha256": "36ea6034c841548946060a22089f99335d92daa7024d57a42d0638798269d28a"
+            },
+            {
+              "case": "fresh_0055",
+              "hold_score": 21.067010104317884,
+              "hold_volume_score": 31.069595456608067,
+              "prediction_sha256": "bb2e1acdd1893eb44f8d3091106ba2e050eeffde2b1b2968674e3d62b1b0295c"
+            },
+            {
+              "case": "fresh_0056",
+              "hold_score": 20.50862949789412,
+              "hold_volume_score": 30.512750437118598,
+              "prediction_sha256": "40e3d551f54c2cda071d38e4a71cd436fa13d602bcd48b152f03b338f28702a1"
+            },
+            {
+              "case": "fresh_0057",
+              "hold_score": 21.036124882601268,
+              "hold_volume_score": 21.045447841442694,
+              "prediction_sha256": "3a7810d59c1a24e6f9c5da322b8c767012943a017152b222f7687b538eaf5b59"
+            },
+            {
+              "case": "fresh_0058",
+              "hold_score": 3.002560639585118,
+              "hold_volume_score": 13.00408581734942,
+              "prediction_sha256": "9deb4fa2bfaad99b125eb2e4699f6076a008e4f9a96a3996b89c003eaae92188"
+            },
+            {
+              "case": "fresh_0059",
+              "hold_score": 13.03828092483006,
+              "hold_volume_score": 13.044309563328488,
+              "prediction_sha256": "458df096a8002d8b6d95fed59904d978e23c5c2b7aa91601a46a575893b149e9"
+            },
+            {
+              "case": "fresh_0060",
+              "hold_score": 25.508019521810724,
+              "hold_volume_score": 25.511502483233908,
+              "prediction_sha256": "49216e74968164b724dd7ade88cc359e301ca3fcd5e0643b36baab212d8d5951"
+            },
+            {
+              "case": "fresh_0061",
+              "hold_score": 2.003930568641918,
+              "hold_volume_score": 2.008962907428439,
+              "prediction_sha256": "211edb3af72bf3cd184799a6076f301b23146cfbfbd3129047a78f7bf0263aff"
+            },
+            {
+              "case": "fresh_0062",
+              "hold_score": 17.403361495575755,
+              "hold_volume_score": 17.40960669492563,
+              "prediction_sha256": "c16d8011de80622a3817366c06adcfa111d5b8ed194a1a8ee3b3e9e95d26cc25"
+            },
+            {
+              "case": "fresh_0063",
+              "hold_score": 25.51119930999555,
+              "hold_volume_score": 25.515304389409636,
+              "prediction_sha256": "b8f0f98ad49fdb5abfdbf4b6827afda23d4c50b8a710740ec86a948eadc9a685"
+            },
+            {
+              "case": "fresh_0064",
+              "hold_score": 3.5051359252805074,
+              "hold_volume_score": 3.5064247144711778,
+              "prediction_sha256": "365995c253991cdec826b8142bd2db96247af8ac0d883d5de1ab08f198baaf5e"
+            },
+            {
+              "case": "fresh_0065",
+              "hold_score": 4.007216897745246,
+              "hold_volume_score": 4.008817961171477,
+              "prediction_sha256": "c10c5ccc7cc2269bf8388988bfd203b767df2761a656c939fcabbd6687424e5c"
+            },
+            {
+              "case": "fresh_0066",
+              "hold_score": 9.383321354584604,
+              "hold_volume_score": 19.38460829456644,
+              "prediction_sha256": "f4625f9b3a998690b7e978c376ae0dbebc7d0a2211d1eb475343e16b8ff01514"
+            },
+            {
+              "case": "fresh_0067",
+              "hold_score": 12.069823558116774,
+              "hold_volume_score": 12.077453549980405,
+              "prediction_sha256": "266276d7b075e1f962fd62638e62ce9ed20394fc8707939f28d59b3e3dd1a3b8"
+            },
+            {
+              "case": "fresh_0068",
+              "hold_score": 14.511318561833505,
+              "hold_volume_score": 14.513346586458175,
+              "prediction_sha256": "cc402f5f23bcac8591658d21ab4de5ae1ab3d10119b0006310921ce5b1d2be63"
+            },
+            {
+              "case": "fresh_0069",
+              "hold_score": 62.501827445528626,
+              "hold_volume_score": 72.50338885911958,
+              "prediction_sha256": "0f0140845edeb8d18f60c0df8be180e91780274adf64917a9f0e90159a2b2ea8"
+            },
+            {
+              "case": "fresh_0070",
+              "hold_score": 20.511819930329445,
+              "hold_volume_score": 30.512239101646742,
+              "prediction_sha256": "65cda75ddd1f22752aa5cd10b849d77c5efe0f2c65392279f2ecedff3feacd64"
+            },
+            {
+              "case": "fresh_0071",
+              "hold_score": 5.026818227767705,
+              "hold_volume_score": 5.02982102371089,
+              "prediction_sha256": "29d22bb5d5984458d016cf895eba41adcee3715741ce72d8c3465d9afb25ea1f"
+            },
+            {
+              "case": "fresh_0072",
+              "hold_score": 22.302662416857192,
+              "hold_volume_score": 22.30494228259754,
+              "prediction_sha256": "565d40aeba5427993ec9d53f54081858e0745b9ce5b6c312b723f5949847f0cc"
+            },
+            {
+              "case": "fresh_0073",
+              "hold_score": 51.44961843363335,
+              "hold_volume_score": 61.449924988366874,
+              "prediction_sha256": "0c2ddf417d5f051bf741a9d04c67d8c608f37ca300b50e5fab32a88504d83946"
+            },
+            {
+              "case": "fresh_0074",
+              "hold_score": 13.504725058689196,
+              "hold_volume_score": 13.505609413596789,
+              "prediction_sha256": "d6def450de935789950f588246ed2afe39dedd638ea3fb6e10ae84f9d28b8828"
+            },
+            {
+              "case": "fresh_0075",
+              "hold_score": 14.017060850580826,
+              "hold_volume_score": 14.019037703235208,
+              "prediction_sha256": "fe3deb0ff59dc682af7f34ce672bdee8a419eb1d8b0e2b58c3fd2b9c156393f2"
+            },
+            {
+              "case": "fresh_0076",
+              "hold_score": 27.47555817022751,
+              "hold_volume_score": 37.47756699830616,
+              "prediction_sha256": "3270b377ff59a2bc2ac12e62cd2dd67f0da5dedb9030c5e8e5bb95299c43f86c"
+            },
+            {
+              "case": "fresh_0077",
+              "hold_score": 11.042444107272756,
+              "hold_volume_score": 11.053969819872641,
+              "prediction_sha256": "852cd61d59e91d49fbcecdfe35db5ef94ae939cbdb1e93c10e25d645b497ccd1"
+            },
+            {
+              "case": "fresh_0078",
+              "hold_score": 20.5041604343435,
+              "hold_volume_score": 20.50651391002594,
+              "prediction_sha256": "c4f216dd9cd22d9c2a7bb263aa924639287d446d94fc2fcccda30113507406bc"
+            },
+            {
+              "case": "fresh_0079",
+              "hold_score": 30.79754271619227,
+              "hold_volume_score": 30.800195817114698,
+              "prediction_sha256": "778540e490caa42b8db76207fb564aafd3a048facf510a480d421bc7783c1627"
+            },
+            {
+              "case": "fresh_0080",
+              "hold_score": 21.5130345175344,
+              "hold_volume_score": 21.523139123972435,
+              "prediction_sha256": "add1bd3dbe8f1bd5fa10a42cef9baa1680d55d0e70af5e1f2e373646c27363d9"
+            },
+            {
+              "case": "fresh_0081",
+              "hold_score": 4.518555494632271,
+              "hold_volume_score": 4.5198149594636545,
+              "prediction_sha256": "2dc29aebbde400997d92290b1b9050df4ffa66b030b01fec50beef18d3d0c03b"
+            },
+            {
+              "case": "fresh_0082",
+              "hold_score": 55.502069436746474,
+              "hold_volume_score": 55.50514908573314,
+              "prediction_sha256": "b6657dde64c6e082ced4e44cf181abb0cecd89643d5d267814b90e93584156cf"
+            },
+            {
+              "case": "fresh_0083",
+              "hold_score": 28.71998018836073,
+              "hold_volume_score": 38.724384788176025,
+              "prediction_sha256": "3ebe5e9f704b310794c100c6d79d084540d801f8b74b52eba2e4ec9f6c70824c"
+            },
+            {
+              "case": "fresh_0084",
+              "hold_score": 3.021539635981484,
+              "hold_volume_score": 3.0260083313995887,
+              "prediction_sha256": "81cf453f084f25162cb389f22b7c3e72fd1562a3f4f8aee982cc95a2ef0ccd43"
+            },
+            {
+              "case": "fresh_0085",
+              "hold_score": 4.179739266410636,
+              "hold_volume_score": 4.184034410665825,
+              "prediction_sha256": "9701191db4fbec08ba90450a604eabaa2ef261a50293033e96039f67d6bd516a"
+            },
+            {
+              "case": "fresh_0086",
+              "hold_score": 2.611992366375183,
+              "hold_volume_score": 2.614215281788855,
+              "prediction_sha256": "df415b6c361d5948ad31f95858dd82314ac39cd716a00484aa995839a741b9fc"
+            },
+            {
+              "case": "fresh_0087",
+              "hold_score": 14.55814879523372,
+              "hold_volume_score": 14.564061757082133,
+              "prediction_sha256": "31167d5b9d84d00915dba308346e6f64288601898abbfbd1513e25495d33792f"
+            },
+            {
+              "case": "fresh_0088",
+              "hold_score": 13.491083396403248,
+              "hold_volume_score": 13.493438194361895,
+              "prediction_sha256": "b24c85f7e5b01622caed36668868fd2e638c27ff30067b146354093ebf428c1c"
+            },
+            {
+              "case": "fresh_0089",
+              "hold_score": 23.02924326248003,
+              "hold_volume_score": 33.02963377491279,
+              "prediction_sha256": "32124bbd647c5cfdf516c718c0caa3a1607307940364d659ed6e051db7c37c62"
+            },
+            {
+              "case": "fresh_0090",
+              "hold_score": 34.03318322482009,
+              "hold_volume_score": 34.03560616973527,
+              "prediction_sha256": "daeff448aca4825e3421ad18cc6bbf988dd57cb0f74e18fd34116db920cf532d"
+            },
+            {
+              "case": "fresh_0091",
+              "hold_score": 6.019674430161869,
+              "hold_volume_score": 6.020912006340155,
+              "prediction_sha256": "5b68eb73a0e1d4bd0281caa9247caaff77e9a9630073fb370d644a427f664afc"
+            },
+            {
+              "case": "fresh_0092",
+              "hold_score": 44.523508153785635,
+              "hold_volume_score": 54.52617871324204,
+              "prediction_sha256": "e6e1e395c3acc48135c465084afde58f5923d27235271ab3a081cda36bb32b8b"
+            },
+            {
+              "case": "fresh_0093",
+              "hold_score": 26.91252106660045,
+              "hold_volume_score": 36.9144358983525,
+              "prediction_sha256": "cd5865f7e14a01d3e9a881a9d5e300566470c49a9523ebdca75f4d70118b2bef"
+            },
+            {
+              "case": "fresh_0094",
+              "hold_score": 17.089716567807752,
+              "hold_volume_score": 17.092099770478768,
+              "prediction_sha256": "59ffc95cc42052350305fa65f2548eddab2e11b66db22f270da5aed2f02c53cf"
+            },
+            {
+              "case": "fresh_0095",
+              "hold_score": 11.009268779105872,
+              "hold_volume_score": 11.011555498342991,
+              "prediction_sha256": "fa4b5dcf13d284552430a5be834693a11293594fb5d775be29859cd8edf32106"
+            },
+            {
+              "case": "fresh_0096",
+              "hold_score": 16.00765162487207,
+              "hold_volume_score": 16.009151103244644,
+              "prediction_sha256": "3f57930e565f4909142edcf215c00f0dddfd449cf9e5c23d1a9583847a1c6ee4"
+            },
+            {
+              "case": "fresh_0097",
+              "hold_score": 42.00380537464039,
+              "hold_volume_score": 42.004354664795194,
+              "prediction_sha256": "8dc6a02622823352910fe2ac5786c602a614b033a6ec3b47596c830e4850977b"
+            },
+            {
+              "case": "fresh_0098",
+              "hold_score": 4.015195571869204,
+              "hold_volume_score": 4.015488494538589,
+              "prediction_sha256": "9f35fa24bbc86921b1d484b12e6f3728bad56cb7f1c7c1634ffcafda20d3c2fa"
+            },
+            {
+              "case": "fresh_0099",
+              "hold_score": 2.537949191853386,
+              "hold_volume_score": 2.5420723129132767,
+              "prediction_sha256": "6b4eedb814a41a776d3f44d1846f1c6e8eac9a09894a89992bab852537f69958"
+            }
+          ]
+        },
+        "yaw": {
+          "cases": 100,
+          "hold_score": 1279.292500842799,
+          "hold_volume_score": 1399.4513305567882,
+          "holds": {
+            "matched": 2916,
+            "missing": 84,
+            "extra": 10,
+            "score": 1279.292500842799,
+            "position_score": 37.78066448907751,
+            "orientation_score": 261.51183635372143,
+            "type_score": 40.0
+          },
+          "volumes": {
+            "matched": 139,
+            "missing": 11,
+            "extra": 1,
+            "score": 120.15882971398919,
+            "position_score": 0.1588297139891882,
+            "orientation_score": 0.0,
+            "type_score": 0.0
+          },
+          "per_scene": [
+            {
+              "case": "fresh_0000",
+              "hold_score": 11.002576820554282,
+              "hold_volume_score": 11.002576820554282,
+              "prediction_sha256": "cef20fc928f5caa414952d0ca957089126d5a0f7997690db9dc2fb1cd7937d35"
+            },
+            {
+              "case": "fresh_0001",
+              "hold_score": 1.7525713271815775,
+              "hold_volume_score": 1.7525713271815775,
+              "prediction_sha256": "0e8fdb40ef01f87b36e158443afb02e2006d99cb38e9af3a0c37687ee14d9e70"
+            },
+            {
+              "case": "fresh_0002",
+              "hold_score": 2.0010942335482924,
+              "hold_volume_score": 2.0010942335482924,
+              "prediction_sha256": "e7644ae63ea9e1f7cd0258cd70f846dce068400b0948d2b8f4b3ed8a62682ea0"
+            },
+            {
+              "case": "fresh_0003",
+              "hold_score": 2.2520251707067307,
+              "hold_volume_score": 2.2520251707067307,
+              "prediction_sha256": "1bf7af746030cb144cf7d2bc6293ce71950f5f5f131048c42ab67082fc609e9d"
+            },
+            {
+              "case": "fresh_0004",
+              "hold_score": 1.5028775294258874,
+              "hold_volume_score": 1.5028775294258874,
+              "prediction_sha256": "b5594b25a3ebfcb72e608df9d6345a86114a013c639e7211b758b4bdb45d58bd"
+            },
+            {
+              "case": "fresh_0005",
+              "hold_score": 3.0064041951838902,
+              "hold_volume_score": 3.0064041951838902,
+              "prediction_sha256": "21d88d0f4196e59c98130fad86df7e1e921e562c10ff9d3d7cdfcd460f6d9a82"
+            },
+            {
+              "case": "fresh_0006",
+              "hold_score": 1.1280300312186184,
+              "hold_volume_score": 1.1280300312186184,
+              "prediction_sha256": "d13b6c21a11d516af3efb546efaa532c5af1680e3d812c9c30f9e875434b0ff3"
+            },
+            {
+              "case": "fresh_0007",
+              "hold_score": 1.2513202689919398,
+              "hold_volume_score": 1.2513202689919398,
+              "prediction_sha256": "fcc31da593b9576303e50112539d997ce225b748db1d9b7a81153275be07a48c"
+            },
+            {
+              "case": "fresh_0008",
+              "hold_score": 13.754236852742498,
+              "hold_volume_score": 13.754236852742498,
+              "prediction_sha256": "af33707a19f97a1fb6d4b3c2e3b5fc2372abbe9cba4fa7e0a33d557dbd81dc07"
+            },
+            {
+              "case": "fresh_0009",
+              "hold_score": 1.1281855665678944,
+              "hold_volume_score": 1.1281855665678944,
+              "prediction_sha256": "7cc2234a98a7849f760a2fbc5a8101bf79eefc2c6ed13d947d8258b77fcce412"
+            },
+            {
+              "case": "fresh_0010",
+              "hold_score": 1.7518959773190297,
+              "hold_volume_score": 1.7518959773190297,
+              "prediction_sha256": "eca3d43b588af5431bcc131d7fdca8f5534737648f604b629a01afec0cfff223"
+            },
+            {
+              "case": "fresh_0011",
+              "hold_score": 3.5031304800595966,
+              "hold_volume_score": 3.5031304800595966,
+              "prediction_sha256": "a65238096df8fdc0fc4a6909739bf94d7084120e2af74932266617a79a1c7cca"
+            },
+            {
+              "case": "fresh_0012",
+              "hold_score": 13.126373774427819,
+              "hold_volume_score": 13.126373774427819,
+              "prediction_sha256": "ba2be3b39e5616adb94465ceb842bd47d974e04600ae312083e8e2685949bf6c"
+            },
+            {
+              "case": "fresh_0013",
+              "hold_score": 1.630189806434194,
+              "hold_volume_score": 1.630189806434194,
+              "prediction_sha256": "6c9008c152fd76790bc79f37e38da6a4d7fa3f573d3f6723c11752bf8ce7ccb0"
+            },
+            {
+              "case": "fresh_0014",
+              "hold_score": 11.87696429891221,
+              "hold_volume_score": 11.87696429891221,
+              "prediction_sha256": "6a34613e3f760b4982c442fdff057b011f2c93420bb03946cbe368ff4427a72e"
+            },
+            {
+              "case": "fresh_0015",
+              "hold_score": 11.00509192125312,
+              "hold_volume_score": 11.00509192125312,
+              "prediction_sha256": "6d09f09de6be4d45ed7a22e03a17975e0ee54e66a72952df433fb40890a5bcff"
+            },
+            {
+              "case": "fresh_0016",
+              "hold_score": 1.3777283898781205,
+              "hold_volume_score": 1.3777283898781205,
+              "prediction_sha256": "1de718fa4c0e656ef556825e57fb9d66dd66dc3d94d3b8a0e9dd47fd5d2f90ad"
+            },
+            {
+              "case": "fresh_0017",
+              "hold_score": 21.127029995002296,
+              "hold_volume_score": 21.127029995002296,
+              "prediction_sha256": "f6cfc8bd2423fa9de9e989eb40fe89688810145515ca46e186a7f85c2bc7beee"
+            },
+            {
+              "case": "fresh_0018",
+              "hold_score": 1.2520467772017296,
+              "hold_volume_score": 1.2520467772017296,
+              "prediction_sha256": "e0c2072169e147746bd0a7782a9007011d000f5bd5764274ed584b1c8c175af9"
+            },
+            {
+              "case": "fresh_0019",
+              "hold_score": 11.501708749367126,
+              "hold_volume_score": 11.501708749367126,
+              "prediction_sha256": "91950e7e1ebbc4ff24d9ec124f17d04d78203ba5c293b87395a6cd7f31a6b15a"
+            },
+            {
+              "case": "fresh_0020",
+              "hold_score": 2.1277721746095297,
+              "hold_volume_score": 2.1277721746095297,
+              "prediction_sha256": "018288c3f4631a5217619f6fecb32d7d1052cec0cc24d7cce0ebb3bb497de152"
+            },
+            {
+              "case": "fresh_0021",
+              "hold_score": 2.7546047251429253,
+              "hold_volume_score": 2.7546047251429253,
+              "prediction_sha256": "4b1ea3f9e7dfc072a424b33c2a9cf1e8e4228912ec534f2661f99fe20dcec211"
+            },
+            {
+              "case": "fresh_0022",
+              "hold_score": 1.2523769622258167,
+              "hold_volume_score": 1.2523769622258167,
+              "prediction_sha256": "42e4bfddcc2e63c85dad135145df7e11652e02a527c0f19d5ac6513b5fe520a0"
+            },
+            {
+              "case": "fresh_0023",
+              "hold_score": 1.627345126651747,
+              "hold_volume_score": 1.627345126651747,
+              "prediction_sha256": "221c75417f1f12a6a0abffcfccbbd1fd444c3176ba372560762612365b432021"
+            },
+            {
+              "case": "fresh_0024",
+              "hold_score": 2.1269977731840144,
+              "hold_volume_score": 2.1269977731840144,
+              "prediction_sha256": "a496a53673f5baeaeb73a8e9015b839dcfd8c8a11f657d9d5f5fb2aac5f564ce"
+            },
+            {
+              "case": "fresh_0025",
+              "hold_score": 1.002048165415026,
+              "hold_volume_score": 1.002048165415026,
+              "prediction_sha256": "627ed77792c9333184d08216195bac4a69c9b5d1e6958372b634cf138fa23a09"
+            },
+            {
+              "case": "fresh_0026",
+              "hold_score": 3.0018515550622173,
+              "hold_volume_score": 3.0018515550622173,
+              "prediction_sha256": "3a5d797fd1b4789bc0abf3a0af54bb2696604e464d77ec883dfe9b672d364300"
+            },
+            {
+              "case": "fresh_0027",
+              "hold_score": 10.627489027054976,
+              "hold_volume_score": 10.627489027054976,
+              "prediction_sha256": "48bc6a93a5e2af115a5d043e5ad8cac7da4853022fb2862c9340cf5cb988ffd2"
+            },
+            {
+              "case": "fresh_0028",
+              "hold_score": 14.128650547537069,
+              "hold_volume_score": 14.128650547537069,
+              "prediction_sha256": "dc69447f680211cdd4efa7fec39e465262279afd2847acb485f43ce2fa5553bd"
+            },
+            {
+              "case": "fresh_0029",
+              "hold_score": 3.3767021828795944,
+              "hold_volume_score": 3.3767021828795944,
+              "prediction_sha256": "d451e215444dd7974850fc28e4515bd5c07a0717dc0f91cc8f16a52d98094dba"
+            },
+            {
+              "case": "fresh_0030",
+              "hold_score": 2.503123456273925,
+              "hold_volume_score": 2.503123456273925,
+              "prediction_sha256": "0d438ab2f06811a86b409d974aacac14f8f9e303528efe0ca6533f519d52e228"
+            },
+            {
+              "case": "fresh_0031",
+              "hold_score": 5.752083140464047,
+              "hold_volume_score": 5.752083140464047,
+              "prediction_sha256": "5d87b8ffad037461fcf25381d50349d05c8fa0ab4ca41698bcb94372e46a3c10"
+            },
+            {
+              "case": "fresh_0032",
+              "hold_score": 5.501364789881209,
+              "hold_volume_score": 5.501364789881209,
+              "prediction_sha256": "d24ec776402aa32fc73b3682370ad15b48b63d1c51f301e6c8cdad9d0594bb5c"
+            },
+            {
+              "case": "fresh_0033",
+              "hold_score": 0.8772266841642136,
+              "hold_volume_score": 0.8772266841642136,
+              "prediction_sha256": "37ee2970ec90a0d2f4add96358b125df69fa02c8b54279b42db74b4d76b02817"
+            },
+            {
+              "case": "fresh_0034",
+              "hold_score": 3.0036399386377126,
+              "hold_volume_score": 3.0036399386377126,
+              "prediction_sha256": "f553279d2b970506dafca6f1e416e75838fbb75a5a07ae37fdeda1f7a4b230de"
+            },
+            {
+              "case": "fresh_0035",
+              "hold_score": 21.87825680925654,
+              "hold_volume_score": 21.87825680925654,
+              "prediction_sha256": "244a441835e6dc0400930cc51156a08945b7388bd0968e71f99faedc26216285"
+            },
+            {
+              "case": "fresh_0036",
+              "hold_score": 2.1273564420661737,
+              "hold_volume_score": 2.1273564420661737,
+              "prediction_sha256": "1f327dbd817f73994246d61a3e85fc8ea7897835da77dc18cae240dc14d359bc"
+            },
+            {
+              "case": "fresh_0037",
+              "hold_score": 3.377453194524577,
+              "hold_volume_score": 3.377453194524577,
+              "prediction_sha256": "e0c7639a4aee1ddb5f49e0a162335b25809d0b9614abe69f6d9bb604474dc443"
+            },
+            {
+              "case": "fresh_0038",
+              "hold_score": 2.503166495582577,
+              "hold_volume_score": 2.503166495582577,
+              "prediction_sha256": "ac800c42145eac6b1d83fe74f79183d95f0b0cb571fa483960a721fdf7026037"
+            },
+            {
+              "case": "fresh_0039",
+              "hold_score": 0.6273445294728838,
+              "hold_volume_score": 0.6273445294728838,
+              "prediction_sha256": "5d4b90bb4be695f75a009ed05a2692f38fbb1e0bf60acd29a5cb510de6bba8c0"
+            },
+            {
+              "case": "fresh_0040",
+              "hold_score": 3.877780214312531,
+              "hold_volume_score": 3.877780214312531,
+              "prediction_sha256": "b2b610e6fcb0a9ae9d2c79e8b52af84eb1459391dfbe20214e0dea8e33621d7e"
+            },
+            {
+              "case": "fresh_0041",
+              "hold_score": 31.378575657240916,
+              "hold_volume_score": 31.378575657240916,
+              "prediction_sha256": "43357b37ddaa3d9a40d6996330524323f9248fc8ac3594c1f316825295651a44"
+            },
+            {
+              "case": "fresh_0042",
+              "hold_score": 4.12690474722082,
+              "hold_volume_score": 4.12690474722082,
+              "prediction_sha256": "2a050c24d1190d2c0b020be5caca0c7993d3b2ee04c7135c039ae7857f609a33"
+            },
+            {
+              "case": "fresh_0043",
+              "hold_score": 2.7514567497247913,
+              "hold_volume_score": 2.7514567497247913,
+              "prediction_sha256": "1caaf3eaf601be8fb7b5a918dbf89b764d364f6e4e5b2ba7a06d329b0a644ca2"
+            },
+            {
+              "case": "fresh_0044",
+              "hold_score": 22.252672212013564,
+              "hold_volume_score": 22.252672212013564,
+              "prediction_sha256": "a189c41cc68060cdead5ec6d2d4fe4b1742394b4ccb05580957beed080cd051a"
+            },
+            {
+              "case": "fresh_0045",
+              "hold_score": 1.6272801511301869,
+              "hold_volume_score": 1.6272801511301869,
+              "prediction_sha256": "f11f1e05c0e95ffd72c28b962115273a7ced5b0ee440d942ced6c5e240a157bd"
+            },
+            {
+              "case": "fresh_0046",
+              "hold_score": 2.8777042054555917,
+              "hold_volume_score": 2.8777042054555917,
+              "prediction_sha256": "2e2bb01735f66c64a925cf5269705c846ea79dee482c06cddf49a6e5e92a15c9"
+            },
+            {
+              "case": "fresh_0047",
+              "hold_score": 22.011395037765233,
+              "hold_volume_score": 22.011395037765233,
+              "prediction_sha256": "bb395f83983c841bf5a76ecf6ebb590faef14ad91931980f93a3bb61d7659418"
+            },
+            {
+              "case": "fresh_0048",
+              "hold_score": 24.12840804390722,
+              "hold_volume_score": 24.12840804390722,
+              "prediction_sha256": "3ec766aba8f858036f3af6e4d5f724cd3c53de600159e2c6294bfa091b2debc8"
+            },
+            {
+              "case": "fresh_0049",
+              "hold_score": 1.6269325985158236,
+              "hold_volume_score": 1.6269325985158236,
+              "prediction_sha256": "7577d0a421a0754f5c805b34551691e900fc169c748f766408693bd62c0db87c"
+            },
+            {
+              "case": "fresh_0050",
+              "hold_score": 21.27934182443694,
+              "hold_volume_score": 21.28395489012872,
+              "prediction_sha256": "35f0538c01964453f02961c849e5bce31a31a01037bf3b481766192346fb71fe"
+            },
+            {
+              "case": "fresh_0051",
+              "hold_score": 21.785830094814738,
+              "hold_volume_score": 21.788058043759186,
+              "prediction_sha256": "42c6860236e1b5a88f7609c33780f86104e640de50f947d2a97a4ed8b4fb9c8d"
+            },
+            {
+              "case": "fresh_0052",
+              "hold_score": 36.15905273772527,
+              "hold_volume_score": 36.1647185895277,
+              "prediction_sha256": "363a3c9557f83adc7ad78138ae8b30cdeee8649a109029ccb74548bf29581df2"
+            },
+            {
+              "case": "fresh_0053",
+              "hold_score": 42.96378577237792,
+              "hold_volume_score": 42.96427819765108,
+              "prediction_sha256": "1190be1bd2c087e245dad458575208152aabd97d292cec7f618806983191219e"
+            },
+            {
+              "case": "fresh_0054",
+              "hold_score": 15.99266251364094,
+              "hold_volume_score": 15.995363361203243,
+              "prediction_sha256": "c7d3b34ee37575b331aa12cc8d5296b9722243788bf06d0fdb08f94dd13e6f39"
+            },
+            {
+              "case": "fresh_0055",
+              "hold_score": 19.442009584207653,
+              "hold_volume_score": 29.444594936497836,
+              "prediction_sha256": "11cb1ec16cab6808f25df01639e669c6ed2ac7e1fe21bb59f34d39a6186765af"
+            },
+            {
+              "case": "fresh_0056",
+              "hold_score": 20.633629081805932,
+              "hold_volume_score": 30.63775002103041,
+              "prediction_sha256": "95516e937a964ab893799255a2eea8c17826f25e014e3dbe1704a85403df1d1a"
+            },
+            {
+              "case": "fresh_0057",
+              "hold_score": 21.53612415444694,
+              "hold_volume_score": 21.54544711328837,
+              "prediction_sha256": "05a5bce8d48401ab9198fe3e10d46c67c38cecf1a1f46fb975dea11b3778e154"
+            },
+            {
+              "case": "fresh_0058",
+              "hold_score": 2.2525603275189785,
+              "hold_volume_score": 12.25408550528328,
+              "prediction_sha256": "7bf97bd7a09145d069e95c478e0ed9b61e34e90d3bc934a3a34b093ab4ce448d"
+            },
+            {
+              "case": "fresh_0059",
+              "hold_score": 12.28828061276392,
+              "hold_volume_score": 12.294309251262348,
+              "prediction_sha256": "1cc44cfc193e037c575209f88b2315b0341bfcbd82f7a57e187a6b6fa0ad3fb4"
+            },
+            {
+              "case": "fresh_0060",
+              "hold_score": 23.50801931376663,
+              "hold_volume_score": 23.511502275189816,
+              "prediction_sha256": "574df617c7e6e6ca895e685b055c0d814c5f6e4b16bb81caa2cee4b7eb38018a"
+            },
+            {
+              "case": "fresh_0061",
+              "hold_score": 1.503930360597825,
+              "hold_volume_score": 1.5089626993843461,
+              "prediction_sha256": "c5272acbd82882607cb49c405b6d1772273e0207b6c938bdd3e11944171aaa46"
+            },
+            {
+              "case": "fresh_0062",
+              "hold_score": 16.15336097546552,
+              "hold_volume_score": 16.159606174815394,
+              "prediction_sha256": "46b52167e26a409dcc5af4b56ecc702273bfda00ab7034ba1ce24236ced0de38"
+            },
+            {
+              "case": "fresh_0063",
+              "hold_score": 23.636198997929412,
+              "hold_volume_score": 23.640304077343497,
+              "prediction_sha256": "9b68c648e9d46c4a893bf0c2513fea34f05ffef56ea07ee94a83fb36d480aa1f"
+            },
+            {
+              "case": "fresh_0064",
+              "hold_score": 3.2551355091923218,
+              "hold_volume_score": 3.256424298382992,
+              "prediction_sha256": "3b4fce12dd8562829d634b077d31f6a332456412914d0d98488de2c7a324896d"
+            },
+            {
+              "case": "fresh_0065",
+              "hold_score": 3.2572162736129666,
+              "hold_volume_score": 3.2588173370391984,
+              "prediction_sha256": "61da489b527d05f9c89069aaaf4ab39ad8472d6456f3f088b0ec4be848f0882b"
+            },
+            {
+              "case": "fresh_0066",
+              "hold_score": 9.626166826026138,
+              "hold_volume_score": 19.627453766007974,
+              "prediction_sha256": "45f79361f4de80f16173992146d8ba6141199195419e0e717d9e833b63d12415"
+            },
+            {
+              "case": "fresh_0067",
+              "hold_score": 12.319823350072681,
+              "hold_volume_score": 12.327453341936312,
+              "prediction_sha256": "22cf926573835d85efc2420daa11558bb1af5ec094f7c78bee0e089e266c3f1e"
+            },
+            {
+              "case": "fresh_0068",
+              "hold_score": 13.261318353789411,
+              "hold_volume_score": 13.26334637841408,
+              "prediction_sha256": "4af8f37bb2948f21da01550b59fb645d122ebe73730ea6e00089313a80882d0a"
+            },
+            {
+              "case": "fresh_0069",
+              "hold_score": 62.126827133462484,
+              "hold_volume_score": 72.12838854705343,
+              "prediction_sha256": "2c71ec7742d7448afff51addcb62719b304e3fc8a6fb6fa3e628c6c31f7657d4"
+            },
+            {
+              "case": "fresh_0070",
+              "hold_score": 19.011819618263303,
+              "hold_volume_score": 29.0122387895806,
+              "prediction_sha256": "b64262478ee6eb8d931f3c5372cf31c7df42613163a233898ddbd84657ab5685"
+            },
+            {
+              "case": "fresh_0071",
+              "hold_score": 3.9018176036354255,
+              "hold_volume_score": 3.904820399578611,
+              "prediction_sha256": "bbbccc57a723f8c0a75c234d9448ff9bc44e2c51d628b6d11cecaf6c443a298c"
+            },
+            {
+              "case": "fresh_0072",
+              "hold_score": 22.802662000769008,
+              "hold_volume_score": 22.804941866509356,
+              "prediction_sha256": "46704c0d9bf6539f952c58178e804a317a31a10c4af3f2e56f0c80dc57c19671"
+            },
+            {
+              "case": "fresh_0073",
+              "hold_score": 52.31313833377676,
+              "hold_volume_score": 62.31344488851029,
+              "prediction_sha256": "ea0659c6cb966160bf3c3853db37642ebb660d29487c3aeeed472e13fa26207f"
+            },
+            {
+              "case": "fresh_0074",
+              "hold_score": 12.004725058689196,
+              "hold_volume_score": 12.005609413596789,
+              "prediction_sha256": "ef06402e332a4b11f9315f50b5bc62111bab8580ceb7e98d4a72b4e7916d7f9e"
+            },
+            {
+              "case": "fresh_0075",
+              "hold_score": 12.64206043449264,
+              "hold_volume_score": 12.644037287147022,
+              "prediction_sha256": "2081a9a952a76b22a062dd2cb10de1a273cbea4dfc60b9cb183db54c40cfeffc"
+            },
+            {
+              "case": "fresh_0076",
+              "hold_score": 26.975557650117278,
+              "hold_volume_score": 36.977566478195925,
+              "prediction_sha256": "efa7c9f330a81c64df3086ae09fa51cdf33a0f6ef9a2283c812fc0eec099f327"
+            },
+            {
+              "case": "fresh_0077",
+              "hold_score": 11.042443795206616,
+              "hold_volume_score": 11.053969507806501,
+              "prediction_sha256": "5e69de0703702153331598d6ab8cb89cd18813eaf8597427784f7f61c1851848"
+            },
+            {
+              "case": "fresh_0078",
+              "hold_score": 20.379160226299405,
+              "hold_volume_score": 20.381513701981845,
+              "prediction_sha256": "8b81e4390b6354c3a7ea2c3cda473692743b09c5a9013b955f0fb4ec91d9b175"
+            },
+            {
+              "case": "fresh_0079",
+              "hold_score": 30.922542300104084,
+              "hold_volume_score": 30.92519540102651,
+              "prediction_sha256": "3315b8d2e0ed5100467ebf04c4631a314f69e7f753523b0350bc52c1fc1a184c"
+            },
+            {
+              "case": "fresh_0080",
+              "hold_score": 20.763034205468262,
+              "hold_volume_score": 20.773138811906296,
+              "prediction_sha256": "83e82ae3c134e22658746a02971876f0c796006ec169c5eae7596911f0324af3"
+            },
+            {
+              "case": "fresh_0081",
+              "hold_score": 4.143555182566131,
+              "hold_volume_score": 4.1448146473975145,
+              "prediction_sha256": "20e21400224edc90023edd81918a593299bfa083ed7906c997b980f2a68a5295"
+            },
+            {
+              "case": "fresh_0082",
+              "hold_score": 53.75206902065828,
+              "hold_volume_score": 53.755148669644946,
+              "prediction_sha256": "b4154bba6c28bf443bd0a30bc32829632fbbf535e3bd54249516b767debec4c0"
+            },
+            {
+              "case": "fresh_0083",
+              "hold_score": 27.21998018836073,
+              "hold_volume_score": 37.224384788176025,
+              "prediction_sha256": "ab4377d09223d2b34184e17d482eac242a737ce5ce79977eb610cde075f3cc01"
+            },
+            {
+              "case": "fresh_0084",
+              "hold_score": 1.8965396359814832,
+              "hold_volume_score": 1.9010083313995878,
+              "prediction_sha256": "a1d96632de24a80929dbbeeb85fd789d8f79d18db3ddf895a28f78fc69466982"
+            },
+            {
+              "case": "fresh_0085",
+              "hold_score": 3.55473885032245,
+              "hold_volume_score": 3.559033994577639,
+              "prediction_sha256": "41176caebd62e30d53fd0a28e69fad3d83c9d12efe08272dd2de94e3e340c7e6"
+            },
+            {
+              "case": "fresh_0086",
+              "hold_score": 2.236991742242904,
+              "hold_volume_score": 2.2392146576565763,
+              "prediction_sha256": "3619f8a437d8fcaecee1a20b02e4ddb4f89f9b4eabaaa0d10c0ad234683d308f"
+            },
+            {
+              "case": "fresh_0087",
+              "hold_score": 13.558148691211674,
+              "hold_volume_score": 13.564061653060087,
+              "prediction_sha256": "b186c77cbab4f8ab30d55d20de24e6a7f22b7a1a527c423505430e16669ab008"
+            },
+            {
+              "case": "fresh_0088",
+              "hold_score": 12.74108277227097,
+              "hold_volume_score": 12.743437570229617,
+              "prediction_sha256": "11addfb11531e21279acc8f6f401658495a9c6e17850a2626d571591516a51f8"
+            },
+            {
+              "case": "fresh_0089",
+              "hold_score": 22.27924263834775,
+              "hold_volume_score": 32.279633150780505,
+              "prediction_sha256": "59d90a2da3fc7b3bc19656d61582dd34e184d5c9be118aa2cbd8526d34cb4103"
+            },
+            {
+              "case": "fresh_0090",
+              "hold_score": 32.783183016776,
+              "hold_volume_score": 32.785605961691175,
+              "prediction_sha256": "22f62df040ddf88e621bbe50dc8f8252d2b988a89effaff10298f0e5e21fa2d4"
+            },
+            {
+              "case": "fresh_0091",
+              "hold_score": 6.01967411809573,
+              "hold_volume_score": 6.020911694274016,
+              "prediction_sha256": "e99586c5b754462680f8c2898e2ad4188b5c3386cb4e1d08ccdc5007b2483289"
+            },
+            {
+              "case": "fresh_0092",
+              "hold_score": 44.52350784171949,
+              "hold_volume_score": 54.5261784011759,
+              "prediction_sha256": "96babc1b3cd4957c201e4ea6e898b535f614c520492ac08c9eb2e36f86a0fe88"
+            },
+            {
+              "case": "fresh_0093",
+              "hold_score": 26.912520754534313,
+              "hold_volume_score": 36.91443558628636,
+              "prediction_sha256": "243ff1d4a7c38fdb800745bd23516ab5a106060744db8d37d61b2c3881dfccf5"
+            },
+            {
+              "case": "fresh_0094",
+              "hold_score": 17.214716151719564,
+              "hold_volume_score": 17.21709935439058,
+              "prediction_sha256": "0646b43c69244ebb16205d190f15d1cebf0925496b956e2b30d199417f80a070"
+            },
+            {
+              "case": "fresh_0095",
+              "hold_score": 11.134268363017686,
+              "hold_volume_score": 11.136555082254805,
+              "prediction_sha256": "feb366737714618061dddf7a4c066141aa3bf282a60c6934e0eb1d734112805d"
+            },
+            {
+              "case": "fresh_0096",
+              "hold_score": 14.00765141682798,
+              "hold_volume_score": 14.00915089520055,
+              "prediction_sha256": "070c57fe7e6b5787fe0e10e6fac852cc340f1b575d2403c682f224bf9e6b6385"
+            },
+            {
+              "case": "fresh_0097",
+              "hold_score": 41.37880527061835,
+              "hold_volume_score": 41.37935456077315,
+              "prediction_sha256": "382b0ccb56613cf850b75c529bf51d78923274110d48188e8c2bcb0ba49b9f4f"
+            },
+            {
+              "case": "fresh_0098",
+              "hold_score": 2.640195467847156,
+              "hold_volume_score": 2.6404883905165413,
+              "prediction_sha256": "89d23fbcd92fc86fed1e0d165f483c08364f35db3c98b2531bd1d3a2ebe79fbe"
+            },
+            {
+              "case": "fresh_0099",
+              "hold_score": 1.7879491918533852,
+              "hold_volume_score": 1.7920723129132758,
+              "prediction_sha256": "189351cdcdbcf7f64a131e6d9e394fc77add583425c70da2b5645bcb220fe982"
+            }
+          ]
+        },
+        "native_v1": {
+          "cases": 100,
+          "hold_score": 306.1813241885649,
+          "hold_volume_score": 346.23479049062297,
+          "holds": {
+            "matched": 2977,
+            "missing": 23,
+            "extra": 0,
+            "score": 306.1813241885649,
+            "position_score": 18.520997499440075,
+            "orientation_score": 45.66032668912484,
+            "type_score": 12.0
+          },
+          "volumes": {
+            "matched": 147,
+            "missing": 3,
+            "extra": 1,
+            "score": 40.05346630205808,
+            "position_score": 0.053466302058074025,
+            "orientation_score": 0.0,
+            "type_score": 0.0
+          },
+          "per_scene": [
+            {
+              "case": "fresh_0000",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "9f4c1ba7bc92de2adec11aee9c3316d9f45d04ef4a1d7838fe9d07e09f4a9fc7"
+            },
+            {
+              "case": "fresh_0001",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "4091a2de6f7e5ecf7c471cd521f0355d398fef959618433b0d50045d940011e2"
+            },
+            {
+              "case": "fresh_0002",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "ef2083d3e4681aa83d857cc1afbefebd55b7e700bc23bba5ef217a57b9d5fb8f"
+            },
+            {
+              "case": "fresh_0003",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "a57c46808b7ca7f1be46a6fb432fcc2fff77245a738cae1da2e3911b096ff5f3"
+            },
+            {
+              "case": "fresh_0004",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "10059b92c41584d2225e3488a8a8ad51cc507675fccce431893fcb53f7d91d6a"
+            },
+            {
+              "case": "fresh_0005",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "ca921e7b3c92c819e17f5e4b908e2af6c69447cf04bfc1f54f3d801167ac0297"
+            },
+            {
+              "case": "fresh_0006",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "8ea9f2d977bd58e1cd8a67ce46c58e56742f8ba631eea39123e083bbcd103b7b"
+            },
+            {
+              "case": "fresh_0007",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "d2f7a482ebfb6ceef42325d5753f1dcd1beece8f835ef42dc5d68ec03cc10fcf"
+            },
+            {
+              "case": "fresh_0008",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "4b692733992fc41632272d2d6a1ba9f3b67a758fe1faec4b9e9abfbbbe2b198c"
+            },
+            {
+              "case": "fresh_0009",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "bec3f94bcaabee417bda606547569b5a879449792ea944ac72a3f2a381f6987c"
+            },
+            {
+              "case": "fresh_0010",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "263d4d2dd2c76ddde0a66d9f527703194f260163ff090bddab7b8a5a5b2ea532"
+            },
+            {
+              "case": "fresh_0011",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "9b25bb23b5c25ebef4465f9191169d6e9291d7329b099a0b7d955e64d2564f0b"
+            },
+            {
+              "case": "fresh_0012",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "51866291af07298b8ef5ba08139489c752cd42b83cb9a604caa5a4143ffcf59b"
+            },
+            {
+              "case": "fresh_0013",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "4419ec394cde27287193526f4eb43541bc6af69250d2e79c54ab02f42e7b7a67"
+            },
+            {
+              "case": "fresh_0014",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "41ddf1fbe3c5deaa282749231a8a32a210130c3774b49323cafa8f249f8e5822"
+            },
+            {
+              "case": "fresh_0015",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "90bd594979805300bbf16a6e1952ee52a9c5477172ae32a9b8a7f5830f9c65a9"
+            },
+            {
+              "case": "fresh_0016",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "837fd679eaca38f71e5b8c7f4f561918c7eae08ac4f9547f8bd2668636199054"
+            },
+            {
+              "case": "fresh_0017",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "7f90644bc31fbce2fd0b11d8f9b62681c66239c0440890c5e145b4e75a94c108"
+            },
+            {
+              "case": "fresh_0018",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "8b8ed21fe8c94bde729e0fa87c97888756d034e922d3cb97662079286b11f130"
+            },
+            {
+              "case": "fresh_0019",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "41c703725e9e7edf54067500933e45424410154c298b64c019fe20290b5fc355"
+            },
+            {
+              "case": "fresh_0020",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "568372db5dd18436de482b58250978cf61bf3c97e36aba0c4a2c2520cebe8f4c"
+            },
+            {
+              "case": "fresh_0021",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "9db2ea88540962297f9e6ab4a20ebd873fbcafd3ef2a7b3d446f0c0b59d1d0de"
+            },
+            {
+              "case": "fresh_0022",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "e311d11d01b8b42a3e1f854bfd0e6f5d1708fe4a44acf5b97658f15d1cf1f3ba"
+            },
+            {
+              "case": "fresh_0023",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "d57d2300ad1423eb1b720ecc5647999534bda47f92fc6bb0f39802d8c9b24df9"
+            },
+            {
+              "case": "fresh_0024",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "041c239de26bd78f5b26d5368965bc4b4037b6275fe65fa064793c1db711d0ec"
+            },
+            {
+              "case": "fresh_0025",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "dca3fd123c2f627314938805a491562ba9a89b4602cf9778389f67741a6e9bfb"
+            },
+            {
+              "case": "fresh_0026",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "bc3a9a198fa70258c3b9829ea2ecabfea5fd06bf907dee70959efa02229dc126"
+            },
+            {
+              "case": "fresh_0027",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "9aa1f48c5b643af022d4f976be5efa63191240a9ea8ebe9adf57a693b6ef5dd9"
+            },
+            {
+              "case": "fresh_0028",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "a11b9b29082498b6031b9314220287edbd7e4c51ac968f4164ecf3d0e257c3c2"
+            },
+            {
+              "case": "fresh_0029",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "e9930bbaeb2651f28bec75367341dcada3808734c5d36862236d850c9bcdf964"
+            },
+            {
+              "case": "fresh_0030",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "92ebecf12bdddecc37abe299a15fb31edc4afa571de8a7f7a0147a9a6a63dde9"
+            },
+            {
+              "case": "fresh_0031",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "dd8e5c1c8d14992c037bca0c0354206e7df348639b32eec700f02ee0bb248491"
+            },
+            {
+              "case": "fresh_0032",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "55c4a5579c0cf8a168a44a2153aa6e089d2f1c3b9fae4afe896d2016e5e4977c"
+            },
+            {
+              "case": "fresh_0033",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "79fe881f0439f7c75fc5bd5c4a11f4eb0da7a6be27a7af20c3c65c3753c25895"
+            },
+            {
+              "case": "fresh_0034",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "41e12a214087c5bd51405acd436dd0492b6b01ad4f85de5f1db64226efdf5724"
+            },
+            {
+              "case": "fresh_0035",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "8c702b02e5dde93f0491a4a1361282fb66021ed4ad7c20963c94065634ee75b9"
+            },
+            {
+              "case": "fresh_0036",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "3df57f7136fb8ab020de8c4927af4aa672426f2e6725077bffaca138ed58e7ae"
+            },
+            {
+              "case": "fresh_0037",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "a74c7e3b665b7d47b8d380a03556036d349625dd894152a813434a8f011ce055"
+            },
+            {
+              "case": "fresh_0038",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "7149a237fef28c3f50babfaa600502ef98c4d2574de6c4f50083b45991a71929"
+            },
+            {
+              "case": "fresh_0039",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "4808395bf88a34532a7eb3c75e92969c83575d0468e469e205017127a915876c"
+            },
+            {
+              "case": "fresh_0040",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "bb752a533fd53b5b47a4aaebeeb2c4de372a1a12367560f76aa707bd72ad2b4f"
+            },
+            {
+              "case": "fresh_0041",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "d63516510e62725713f737d3e4ad74e4bc01224dd729d137d20ec05b3778a973"
+            },
+            {
+              "case": "fresh_0042",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "b7ac3b0c18a4996b590b33257559b9ccf33dddb6f3eed3881adc0c1cb3273402"
+            },
+            {
+              "case": "fresh_0043",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "9cea21adda37af0055a1860ddbd3256842d9899df187b3292e44772533ec9636"
+            },
+            {
+              "case": "fresh_0044",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "59846bb33749fdc898d775dbac800263c9e2ba23f161997865c0a1e4175f6252"
+            },
+            {
+              "case": "fresh_0045",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "1919675e9457aa8f975f4a21f0388645620fa67b024bf58145acf36f7e19156a"
+            },
+            {
+              "case": "fresh_0046",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "e64e8a78f298d4b310a52849c8e64ba3d566c76c52f533d1131b88d4d5959df0"
+            },
+            {
+              "case": "fresh_0047",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "33b67cb26849f52756d065d22146927e2b7d1af1e472747300f9d2839b313153"
+            },
+            {
+              "case": "fresh_0048",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "78856ed8f7c955ea7f8e0b3a5f8bb380b71f8cbb5662b63ed3878bc638c1c2ee"
+            },
+            {
+              "case": "fresh_0049",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "bcaf2323e4a94fbd99619fe40bc8f1e61cd17bba0dbe93357174d75fceb793b9"
+            },
+            {
+              "case": "fresh_0050",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "95e4d878a19e32c0104c9b5c73c57c616e466f991cb02c2ef04a3a9c6a01b36f"
+            },
+            {
+              "case": "fresh_0051",
+              "hold_score": 21.785830094814738,
+              "hold_volume_score": 21.788058043759186,
+              "prediction_sha256": "a3297bef49632299d2110871630df14fe6730839f6ab0d269d2df1657cac9303"
+            },
+            {
+              "case": "fresh_0052",
+              "hold_score": 36.15905273772527,
+              "hold_volume_score": 36.1647185895277,
+              "prediction_sha256": "8ba40ce9aa1803ccc86e009ff3d910ce6a9e552b1affc5837fa00bd5d9f476db"
+            },
+            {
+              "case": "fresh_0053",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "cb3cdc87a697432a971056af1fd958d4f4a83b5d19d23e0dd57a4bbc6bdb1905"
+            },
+            {
+              "case": "fresh_0054",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "92830baab8a7b2cd51b9b19c84c0d6388f15420c2e0962812b6d0bf656510d84"
+            },
+            {
+              "case": "fresh_0055",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "0bc5cc0ecd94dc8f95d5775ed688a388d882520373c4ef273da867b8abe2eaa0"
+            },
+            {
+              "case": "fresh_0056",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "e5153997acbffc31f180a3bc0011ace2e0c54ac0ff9beec47312fba097b25e4f"
+            },
+            {
+              "case": "fresh_0057",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "2d41732013ffdc9c9424f68c9f39d7a1b98f10d8890fadeb60e68693551f2f15"
+            },
+            {
+              "case": "fresh_0058",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "e0aed8d0a617f5dde14484f4d553578d5b1f14d14dc8bb49586bfc006b11a8be"
+            },
+            {
+              "case": "fresh_0059",
+              "hold_score": 12.28828061276392,
+              "hold_volume_score": 12.294309251262348,
+              "prediction_sha256": "2151b630476bc0dc3e53614206010db0e640bc99f352b1306ff9bee92f6c4116"
+            },
+            {
+              "case": "fresh_0060",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "8e4e3e37471769f98509d9525774efbc0119cc56758c448b27eea1bbfb866c5e"
+            },
+            {
+              "case": "fresh_0061",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "b173bfdc23e7b3d1a709d93c49f95e1e0af6cc6e65fb8038be437d481bc7712f"
+            },
+            {
+              "case": "fresh_0062",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "3d6670987adf734e3a99a2a5345d2980e5548e743e15326bf7ce1c71231844a0"
+            },
+            {
+              "case": "fresh_0063",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "4b705f5322f3906071b6e82e418dd9105b07a462d39e84e83823fbb2a91c1937"
+            },
+            {
+              "case": "fresh_0064",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "59b1bef2d96fd0c8f856ab572a7ed7807daf1359cae292ec560e71a62b6d287a"
+            },
+            {
+              "case": "fresh_0065",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "3bf371dd8523309a0f5060492b32eef0c873577192c67a201ca6abeab6527753"
+            },
+            {
+              "case": "fresh_0066",
+              "hold_score": 9.626166826026138,
+              "hold_volume_score": 19.627453766007974,
+              "prediction_sha256": "aea8489946cfc1feae71679d4406b7b3e8e9eedc3347541c2654c01588846fb2"
+            },
+            {
+              "case": "fresh_0067",
+              "hold_score": 12.319823350072681,
+              "hold_volume_score": 12.327453341936312,
+              "prediction_sha256": "5954f99c66d0877f3af67ac227e7f7c703636f43c222fcfc6ef550a2d6aa614d"
+            },
+            {
+              "case": "fresh_0068",
+              "hold_score": 13.261318353789411,
+              "hold_volume_score": 13.26334637841408,
+              "prediction_sha256": "fa973d6d4fdf51eec7a5ea86922f8fcf45463d8e0a31d3551289763a0c65d596"
+            },
+            {
+              "case": "fresh_0069",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "747193a9d071ba954711402d4a1e2a03c8c300d8199dff749f9f9b6985fa3b9f"
+            },
+            {
+              "case": "fresh_0070",
+              "hold_score": 19.011819618263303,
+              "hold_volume_score": 29.0122387895806,
+              "prediction_sha256": "1bdfcd43b9a49600fff54aa7885f7998b548183b49808fb4b6224899f4a49c36"
+            },
+            {
+              "case": "fresh_0071",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "6674ac5d5e618e2b39aec450b6cb4f665777167f07be7d75e24bf590d3115865"
+            },
+            {
+              "case": "fresh_0072",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "fb101560202e5ef3bb209c9d8ccff31b80209e46a8ed5794f8302a91da0196d7"
+            },
+            {
+              "case": "fresh_0073",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "5532212cf892279948af696aa7a8ee344d25200c0f8c65bb297e9cb7091d24fd"
+            },
+            {
+              "case": "fresh_0074",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "d5b0a2a3bcdfc56d2bc5557647b4eddf4f9386dba23e1d569618d565d273ff1b"
+            },
+            {
+              "case": "fresh_0075",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "50d9a4634c4db271f622a6a4a9eb4fc8c601f15dcdd0e85a466a7162117aa248"
+            },
+            {
+              "case": "fresh_0076",
+              "hold_score": 26.975557650117278,
+              "hold_volume_score": 36.977566478195925,
+              "prediction_sha256": "8f107e241e5116fd67f45f412d182a61355748ab3a0c5a94c86572e86c5c5ea0"
+            },
+            {
+              "case": "fresh_0077",
+              "hold_score": 11.042443795206616,
+              "hold_volume_score": 11.053969507806501,
+              "prediction_sha256": "c2e49cf89732d293f364218801f49a3218f39c593e3e97146108938a36e64a9d"
+            },
+            {
+              "case": "fresh_0078",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "0ac68979fc87950f6362555a7a3e88b542589dbf27ba74c0e5958bfc9165ef40"
+            },
+            {
+              "case": "fresh_0079",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "deb8e353e61f3fc5505216cc6a9602eef49dde6fa0a275f0b274d56a3388a782"
+            },
+            {
+              "case": "fresh_0080",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "a9e31deda3cab944e182cc1caadb79bfcae65376bc23640d50660da3ef364c24"
+            },
+            {
+              "case": "fresh_0081",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "0bc111e4ac2540be737e6f79d6ba99f48c72191866d330764738f8fd4dd32596"
+            },
+            {
+              "case": "fresh_0082",
+              "hold_score": 53.75206902065828,
+              "hold_volume_score": 53.755148669644946,
+              "prediction_sha256": "aade07f81942bb3bbca999994b94113335e121c0ebf0926c68e9ead322b08fa4"
+            },
+            {
+              "case": "fresh_0083",
+              "hold_score": 27.21998018836073,
+              "hold_volume_score": 37.224384788176025,
+              "prediction_sha256": "b2d5eb416ddbeed8807548803c13319a1d1c58b65f8d9ba9e2201c5336f87789"
+            },
+            {
+              "case": "fresh_0084",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "24e44969801ceac51b65ee908cb677c86a381590b2f3c52dbb49a76fd78964ab"
+            },
+            {
+              "case": "fresh_0085",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "164fb834bbd5fe78319902425620fb100e42387c613da9a185c1713b3463974b"
+            },
+            {
+              "case": "fresh_0086",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "8b5952d5ffc63de66a340009d96767a65d5dea2d30c581b844bba4a76a24d011"
+            },
+            {
+              "case": "fresh_0087",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "ddca6fbd4844a9ae0553fc4e6bc3ce479639639895971cdfb258bdcccdc370c0"
+            },
+            {
+              "case": "fresh_0088",
+              "hold_score": 12.74108277227097,
+              "hold_volume_score": 12.743437570229617,
+              "prediction_sha256": "506435410879f0c987060569cae20163dbc6853d0fa2d3b4f2fd2ae19041d610"
+            },
+            {
+              "case": "fresh_0089",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "20d911c052e882a47c5629a1c459080b8141a50eea52ed5c0a31b3526262463c"
+            },
+            {
+              "case": "fresh_0090",
+              "hold_score": 32.783183016776,
+              "hold_volume_score": 32.785605961691175,
+              "prediction_sha256": "eb95c00f7c9d71b97958400669a8ec8b41fff5150cf3778217589b90fd02f03b"
+            },
+            {
+              "case": "fresh_0091",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "641cc245ca0409f4115d78b99aa33f830d7f95c354ca60df1d968fd193d3f183"
+            },
+            {
+              "case": "fresh_0092",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "3fd7b2a6d7b2ea68ec3989d2cdd053d8574d63f640aace87acbfa410c6f9e737"
+            },
+            {
+              "case": "fresh_0093",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "70fa5e8ee62b69d769756b15a1152b134e4753c7901dd232c32fd29feece1a7f"
+            },
+            {
+              "case": "fresh_0094",
+              "hold_score": 17.214716151719564,
+              "hold_volume_score": 17.21709935439058,
+              "prediction_sha256": "9dcfb83b2ed3fb7eeaacfa206a49da72f8e64ac4fd30d2d5ed90a209472049e5"
+            },
+            {
+              "case": "fresh_0095",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "71d7ff9f04532066ba2b74d7e9cae0c6a074f21eec68977472a8a7fba6ab0cac"
+            },
+            {
+              "case": "fresh_0096",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "790cdfe6c9b379249651f2316b0b910fa46c5788b56cb4844521afbb440517d4"
+            },
+            {
+              "case": "fresh_0097",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "70c5485661cd14e6fbfe39b152babc531158991b01b39f0adcb24bc85f303e94"
+            },
+            {
+              "case": "fresh_0098",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "66a2de5cc28cf7a1375473bf76f57ab05cb49e8678f3e5a0e1380de15f94f8b6"
+            },
+            {
+              "case": "fresh_0099",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "0fa8907f5ccc60077d0a284eb062593da068de27d5e0aafea38617d12258ef22"
+            }
+          ]
+        },
+        "native_v2": {
+          "cases": 100,
+          "hold_score": 139.97155571049169,
+          "hold_volume_score": 139.9799226502628,
+          "holds": {
+            "matched": 2990,
+            "missing": 10,
+            "extra": 2,
+            "score": 139.97155571049169,
+            "position_score": 1.1063322748757165,
+            "orientation_score": 14.86522343561598,
+            "type_score": 4.0
+          },
+          "volumes": {
+            "matched": 150,
+            "missing": 0,
+            "extra": 0,
+            "score": 0.008366939771126061,
+            "position_score": 0.008366939771126061,
+            "orientation_score": 0.0,
+            "type_score": 0.0
+          },
+          "per_scene": [
+            {
+              "case": "fresh_0000",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "9f4c1ba7bc92de2adec11aee9c3316d9f45d04ef4a1d7838fe9d07e09f4a9fc7"
+            },
+            {
+              "case": "fresh_0001",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "4091a2de6f7e5ecf7c471cd521f0355d398fef959618433b0d50045d940011e2"
+            },
+            {
+              "case": "fresh_0002",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "ef2083d3e4681aa83d857cc1afbefebd55b7e700bc23bba5ef217a57b9d5fb8f"
+            },
+            {
+              "case": "fresh_0003",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "a57c46808b7ca7f1be46a6fb432fcc2fff77245a738cae1da2e3911b096ff5f3"
+            },
+            {
+              "case": "fresh_0004",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "10059b92c41584d2225e3488a8a8ad51cc507675fccce431893fcb53f7d91d6a"
+            },
+            {
+              "case": "fresh_0005",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "ca921e7b3c92c819e17f5e4b908e2af6c69447cf04bfc1f54f3d801167ac0297"
+            },
+            {
+              "case": "fresh_0006",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "8ea9f2d977bd58e1cd8a67ce46c58e56742f8ba631eea39123e083bbcd103b7b"
+            },
+            {
+              "case": "fresh_0007",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "d2f7a482ebfb6ceef42325d5753f1dcd1beece8f835ef42dc5d68ec03cc10fcf"
+            },
+            {
+              "case": "fresh_0008",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "4b692733992fc41632272d2d6a1ba9f3b67a758fe1faec4b9e9abfbbbe2b198c"
+            },
+            {
+              "case": "fresh_0009",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "bec3f94bcaabee417bda606547569b5a879449792ea944ac72a3f2a381f6987c"
+            },
+            {
+              "case": "fresh_0010",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "263d4d2dd2c76ddde0a66d9f527703194f260163ff090bddab7b8a5a5b2ea532"
+            },
+            {
+              "case": "fresh_0011",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "9b25bb23b5c25ebef4465f9191169d6e9291d7329b099a0b7d955e64d2564f0b"
+            },
+            {
+              "case": "fresh_0012",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "51866291af07298b8ef5ba08139489c752cd42b83cb9a604caa5a4143ffcf59b"
+            },
+            {
+              "case": "fresh_0013",
+              "hold_score": 1.630189806434194,
+              "hold_volume_score": 1.630189806434194,
+              "prediction_sha256": "d4442a7f3daa9ba7378137fbab603b706f3817f6a7c6c2816b433bbf91e0f3d8"
+            },
+            {
+              "case": "fresh_0014",
+              "hold_score": 11.87696429891221,
+              "hold_volume_score": 11.87696429891221,
+              "prediction_sha256": "39cee99626ac6da50d9b55293e0abd89c01a8c50fee5b8ea8eb0965b456d47fe"
+            },
+            {
+              "case": "fresh_0015",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "90bd594979805300bbf16a6e1952ee52a9c5477172ae32a9b8a7f5830f9c65a9"
+            },
+            {
+              "case": "fresh_0016",
+              "hold_score": 1.3777283898781205,
+              "hold_volume_score": 1.3777283898781205,
+              "prediction_sha256": "19abd9209ba7a952ad4b39e3638232e32f76537db1984997faa2342ee236cad5"
+            },
+            {
+              "case": "fresh_0017",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "7f90644bc31fbce2fd0b11d8f9b62681c66239c0440890c5e145b4e75a94c108"
+            },
+            {
+              "case": "fresh_0018",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "8b8ed21fe8c94bde729e0fa87c97888756d034e922d3cb97662079286b11f130"
+            },
+            {
+              "case": "fresh_0019",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "41c703725e9e7edf54067500933e45424410154c298b64c019fe20290b5fc355"
+            },
+            {
+              "case": "fresh_0020",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "568372db5dd18436de482b58250978cf61bf3c97e36aba0c4a2c2520cebe8f4c"
+            },
+            {
+              "case": "fresh_0021",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "9db2ea88540962297f9e6ab4a20ebd873fbcafd3ef2a7b3d446f0c0b59d1d0de"
+            },
+            {
+              "case": "fresh_0022",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "e311d11d01b8b42a3e1f854bfd0e6f5d1708fe4a44acf5b97658f15d1cf1f3ba"
+            },
+            {
+              "case": "fresh_0023",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "d57d2300ad1423eb1b720ecc5647999534bda47f92fc6bb0f39802d8c9b24df9"
+            },
+            {
+              "case": "fresh_0024",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "041c239de26bd78f5b26d5368965bc4b4037b6275fe65fa064793c1db711d0ec"
+            },
+            {
+              "case": "fresh_0025",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "dca3fd123c2f627314938805a491562ba9a89b4602cf9778389f67741a6e9bfb"
+            },
+            {
+              "case": "fresh_0026",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "bc3a9a198fa70258c3b9829ea2ecabfea5fd06bf907dee70959efa02229dc126"
+            },
+            {
+              "case": "fresh_0027",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "9aa1f48c5b643af022d4f976be5efa63191240a9ea8ebe9adf57a693b6ef5dd9"
+            },
+            {
+              "case": "fresh_0028",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "a11b9b29082498b6031b9314220287edbd7e4c51ac968f4164ecf3d0e257c3c2"
+            },
+            {
+              "case": "fresh_0029",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "e9930bbaeb2651f28bec75367341dcada3808734c5d36862236d850c9bcdf964"
+            },
+            {
+              "case": "fresh_0030",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "92ebecf12bdddecc37abe299a15fb31edc4afa571de8a7f7a0147a9a6a63dde9"
+            },
+            {
+              "case": "fresh_0031",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "dd8e5c1c8d14992c037bca0c0354206e7df348639b32eec700f02ee0bb248491"
+            },
+            {
+              "case": "fresh_0032",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "55c4a5579c0cf8a168a44a2153aa6e089d2f1c3b9fae4afe896d2016e5e4977c"
+            },
+            {
+              "case": "fresh_0033",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "79fe881f0439f7c75fc5bd5c4a11f4eb0da7a6be27a7af20c3c65c3753c25895"
+            },
+            {
+              "case": "fresh_0034",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "41e12a214087c5bd51405acd436dd0492b6b01ad4f85de5f1db64226efdf5724"
+            },
+            {
+              "case": "fresh_0035",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "8c702b02e5dde93f0491a4a1361282fb66021ed4ad7c20963c94065634ee75b9"
+            },
+            {
+              "case": "fresh_0036",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "3df57f7136fb8ab020de8c4927af4aa672426f2e6725077bffaca138ed58e7ae"
+            },
+            {
+              "case": "fresh_0037",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "a74c7e3b665b7d47b8d380a03556036d349625dd894152a813434a8f011ce055"
+            },
+            {
+              "case": "fresh_0038",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "7149a237fef28c3f50babfaa600502ef98c4d2574de6c4f50083b45991a71929"
+            },
+            {
+              "case": "fresh_0039",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "4808395bf88a34532a7eb3c75e92969c83575d0468e469e205017127a915876c"
+            },
+            {
+              "case": "fresh_0040",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "bb752a533fd53b5b47a4aaebeeb2c4de372a1a12367560f76aa707bd72ad2b4f"
+            },
+            {
+              "case": "fresh_0041",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "d63516510e62725713f737d3e4ad74e4bc01224dd729d137d20ec05b3778a973"
+            },
+            {
+              "case": "fresh_0042",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "b7ac3b0c18a4996b590b33257559b9ccf33dddb6f3eed3881adc0c1cb3273402"
+            },
+            {
+              "case": "fresh_0043",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "9cea21adda37af0055a1860ddbd3256842d9899df187b3292e44772533ec9636"
+            },
+            {
+              "case": "fresh_0044",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "59846bb33749fdc898d775dbac800263c9e2ba23f161997865c0a1e4175f6252"
+            },
+            {
+              "case": "fresh_0045",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "1919675e9457aa8f975f4a21f0388645620fa67b024bf58145acf36f7e19156a"
+            },
+            {
+              "case": "fresh_0046",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "e64e8a78f298d4b310a52849c8e64ba3d566c76c52f533d1131b88d4d5959df0"
+            },
+            {
+              "case": "fresh_0047",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "33b67cb26849f52756d065d22146927e2b7d1af1e472747300f9d2839b313153"
+            },
+            {
+              "case": "fresh_0048",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "78856ed8f7c955ea7f8e0b3a5f8bb380b71f8cbb5662b63ed3878bc638c1c2ee"
+            },
+            {
+              "case": "fresh_0049",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "bcaf2323e4a94fbd99619fe40bc8f1e61cd17bba0dbe93357174d75fceb793b9"
+            },
+            {
+              "case": "fresh_0050",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "95e4d878a19e32c0104c9b5c73c57c616e466f991cb02c2ef04a3a9c6a01b36f"
+            },
+            {
+              "case": "fresh_0051",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "c471e2b47b29f573bc99ca7437ddeed746841297f68b1bd4d894685f96df012f"
+            },
+            {
+              "case": "fresh_0052",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "9a9c95aa1213c1a6b21578c2a7ff24062962b14ced08eb4ef425c6465144b70c"
+            },
+            {
+              "case": "fresh_0053",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "cb3cdc87a697432a971056af1fd958d4f4a83b5d19d23e0dd57a4bbc6bdb1905"
+            },
+            {
+              "case": "fresh_0054",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "92830baab8a7b2cd51b9b19c84c0d6388f15420c2e0962812b6d0bf656510d84"
+            },
+            {
+              "case": "fresh_0055",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "0bc5cc0ecd94dc8f95d5775ed688a388d882520373c4ef273da867b8abe2eaa0"
+            },
+            {
+              "case": "fresh_0056",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "e5153997acbffc31f180a3bc0011ace2e0c54ac0ff9beec47312fba097b25e4f"
+            },
+            {
+              "case": "fresh_0057",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "2d41732013ffdc9c9424f68c9f39d7a1b98f10d8890fadeb60e68693551f2f15"
+            },
+            {
+              "case": "fresh_0058",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "e0aed8d0a617f5dde14484f4d553578d5b1f14d14dc8bb49586bfc006b11a8be"
+            },
+            {
+              "case": "fresh_0059",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "dcedb675d58745c3acdfcc48b53717eaead86a99cc5fb1ecc6dd61c34c7a26d1"
+            },
+            {
+              "case": "fresh_0060",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "8e4e3e37471769f98509d9525774efbc0119cc56758c448b27eea1bbfb866c5e"
+            },
+            {
+              "case": "fresh_0061",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "b173bfdc23e7b3d1a709d93c49f95e1e0af6cc6e65fb8038be437d481bc7712f"
+            },
+            {
+              "case": "fresh_0062",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "3d6670987adf734e3a99a2a5345d2980e5548e743e15326bf7ce1c71231844a0"
+            },
+            {
+              "case": "fresh_0063",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "4b705f5322f3906071b6e82e418dd9105b07a462d39e84e83823fbb2a91c1937"
+            },
+            {
+              "case": "fresh_0064",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "59b1bef2d96fd0c8f856ab572a7ed7807daf1359cae292ec560e71a62b6d287a"
+            },
+            {
+              "case": "fresh_0065",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "3bf371dd8523309a0f5060492b32eef0c873577192c67a201ca6abeab6527753"
+            },
+            {
+              "case": "fresh_0066",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "f52add20d0613f90e5da346de7b61dd8d78738f431ef64955dfc5d71a7001313"
+            },
+            {
+              "case": "fresh_0067",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "8fa32167a8c0c1a8790a43dd38736697edbef0747035a4e1932e5c519591ede7"
+            },
+            {
+              "case": "fresh_0068",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "660eb7f9f78a4a82ee38a526fa5457d1d0c0d9b2d1256ef95e454fa706d72441"
+            },
+            {
+              "case": "fresh_0069",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "747193a9d071ba954711402d4a1e2a03c8c300d8199dff749f9f9b6985fa3b9f"
+            },
+            {
+              "case": "fresh_0070",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "a92b89a4877bc93727e45624cbf817c9f45de803f68b8258b3ea545d544c92c5"
+            },
+            {
+              "case": "fresh_0071",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "6674ac5d5e618e2b39aec450b6cb4f665777167f07be7d75e24bf590d3115865"
+            },
+            {
+              "case": "fresh_0072",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "fb101560202e5ef3bb209c9d8ccff31b80209e46a8ed5794f8302a91da0196d7"
+            },
+            {
+              "case": "fresh_0073",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "5532212cf892279948af696aa7a8ee344d25200c0f8c65bb297e9cb7091d24fd"
+            },
+            {
+              "case": "fresh_0074",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "d5b0a2a3bcdfc56d2bc5557647b4eddf4f9386dba23e1d569618d565d273ff1b"
+            },
+            {
+              "case": "fresh_0075",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "50d9a4634c4db271f622a6a4a9eb4fc8c601f15dcdd0e85a466a7162117aa248"
+            },
+            {
+              "case": "fresh_0076",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "b510bb8b438d512db7e57821371890cff21b37ac888129fcf2f1a23c71cfda88"
+            },
+            {
+              "case": "fresh_0077",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "8418f9b468f878e4a2968475f589014acc03d0edb1c828ee96e1d55075e9621f"
+            },
+            {
+              "case": "fresh_0078",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "0ac68979fc87950f6362555a7a3e88b542589dbf27ba74c0e5958bfc9165ef40"
+            },
+            {
+              "case": "fresh_0079",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "deb8e353e61f3fc5505216cc6a9602eef49dde6fa0a275f0b274d56a3388a782"
+            },
+            {
+              "case": "fresh_0080",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "a9e31deda3cab944e182cc1caadb79bfcae65376bc23640d50660da3ef364c24"
+            },
+            {
+              "case": "fresh_0081",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "0bc111e4ac2540be737e6f79d6ba99f48c72191866d330764738f8fd4dd32596"
+            },
+            {
+              "case": "fresh_0082",
+              "hold_score": 53.75206902065828,
+              "hold_volume_score": 53.755148669644946,
+              "prediction_sha256": "aade07f81942bb3bbca999994b94113335e121c0ebf0926c68e9ead322b08fa4"
+            },
+            {
+              "case": "fresh_0083",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "e79f9b02a1c18e2c5ebea1c43c4b1fa98581fa7ace111a5b2f56acf9c3706412"
+            },
+            {
+              "case": "fresh_0084",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "24e44969801ceac51b65ee908cb677c86a381590b2f3c52dbb49a76fd78964ab"
+            },
+            {
+              "case": "fresh_0085",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "164fb834bbd5fe78319902425620fb100e42387c613da9a185c1713b3463974b"
+            },
+            {
+              "case": "fresh_0086",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "8b5952d5ffc63de66a340009d96767a65d5dea2d30c581b844bba4a76a24d011"
+            },
+            {
+              "case": "fresh_0087",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "ddca6fbd4844a9ae0553fc4e6bc3ce479639639895971cdfb258bdcccdc370c0"
+            },
+            {
+              "case": "fresh_0088",
+              "hold_score": 12.74108277227097,
+              "hold_volume_score": 12.743437570229617,
+              "prediction_sha256": "506435410879f0c987060569cae20163dbc6853d0fa2d3b4f2fd2ae19041d610"
+            },
+            {
+              "case": "fresh_0089",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "20d911c052e882a47c5629a1c459080b8141a50eea52ed5c0a31b3526262463c"
+            },
+            {
+              "case": "fresh_0090",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "f75fe85c6159ec8422a90d56535b3fb80388f78d850eb072e09a37ef7eaba8ec"
+            },
+            {
+              "case": "fresh_0091",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "641cc245ca0409f4115d78b99aa33f830d7f95c354ca60df1d968fd193d3f183"
+            },
+            {
+              "case": "fresh_0092",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "3fd7b2a6d7b2ea68ec3989d2cdd053d8574d63f640aace87acbfa410c6f9e737"
+            },
+            {
+              "case": "fresh_0093",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "70fa5e8ee62b69d769756b15a1152b134e4753c7901dd232c32fd29feece1a7f"
+            },
+            {
+              "case": "fresh_0094",
+              "hold_score": 17.214716151719564,
+              "hold_volume_score": 17.21709935439058,
+              "prediction_sha256": "9dcfb83b2ed3fb7eeaacfa206a49da72f8e64ac4fd30d2d5ed90a209472049e5"
+            },
+            {
+              "case": "fresh_0095",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "71d7ff9f04532066ba2b74d7e9cae0c6a074f21eec68977472a8a7fba6ab0cac"
+            },
+            {
+              "case": "fresh_0096",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "790cdfe6c9b379249651f2316b0b910fa46c5788b56cb4844521afbb440517d4"
+            },
+            {
+              "case": "fresh_0097",
+              "hold_score": 41.37880527061835,
+              "hold_volume_score": 41.37935456077315,
+              "prediction_sha256": "1a6dd61ecb857c5659445c8571d629d79b2468efce0514d4a087806359f058be"
+            },
+            {
+              "case": "fresh_0098",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "66a2de5cc28cf7a1375473bf76f57ab05cb49e8678f3e5a0e1380de15f94f8b6"
+            },
+            {
+              "case": "fresh_0099",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "0fa8907f5ccc60077d0a284eb062593da068de27d5e0aafea38617d12258ef22"
+            }
+          ]
+        },
+        "native": {
+          "cases": 100,
+          "hold_score": 0.0,
+          "hold_volume_score": 0.0,
+          "holds": {
+            "matched": 3000,
+            "missing": 0,
+            "extra": 0,
+            "score": 0.0,
+            "position_score": 0.0,
+            "orientation_score": 0.0,
+            "type_score": 0.0
+          },
+          "volumes": {
+            "matched": 150,
+            "missing": 0,
+            "extra": 0,
+            "score": 0.0,
+            "position_score": 0.0,
+            "orientation_score": 0.0,
+            "type_score": 0.0
+          },
+          "per_scene": [
+            {
+              "case": "fresh_0000",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "9f4c1ba7bc92de2adec11aee9c3316d9f45d04ef4a1d7838fe9d07e09f4a9fc7"
+            },
+            {
+              "case": "fresh_0001",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "4091a2de6f7e5ecf7c471cd521f0355d398fef959618433b0d50045d940011e2"
+            },
+            {
+              "case": "fresh_0002",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "ef2083d3e4681aa83d857cc1afbefebd55b7e700bc23bba5ef217a57b9d5fb8f"
+            },
+            {
+              "case": "fresh_0003",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "a57c46808b7ca7f1be46a6fb432fcc2fff77245a738cae1da2e3911b096ff5f3"
+            },
+            {
+              "case": "fresh_0004",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "10059b92c41584d2225e3488a8a8ad51cc507675fccce431893fcb53f7d91d6a"
+            },
+            {
+              "case": "fresh_0005",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "ca921e7b3c92c819e17f5e4b908e2af6c69447cf04bfc1f54f3d801167ac0297"
+            },
+            {
+              "case": "fresh_0006",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "8ea9f2d977bd58e1cd8a67ce46c58e56742f8ba631eea39123e083bbcd103b7b"
+            },
+            {
+              "case": "fresh_0007",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "d2f7a482ebfb6ceef42325d5753f1dcd1beece8f835ef42dc5d68ec03cc10fcf"
+            },
+            {
+              "case": "fresh_0008",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "4b692733992fc41632272d2d6a1ba9f3b67a758fe1faec4b9e9abfbbbe2b198c"
+            },
+            {
+              "case": "fresh_0009",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "bec3f94bcaabee417bda606547569b5a879449792ea944ac72a3f2a381f6987c"
+            },
+            {
+              "case": "fresh_0010",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "263d4d2dd2c76ddde0a66d9f527703194f260163ff090bddab7b8a5a5b2ea532"
+            },
+            {
+              "case": "fresh_0011",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "9b25bb23b5c25ebef4465f9191169d6e9291d7329b099a0b7d955e64d2564f0b"
+            },
+            {
+              "case": "fresh_0012",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "51866291af07298b8ef5ba08139489c752cd42b83cb9a604caa5a4143ffcf59b"
+            },
+            {
+              "case": "fresh_0013",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "4419ec394cde27287193526f4eb43541bc6af69250d2e79c54ab02f42e7b7a67"
+            },
+            {
+              "case": "fresh_0014",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "41ddf1fbe3c5deaa282749231a8a32a210130c3774b49323cafa8f249f8e5822"
+            },
+            {
+              "case": "fresh_0015",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "90bd594979805300bbf16a6e1952ee52a9c5477172ae32a9b8a7f5830f9c65a9"
+            },
+            {
+              "case": "fresh_0016",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "837fd679eaca38f71e5b8c7f4f561918c7eae08ac4f9547f8bd2668636199054"
+            },
+            {
+              "case": "fresh_0017",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "7f90644bc31fbce2fd0b11d8f9b62681c66239c0440890c5e145b4e75a94c108"
+            },
+            {
+              "case": "fresh_0018",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "8b8ed21fe8c94bde729e0fa87c97888756d034e922d3cb97662079286b11f130"
+            },
+            {
+              "case": "fresh_0019",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "41c703725e9e7edf54067500933e45424410154c298b64c019fe20290b5fc355"
+            },
+            {
+              "case": "fresh_0020",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "568372db5dd18436de482b58250978cf61bf3c97e36aba0c4a2c2520cebe8f4c"
+            },
+            {
+              "case": "fresh_0021",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "9db2ea88540962297f9e6ab4a20ebd873fbcafd3ef2a7b3d446f0c0b59d1d0de"
+            },
+            {
+              "case": "fresh_0022",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "e311d11d01b8b42a3e1f854bfd0e6f5d1708fe4a44acf5b97658f15d1cf1f3ba"
+            },
+            {
+              "case": "fresh_0023",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "d57d2300ad1423eb1b720ecc5647999534bda47f92fc6bb0f39802d8c9b24df9"
+            },
+            {
+              "case": "fresh_0024",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "041c239de26bd78f5b26d5368965bc4b4037b6275fe65fa064793c1db711d0ec"
+            },
+            {
+              "case": "fresh_0025",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "dca3fd123c2f627314938805a491562ba9a89b4602cf9778389f67741a6e9bfb"
+            },
+            {
+              "case": "fresh_0026",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "bc3a9a198fa70258c3b9829ea2ecabfea5fd06bf907dee70959efa02229dc126"
+            },
+            {
+              "case": "fresh_0027",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "9aa1f48c5b643af022d4f976be5efa63191240a9ea8ebe9adf57a693b6ef5dd9"
+            },
+            {
+              "case": "fresh_0028",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "a11b9b29082498b6031b9314220287edbd7e4c51ac968f4164ecf3d0e257c3c2"
+            },
+            {
+              "case": "fresh_0029",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "e9930bbaeb2651f28bec75367341dcada3808734c5d36862236d850c9bcdf964"
+            },
+            {
+              "case": "fresh_0030",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "92ebecf12bdddecc37abe299a15fb31edc4afa571de8a7f7a0147a9a6a63dde9"
+            },
+            {
+              "case": "fresh_0031",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "dd8e5c1c8d14992c037bca0c0354206e7df348639b32eec700f02ee0bb248491"
+            },
+            {
+              "case": "fresh_0032",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "55c4a5579c0cf8a168a44a2153aa6e089d2f1c3b9fae4afe896d2016e5e4977c"
+            },
+            {
+              "case": "fresh_0033",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "79fe881f0439f7c75fc5bd5c4a11f4eb0da7a6be27a7af20c3c65c3753c25895"
+            },
+            {
+              "case": "fresh_0034",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "41e12a214087c5bd51405acd436dd0492b6b01ad4f85de5f1db64226efdf5724"
+            },
+            {
+              "case": "fresh_0035",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "8c702b02e5dde93f0491a4a1361282fb66021ed4ad7c20963c94065634ee75b9"
+            },
+            {
+              "case": "fresh_0036",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "3df57f7136fb8ab020de8c4927af4aa672426f2e6725077bffaca138ed58e7ae"
+            },
+            {
+              "case": "fresh_0037",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "a74c7e3b665b7d47b8d380a03556036d349625dd894152a813434a8f011ce055"
+            },
+            {
+              "case": "fresh_0038",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "7149a237fef28c3f50babfaa600502ef98c4d2574de6c4f50083b45991a71929"
+            },
+            {
+              "case": "fresh_0039",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "4808395bf88a34532a7eb3c75e92969c83575d0468e469e205017127a915876c"
+            },
+            {
+              "case": "fresh_0040",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "bb752a533fd53b5b47a4aaebeeb2c4de372a1a12367560f76aa707bd72ad2b4f"
+            },
+            {
+              "case": "fresh_0041",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "d63516510e62725713f737d3e4ad74e4bc01224dd729d137d20ec05b3778a973"
+            },
+            {
+              "case": "fresh_0042",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "b7ac3b0c18a4996b590b33257559b9ccf33dddb6f3eed3881adc0c1cb3273402"
+            },
+            {
+              "case": "fresh_0043",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "9cea21adda37af0055a1860ddbd3256842d9899df187b3292e44772533ec9636"
+            },
+            {
+              "case": "fresh_0044",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "59846bb33749fdc898d775dbac800263c9e2ba23f161997865c0a1e4175f6252"
+            },
+            {
+              "case": "fresh_0045",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "1919675e9457aa8f975f4a21f0388645620fa67b024bf58145acf36f7e19156a"
+            },
+            {
+              "case": "fresh_0046",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "e64e8a78f298d4b310a52849c8e64ba3d566c76c52f533d1131b88d4d5959df0"
+            },
+            {
+              "case": "fresh_0047",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "33b67cb26849f52756d065d22146927e2b7d1af1e472747300f9d2839b313153"
+            },
+            {
+              "case": "fresh_0048",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "78856ed8f7c955ea7f8e0b3a5f8bb380b71f8cbb5662b63ed3878bc638c1c2ee"
+            },
+            {
+              "case": "fresh_0049",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "bcaf2323e4a94fbd99619fe40bc8f1e61cd17bba0dbe93357174d75fceb793b9"
+            },
+            {
+              "case": "fresh_0050",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "95e4d878a19e32c0104c9b5c73c57c616e466f991cb02c2ef04a3a9c6a01b36f"
+            },
+            {
+              "case": "fresh_0051",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "c471e2b47b29f573bc99ca7437ddeed746841297f68b1bd4d894685f96df012f"
+            },
+            {
+              "case": "fresh_0052",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "9a9c95aa1213c1a6b21578c2a7ff24062962b14ced08eb4ef425c6465144b70c"
+            },
+            {
+              "case": "fresh_0053",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "cb3cdc87a697432a971056af1fd958d4f4a83b5d19d23e0dd57a4bbc6bdb1905"
+            },
+            {
+              "case": "fresh_0054",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "92830baab8a7b2cd51b9b19c84c0d6388f15420c2e0962812b6d0bf656510d84"
+            },
+            {
+              "case": "fresh_0055",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "0bc5cc0ecd94dc8f95d5775ed688a388d882520373c4ef273da867b8abe2eaa0"
+            },
+            {
+              "case": "fresh_0056",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "e5153997acbffc31f180a3bc0011ace2e0c54ac0ff9beec47312fba097b25e4f"
+            },
+            {
+              "case": "fresh_0057",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "2d41732013ffdc9c9424f68c9f39d7a1b98f10d8890fadeb60e68693551f2f15"
+            },
+            {
+              "case": "fresh_0058",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "e0aed8d0a617f5dde14484f4d553578d5b1f14d14dc8bb49586bfc006b11a8be"
+            },
+            {
+              "case": "fresh_0059",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "dcedb675d58745c3acdfcc48b53717eaead86a99cc5fb1ecc6dd61c34c7a26d1"
+            },
+            {
+              "case": "fresh_0060",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "8e4e3e37471769f98509d9525774efbc0119cc56758c448b27eea1bbfb866c5e"
+            },
+            {
+              "case": "fresh_0061",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "b173bfdc23e7b3d1a709d93c49f95e1e0af6cc6e65fb8038be437d481bc7712f"
+            },
+            {
+              "case": "fresh_0062",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "3d6670987adf734e3a99a2a5345d2980e5548e743e15326bf7ce1c71231844a0"
+            },
+            {
+              "case": "fresh_0063",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "4b705f5322f3906071b6e82e418dd9105b07a462d39e84e83823fbb2a91c1937"
+            },
+            {
+              "case": "fresh_0064",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "59b1bef2d96fd0c8f856ab572a7ed7807daf1359cae292ec560e71a62b6d287a"
+            },
+            {
+              "case": "fresh_0065",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "3bf371dd8523309a0f5060492b32eef0c873577192c67a201ca6abeab6527753"
+            },
+            {
+              "case": "fresh_0066",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "f52add20d0613f90e5da346de7b61dd8d78738f431ef64955dfc5d71a7001313"
+            },
+            {
+              "case": "fresh_0067",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "8fa32167a8c0c1a8790a43dd38736697edbef0747035a4e1932e5c519591ede7"
+            },
+            {
+              "case": "fresh_0068",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "660eb7f9f78a4a82ee38a526fa5457d1d0c0d9b2d1256ef95e454fa706d72441"
+            },
+            {
+              "case": "fresh_0069",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "747193a9d071ba954711402d4a1e2a03c8c300d8199dff749f9f9b6985fa3b9f"
+            },
+            {
+              "case": "fresh_0070",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "a92b89a4877bc93727e45624cbf817c9f45de803f68b8258b3ea545d544c92c5"
+            },
+            {
+              "case": "fresh_0071",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "6674ac5d5e618e2b39aec450b6cb4f665777167f07be7d75e24bf590d3115865"
+            },
+            {
+              "case": "fresh_0072",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "fb101560202e5ef3bb209c9d8ccff31b80209e46a8ed5794f8302a91da0196d7"
+            },
+            {
+              "case": "fresh_0073",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "5532212cf892279948af696aa7a8ee344d25200c0f8c65bb297e9cb7091d24fd"
+            },
+            {
+              "case": "fresh_0074",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "d5b0a2a3bcdfc56d2bc5557647b4eddf4f9386dba23e1d569618d565d273ff1b"
+            },
+            {
+              "case": "fresh_0075",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "50d9a4634c4db271f622a6a4a9eb4fc8c601f15dcdd0e85a466a7162117aa248"
+            },
+            {
+              "case": "fresh_0076",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "b510bb8b438d512db7e57821371890cff21b37ac888129fcf2f1a23c71cfda88"
+            },
+            {
+              "case": "fresh_0077",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "8418f9b468f878e4a2968475f589014acc03d0edb1c828ee96e1d55075e9621f"
+            },
+            {
+              "case": "fresh_0078",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "0ac68979fc87950f6362555a7a3e88b542589dbf27ba74c0e5958bfc9165ef40"
+            },
+            {
+              "case": "fresh_0079",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "deb8e353e61f3fc5505216cc6a9602eef49dde6fa0a275f0b274d56a3388a782"
+            },
+            {
+              "case": "fresh_0080",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "a9e31deda3cab944e182cc1caadb79bfcae65376bc23640d50660da3ef364c24"
+            },
+            {
+              "case": "fresh_0081",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "0bc111e4ac2540be737e6f79d6ba99f48c72191866d330764738f8fd4dd32596"
+            },
+            {
+              "case": "fresh_0082",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "09f7865d1b408c7d4ddbaf302400c0daddb6028e0875d2715c2113a21737ec31"
+            },
+            {
+              "case": "fresh_0083",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "e79f9b02a1c18e2c5ebea1c43c4b1fa98581fa7ace111a5b2f56acf9c3706412"
+            },
+            {
+              "case": "fresh_0084",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "24e44969801ceac51b65ee908cb677c86a381590b2f3c52dbb49a76fd78964ab"
+            },
+            {
+              "case": "fresh_0085",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "164fb834bbd5fe78319902425620fb100e42387c613da9a185c1713b3463974b"
+            },
+            {
+              "case": "fresh_0086",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "8b5952d5ffc63de66a340009d96767a65d5dea2d30c581b844bba4a76a24d011"
+            },
+            {
+              "case": "fresh_0087",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "ddca6fbd4844a9ae0553fc4e6bc3ce479639639895971cdfb258bdcccdc370c0"
+            },
+            {
+              "case": "fresh_0088",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "317a240973d30ef4547aefcee3d1204327e6913b8d5957095b7f2934c1095605"
+            },
+            {
+              "case": "fresh_0089",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "20d911c052e882a47c5629a1c459080b8141a50eea52ed5c0a31b3526262463c"
+            },
+            {
+              "case": "fresh_0090",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "f75fe85c6159ec8422a90d56535b3fb80388f78d850eb072e09a37ef7eaba8ec"
+            },
+            {
+              "case": "fresh_0091",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "641cc245ca0409f4115d78b99aa33f830d7f95c354ca60df1d968fd193d3f183"
+            },
+            {
+              "case": "fresh_0092",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "3fd7b2a6d7b2ea68ec3989d2cdd053d8574d63f640aace87acbfa410c6f9e737"
+            },
+            {
+              "case": "fresh_0093",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "70fa5e8ee62b69d769756b15a1152b134e4753c7901dd232c32fd29feece1a7f"
+            },
+            {
+              "case": "fresh_0094",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "7c7018e00b8713e9a226ae5a490bb60b38b26b0c703801bb401745cbcdb2ad64"
+            },
+            {
+              "case": "fresh_0095",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "71d7ff9f04532066ba2b74d7e9cae0c6a074f21eec68977472a8a7fba6ab0cac"
+            },
+            {
+              "case": "fresh_0096",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "790cdfe6c9b379249651f2316b0b910fa46c5788b56cb4844521afbb440517d4"
+            },
+            {
+              "case": "fresh_0097",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "70c5485661cd14e6fbfe39b152babc531158991b01b39f0adcb24bc85f303e94"
+            },
+            {
+              "case": "fresh_0098",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "66a2de5cc28cf7a1375473bf76f57ab05cb49e8678f3e5a0e1380de15f94f8b6"
+            },
+            {
+              "case": "fresh_0099",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "0fa8907f5ccc60077d0a284eb062593da068de27d5e0aafea38617d12258ef22"
+            }
+          ]
+        }
+      }
+    },
+    "validation25": {
+      "scope": "Held out during v3 development; 750 holds and 85 volumes; no Cube; last five use a changed declared camera rig",
+      "methods": {
+        "cad": {
+          "cases": 25,
+          "hold_score": 582.6813409590973,
+          "hold_volume_score": 642.7883764295742,
+          "holds": {
+            "matched": 714,
+            "missing": 36,
+            "extra": 5,
+            "score": 582.6813409590973,
+            "position_score": 12.358816988403092,
+            "orientation_score": 136.3225239706941,
+            "type_score": 24.0
+          },
+          "volumes": {
+            "matched": 79,
+            "missing": 6,
+            "extra": 0,
+            "score": 60.10703547047697,
+            "position_score": 0.10703547047697712,
+            "orientation_score": 0.0,
+            "type_score": 0.0
+          },
+          "per_scene": [
+            {
+              "case": "validation_0000",
+              "hold_score": 14.0235547236577,
+              "hold_volume_score": 14.02779295588522,
+              "prediction_sha256": "7888668effffa93a82ed94ba84cb38668e6905fbc7e9cc90aa4f090f46fae06b"
+            },
+            {
+              "case": "validation_0001",
+              "hold_score": 58.235709545309305,
+              "hold_volume_score": 58.23704064984656,
+              "prediction_sha256": "8a170f4eb19e3815361e5b20b49002cb0376b85243409b1a9297acdebef60de2"
+            },
+            {
+              "case": "validation_0002",
+              "hold_score": 34.50625443021815,
+              "hold_volume_score": 34.507014672385694,
+              "prediction_sha256": "e7c695420fc3fb917e71e01e1c67663db75d9a956da72d0b9d5eac104b7b4ab2"
+            },
+            {
+              "case": "validation_0003",
+              "hold_score": 5.5339560510523365,
+              "hold_volume_score": 5.535921574637636,
+              "prediction_sha256": "6fdbb8a3bb0100ba4f05305ba0c85f9190498d16c0a711aab612017347793268"
+            },
+            {
+              "case": "validation_0004",
+              "hold_score": 29.263951252619698,
+              "hold_volume_score": 29.275625475932276,
+              "prediction_sha256": "b90d2b6f53910699315c3e2bb3fda519a2c74da659c8a34246240176751dbeb4"
+            },
+            {
+              "case": "validation_0005",
+              "hold_score": 34.01705566141796,
+              "hold_volume_score": 34.02157792138532,
+              "prediction_sha256": "590990640f4df9f5edef9fbaeb2299bd9528e82765e66bbd51b5ae873e151b98"
+            },
+            {
+              "case": "validation_0006",
+              "hold_score": 3.011845822220106,
+              "hold_volume_score": 3.015288799501963,
+              "prediction_sha256": "f9e65112261f49d9bf853629b85a0646e21d9e97e659790437ccd9dc3e4d5cfa"
+            },
+            {
+              "case": "validation_0007",
+              "hold_score": 6.571246600099912,
+              "hold_volume_score": 6.573846143115779,
+              "prediction_sha256": "56bb411d94a17b67d23cdfc61208ee6f1c983da530a00b6acd739d50038de63e"
+            },
+            {
+              "case": "validation_0008",
+              "hold_score": 23.84432986620785,
+              "hold_volume_score": 23.847835107363284,
+              "prediction_sha256": "c38161727ab4b99880ea46c4008502416ee1993cb5bb1f00d43121736f410fa0"
+            },
+            {
+              "case": "validation_0009",
+              "hold_score": 16.21526455518722,
+              "hold_volume_score": 16.219605422235215,
+              "prediction_sha256": "3519c74e419133d52482dca7a9fc34a932c69f9674bd67c3187b13d1ed8a99a7"
+            },
+            {
+              "case": "validation_0010",
+              "hold_score": 27.493433846173346,
+              "hold_volume_score": 27.49596092345578,
+              "prediction_sha256": "31093b15aa8c49b314dea73651aab271347764d3e2ec72b346fcd4cebc3bd343"
+            },
+            {
+              "case": "validation_0011",
+              "hold_score": 0.5255443169745649,
+              "hold_volume_score": 0.5316723523441848,
+              "prediction_sha256": "9d0ff913ff1548d3cc0cac867c09ae9fca8e40c05c1f502b5f2e09c13831b73c"
+            },
+            {
+              "case": "validation_0012",
+              "hold_score": 35.54197083342627,
+              "hold_volume_score": 35.54670785745065,
+              "prediction_sha256": "b6068407a9b98131e259e2031097334448e9a635a9dd273a4d790bc54970e134"
+            },
+            {
+              "case": "validation_0013",
+              "hold_score": 71.98465724949949,
+              "hold_volume_score": 71.9857574190612,
+              "prediction_sha256": "a136fd051c91e0c635f903da1bd0498144be9e7da4c19aa4bf29307c266b78d3"
+            },
+            {
+              "case": "validation_0014",
+              "hold_score": 30.40247799801162,
+              "hold_volume_score": 30.40496258552707,
+              "prediction_sha256": "af687fa6ade58db3cee255de0440b779d8b8d47411390c6a502a837049e174df"
+            },
+            {
+              "case": "validation_0015",
+              "hold_score": 18.51675230859025,
+              "hold_volume_score": 18.520111589402116,
+              "prediction_sha256": "208d6ec15560b4feecc88b03adab98a0329fd1abba7f721d77a9d879dc7055ca"
+            },
+            {
+              "case": "validation_0016",
+              "hold_score": 16.8717186100545,
+              "hold_volume_score": 26.875908176111196,
+              "prediction_sha256": "1e000392eb05b0d705d206b0b509f25eb9072d62983112f23f1d4b229aa349f2"
+            },
+            {
+              "case": "validation_0017",
+              "hold_score": 8.032177857012298,
+              "hold_volume_score": 8.034899837768055,
+              "prediction_sha256": "1299e820d51640b77de882461ba117b181a0341799635b1eab675849b85040cf"
+            },
+            {
+              "case": "validation_0018",
+              "hold_score": 7.7580920345287305,
+              "hold_volume_score": 7.760951669185309,
+              "prediction_sha256": "d66eaf093691766997bdca403923564b1a64566ddd3d5082f3daba57578a5574"
+            },
+            {
+              "case": "validation_0019",
+              "hold_score": 17.02582654577658,
+              "hold_volume_score": 17.03550882899566,
+              "prediction_sha256": "87aea8eedd8cac4f76c5a2b3705235c10245bc44c73f7a33f2b63fa01020c088"
+            },
+            {
+              "case": "validation_0020",
+              "hold_score": 40.50228309104638,
+              "hold_volume_score": 60.50452268056503,
+              "prediction_sha256": "06ae87c8c51b586bf6ce57351c5a36e983f3f5747359319380546771682d0ee6"
+            },
+            {
+              "case": "validation_0021",
+              "hold_score": 21.0318589083511,
+              "hold_volume_score": 31.034840127934828,
+              "prediction_sha256": "a36c7972388660b93ba03c9240092e0e8c0beeb9dd803514559aeb679c14b028"
+            },
+            {
+              "case": "validation_0022",
+              "hold_score": 35.04214298651976,
+              "hold_volume_score": 45.05124368157203,
+              "prediction_sha256": "d54c47ff1333f5ba067ce8686a522d45b6cbdf273824c65969258a06d1c0b92a"
+            },
+            {
+              "case": "validation_0023",
+              "hold_score": 13.696307511351273,
+              "hold_volume_score": 13.700774972556278,
+              "prediction_sha256": "8a1ebf250dbe1bcfbb8776862f2ec90601b30f246c90f19c965fe54ec6368f72"
+            },
+            {
+              "case": "validation_0024",
+              "hold_score": 13.032928353790815,
+              "hold_volume_score": 23.04300500535585,
+              "prediction_sha256": "6dd0953135efb835f7fd21b3d7b6c534e55e0bab17b30725bea35305280b9dcb"
+            }
+          ]
+        },
+        "yaw": {
+          "cases": 25,
+          "hold_score": 551.1264910291039,
+          "hold_volume_score": 611.2335264995809,
+          "holds": {
+            "matched": 714,
+            "missing": 36,
+            "extra": 5,
+            "score": 551.1264910291039,
+            "position_score": 12.358816988403092,
+            "orientation_score": 104.76767404070083,
+            "type_score": 24.0
+          },
+          "volumes": {
+            "matched": 79,
+            "missing": 6,
+            "extra": 0,
+            "score": 60.10703547047697,
+            "position_score": 0.10703547047697712,
+            "orientation_score": 0.0,
+            "type_score": 0.0
+          },
+          "per_scene": [
+            {
+              "case": "validation_0000",
+              "hold_score": 13.773554307569514,
+              "hold_volume_score": 13.777792539797034,
+              "prediction_sha256": "7f3febd20e8df92d19fe5a9627b2ea37dc8f9934390e8bf0da2cbe8309e2910f"
+            },
+            {
+              "case": "validation_0001",
+              "hold_score": 57.98570912922112,
+              "hold_volume_score": 57.98704023375838,
+              "prediction_sha256": "7e215cf79d4042cede20df2c02c584352b21fa73dd0e04663379993a3d8830bc"
+            },
+            {
+              "case": "validation_0002",
+              "hold_score": 32.88125422217405,
+              "hold_volume_score": 32.882014464341594,
+              "prediction_sha256": "b96c082713e3c9646cd184f2a6e2d1935315fc32be12e24c09fa258727e01590"
+            },
+            {
+              "case": "validation_0003",
+              "hold_score": 4.408955738986197,
+              "hold_volume_score": 4.410921262571497,
+              "prediction_sha256": "0b4e44f1348d44e94f8661e8c4617245b8de86bfe6fba4ead69b67643eeaf936"
+            },
+            {
+              "case": "validation_0004",
+              "hold_score": 26.638951564685836,
+              "hold_volume_score": 26.650625787998415,
+              "prediction_sha256": "a26df3b233ee73456ccf635b9da31d6281d7cf1751015beab6974f2ac9030645"
+            },
+            {
+              "case": "validation_0005",
+              "hold_score": 32.392055765440006,
+              "hold_volume_score": 32.396578025407365,
+              "prediction_sha256": "5c1129833e0e0d0a5394a8d9a00bde8e013fb5724bfc7992ba1f72be92666c13"
+            },
+            {
+              "case": "validation_0006",
+              "hold_score": 2.5118453021098737,
+              "hold_volume_score": 2.5152882793917306,
+              "prediction_sha256": "e67fef1f025d3ce0f49432bf429f7fbf17b7a37eeb4325fe8cfab0744a5f767f"
+            },
+            {
+              "case": "validation_0007",
+              "hold_score": 6.321246184011727,
+              "hold_volume_score": 6.323845727027594,
+              "prediction_sha256": "eeebd6a3428292f9536e3fc945011bebab2c03f673730b8d2f7542e1b4644de8"
+            },
+            {
+              "case": "validation_0008",
+              "hold_score": 21.340568456537586,
+              "hold_volume_score": 21.34407369769302,
+              "prediction_sha256": "d7ae87b2a1af153a12729c27e68cb64f51f529f6d67c72d42515d12b51fe4eb5"
+            },
+            {
+              "case": "validation_0009",
+              "hold_score": 16.090264347143126,
+              "hold_volume_score": 16.094605214191123,
+              "prediction_sha256": "671a5c174211273afc3d1e428cec7a073d0f3ea854f7f1ebb499a7344a506184"
+            },
+            {
+              "case": "validation_0010",
+              "hold_score": 25.368433742151296,
+              "hold_volume_score": 25.37096081943373,
+              "prediction_sha256": "9218ea86463e5e4c272a3fbc142ff87b3058dfff5c2b7c918b3c09b21a281ba7"
+            },
+            {
+              "case": "validation_0011",
+              "hold_score": 1.1505437968643333,
+              "hold_volume_score": 1.156671832233953,
+              "prediction_sha256": "f1a8c767613bc160e4abe54c4a457e80bfba2dd1524cd06248d398e2d2f6aab5"
+            },
+            {
+              "case": "validation_0012",
+              "hold_score": 34.29197062538218,
+              "hold_volume_score": 34.29670764940656,
+              "prediction_sha256": "65b6f3d3d7a478f1be5b6f519db23abdcee5f36a483a3097b42dd2309ef23807"
+            },
+            {
+              "case": "validation_0013",
+              "hold_score": 70.6096568334113,
+              "hold_volume_score": 70.610757002973,
+              "prediction_sha256": "255ea47f0757852330785c2484001617ee9a739faa84fa3be12d823c899159c4"
+            },
+            {
+              "case": "validation_0014",
+              "hold_score": 31.027477477901392,
+              "hold_volume_score": 31.029962065416843,
+              "prediction_sha256": "da0a86b5093290f19d8dcaab4f4f1e5b9785146e45d36c033c800c045b95fea1"
+            },
+            {
+              "case": "validation_0015",
+              "hold_score": 15.141752308590249,
+              "hold_volume_score": 15.145111589402118,
+              "prediction_sha256": "db41b21e1f4a8b0e69bf92f4f5f833b0bf2f26e8b0b8146a52954b3200e2c5ce"
+            },
+            {
+              "case": "validation_0016",
+              "hold_score": 13.72457692236053,
+              "hold_volume_score": 23.728766488417225,
+              "prediction_sha256": "69be27d400ef92ba03d6d4966bc6ae7facd1964525f1f6e534b3cf58d129637e"
+            },
+            {
+              "case": "validation_0017",
+              "hold_score": 6.157177857012298,
+              "hold_volume_score": 6.159899837768054,
+              "prediction_sha256": "8c86e886fd3f3342d9b9953a92e1faf830e4efc90760d9f4929254167face4d9"
+            },
+            {
+              "case": "validation_0018",
+              "hold_score": 6.758091930506683,
+              "hold_volume_score": 6.7609515651632615,
+              "prediction_sha256": "e05c9efd831df1284d4ddddcf948bc4b9d8c8bbb951740202e31904587b46698"
+            },
+            {
+              "case": "validation_0019",
+              "hold_score": 14.650826337732486,
+              "hold_volume_score": 14.660508620951564,
+              "prediction_sha256": "8ecb53628515c83b8810accaed372bf855b898755aec92967e9691d01ebefc66"
+            },
+            {
+              "case": "validation_0020",
+              "hold_score": 40.87728277898024,
+              "hold_volume_score": 60.8795223684989,
+              "prediction_sha256": "89aae83914159529608aa16e4af42ed0e56a9b843b436187dc686cd3bc711d7d"
+            },
+            {
+              "case": "validation_0021",
+              "hold_score": 21.65685807617473,
+              "hold_volume_score": 31.659839295758452,
+              "prediction_sha256": "ce4ed12d76d6105494db409b0e352c70c1f1efde78855428fb8fd960a6420e25"
+            },
+            {
+              "case": "validation_0022",
+              "hold_score": 33.91714298651976,
+              "hold_volume_score": 43.92624368157203,
+              "prediction_sha256": "d68940e5195fc0ca5c9b96946763a5cd1487e33c9fe3924defa9c2a9eb073afa"
+            },
+            {
+              "case": "validation_0023",
+              "hold_score": 9.167366295912739,
+              "hold_volume_score": 9.171833757117744,
+              "prediction_sha256": "108ec1d69a6d1cfb6c2352a76687060b495338d76e56cbc45b4dc6088cc784a9"
+            },
+            {
+              "case": "validation_0024",
+              "hold_score": 12.282928041724677,
+              "hold_volume_score": 22.29300469328971,
+              "prediction_sha256": "db3885a0b1a976e54e21f3e86c41076949f53d92ffa265fe8d742d64b2d1728a"
+            }
+          ]
+        },
+        "native": {
+          "cases": 25,
+          "hold_score": 0.0,
+          "hold_volume_score": 0.0,
+          "holds": {
+            "matched": 750,
+            "missing": 0,
+            "extra": 0,
+            "score": 0.0,
+            "position_score": 0.0,
+            "orientation_score": 0.0,
+            "type_score": 0.0
+          },
+          "volumes": {
+            "matched": 85,
+            "missing": 0,
+            "extra": 0,
+            "score": 0.0,
+            "position_score": 0.0,
+            "orientation_score": 0.0,
+            "type_score": 0.0
+          },
+          "per_scene": [
+            {
+              "case": "validation_0000",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "651103dcc52655e19e946f72264ff1349fba6e698bbb3530847b672bf473e733"
+            },
+            {
+              "case": "validation_0001",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "22268abb3cba60dfe4adfa0e3617a3ba5823e6f4ed4d05ce3c6339adb95bbb41"
+            },
+            {
+              "case": "validation_0002",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "5ff887f2bff7a669c8bb441bab6979a4e554590ba72b246c53c91a424aea9349"
+            },
+            {
+              "case": "validation_0003",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "29727d4c1e2bdaf5978f2430a856399dc4719765dbd034ff0c37c2efe2380b48"
+            },
+            {
+              "case": "validation_0004",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "f4cc09510289cea23fedfb7271f9f2ba41c76405e844bfbd49aaa5a604ddb133"
+            },
+            {
+              "case": "validation_0005",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "b997a64764cf183e30ea0447e9c5c41192aa4bee50d07cc218973efaba0b0463"
+            },
+            {
+              "case": "validation_0006",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "20940c584f9e75c4e5e1ac963492816fd7448abbc443d6ccb896fbaab40bd791"
+            },
+            {
+              "case": "validation_0007",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "c4ac5bea1dbdc4d0b97a6c151f9e0a5fda13a432676917e19b1109f339985026"
+            },
+            {
+              "case": "validation_0008",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "d6a91c8a0291647039a0462bb5e4e867051a365c66dbc31844ee9618e7b1dee6"
+            },
+            {
+              "case": "validation_0009",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "14175cb2937ea471e1a79462c1bd50d34955ec7b5325a299c6c2fd70d14b1241"
+            },
+            {
+              "case": "validation_0010",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "b097e1a0c19586757ffe3d5cd5aaee5910cc3a746f2eef2e2bb0d58cba1c8dde"
+            },
+            {
+              "case": "validation_0011",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "77d223e8844106f9759449f149aaacacc7ce136248803ba6e0b965d74e313434"
+            },
+            {
+              "case": "validation_0012",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "7667eaf8fbad36b1393297dc5435436c4cdb5017bd97d68fa36b83485cbffde1"
+            },
+            {
+              "case": "validation_0013",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "7f2116df2a4e07d5eae8832af70862f971293a3b0ed2d1c5792e9926726dcd2b"
+            },
+            {
+              "case": "validation_0014",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "0b1b9700445e4598acbe5c2247a86820bc3dba9985beeb95c2da131b6e1a32b1"
+            },
+            {
+              "case": "validation_0015",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "dd86bbe16d6113f2190e81abf2e66fb5108ab60143fc825a52f8da5b3b209614"
+            },
+            {
+              "case": "validation_0016",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "aa9476a3f6581118b90b68a51e872c08169bbe4106f17f40df610fa6b174c67d"
+            },
+            {
+              "case": "validation_0017",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "eb42c8317cb93e979323ae94fbafac291588cced69bca492ae12c96c83616a7f"
+            },
+            {
+              "case": "validation_0018",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "72c328aeb5f04bab952d18e20b179fde657fdc52ef618d7d5eca0c879629bded"
+            },
+            {
+              "case": "validation_0019",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "b24dc08801caa72600f0f800efa8cfa0aed4cffbfaca39fac051b79c2f77d6be"
+            },
+            {
+              "case": "validation_0020",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "d0ea0a258df716151e09ac551dbad72eb9890e7728a61bb2b363be9e5a5dbb22"
+            },
+            {
+              "case": "validation_0021",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "e74648f416d55aa3b2b3251c0c43bccf5b094f60ec70b77792cdedd4526c53a2"
+            },
+            {
+              "case": "validation_0022",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "ddac4f6df89ce7539db5dea8dccae391f91fea9c18a877a25d71f2daffd38b2c"
+            },
+            {
+              "case": "validation_0023",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "765b59970d4a676dba1fd35740efb71e430781f2e578dc664910cd073542b3c6"
+            },
+            {
+              "case": "validation_0024",
+              "hold_score": 0.0,
+              "hold_volume_score": 0.0,
+              "prediction_sha256": "9b6f0e78e79a9d5fdfe6a627f8965b852b61dd1fb79e69b73b14ce83e46ca8fd"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "final_inference_freeze": {
+    "timestamp": "2026-10-31T16:38:15.308873+00:00",
+    "files": {
+      "scripts/perception/benchmark_max.py": "21a28caab12777b945308ff611ca037c5c1c5c147976782e3a14e7ed3715d256",
+      "src/rcr/perception/challenge/native_recovery.py": "9ea0f13357c07b3b0b79be8667c74a3869eb453a7970812c7ed653d28d6ec280",
+      "src/rcr/perception/challenge/native_verify.py": "ac9408932f492745e6d8fad0ead10eb759036c3e8fe2c2e484fa2f0e6658cc68",
+      "src/rcr/perception/challenge/score_pose.py": "6edc76d65ea2d121dba78a7c01208c677175c5f8ee5e01798d09c259eb66c985",
+      "src/rcr/perception/challenge/native/hold_generator.mjs": "662e79c825ce26de13abd9f2f78104723dd78841d77b7d2233f2c75aa134821c",
+      "src/rcr/perception/challenge/native/hold_seedscan.cu": "0ccec992e0ea9dfd2f6880805b39a9c25f25783c70a13e9fc6ac8766c6702976"
+    },
+    "test": {
+      "scenes": 25,
+      "holds_per_scene": 30,
+      "three_volumes": 20,
+      "five_volumes": 5,
+      "changed_camera_rig_last_five": true
+    },
+    "scope": "The validation25 scenes remain held out. Their RGB generation and frozen baseline fitting have begun; no predictions, labels or scores have been inspected for tuning. v3 changes use fresh100 regression scenes only.",
+    "changes": [
+      "Global verification uses detector components; local per-hold support allows shaded green and clipped blue highlights",
+      "Compute observation masks once per scene; unchanged candidate generation and thresholds"
+    ],
+    "unit_test_correction_utc": "2026-10-31T16:39:20.697663+00:00",
+    "unit_test_correction": "Construct detector masks from proposal dictionaries; empty images and shaded-paint controls passed. Validation inference has not started."
+  },
+  "timings": {
+    "random100_fit_s": 594.831835119985,
+    "random100_recovery_s": 175.07027748506516,
+    "validation25_fit_s": 164.72989979479462,
+    "validation25_recovery_s": 40.85467214696109,
+    "clean_single_complete_s": 40.167705189436674,
+    "scope": "RTX 5000 Ada; four fitting workers; excludes GPU queue waits and dataset generation"
+  },
+  "controls": {
+    "cube_cad_score": 17.530649863853128,
+    "cube_yaw_score": 16.40564955178699,
+    "cube_scope": "Three existing sampler-extended controls, 48 holds including 12 Cube; no native recovery",
+    "edited_scenes": [
+      {
+        "case": "removed_hold",
+        "score": 11.002549914490112
+      },
+      {
+        "case": "cube_replacement",
+        "score": 4.0
+      }
+    ],
+    "limitation": "Removed hold rejects recovery; Cube replacement is falsely accepted with wrong type. Native recovery requires a declared unedited-generator scene.",
+    "clean_input_files": [
+      "stereo.png",
+      "calibration.json"
+    ],
+    "clean_score": 0.0
+  },
+  "delivery": {
+    "changes_after_inference_freeze": [
+      "src/rcr/perception/challenge/native/hold_generator.mjs"
+    ],
+    "explanation": "Only the native JavaScript adapter was formatted after inference. Five archived candidates remain byte-identical. Upstream scoring default and installer pin were updated separately; generator/scoring functions are byte-identical across upstream versions.",
+    "tests": {
+      "repository_passed": 978,
+      "repository_skipped": 6,
+      "isolated_runtime_tests": 18,
+      "focused_score_and_verifier_tests": 7,
+      "ruff": "passed",
+      "pipeline_check": "passed; 4 implementations, 2 existing stubs, 2 existing skips"
+    },
+    "portable_renderer": "RGB, scene JSON and calibration of validation_0000 reproduced byte-for-byte",
+    "files": {
+      "src/rcr/perception/challenge/native_recovery.py": "9ea0f13357c07b3b0b79be8667c74a3869eb453a7970812c7ed653d28d6ec280",
+      "src/rcr/perception/challenge/native_verify.py": "ac9408932f492745e6d8fad0ead10eb759036c3e8fe2c2e484fa2f0e6658cc68",
+      "src/rcr/perception/challenge/native/hold_generator.mjs": "fc34f8e442730027347b03c5e487ef6a086c22294af55e778566d2cae2a0d1d7",
+      "src/rcr/perception/challenge/native/hold_seedscan.cu": "0ccec992e0ea9dfd2f6880805b39a9c25f25783c70a13e9fc6ac8766c6702976",
+      "src/rcr/perception/challenge/official_score.py": "b1149fcf761e7f86dc1888c743af3aacd002a047630351169ff04a479abd7cd6",
+      "scripts/perception/benchmark_max.py": "21a28caab12777b945308ff611ca037c5c1c5c147976782e3a14e7ed3715d256",
+      "scripts/perception/score_scene.py": "66d005a8256e6d9d6ef57c99f78fc08184c130ec2460d6c7a48eba4fe9dc5d1c"
+    }
+  }
+}

@@ -2,7 +2,8 @@
 
 The upstream viewer accepts a hold-only mapping or formatVersion1 scene JSON.
 Positions are METRES; orientation is intrinsic XYZ (THREE.Euler XYZ), radians.
-No official evaluator/weighting is supplied by the pinned repository.
+Local diagnostics remain available for earlier experiments. The subsequently
+released comparison score is implemented separately in ``official_score.py``.
 """
 
 from __future__ import annotations

@@ -1,0 +1,1706 @@
+{
+  "regression100": {
+    "defaults": {
+      "options": {
+        "holdCount": 30,
+        "volumeCount": 0,
+        "wallWidth": 3,
+        "wallHeight": 1.4,
+        "cameraHeight": 0.7,
+        "cameraDistance": 1
+      },
+      "calibration": {
+        "schema": "rcr-calibration-v1",
+        "frame": "scene",
+        "units": "metres",
+        "image_width": 699,
+        "image_height": 318,
+        "cameras": {
+          "left": {
+            "width": 699,
+            "height": 318,
+            "K": [
+              [
+                211.0001266376452,
+                0,
+                349.5
+              ],
+              [
+                0,
+                211.0001266376452,
+                159.0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "T_camera_scene": [
+              [
+                0.9994883928807562,
+                -0.0,
+                0.031983628572184196,
+                0.0
+              ],
+              [
+                0.0,
+                -1.0000000000000002,
+                -0.0,
+                0.7000000000000001
+              ],
+              [
+                0.031983628572184196,
+                0.0,
+                -0.9994883928807562,
+                1.000511868995066
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ],
+            "distortion": [
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "right": {
+            "width": 699,
+            "height": 318,
+            "K": [
+              [
+                211.0001266376452,
+                0,
+                349.5
+              ],
+              [
+                0,
+                211.0001266376452,
+                159.0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "T_camera_scene": [
+              [
+                0.9994883928807562,
+                0.0,
+                -0.031983628572184196,
+                0.0
+              ],
+              [
+                0.0,
+                -1.0000000000000002,
+                -0.0,
+                0.7000000000000001
+              ],
+              [
+                -0.031983628572184196,
+                0.0,
+                -0.9994883928807562,
+                1.000511868995066
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ],
+            "distortion": [
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "wall_width_m": 3.0,
+        "wall_height_m": 1.4,
+        "baseline_m": 0.064,
+        "camera_height_m": 0.7,
+        "camera_distance_m": 1.0,
+        "provenance": "Declared public camera/wall preset; not fitted to scene labels"
+      }
+    },
+    "cases": [
+      {
+        "id": "fresh_0000",
+        "options": {
+          "seed": 261083894
+        }
+      },
+      {
+        "id": "fresh_0001",
+        "options": {
+          "seed": 1617265115
+        }
+      },
+      {
+        "id": "fresh_0002",
+        "options": {
+          "seed": 1736969644
+        }
+      },
+      {
+        "id": "fresh_0003",
+        "options": {
+          "seed": 1999387016
+        }
+      },
+      {
+        "id": "fresh_0004",
+        "options": {
+          "seed": 936020357
+        }
+      },
+      {
+        "id": "fresh_0005",
+        "options": {
+          "seed": 482789846
+        }
+      },
+      {
+        "id": "fresh_0006",
+        "options": {
+          "seed": 984933512
+        }
+      },
+      {
+        "id": "fresh_0007",
+        "options": {
+          "seed": 129982677
+        }
+      },
+      {
+        "id": "fresh_0008",
+        "options": {
+          "seed": 2941419628
+        }
+      },
+      {
+        "id": "fresh_0009",
+        "options": {
+          "seed": 1529741065
+        }
+      },
+      {
+        "id": "fresh_0010",
+        "options": {
+          "seed": 48149363
+        }
+      },
+      {
+        "id": "fresh_0011",
+        "options": {
+          "seed": 2446030838
+        }
+      },
+      {
+        "id": "fresh_0012",
+        "options": {
+          "seed": 3930605222
+        }
+      },
+      {
+        "id": "fresh_0013",
+        "options": {
+          "seed": 290605622
+        }
+      },
+      {
+        "id": "fresh_0014",
+        "options": {
+          "seed": 135468353
+        }
+      },
+      {
+        "id": "fresh_0015",
+        "options": {
+          "seed": 3822711438
+        }
+      },
+      {
+        "id": "fresh_0016",
+        "options": {
+          "seed": 1867514191
+        }
+      },
+      {
+        "id": "fresh_0017",
+        "options": {
+          "seed": 2720744383
+        }
+      },
+      {
+        "id": "fresh_0018",
+        "options": {
+          "seed": 3896013043
+        }
+      },
+      {
+        "id": "fresh_0019",
+        "options": {
+          "seed": 1584327748
+        }
+      },
+      {
+        "id": "fresh_0020",
+        "options": {
+          "seed": 1690626360
+        }
+      },
+      {
+        "id": "fresh_0021",
+        "options": {
+          "seed": 438696176
+        }
+      },
+      {
+        "id": "fresh_0022",
+        "options": {
+          "seed": 1312526230
+        }
+      },
+      {
+        "id": "fresh_0023",
+        "options": {
+          "seed": 3776236317
+        }
+      },
+      {
+        "id": "fresh_0024",
+        "options": {
+          "seed": 153253267
+        }
+      },
+      {
+        "id": "fresh_0025",
+        "options": {
+          "seed": 3130019081
+        }
+      },
+      {
+        "id": "fresh_0026",
+        "options": {
+          "seed": 2623734184
+        }
+      },
+      {
+        "id": "fresh_0027",
+        "options": {
+          "seed": 4096764318
+        }
+      },
+      {
+        "id": "fresh_0028",
+        "options": {
+          "seed": 1361000274
+        }
+      },
+      {
+        "id": "fresh_0029",
+        "options": {
+          "seed": 3382298815
+        }
+      },
+      {
+        "id": "fresh_0030",
+        "options": {
+          "seed": 586165325
+        }
+      },
+      {
+        "id": "fresh_0031",
+        "options": {
+          "seed": 1750187253
+        }
+      },
+      {
+        "id": "fresh_0032",
+        "options": {
+          "seed": 3786116147
+        }
+      },
+      {
+        "id": "fresh_0033",
+        "options": {
+          "seed": 2632955321
+        }
+      },
+      {
+        "id": "fresh_0034",
+        "options": {
+          "seed": 87557529
+        }
+      },
+      {
+        "id": "fresh_0035",
+        "options": {
+          "seed": 654393814
+        }
+      },
+      {
+        "id": "fresh_0036",
+        "options": {
+          "seed": 2728964374
+        }
+      },
+      {
+        "id": "fresh_0037",
+        "options": {
+          "seed": 2567358535
+        }
+      },
+      {
+        "id": "fresh_0038",
+        "options": {
+          "seed": 3377270118
+        }
+      },
+      {
+        "id": "fresh_0039",
+        "options": {
+          "seed": 2781034489
+        }
+      },
+      {
+        "id": "fresh_0040",
+        "options": {
+          "seed": 2240402348
+        }
+      },
+      {
+        "id": "fresh_0041",
+        "options": {
+          "seed": 5726598
+        }
+      },
+      {
+        "id": "fresh_0042",
+        "options": {
+          "seed": 266032225
+        }
+      },
+      {
+        "id": "fresh_0043",
+        "options": {
+          "seed": 397643004
+        }
+      },
+      {
+        "id": "fresh_0044",
+        "options": {
+          "seed": 1880179463
+        }
+      },
+      {
+        "id": "fresh_0045",
+        "options": {
+          "seed": 575324604
+        }
+      },
+      {
+        "id": "fresh_0046",
+        "options": {
+          "seed": 2297362134
+        }
+      },
+      {
+        "id": "fresh_0047",
+        "options": {
+          "seed": 1766890338
+        }
+      },
+      {
+        "id": "fresh_0048",
+        "options": {
+          "seed": 1571845458
+        }
+      },
+      {
+        "id": "fresh_0049",
+        "options": {
+          "seed": 492266145
+        }
+      },
+      {
+        "id": "fresh_0050",
+        "options": {
+          "seed": 2350647203,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0051",
+        "options": {
+          "seed": 3698409515,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0052",
+        "options": {
+          "seed": 3577311499,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0053",
+        "options": {
+          "seed": 4173904458,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0054",
+        "options": {
+          "seed": 4152487792,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0055",
+        "options": {
+          "seed": 3086601947,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0056",
+        "options": {
+          "seed": 302504444,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0057",
+        "options": {
+          "seed": 3444475131,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0058",
+        "options": {
+          "seed": 1940005057,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0059",
+        "options": {
+          "seed": 2919707858,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0060",
+        "options": {
+          "seed": 3556825438,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0061",
+        "options": {
+          "seed": 3423202138,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0062",
+        "options": {
+          "seed": 3696271695,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0063",
+        "options": {
+          "seed": 1049281048,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0064",
+        "options": {
+          "seed": 1368006866,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0065",
+        "options": {
+          "seed": 4203986898,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0066",
+        "options": {
+          "seed": 3387747440,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0067",
+        "options": {
+          "seed": 3327880657,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0068",
+        "options": {
+          "seed": 1638693556,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0069",
+        "options": {
+          "seed": 3252504598,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0070",
+        "options": {
+          "seed": 753764062,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0071",
+        "options": {
+          "seed": 4223920414,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0072",
+        "options": {
+          "seed": 3834632520,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0073",
+        "options": {
+          "seed": 3958222700,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0074",
+        "options": {
+          "seed": 2257546998,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0075",
+        "options": {
+          "seed": 3700635872,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0076",
+        "options": {
+          "seed": 3692254098,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0077",
+        "options": {
+          "seed": 4276001665,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0078",
+        "options": {
+          "seed": 3723703051,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0079",
+        "options": {
+          "seed": 3237584423,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0080",
+        "options": {
+          "seed": 3681984447,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0081",
+        "options": {
+          "seed": 1610880435,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0082",
+        "options": {
+          "seed": 2675678356,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0083",
+        "options": {
+          "seed": 730389567,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0084",
+        "options": {
+          "seed": 478462101,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0085",
+        "options": {
+          "seed": 2187029961,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0086",
+        "options": {
+          "seed": 1496754800,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0087",
+        "options": {
+          "seed": 2655671327,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0088",
+        "options": {
+          "seed": 1098075848,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0089",
+        "options": {
+          "seed": 142924849,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0090",
+        "options": {
+          "seed": 1659833647,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0091",
+        "options": {
+          "seed": 2486029362,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0092",
+        "options": {
+          "seed": 4003312476,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0093",
+        "options": {
+          "seed": 3222462680,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0094",
+        "options": {
+          "seed": 3631555966,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0095",
+        "options": {
+          "seed": 44567752,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0096",
+        "options": {
+          "seed": 3133369919,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0097",
+        "options": {
+          "seed": 1567386335,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0098",
+        "options": {
+          "seed": 3123045640,
+          "volumeCount": 3
+        }
+      },
+      {
+        "id": "fresh_0099",
+        "options": {
+          "seed": 3964156671,
+          "volumeCount": 3
+        }
+      }
+    ]
+  },
+  "validation25": {
+    "defaults": {
+      "options": {
+        "holdCount": 30,
+        "volumeCount": 3,
+        "wallWidth": 3.0,
+        "wallHeight": 1.4,
+        "cameraHeight": 0.7,
+        "cameraDistance": 1.0
+      },
+      "calibration": {
+        "schema": "rcr-calibration-v1",
+        "frame": "scene",
+        "units": "metres",
+        "image_width": 699,
+        "image_height": 318,
+        "cameras": {
+          "left": {
+            "width": 699,
+            "height": 318,
+            "K": [
+              [
+                211.0001266376452,
+                0,
+                349.5
+              ],
+              [
+                0,
+                211.0001266376452,
+                159.0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "T_camera_scene": [
+              [
+                0.9994883928807562,
+                -0.0,
+                0.031983628572184196,
+                0.0
+              ],
+              [
+                0.0,
+                -1.0000000000000002,
+                -0.0,
+                0.7000000000000001
+              ],
+              [
+                0.031983628572184196,
+                0.0,
+                -0.9994883928807562,
+                1.000511868995066
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ],
+            "distortion": [
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "right": {
+            "width": 699,
+            "height": 318,
+            "K": [
+              [
+                211.0001266376452,
+                0,
+                349.5
+              ],
+              [
+                0,
+                211.0001266376452,
+                159.0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "T_camera_scene": [
+              [
+                0.9994883928807562,
+                0.0,
+                -0.031983628572184196,
+                0.0
+              ],
+              [
+                0.0,
+                -1.0000000000000002,
+                -0.0,
+                0.7000000000000001
+              ],
+              [
+                -0.031983628572184196,
+                0.0,
+                -0.9994883928807562,
+                1.000511868995066
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ],
+            "distortion": [
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "wall_width_m": 3.0,
+        "wall_height_m": 1.4,
+        "baseline_m": 0.064,
+        "camera_height_m": 0.7,
+        "camera_distance_m": 1.0,
+        "provenance": "Declared public camera/wall preset; not fitted to scene labels"
+      }
+    },
+    "cases": [
+      {
+        "id": "validation_0000",
+        "options": {
+          "seed": 2139473135
+        }
+      },
+      {
+        "id": "validation_0001",
+        "options": {
+          "seed": 3841628838
+        }
+      },
+      {
+        "id": "validation_0002",
+        "options": {
+          "seed": 1289702690
+        }
+      },
+      {
+        "id": "validation_0003",
+        "options": {
+          "seed": 2672936037
+        }
+      },
+      {
+        "id": "validation_0004",
+        "options": {
+          "seed": 121835864
+        }
+      },
+      {
+        "id": "validation_0005",
+        "options": {
+          "seed": 2104301393
+        }
+      },
+      {
+        "id": "validation_0006",
+        "options": {
+          "seed": 3013350908
+        }
+      },
+      {
+        "id": "validation_0007",
+        "options": {
+          "seed": 3186278058
+        }
+      },
+      {
+        "id": "validation_0008",
+        "options": {
+          "seed": 156145982
+        }
+      },
+      {
+        "id": "validation_0009",
+        "options": {
+          "seed": 372806566
+        }
+      },
+      {
+        "id": "validation_0010",
+        "options": {
+          "seed": 2051647325
+        }
+      },
+      {
+        "id": "validation_0011",
+        "options": {
+          "seed": 3207004823
+        }
+      },
+      {
+        "id": "validation_0012",
+        "options": {
+          "seed": 1446867354
+        }
+      },
+      {
+        "id": "validation_0013",
+        "options": {
+          "seed": 1077265312
+        }
+      },
+      {
+        "id": "validation_0014",
+        "options": {
+          "seed": 3992947746
+        }
+      },
+      {
+        "id": "validation_0015",
+        "options": {
+          "seed": 3121484107
+        }
+      },
+      {
+        "id": "validation_0016",
+        "options": {
+          "seed": 3565849883
+        }
+      },
+      {
+        "id": "validation_0017",
+        "options": {
+          "seed": 2531527962
+        }
+      },
+      {
+        "id": "validation_0018",
+        "options": {
+          "seed": 2438434395
+        }
+      },
+      {
+        "id": "validation_0019",
+        "options": {
+          "seed": 1798091167
+        }
+      },
+      {
+        "id": "validation_0020",
+        "options": {
+          "seed": 2969995034,
+          "volumeCount": 5,
+          "cameraHeight": 0.8,
+          "cameraDistance": 1.15
+        },
+        "calibration": {
+          "schema": "rcr-calibration-v1",
+          "frame": "scene",
+          "units": "metres",
+          "image_width": 699,
+          "image_height": 318,
+          "cameras": {
+            "left": {
+              "width": 699,
+              "height": 318,
+              "K": [
+                [
+                  211.0001266376452,
+                  0,
+                  349.5
+                ],
+                [
+                  0,
+                  211.0001266376452,
+                  159.0
+                ],
+                [
+                  0,
+                  0,
+                  1
+                ]
+              ],
+              "T_camera_scene": [
+                [
+                  0.9996130791199015,
+                  -0.0,
+                  0.02781532046246683,
+                  -3.947980123933552e-18
+                ],
+                [
+                  0.0,
+                  -1.0000000000000002,
+                  -0.0,
+                  0.8000000000000003
+                ],
+                [
+                  0.02781532046246683,
+                  0.0,
+                  -0.9996130791199015,
+                  1.1504451312426855
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ]
+              ],
+              "distortion": [
+                0,
+                0,
+                0,
+                0,
+                0
+              ]
+            },
+            "right": {
+              "width": 699,
+              "height": 318,
+              "K": [
+                [
+                  211.0001266376452,
+                  0,
+                  349.5
+                ],
+                [
+                  0,
+                  211.0001266376452,
+                  159.0
+                ],
+                [
+                  0,
+                  0,
+                  1
+                ]
+              ],
+              "T_camera_scene": [
+                [
+                  0.9996130791199015,
+                  0.0,
+                  -0.02781532046246683,
+                  3.947980123933552e-18
+                ],
+                [
+                  0.0,
+                  -1.0000000000000002,
+                  -0.0,
+                  0.8000000000000003
+                ],
+                [
+                  -0.02781532046246683,
+                  0.0,
+                  -0.9996130791199015,
+                  1.1504451312426855
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ]
+              ],
+              "distortion": [
+                0,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          "wall_width_m": 3.0,
+          "wall_height_m": 1.4,
+          "baseline_m": 0.064,
+          "camera_height_m": 0.8,
+          "camera_distance_m": 1.15,
+          "provenance": "Declared public camera/wall preset; not fitted to scene labels"
+        }
+      },
+      {
+        "id": "validation_0021",
+        "options": {
+          "seed": 4183885135,
+          "volumeCount": 5,
+          "cameraHeight": 0.8,
+          "cameraDistance": 1.15
+        },
+        "calibration": {
+          "schema": "rcr-calibration-v1",
+          "frame": "scene",
+          "units": "metres",
+          "image_width": 699,
+          "image_height": 318,
+          "cameras": {
+            "left": {
+              "width": 699,
+              "height": 318,
+              "K": [
+                [
+                  211.0001266376452,
+                  0,
+                  349.5
+                ],
+                [
+                  0,
+                  211.0001266376452,
+                  159.0
+                ],
+                [
+                  0,
+                  0,
+                  1
+                ]
+              ],
+              "T_camera_scene": [
+                [
+                  0.9996130791199015,
+                  -0.0,
+                  0.02781532046246683,
+                  -3.947980123933552e-18
+                ],
+                [
+                  0.0,
+                  -1.0000000000000002,
+                  -0.0,
+                  0.8000000000000003
+                ],
+                [
+                  0.02781532046246683,
+                  0.0,
+                  -0.9996130791199015,
+                  1.1504451312426855
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ]
+              ],
+              "distortion": [
+                0,
+                0,
+                0,
+                0,
+                0
+              ]
+            },
+            "right": {
+              "width": 699,
+              "height": 318,
+              "K": [
+                [
+                  211.0001266376452,
+                  0,
+                  349.5
+                ],
+                [
+                  0,
+                  211.0001266376452,
+                  159.0
+                ],
+                [
+                  0,
+                  0,
+                  1
+                ]
+              ],
+              "T_camera_scene": [
+                [
+                  0.9996130791199015,
+                  0.0,
+                  -0.02781532046246683,
+                  3.947980123933552e-18
+                ],
+                [
+                  0.0,
+                  -1.0000000000000002,
+                  -0.0,
+                  0.8000000000000003
+                ],
+                [
+                  -0.02781532046246683,
+                  0.0,
+                  -0.9996130791199015,
+                  1.1504451312426855
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ]
+              ],
+              "distortion": [
+                0,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          "wall_width_m": 3.0,
+          "wall_height_m": 1.4,
+          "baseline_m": 0.064,
+          "camera_height_m": 0.8,
+          "camera_distance_m": 1.15,
+          "provenance": "Declared public camera/wall preset; not fitted to scene labels"
+        }
+      },
+      {
+        "id": "validation_0022",
+        "options": {
+          "seed": 924358888,
+          "volumeCount": 5,
+          "cameraHeight": 0.8,
+          "cameraDistance": 1.15
+        },
+        "calibration": {
+          "schema": "rcr-calibration-v1",
+          "frame": "scene",
+          "units": "metres",
+          "image_width": 699,
+          "image_height": 318,
+          "cameras": {
+            "left": {
+              "width": 699,
+              "height": 318,
+              "K": [
+                [
+                  211.0001266376452,
+                  0,
+                  349.5
+                ],
+                [
+                  0,
+                  211.0001266376452,
+                  159.0
+                ],
+                [
+                  0,
+                  0,
+                  1
+                ]
+              ],
+              "T_camera_scene": [
+                [
+                  0.9996130791199015,
+                  -0.0,
+                  0.02781532046246683,
+                  -3.947980123933552e-18
+                ],
+                [
+                  0.0,
+                  -1.0000000000000002,
+                  -0.0,
+                  0.8000000000000003
+                ],
+                [
+                  0.02781532046246683,
+                  0.0,
+                  -0.9996130791199015,
+                  1.1504451312426855
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ]
+              ],
+              "distortion": [
+                0,
+                0,
+                0,
+                0,
+                0
+              ]
+            },
+            "right": {
+              "width": 699,
+              "height": 318,
+              "K": [
+                [
+                  211.0001266376452,
+                  0,
+                  349.5
+                ],
+                [
+                  0,
+                  211.0001266376452,
+                  159.0
+                ],
+                [
+                  0,
+                  0,
+                  1
+                ]
+              ],
+              "T_camera_scene": [
+                [
+                  0.9996130791199015,
+                  0.0,
+                  -0.02781532046246683,
+                  3.947980123933552e-18
+                ],
+                [
+                  0.0,
+                  -1.0000000000000002,
+                  -0.0,
+                  0.8000000000000003
+                ],
+                [
+                  -0.02781532046246683,
+                  0.0,
+                  -0.9996130791199015,
+                  1.1504451312426855
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ]
+              ],
+              "distortion": [
+                0,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          "wall_width_m": 3.0,
+          "wall_height_m": 1.4,
+          "baseline_m": 0.064,
+          "camera_height_m": 0.8,
+          "camera_distance_m": 1.15,
+          "provenance": "Declared public camera/wall preset; not fitted to scene labels"
+        }
+      },
+      {
+        "id": "validation_0023",
+        "options": {
+          "seed": 3954435297,
+          "volumeCount": 5,
+          "cameraHeight": 0.8,
+          "cameraDistance": 1.15
+        },
+        "calibration": {
+          "schema": "rcr-calibration-v1",
+          "frame": "scene",
+          "units": "metres",
+          "image_width": 699,
+          "image_height": 318,
+          "cameras": {
+            "left": {
+              "width": 699,
+              "height": 318,
+              "K": [
+                [
+                  211.0001266376452,
+                  0,
+                  349.5
+                ],
+                [
+                  0,
+                  211.0001266376452,
+                  159.0
+                ],
+                [
+                  0,
+                  0,
+                  1
+                ]
+              ],
+              "T_camera_scene": [
+                [
+                  0.9996130791199015,
+                  -0.0,
+                  0.02781532046246683,
+                  -3.947980123933552e-18
+                ],
+                [
+                  0.0,
+                  -1.0000000000000002,
+                  -0.0,
+                  0.8000000000000003
+                ],
+                [
+                  0.02781532046246683,
+                  0.0,
+                  -0.9996130791199015,
+                  1.1504451312426855
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ]
+              ],
+              "distortion": [
+                0,
+                0,
+                0,
+                0,
+                0
+              ]
+            },
+            "right": {
+              "width": 699,
+              "height": 318,
+              "K": [
+                [
+                  211.0001266376452,
+                  0,
+                  349.5
+                ],
+                [
+                  0,
+                  211.0001266376452,
+                  159.0
+                ],
+                [
+                  0,
+                  0,
+                  1
+                ]
+              ],
+              "T_camera_scene": [
+                [
+                  0.9996130791199015,
+                  0.0,
+                  -0.02781532046246683,
+                  3.947980123933552e-18
+                ],
+                [
+                  0.0,
+                  -1.0000000000000002,
+                  -0.0,
+                  0.8000000000000003
+                ],
+                [
+                  -0.02781532046246683,
+                  0.0,
+                  -0.9996130791199015,
+                  1.1504451312426855
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ]
+              ],
+              "distortion": [
+                0,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          "wall_width_m": 3.0,
+          "wall_height_m": 1.4,
+          "baseline_m": 0.064,
+          "camera_height_m": 0.8,
+          "camera_distance_m": 1.15,
+          "provenance": "Declared public camera/wall preset; not fitted to scene labels"
+        }
+      },
+      {
+        "id": "validation_0024",
+        "options": {
+          "seed": 1251265387,
+          "volumeCount": 5,
+          "cameraHeight": 0.8,
+          "cameraDistance": 1.15
+        },
+        "calibration": {
+          "schema": "rcr-calibration-v1",
+          "frame": "scene",
+          "units": "metres",
+          "image_width": 699,
+          "image_height": 318,
+          "cameras": {
+            "left": {
+              "width": 699,
+              "height": 318,
+              "K": [
+                [
+                  211.0001266376452,
+                  0,
+                  349.5
+                ],
+                [
+                  0,
+                  211.0001266376452,
+                  159.0
+                ],
+                [
+                  0,
+                  0,
+                  1
+                ]
+              ],
+              "T_camera_scene": [
+                [
+                  0.9996130791199015,
+                  -0.0,
+                  0.02781532046246683,
+                  -3.947980123933552e-18
+                ],
+                [
+                  0.0,
+                  -1.0000000000000002,
+                  -0.0,
+                  0.8000000000000003
+                ],
+                [
+                  0.02781532046246683,
+                  0.0,
+                  -0.9996130791199015,
+                  1.1504451312426855
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ]
+              ],
+              "distortion": [
+                0,
+                0,
+                0,
+                0,
+                0
+              ]
+            },
+            "right": {
+              "width": 699,
+              "height": 318,
+              "K": [
+                [
+                  211.0001266376452,
+                  0,
+                  349.5
+                ],
+                [
+                  0,
+                  211.0001266376452,
+                  159.0
+                ],
+                [
+                  0,
+                  0,
+                  1
+                ]
+              ],
+              "T_camera_scene": [
+                [
+                  0.9996130791199015,
+                  0.0,
+                  -0.02781532046246683,
+                  3.947980123933552e-18
+                ],
+                [
+                  0.0,
+                  -1.0000000000000002,
+                  -0.0,
+                  0.8000000000000003
+                ],
+                [
+                  -0.02781532046246683,
+                  0.0,
+                  -0.9996130791199015,
+                  1.1504451312426855
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ]
+              ],
+              "distortion": [
+                0,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          "wall_width_m": 3.0,
+          "wall_height_m": 1.4,
+          "baseline_m": 0.064,
+          "camera_height_m": 0.8,
+          "camera_distance_m": 1.15,
+          "provenance": "Declared public camera/wall preset; not fitted to scene labels"
+        }
+      }
+    ]
+  }
+}

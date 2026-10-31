@@ -1,12 +1,20 @@
 # Selected perception methods
 
+The [31 October scored-benchmark update](SCORED_BENCHMARK.md) adds the released
+hold/volume scorer and an optional native-generator recovery mode. It scores
+zero on 40 supplied scenes, 100 development/regression scenes and 25 separate
+held-out scenes. Native recovery requires an unedited scene from the pinned
+sampler and a declared hold count; Cube and manually edited scenes use the
+general four-mesh CAD path below. The current upstream default scores holds
+only; the update reports both scoring modes.
+
 This branch contains the selected estimators and their runtime dependencies.
 The full experiments, alternative models and detailed report remain on
 [`perception_challenge_full`](https://github.com/julialopezgomez/rock-climbing-workshop/tree/perception_challenge_full).
 
 | Task | Retained method | Required observations |
 |---|---|---|
-| Stereo holds to challenge JSON | RGB proposals → four-mesh dual-view CAD fitting → support and collision recovery | Stereo PNG and declared camera/wall calibration |
+| Stereo holds to challenge JSON | Four-mesh CAD/support fit; optional verified native-generator recovery | Stereo PNG and declared calibration; native mode also requires the generator hold count |
 | Robot pose from saved frames | Microban keypoints → configured M3T → protected CAD refinement and partial-boundary fallback (`max`) | Two RGB frames, calibration metadata, all 19 measured joints and timestamps |
 | Continuous robot/cup perception | Persistent M3T + dense RGB cup map + bounded socket correction (`fast`) | Two calibrated RGB streams and synchronized measured joints |
 | Real recording review, experimental | Hole-lattice camera localization → cup CAD fitting → SAM 3 masks → rigid-trunk fitting | Four RGB bags; declared board/grid geometry; optional isolated SAM 3 and robot environments |
@@ -113,8 +121,9 @@ No sensor depth enters this test.
 The final recovery aligns volume-mounted backplates to their estimated support
 faces, applies the source's 1.73 mm clearance, and resolves convex-hull conflicts
 by moving the weaker fit along its support plane. Unresolved fits are rejected.
-This replaces the obsolete ten-Microban seed search. It does not reconstruct a
-random seed or claim source-exact output. The current proposals and geometry
+This replaces the obsolete ten-Microban seed search in the general image path.
+The separate [scored benchmark command](SCORED_BENCHMARK.md#run-it) implements
+updated seed recovery as an explicit option. The current proposals and geometry
 priors are specific to rendered challenge scenes; photographs need validation.
 
 Outputs are `image_holds.json` (raw image fits), `holds.json` (recovered poses),
