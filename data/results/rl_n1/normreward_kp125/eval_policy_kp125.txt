@@ -1,0 +1,43 @@
+move 0 (right_foot): 0/4 success, 4 failed, 0 timeout; joint error 0.149 rad, ball 58 mm from the reference, |a| > 0.95 on 27 % of joint-steps
+move 1 (left_foot ): 0/3 success, 0 failed, 3 timeout; joint error 0.101 rad, ball 43 mm from the reference, |a| > 0.95 on 30 % of joint-steps
+move 2 (right_hand): 0/4 success, 0 failed, 4 timeout; joint error 0.142 rad, ball 64 mm from the reference, |a| > 0.95 on 34 % of joint-steps
+move 3 (left_hand ): 0/2 success, 2 failed, 0 timeout; joint error 0.129 rad, ball 62 mm from the reference, |a| > 0.95 on 37 % of joint-steps
+move 4 (right_foot): 0/4 success, 0 failed, 4 timeout; joint error 0.123 rad, ball 38 mm from the reference, |a| > 0.95 on 35 % of joint-steps
+move 6 (left_hand ): 0/2 success, 0 failed, 2 timeout; joint error 0.126 rad, ball 65 mm from the reference, |a| > 0.95 on 41 % of joint-steps
+move 7 (right_hand): 0/1 success, 0 failed, 1 timeout; joint error 0.112 rad, ball 45 mm from the reference, |a| > 0.95 on 42 % of joint-steps
+move 8 (right_foot): 0/2 success, 2 failed, 0 timeout; joint error 0.122 rad, ball 34 mm from the reference, |a| > 0.95 on 33 % of joint-steps
+move 12 (right_foot): 0/2 success, 0 failed, 2 timeout; joint error 0.133 rad, ball 37 mm from the reference, |a| > 0.95 on 36 % of joint-steps
+move 13 (left_foot ): 0/3 success, 0 failed, 3 timeout; joint error 0.095 rad, ball 33 mm from the reference, |a| > 0.95 on 33 % of joint-steps
+move 14 (right_hand): 0/1 success, 0 failed, 1 timeout; joint error 0.133 rad, ball 64 mm from the reference, |a| > 0.95 on 41 % of joint-steps
+move 15 (left_hand ): 0/3 success, 3 failed, 0 timeout; joint error 0.126 rad, ball 60 mm from the reference, |a| > 0.95 on 37 % of joint-steps
+move 16 (right_foot): 0/3 success, 3 failed, 0 timeout; joint error 0.117 rad, ball 35 mm from the reference, |a| > 0.95 on 31 % of joint-steps
+move 17 (left_foot ): 0/2 success, 0 failed, 2 timeout; joint error 0.110 rad, ball 33 mm from the reference, |a| > 0.95 on 37 % of joint-steps
+move 18 (right_hand): 0/1 success, 0 failed, 1 timeout; joint error 0.136 rad, ball 64 mm from the reference, |a| > 0.95 on 38 % of joint-steps
+move 20 (right_foot): 0/3 success, 0 failed, 3 timeout; joint error 0.123 rad, ball 36 mm from the reference, |a| > 0.95 on 40 % of joint-steps
+move 21 (left_foot ): 0/2 success, 0 failed, 2 timeout; joint error 0.100 rad, ball 38 mm from the reference, |a| > 0.95 on 33 % of joint-steps
+move 22 (left_hand ): 0/1 success, 0 failed, 1 timeout; joint error 0.125 rad, ball 64 mm from the reference, |a| > 0.95 on 45 % of joint-steps
+move 23 (right_hand): 0/1 success, 0 failed, 1 timeout; joint error 0.110 rad, ball 42 mm from the reference, |a| > 0.95 on 42 % of joint-steps
+move 24 (right_foot): 0/2 success, 2 failed, 0 timeout; joint error 0.118 rad, ball 35 mm from the reference, |a| > 0.95 on 35 % of joint-steps
+move 25 (left_foot ): 0/2 success, 0 failed, 2 timeout; joint error 0.111 rad, ball 33 mm from the reference, |a| > 0.95 on 37 % of joint-steps
+move 26 (right_hand): 0/3 success, 0 failed, 3 timeout; joint error 0.136 rad, ball 64 mm from the reference, |a| > 0.95 on 38 % of joint-steps
+move 28 (right_foot): 0/2 success, 0 failed, 2 timeout; joint error 0.125 rad, ball 34 mm from the reference, |a| > 0.95 on 42 % of joint-steps
+move 29 (left_foot ): 0/3 success, 0 failed, 3 timeout; joint error 0.097 rad, ball 36 mm from the reference, |a| > 0.95 on 36 % of joint-steps
+move 30 (left_hand ): 0/2 success, 0 failed, 2 timeout; joint error 0.123 rad, ball 64 mm from the reference, |a| > 0.95 on 43 % of joint-steps
+move 31 (right_hand): 0/2 success, 0 failed, 2 timeout; joint error 0.111 rad, ball 42 mm from the reference, |a| > 0.95 on 42 % of joint-steps
+move 32 (right_foot): 0/1 success, 1 failed, 0 timeout; joint error 0.119 rad, ball 36 mm from the reference, |a| > 0.95 on 34 % of joint-steps
+move 33 (left_foot ): 0/3 success, 0 failed, 3 timeout; joint error 0.115 rad, ball 33 mm from the reference, |a| > 0.95 on 38 % of joint-steps
+move 34 (right_hand): 0/5 success, 0 failed, 5 timeout; joint error 0.138 rad, ball 65 mm from the reference, |a| > 0.95 on 38 % of joint-steps
+move 36 (right_foot): 0/4 success, 4 failed, 0 timeout; joint error 0.125 rad, ball 37 mm from the reference, |a| > 0.95 on 40 % of joint-steps
+move 37 (left_foot ): 0/2 success, 0 failed, 2 timeout; joint error 0.099 rad, ball 34 mm from the reference, |a| > 0.95 on 37 % of joint-steps
+move 38 (left_hand ): 0/2 success, 0 failed, 2 timeout; joint error 0.125 rad, ball 64 mm from the reference, |a| > 0.95 on 40 % of joint-steps
+move 39 (right_hand): 0/2 success, 0 failed, 2 timeout; joint error 0.113 rad, ball 42 mm from the reference, |a| > 0.95 on 43 % of joint-steps
+move 40 (right_foot): 0/3 success, 3 failed, 0 timeout; joint error 0.121 rad, ball 37 mm from the reference, |a| > 0.95 on 34 % of joint-steps
+move 41 (left_foot ): 0/3 success, 0 failed, 3 timeout; joint error 0.119 rad, ball 33 mm from the reference, |a| > 0.95 on 37 % of joint-steps
+move 42 (right_hand): 0/2 success, 0 failed, 2 timeout; joint error 0.141 rad, ball 65 mm from the reference, |a| > 0.95 on 40 % of joint-steps
+move 44 (right_foot): 0/3 success, 3 failed, 0 timeout; joint error 0.129 rad, ball 39 mm from the reference, |a| > 0.95 on 39 % of joint-steps
+move 45 (left_foot ): 0/3 success, 0 failed, 3 timeout; joint error 0.100 rad, ball 35 mm from the reference, |a| > 0.95 on 34 % of joint-steps
+move 46 (left_hand ): 0/1 success, 0 failed, 1 timeout; joint error 0.127 rad, ball 64 mm from the reference, |a| > 0.95 on 38 % of joint-steps
+move 47 (right_hand): 0/2 success, 0 failed, 2 timeout; joint error 0.117 rad, ball 42 mm from the reference, |a| > 0.95 on 42 % of joint-steps
+move 48 (right_foot): 0/1 success, 1 failed, 0 timeout; joint error 0.117 rad, ball 38 mm from the reference, |a| > 0.95 on 37 % of joint-steps
+move 49 (left_foot ): 0/1 success, 0 failed, 1 timeout; joint error 0.120 rad, ball 32 mm from the reference, |a| > 0.95 on 36 % of joint-steps
+move 50 (right_hand): 0/2 success, 0 failed, 2 timeout; joint error 0.136 rad, ball 62 mm from the reference, |a| > 0.95 on 41 % of joint-steps
