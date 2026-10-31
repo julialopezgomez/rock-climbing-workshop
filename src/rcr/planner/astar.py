@@ -138,6 +138,7 @@ MAX_LEVEL = 0.08
 # [m] most the higher hand is above the lower foot [Ours]: the example plan the optimiser
 # solved has 0.35 m
 HAND_FEET_MAX_APART = 0.36
+HAND_FEET_MIN_APART = 0.25  # [m] least the higher hand is above the lower foot [Ours]: the example plan the optimiser solved has 0.08 m
 MAX_TRANSITION_DISTANCE = STEP  # [m] most a limb's hold in b is from its hold in a [Ours]
 
 Q_HANG = pin.neutral(model)
