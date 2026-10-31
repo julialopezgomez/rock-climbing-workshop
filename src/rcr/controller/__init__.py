@@ -26,7 +26,7 @@ class Controller:
     def __init__(self, trajectory: Trajectory, policy: str | Path | None = None) -> None:
         self.trajectory = trajectory
         self.reference = tracking.reference(trajectory)
-        self.policy = None
+        self.policy, self.last = None, {}  # last: the last tick's observation and action
         if policy is not None:  # the policy's .json says at which servo gain it was trained
             if trajectory.planned_positions is None:
                 raise ValueError("a policy tracks planned_positions: the trajectory has none")
@@ -51,5 +51,6 @@ class Controller:
             ahead = tracking.at(self.reference, state.time + tracking.LOOKAHEAD_S)[1]
             obs = tracking.observation(planned, ahead, q, dq, state.imu_quat, state.gyro)
             action = self.policy.run(None, {"obs": obs[None]})[0][0]
+            self.last = {"obs": obs, "action": action}
             q_target = tracking.targets(q_target, action, self.alpha, self.low, self.high)
         return JointTargets(dict(zip(tracking.JOINTS, map(float, q_target), strict=True)))

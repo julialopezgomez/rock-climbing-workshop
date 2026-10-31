@@ -67,7 +67,8 @@ class LinkRobot:
         self.link.poll()
         if self.link.move_state(self.move) != self.active:
             raise SystemExit(f"{self.move} stopped on the robot")
-        return dict(self.link.frame)
+        stamp = self.link.frame_time  # the robot's clock: unchanged = no new frame arrived
+        return {**self.link.frame, "time": np.nan if stamp is None else stamp}
 
     def send(self, targets: dict[str, float]) -> None:
         q = np.clip([targets[j] for j in self.joints], self.low, self.high)
@@ -173,7 +174,16 @@ def main() -> None:
             )
     print(f"{'playback' if args.playback else args.policy} at kp_fw {kp:g}, {end:.1f} s")
 
-    log = {"t": [], "q": [], "target": [], "robot_time": []}
+    log = {
+        "t": [],
+        "q": [],
+        "target": [],
+        "feedforward": [],
+        "robot_time": [],
+        "obs": [],
+        "action": [],
+    }
+    fields = {}  # every field the robot sends (current, q_target, ...), per tick
     robot.start()
     try:
         if not args.dry_run:  # hold, ramp to the first pose, hold, then climb on Enter
@@ -202,6 +212,14 @@ def main() -> None:
             log["q"].append(last_q)
             log["target"].append([targets[j] for j in robot.joints])
             log["robot_time"].append(frame.get("time", np.nan) if not args.dry_run else t)
+            ff = dict(zip(tracking.JOINTS, tracking.at(controller.reference, t)[0], strict=True))
+            log["feedforward"].append([ff[j] for j in robot.joints])
+            log["obs"].append(controller.last.get("obs", np.full(tracking.OBS_SIZE, np.nan)))
+            log["action"].append(
+                controller.last.get("action", np.full(len(tracking.JOINTS), np.nan))
+            )
+            for name, value in frame.items():
+                fields.setdefault(f"frame_{name}", []).append(np.atleast_1d(value))
             if args.dry_run:
                 t += DT  # the sim advances one tick per send
             else:  # the robot runs in real time: a late tick catches up, it doesn't slow the climb
@@ -216,7 +234,9 @@ def main() -> None:
         if log["t"]:
             path = Path("runs/policy") / time.strftime("%Y%m%d-%H%M%S.npz")
             path.parent.mkdir(parents=True, exist_ok=True)
-            np.savez(path, joints=robot.joints, **{k: np.array(v) for k, v in log.items()})
+            np.savez(
+                path, joints=robot.joints, **{k: np.array(v) for k, v in {**log, **fields}.items()}
+            )
             print(f"log: {path} ({len(log['t'])} ticks)")
 
 
