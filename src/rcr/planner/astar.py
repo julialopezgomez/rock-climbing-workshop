@@ -22,7 +22,7 @@ HANG = Path(__file__).parents[3] / "third_party/simulator/climbing_sim/assets/po
 EPSILON = 1e-3  # [m]
 DT = 0.5
 MAX_ITERATIONS = 200
-WEIGHT = 1.5  # A* heuristic weight: 1.0 = admissible, 0.0 = Dijkstra
+WEIGHT = 1.7  # A* heuristic weight: 1.0 = admissible, 0.0 = Dijkstra
 # TODO: order by move: moving arm, diagonal leg, other leg, other arm
 TASK_ORDER = ("right_hand", "left_hand", "right_foot", "left_foot")
 # trunk z up, x into the wall (+y)
