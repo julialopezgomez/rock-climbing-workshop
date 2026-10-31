@@ -1,6 +1,7 @@
-"""Kinematic motion of a move: the moving ball follows a polynomial path from its socket on hold a
-to its socket on hold b, the other three stay in theirs, and the whole body follows by hierarchical
-IK with an error correction (CLIK) [Ours, after the planner's astar.ik]. No torques, no collisions.
+"""Contact-prioritized differential IK for Microban's climbing trajectories.
+
+The moving ball follows a piecewise-smooth hold-clearing corridor while held
+balls remain fixed. Uses Pinocchio null-space IK, without dynamics or collisions.
 """
 
 import json
@@ -37,7 +38,6 @@ OUT = 0.04
 MOVE_TIME = 2.0  # [s] per move
 DT = 0.02  # [s] between samples: the robot's 50 Hz loop
 GAIN = 0.5  # fraction of a ball's tracking error corrected per sample [Ours]
-LOCK_PASSES = 4  # ik_step: solves at most, each locking the joints it would push past a limit
 MAX_ERROR = 0.01  # [m] a held ball further than this from its socket: the move cannot be done
 DAMPING = 0.03  # damped(): the moving ball's and the trunk's tasks [Ours]
 ITERATIONS = 3  # IK steps per sample, toward that sample's targets [Ours]
@@ -210,10 +210,10 @@ def start_pose(wall: WallModel, stance: Stance):
 
 
 def ball_path(p_a, p_b):
-    """B(t), t in [0, MOVE_TIME]: the corridor's five straight pieces at one constant speed (the
-    path's length / MOVE_TIME), each a degree-1 Bezier lasting its share of the length (it cannot
-    cut a corner into a hold, nor rise above it): up ABOVE out of socket a, out OUT from the wall,
-    across to in front of socket b, in, and down into socket b.
+    """B(t), t in [0, MOVE_TIME]: a five-segment hold-clearing corridor.
+    Segment durations are proportional to length, with quintic time scaling on
+    each segment to give zero velocity and acceleration at the corners.
+    The geometric path stays on each straight segment: up, out, across, in, down.
 
     - p_a, p_b: the moving ball's sockets on holds a and b
 
@@ -230,7 +230,12 @@ def ball_path(p_a, p_b):
 
     def B(t):
         t = min(max(t, 0.0), MOVE_TIME)
-        return next(curve for curve in curves if t <= curve.T_max_)(t)
+        curve = next(curve for curve in curves if t <= curve.T_max_)
+        # Stop smoothly at each corridor corner instead of jumping in velocity.
+        # Geometry remains on the same straight pieces, preserving hold clearance.
+        duration = curve.T_max_ - curve.T_min_
+        smooth_t = curve.T_min_ + duration * timing(t - curve.T_min_, duration)
+        return curve(smooth_t)
 
     return B
 
