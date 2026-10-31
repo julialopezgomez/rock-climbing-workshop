@@ -227,7 +227,7 @@ def track_move(wall: WallModel, a: Stance, b: Stance, q0):
     ends exactly in b's stance pose, where b -> c starts: from within JOINT_TOL it jumps there,
     from further it blends there over BLEND_TIME, balls held. Also the moving ball's worst distance
     from its path [m]. ValueError, naming the move, if a ball gets MAX_ERROR from its socket."""
-    limb = moving_limb(a, b)u
+    limb = moving_limb(a, b)
     move = f"{limb} {a.contacts[limb]} -> {b.contacts[limb]}"
     i = LIMBS.index(limb)
     held = sockets(wall, a)
