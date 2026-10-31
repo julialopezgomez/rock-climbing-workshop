@@ -9,7 +9,7 @@ import argparse
 import random
 import time
 from collections import Counter
-from itertools import pairwise
+from itertools import count, pairwise
 from pathlib import Path
 
 import mujoco
@@ -18,9 +18,28 @@ from climbing_sim.routes import generate_wall
 from numpy.linalg import norm
 
 from rcr import io, kinematics
+from rcr.kinematics import feasible_ik_traj
 from rcr.planner import astar, feasible_ik_contact, plan, replan
-from rcr.kinematics import feasible_ik_traj #TODO: Implement
 from rcr.types import LIMBS, ContactPlan, Hold, Stance, Trajectory, WallModel
+
+
+def feasible_ik_contact_traj(wall: WallModel, a: Stance, b: Stance):
+    """The planner's check of stance b (reach, IK, collision; cached and quick) first, then the IK
+    motion a -> b (kinematics), which costs ~65 ms a move."""
+    contact = feasible_ik_contact(wall, a, b)
+    return feasible_ik_traj(wall, a, b) if contact.feasible else contact
+
+
+def logged(feasible, every=50):
+    """feasible, printing how many moves it has checked so far every `every` checks."""
+    calls, clock = count(1), time.perf_counter()
+
+    def check(wall, a, b):
+        if (n := next(calls)) % every == 0:
+            print(f"  checked {n} moves ({time.perf_counter() - clock:.0f} s)", flush=True)
+        return feasible(wall, a, b)
+
+    return check
 
 
 def hold_id(hold) -> str:
@@ -128,12 +147,13 @@ def main() -> None:
     if args.feasibility == "ik_contact":
         feasible = feasible_ik_contact
     elif args.feasibility == "ik_traj":
-        feasible = feasible_ik_traj
+        feasible = feasible_ik_contact_traj
     else:
         raise ValueError("Invalid feasibility function")
 
+    print(f"planning the contact plan (A*, feasibility {args.feasibility})...", flush=True)
     clock = time.perf_counter()
-    contact_plan = plan(wall, feasible, HEURISTIC_WEIGHT=args.heuristic_weight)
+    contact_plan = plan(wall, logged(feasible), HEURISTIC_WEIGHT=args.heuristic_weight)
     seconds = time.perf_counter() - clock
     for a, b in pairwise(contact_plan.stances):
         (limb,) = [limb for limb in LIMBS if a.contacts[limb] != b.contacts[limb]]
@@ -146,6 +166,7 @@ def main() -> None:
         f"top {top:.3f} m: {'reached' if hand == top else 'NOT reached'}"
     )
     if hand != top:
+        print("why stuck: checking the moves from the last stance...", flush=True)
         why_stuck(wall, contact_plan.stances[-1], feasible)
 
     if args.save:
@@ -153,8 +174,10 @@ def main() -> None:
         io.save_contact_plan(contact_plan, args.save)
         print(f"saved {args.save}")
     if args.show:
+        print("showing the stances in MuJoCo...", flush=True)
         show(sim_wall, wall, contact_plan)
     if (args.play or args.save_trajectory or args.save_npz) and len(contact_plan.stances) > 1:
+        print("generating the trajectory (kinematics.optimise)...", flush=True)
         clock = time.perf_counter()
         trajectory = kinematics.optimise(wall, contact_plan)
         seconds = time.perf_counter() - clock
@@ -168,6 +191,7 @@ def main() -> None:
             kinematics.convert_trajectory_to_npz(trajectory, args.save_npz)
             print(f"saved {args.save_npz}")
         if args.play:
+            print("playing the trajectory in MuJoCo...", flush=True)
             play(sim_wall, trajectory)
 
 
