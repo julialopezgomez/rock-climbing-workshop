@@ -146,7 +146,10 @@ after solving: phase A takes 1 s and phase B 2 s, so a move takes 3 s.
 ## How to run
 **Simplest:** set the weights and what to solve at the top of [`run.sh`](run.sh), then `bash src/rcr/optimiser/run.sh`.
 It prints the full command it runs; the options below are what it uses. `--set NAME=VALUE` sets any number setting of
-`TransitionConfig`, last, so it wins.
+`TransitionConfig`, last, so it wins. The trajectory is saved next to the plan: `build/` is not tracked by git, so a
+plan and guess meant for another machine (the cluster) go in `data/results/<run>/` [Ours], as N2's do
+(`data/results/to_n2/`: `plan_N2.json`, seed 66102, and its IK reference `wall-2-ik.npz`). There, commit the
+trajectory and pull it here, then `bash src/rcr/optimiser/run.sh --play`.
 
 ```bash
 git submodule update --init                       # Microban and the organisers' simulator (once)

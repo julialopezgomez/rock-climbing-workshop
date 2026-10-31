@@ -2,9 +2,11 @@
 # Run the optimiser (the TO) with every setting in one place: change the values below, then
 #     bash src/rcr/optimiser/run.sh          solve, play each move in the organisers' sim, save
 #     bash src/rcr/optimiser/run.sh --play   play the saved trajectory again, without solving
-# The trajectory is saved as build/trajectory_<the plan's name>.json: build/plan_N3.json gives
-# build/trajectory_plan_N3.json, after every solved move. Anything else after run.sh goes to the
-# runner too (bash src/rcr/optimiser/run.sh --help lists its options).
+# The trajectory is saved next to the plan, as trajectory_<the plan's name>.json, after every
+# solved move: build/plan_N3.json gives build/trajectory_plan_N3.json. A plan in data/results/ is
+# tracked by git, so a run elsewhere (the cluster) can commit its trajectory there to pull here.
+# Anything else after run.sh goes to the runner too (bash src/rcr/optimiser/run.sh --help lists
+# its options).
 # The full problem (constraints and cost) is in README.md, "One move: the problem".
 set -euo pipefail
 cd "$(dirname "$0")/../../.."  # the repository root
@@ -16,8 +18,8 @@ cd "$(dirname "$0")/../../.."  # the repository root
 #        the solver's starting guess for each move it has too (from the same stance to the same
 #        stance), so it converges faster; the other moves start as usual. "" for none. With
 #        W_TRACK > 0 the result is also kept near it (then it must have every move).
-PLAN="build/plan_N1.json"
-GUESS=""
+PLAN="data/results/to_n2/plan_N2.json"
+GUESS="data/results/to_n2/wall-2-ik.npz"
 
 # --- Constraints -----------------------------------------------------------------------------------
 TAU_LIMIT=0.9   # motor torque limit, as a fraction of the servo's 0.605 N·m
@@ -38,7 +40,7 @@ HEADLESS=0       # 1: no window
 
 # ---------------------------------------------------------------------------------------------------
 name="$(basename "$PLAN")"
-out="build/trajectory_${name%.*}.json"  # plan_N3.json -> trajectory_plan_N3.json
+out="$(dirname "$PLAN")/trajectory_${name%.*}.json"  # plan_N3.json -> trajectory_plan_N3.json
 mode=--save
 if [[ "${1:-}" == --play ]]; then
     shift
