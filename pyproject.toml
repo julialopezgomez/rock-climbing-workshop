@@ -12,6 +12,7 @@ dependencies = [
     "microban-model",
     # the organisers' simulator (third_party/simulator): walls, and the MuJoCo viewer of a plan
     "climbing-sim",
+    "quadprog>=0.1.14",
 ]
 
 [dependency-groups]
