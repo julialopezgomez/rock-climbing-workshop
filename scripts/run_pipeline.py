@@ -20,7 +20,7 @@ import typing
 from pathlib import Path
 from types import NoneType
 
-from rcr import controller, io, link, optimiser, perception, planner, robot
+from rcr import controller, io, kinematics, link, perception, planner, robot
 from rcr.types import (
     MICROBAN_JOINTS,
     ContactPlan,
@@ -129,7 +129,7 @@ def check() -> int:
     else:
         first_move = ContactPlan(plan.wall_id, plan.stances[:2])
         traj, s = stage(
-            "optimiser.optimise", optimiser.optimise, Trajectory, traj_ex, wall, first_move
+            "optimiser.optimise", kinematics.optimise, Trajectory, traj_ex, wall, first_move
         )
     results.append(s)
     # Both ends of the link on this machine, over loopback: the real code, without the Pi
