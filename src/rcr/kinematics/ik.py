@@ -14,6 +14,8 @@ from numpy.linalg import norm, pinv
 from rcr.kinematics.bezier import Bezier, connecting
 from rcr.types import LIMBS, Feasibility, Stance, WallModel
 
+import quadprog
+
 SOCKET = np.array([0.0, -0.026, -0.014])  # ball centre from Hold.position [simulator wall.py]
 HANG = Path(__file__).parents[3] / "third_party/simulator/climbing_sim/assets/poses/hang.json"
 TASK_ORDER = ("right_hand", "left_hand", "right_foot", "left_foot")
@@ -85,7 +87,67 @@ def damped(A):
     return A.T @ np.linalg.inv(A @ A.T + DAMPING**2 * np.eye(A.shape[0]))
 
 
+import quadprog
+
+
+def quadprog_solve_qp(H, q, G=None, h=None, C=None, d=None, verbose=False):
+    """
+    min (1/2)x' P x + q' x
+    subject to  G x <= h
+    subject to  C x  = d
+    """
+    qp_G = 0.5 * (H + H.T)  # make sure P is symmetric
+    qp_a = -q
+    qp_C = None
+    qp_b = None
+    meq = 0
+    if C is not None:
+        if G is not None:
+            qp_C = -np.vstack([C, G]).T
+            qp_b = -np.hstack([d, h])
+        else:
+            qp_C = -C.transpose()
+            qp_b = -d
+        meq = C.shape[0]
+    elif G is not None:  # no equality constraint
+        qp_C = -G.T
+        qp_b = -h
+    res = quadprog.solve_qp(qp_G, qp_a, qp_C, qp_b, meq)
+    if verbose:
+        return res
+    return res[0]
+
+
 def ik_step(q, displacement, moving=None, height=None, posture=None):
+    try:
+        return ik_step_qp(q, displacement)
+    except NotImplementedError:
+        return ik_step_pinv(q, displacement, moving, height, posture)
+
+def ik_step_qp(q, displacement):
+    
+    pin.computeJointJacobians(model, data, q)
+    pin.updateFramePlacements(model, data)
+    order = [limb for limb in TASK_ORDER]
+    tasks = [
+        (
+            pin.getFrameJacobian(model, data, BALL[limb], pin.LOCAL_WORLD_ALIGNED)[:3],
+            LIMBS.index(limb),
+        )
+        for limb in order
+    ]
+    
+    # ignore trunk and now.
+    # solve with quadprog
+    
+    
+    
+    
+    
+    
+    raise NotImplementedError("ik_step_qp not implemented yet")
+
+def ik_step_pinv(q, displacement, moving=None, height=None, posture=None):
     """One hierarchical IK step: each limb's ball moved by its displacement (in LIMBS order), the
     held ones first in TASK_ORDER, then the moving one, each in the null space of the ones before;
     then, if given, the trunk's origin brought GAIN of the way to that height [m]; then the trunk
