@@ -228,22 +228,27 @@ def evaluate(data: Path, episodes: int, policy: Path | None = None, watch: bool 
               f"|a| > 0.95 on {100 * mean[2]:.0f} % of joint-steps")  # fmt: skip
 
 
-def train(data: Path, steps: int, envs: int, out: Path, alpha: float) -> None:
+def train(data: Path, steps: int, envs: int, out: Path, alpha: float, norm_reward: bool) -> None:
+    """PPO (SB3 defaults: advantages normalised per minibatch). norm_reward: rewards scaled by a
+    running estimate of the returns' std (VecNormalize), so the value function learns numbers
+    near 1, not thousands; the observations are left as they are, so the ONNX export and
+    Controller need nothing more."""
     from stable_baselines3 import PPO
     from stable_baselines3.common.env_util import make_vec_env
-    from stable_baselines3.common.vec_env import SubprocVecEnv
+    from stable_baselines3.common.vec_env import SubprocVecEnv, VecNormalize
 
     vec = make_vec_env(TrackingEnv, envs, seed=0, vec_env_cls=SubprocVecEnv,
                        env_kwargs={"data": data, "alpha": alpha})  # fmt: skip
+    if norm_reward:
+        vec = VecNormalize(vec, norm_obs=False, norm_reward=True)
     model = PPO("MlpPolicy", vec, verbose=1, seed=0)
     history = History()
     model.learn(total_timesteps=steps, callback=history)
     out.parent.mkdir(parents=True, exist_ok=True)
     model.save(out.with_suffix(".zip"))
     rows = history.rows
-    np.savez(
-        f"{out}_history.npz", **{k: np.array([r.get(k, np.nan) for r in rows]) for k in rows[0]}
-    )
+    columns = {k: np.array([r.get(k, np.nan) for r in rows]) for k in rows[0]}
+    np.savez(f"{out}_history.npz", norm_reward=norm_reward, **columns)
     export(model, out, TrackingEnv(data, alpha))
     plot(Path(f"{out}_history.npz"))
 
@@ -297,6 +302,8 @@ def plot(history: Path) -> None:
 
     h = np.load(history)
     x = h["steps"] / 1e6
+    # with --norm-reward, PPO's rewards (so advantages, returns, value loss) are the scaled ones
+    unit = ", scaled" if "norm_reward" in h.files and h["norm_reward"] else ""
     blue, orange, aqua = "#2a78d6", "#eb6834", "#1baf7a"  # the dataviz reference palette
     ink, muted, surface = "#0b0b0b", "#52514e", "#fcfcfb"
     plt.rcParams.update({"font.size": 9, "text.color": ink, "axes.edgecolor": muted})
@@ -306,13 +313,13 @@ def plot(history: Path) -> None:
         ("Episode return", [("mean", h["episode_return"], blue)], None, None),
         ("Episode outcomes (fraction)", [("slot-in", h["success"], blue),
          ("fall", h["failed"], orange), ("timeout", h["timeout"], aqua)], None, None),
-        ("Step reward (mean, 5-95 %)", [("mean", h["reward_mean"], blue)],
+        (f"Step reward (mean, 5-95 %{unit})", [("mean", h["reward_mean"], blue)],
          (h["reward_p5"], h["reward_p95"]), None),
-        ("Raw advantage (before PPO normalises it)", [("std", h["adv_std"], blue),
+        (f"Raw advantage (before PPO normalises it{unit})", [("std", h["adv_std"], blue),
          ("max |A|", h["adv_absmax"], orange)], None, "log"),
-        ("Value targets: returns (mean, 5-95 %)", [("mean", h["return_mean"], blue)],
+        (f"Value targets: returns (mean, 5-95 %{unit})", [("mean", h["return_mean"], blue)],
          (h["return_p5"], h["return_p95"]), None),
-        ("Value loss", [("loss", h["value_loss"], blue)], None, "log"),
+        (f"Value loss{unit}", [("loss", h["value_loss"], blue)], None, "log"),
         ("Explained variance", [("explained", h["explained_variance"], blue)], None, None),
         ("Policy std (exploration)", [("std", h["std"], blue)], None, None),
     ]  # fmt: skip
@@ -371,11 +378,12 @@ if __name__ == "__main__":
     parser.add_argument("--envs", type=int, default=8, help="parallel sims")
     parser.add_argument("--out", type=Path, default=Path("build/rl/policy"))
     parser.add_argument("--alpha", type=float, default=tracking.ALPHA, help="the policy's share")
+    parser.add_argument("--norm-reward", action="store_true", help="train: VecNormalize rewards")
     args = parser.parse_args()
     if args.command == "import":
         import_npz(args.npz, args.wall, args.data)
     elif args.command == "train":
-        train(args.data, args.steps, args.envs, args.out, args.alpha)
+        train(args.data, args.steps, args.envs, args.out, args.alpha, args.norm_reward)
     elif args.command == "plot":
         plot(Path(f"{args.out}_history.npz"))
     else:
