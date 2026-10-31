@@ -228,7 +228,8 @@ def evaluate(data: Path, episodes: int, policy: Path | None = None, watch: bool 
               f"|a| > 0.95 on {100 * mean[2]:.0f} % of joint-steps")  # fmt: skip
 
 
-def train(data: Path, steps: int, envs: int, out: Path, alpha: float, norm_reward: bool) -> None:
+def train(data: Path, steps: int, envs: int, out: Path, alpha: float, norm_reward: bool,
+          seed: int = 0) -> None:  # fmt: skip
     """PPO (SB3 defaults: advantages normalised per minibatch). norm_reward: rewards scaled by a
     running estimate of the returns' std (VecNormalize), so the value function learns numbers
     near 1, not thousands; the observations are left as they are, so the ONNX export and
@@ -237,15 +238,15 @@ def train(data: Path, steps: int, envs: int, out: Path, alpha: float, norm_rewar
     from stable_baselines3.common.env_util import make_vec_env
     from stable_baselines3.common.vec_env import SubprocVecEnv, VecNormalize
 
-    vec = make_vec_env(TrackingEnv, envs, seed=0, vec_env_cls=SubprocVecEnv,
+    vec = make_vec_env(TrackingEnv, envs, seed=seed, vec_env_cls=SubprocVecEnv,
                        env_kwargs={"data": data, "alpha": alpha})  # fmt: skip
     if norm_reward:
         vec = VecNormalize(vec, norm_obs=False, norm_reward=True)
-    model = PPO("MlpPolicy", vec, verbose=1, seed=0)
+    model = PPO("MlpPolicy", vec, verbose=1, seed=seed)
     history = History()
     model.learn(total_timesteps=steps, callback=history)
     out.parent.mkdir(parents=True, exist_ok=True)
-    model.save(out.with_suffix(".zip"))
+    model.save(f"{out}.zip")  # out may hold dots (alpha0.1): append, never replace
     rows = history.rows
     columns = {k: np.array([r.get(k, np.nan) for r in rows]) for k in rows[0]}
     np.savez(f"{out}_history.npz", norm_reward=norm_reward, **columns)
@@ -357,12 +358,12 @@ def export(model, out: Path, env: TrackingEnv) -> None:
             return self.policy(obs, deterministic=True)[0]
 
     obs = torch.zeros(1, tracking.OBS_SIZE)
-    torch.onnx.export(Mean(model.policy), obs, out.with_suffix(".onnx"), input_names=["obs"],
+    torch.onnx.export(Mean(model.policy), obs, f"{out}.onnx", input_names=["obs"],
                       dynamo=False)  # fmt: skip
     meta = {"alpha": env.alpha, "joints": list(tracking.JOINTS),
             "low": env.low.tolist(), "high": env.high.tolist()}  # fmt: skip
-    out.with_suffix(".json").write_text(json.dumps(meta, indent=1))
-    print(f"saved {out.with_suffix('.onnx')} and {out.with_suffix('.json')}")
+    Path(f"{out}.json").write_text(json.dumps(meta, indent=1))
+    print(f"saved {out}.onnx and {out}.json")
 
 
 if __name__ == "__main__":
@@ -379,11 +380,12 @@ if __name__ == "__main__":
     parser.add_argument("--out", type=Path, default=Path("build/rl/policy"))
     parser.add_argument("--alpha", type=float, default=tracking.ALPHA, help="the policy's share")
     parser.add_argument("--norm-reward", action="store_true", help="train: VecNormalize rewards")
+    parser.add_argument("--seed", type=int, default=0, help="train: PPO and environment seed")
     args = parser.parse_args()
     if args.command == "import":
         import_npz(args.npz, args.wall, args.data)
     elif args.command == "train":
-        train(args.data, args.steps, args.envs, args.out, args.alpha, args.norm_reward)
+        train(args.data, args.steps, args.envs, args.out, args.alpha, args.norm_reward, args.seed)
     elif args.command == "plot":
         plot(Path(f"{args.out}_history.npz"))
     else:
