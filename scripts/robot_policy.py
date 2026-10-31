@@ -7,6 +7,7 @@ rcr.controller.Controller from the state the robot measures, not read from a fil
     --Wi-Fi--> the robot's "replay" move, which sets them as the servos' position targets
 
     uv run --no-sync scripts/robot_policy.py --dry-run                 # the sim plays the robot
+    uv run --no-sync mjpython scripts/robot_policy.py --dry-run --watch  # ... in MuJoCo's viewer
     uv run --no-sync scripts/robot_policy.py --host <robot> --playback # the reference only (a = 0)
     uv run --no-sync scripts/robot_policy.py --host <robot>            # the policy
 
@@ -81,7 +82,7 @@ class LinkRobot:
 class SimRobot:
     """The organisers' sim in the robot's place, at the reference's first pose, settled."""
 
-    def __init__(self, data: Path, trajectory, kp: float):
+    def __init__(self, data: Path, trajectory, kp: float, watch: bool = False):
         from climbing_sim import JOINTS, ClimbingSim, Wall
 
         self.sim = ClimbingSim(Wall.load(str(data / "sim_wall.json")), cameras=[], kp_fw=kp)
@@ -92,6 +93,8 @@ class SimRobot:
         for _ in range(25):  # 0.5 s holding the first pose
             self.sim.step([start[j] for j in self.joints])
         self.ticks, self.fell = 0, None  # when fewer than two balls are hooked
+        if watch:  # every step then shows in the viewer, in real time
+            self.sim.view()
 
     def start(self) -> None:
         pass
@@ -136,6 +139,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--host", help="the robot's host name or IP")
     parser.add_argument("--dry-run", action="store_true", help="the sim plays the robot")
+    parser.add_argument("--watch", action="store_true", help="dry run in the viewer (mjpython)")
     parser.add_argument("--data", type=Path, default=Path("build/rl/n1"), help="trajectory.json")
     parser.add_argument(
         "--policy", type=Path, default=Path("data/policies/clone_kp1000_ls-1_s2.onnx")
@@ -156,7 +160,7 @@ def main() -> None:
     end = trajectory.times[-1] + 1.0 if args.seconds is None else args.seconds
     first = dict(zip(tracking.JOINTS, tracking.at(controller.reference, 0.0)[0], strict=True))
     robot = (
-        SimRobot(args.data, trajectory, kp)
+        SimRobot(args.data, trajectory, kp, args.watch)
         if args.dry_run
         else LinkRobot(args.host, args.move, int(kp))
     )
