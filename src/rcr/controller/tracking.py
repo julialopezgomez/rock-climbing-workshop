@@ -21,10 +21,13 @@ KP_PRELOAD = 400.0  # kp_fw the optimiser pre-loads `positions` for [optimiser K
 # Default kp_fw (P only) [simulator README: the gain for learned policies]. A policy saves the one
 # it was trained at, and the robot must run its climbing move at that gain.
 KP_FW = 125.0
-# The policy's share of the targets [Ours]: 0 plays the reference back, 1 lets the policy choose
-# every target. A curriculum raises it as the policy learns; each policy saves the one it used.
-ALPHA = 0.1
-OBS_SIZE = 3 * len(JOINTS) + 6  # error to the reference, q, dq, gravity, gyro
+# Residual action [Ours, as residual policy learning, Silver et al. 2018]: targets = feedforward +
+# ALPHA * action, action in [-1, 1], so ALPHA is the largest correction (rad) and action 0 plays
+# the reference back. Each policy saves the ALPHA it used, and ACTION, which Controller checks.
+ALPHA = 0.2
+ACTION = "residual"
+LOOKAHEAD_S = 0.1  # [s] the policy also sees the error to where the reference will be then [Ours]
+OBS_SIZE = 4 * len(JOINTS) + 6  # error to the reference now and ahead, q, dq, gravity, gyro
 
 
 @dataclass
@@ -67,14 +70,14 @@ def gravity(quat) -> np.ndarray:
     return -np.array([2 * (x * z - w * y), 2 * (y * z + w * x), 1 - 2 * (x * x + y * y)])
 
 
-def observation(planned, q, dq, quat, gyro) -> np.ndarray:
-    """What the policy sees: the error to the reference, then what the robot measures."""
-    err = np.asarray(planned) - np.asarray(q)
-    return np.concatenate([err, q, dq, gravity(quat), gyro]).astype(np.float32)
+def observation(planned, planned_ahead, q, dq, quat, gyro) -> np.ndarray:
+    """What the policy sees: the error to the reference now and LOOKAHEAD_S ahead, then what the
+    robot measures."""
+    err, ahead = np.asarray(planned) - np.asarray(q), np.asarray(planned_ahead) - np.asarray(q)
+    return np.concatenate([err, ahead, q, dq, gravity(quat), gyro]).astype(np.float32)
 
 
 def targets(feedforward, action, alpha, low, high) -> np.ndarray:
-    """Joint targets: (1 - alpha) of the feedforward plus alpha of the policy's own targets, the
-    action (clipped to [-1, 1]) mapped onto the joint ranges [low, high]."""
-    own = low + (np.clip(action, -1.0, 1.0) + 1.0) / 2.0 * (high - low)
-    return np.clip((1.0 - alpha) * np.asarray(feedforward) + alpha * own, low, high)
+    """Joint targets: the feedforward plus alpha (rad) times the action clipped to [-1, 1], within
+    the joint ranges [low, high]. Action 0 is playback."""
+    return np.clip(np.asarray(feedforward) + alpha * np.clip(action, -1.0, 1.0), low, high)

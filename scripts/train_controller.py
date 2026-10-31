@@ -15,16 +15,13 @@ a data folder with:
     uv run --group rl scripts/train_controller.py import wall-1-ik.npz --wall N1 --data build/rl/n1
 
 An episode is one transition [Ours]:
-* reward each step, least squares: 1 - W_Q |planned(t) - q|^2 / SIGMA_Q^2 - W_B d^2 / SIGMA_B^2,
-  d the moving ball's distance to where the reference puts it at t (the sim's forward kinematics
-  of planned_positions and trunk_poses): joint tracking alone misses the trunk's drift, which
-  moves the ball centimetres off. Near the target it equals the earlier exp(-x) ~ 1 - x; far from
-  it the squares keep their slope, where the exponential went flat. At most 1, floored at
-  -REWARD_FLOOR;
+* reward each step, bounded and positive (DeepMimic, Peng et al. 2018):
+  W_Q exp(-|planned(t) - q|^2 / SIGMA_Q^2) + W_B exp(-d^2 / SIGMA_B^2) + W_ALIVE
+  - W_RATE mean((a_t - a_{t-1})^2), d the moving ball's distance to where the reference puts it at
+  t (the sim's forward kinematics of planned_positions and trunk_poses). At most 1;
 * success (terminated): the moving ball hooked in its new hold, the others still in theirs; plus
   one reward per step left before the time limit, so finishing early never loses;
-* failure (terminated): a fixed limb out of its hold; minus REWARD_FLOOR per step left and the
-  transition's planned steps, so falling always costs more than staying, however bad;
+* failure (terminated): a fixed limb out of its hold; no penalty, it forgoes the steps left;
 * time limit (truncated): the transition's planned end + SLACK_S.
 After a success the next transition starts where this one ended (the sim is not reset). Otherwise
 a transition is drawn at random and the robot placed at its reference start (reference state
@@ -47,12 +44,13 @@ from rcr.types import LIMBS, MICROBAN_JOINTS, Trajectory
 
 HOOK_TOL = 0.006  # [m] a ball this close to a socket's centre sits in it [simulator hooked()]
 NPZ_DT = 0.02  # [s] between the rows of a teammate's .npz
-SIGMA_Q = 0.25  # [rad] joint error (19 joints together) whose cost is W_Q [Ours]
-SIGMA_B = 0.03  # [m] moving ball's distance to the reference whose cost is W_B [Ours]
-W_Q, W_B = 0.5, 0.5  # weights of the joint and ball terms [Ours]
-# a step's reward stays >= -30: above the worst playback cost measured (28 on N1, 20 on the
-# pre-loaded reference), so the squares keep their slope wherever playback goes [Ours]
-REWARD_FLOOR = 30.0
+# Reward [Ours, after DeepMimic, Peng et al. 2018]: bounded positive terms, so staying on the wall
+# pays and a fall costs the rewards it forgoes; tracking is loose, as the reference itself fails
+# on some moves (a held limb pops out even when its joints are tracked within 0.01 rad)
+SIGMA_Q = 0.25  # [rad] joint error (19 joints together) at which its term is exp(-1)
+SIGMA_B = 0.03  # [m] moving ball's distance to the reference at which its term is exp(-1)
+W_Q, W_B, W_ALIVE = 0.3, 0.3, 0.4  # joints, moving ball, every step still on the wall
+W_RATE = 0.1  # times the mean square change of the action between steps (smoothness)
 SLACK_S = 1.0  # [s] time allowed after a transition's planned end [Ours]
 SETTLE_S = 0.5  # [s] holding the reference start after a reset [Ours]
 TO_SIM = [tracking.JOINTS.index(n) for n in SIM_JOINTS]  # ours -> the sim's joint order
@@ -61,17 +59,18 @@ FROM_SIM = [list(SIM_JOINTS).index(n) for n in tracking.JOINTS]  # the sim's -> 
 
 class TrackingEnv(gym.Env):
     def __init__(self, data: Path, alpha: float = tracking.ALPHA, kp_fw: float = tracking.KP_FW,
-                 seed: int = 0):  # fmt: skip
+                 seed: int = 0, only: list[int] | None = None):  # fmt: skip
         self.sim = ClimbingSim(Wall.load(str(data / "sim_wall.json")), cameras=[],
                                kp_fw=kp_fw, seed=seed)  # fmt: skip
         self.kp_fw = kp_fw  # the servos' P gain
-        self.alpha = alpha  # the policy's share of the targets
+        self.alpha = alpha  # the largest residual correction (rad)
         self.trajectory = io.load_trajectory(data / "trajectory.json")
         self.ref = tracking.reference(self.trajectory, kp_fw)
         self.low, self.high = self.sim.joint_range[FROM_SIM].T
         self.dt = self.sim.control_dt
         self.balls = reference_balls(self.sim, self.trajectory)
         self.moves = moves(self.balls, self.sim.wall.sockets(), self.trajectory.times)
+        self.only = only  # train on these moves only (None: all)
         self.k, self.chain = 0, False
         n = len(tracking.JOINTS)
         self.action_space = gym.spaces.Box(-1.0, 1.0, (n,), np.float32)
@@ -79,19 +78,22 @@ class TrackingEnv(gym.Env):
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
-        if self.chain and self.k + 1 < len(self.moves):
+        nxt = self.k + 1
+        if self.chain and nxt < len(self.moves) and (not self.only or nxt in self.only):
             self.k += 1  # carry on from where the last transition ended
             obs = self.sim.observation()
         else:
             obs = self.place()
         self.chain = False
         self.t = self.moves[self.k]["t0"]
+        self.last_action = np.zeros(len(tracking.JOINTS))
         return self.observe(obs), {"move": self.k}
 
     def place(self, tries: int = 20) -> dict:
         """A random transition's reference start, settled with all four balls hooked."""
         for _ in range(tries):
-            self.k = int(self.np_random.integers(len(self.moves)))
+            pool = self.only or range(len(self.moves))
+            self.k = int(pool[self.np_random.integers(len(pool))])
             t0 = self.moves[self.k]["t0"]
             i = int(np.searchsorted(self.trajectory.times, t0))
             pose = self.trajectory.trunk_poses[i]
@@ -107,8 +109,9 @@ class TrackingEnv(gym.Env):
 
     def observe(self, obs) -> np.ndarray:
         planned = tracking.at(self.ref, self.t)[1]
+        ahead = tracking.at(self.ref, self.t + tracking.LOOKAHEAD_S)[1]
         q, dq = obs["q"][FROM_SIM], obs["dq"][FROM_SIM]
-        return tracking.observation(planned, q, dq, obs["quat"], obs["gyro"])
+        return tracking.observation(planned, ahead, q, dq, obs["quat"], obs["gyro"])
 
     def step(self, action):
         move = self.moves[self.k]
@@ -120,16 +123,17 @@ class TrackingEnv(gym.Env):
         path = self.balls[:, LIMBS.index(move["limb"])]
         ref_ball = [np.interp(self.t, self.trajectory.times, path[:, c]) for c in range(3)]
         d = float(np.linalg.norm(self.sim.ball_positions()[move["limb"]] - ref_ball))
-        cost = W_Q * (error @ error) / SIGMA_Q**2 + W_B * d**2 / SIGMA_B**2
-        reward = max(1.0 - cost, -REWARD_FLOOR)
+        action = np.clip(action, -1.0, 1.0)
+        rate = float(np.mean((action - self.last_action) ** 2))
+        self.last_action = action
+        reward = (W_Q * np.exp(-(error @ error) / SIGMA_Q**2) + W_B * np.exp(-(d**2) / SIGMA_B**2)
+                  + W_ALIVE - W_RATE * rate)  # fmt: skip
         hooked = self.sim.hooked()
         failed = any(hooked[limb] != move["before"][limb] for limb in move["fixed"])
         success = not failed and hooked[move["limb"]] == move["after"][move["limb"]]
         steps_left = max(0, round((move["t1"] + SLACK_S - self.t) / self.dt))
         if success:
-            reward += steps_left
-        if failed:
-            reward -= REWARD_FLOOR * steps_left + round((move["t1"] - move["t0"]) / self.dt)
+            reward += steps_left  # the most the steps left could earn: finishing early never loses
         self.chain = success
         error = float(abs(error).mean())
         info = {"move": self.k, "success": success, "failed": failed, "error": error, "ball": d}
@@ -234,23 +238,28 @@ def evaluate(data: Path, episodes: int, policy: Path | None = None, watch: bool 
 
 
 def train(data: Path, steps: int, envs: int, out: Path, alpha: float, kp_fw: float,
-          norm_reward: bool, seed: int = 0, log_std_init: float = 0.0) -> None:  # fmt: skip
+          norm_reward: bool, seed: int = 0, log_std_init: float = 0.0,
+          only: list[int] | None = None) -> None:  # fmt: skip
     """PPO (SB3 defaults: advantages normalised per minibatch). norm_reward: rewards scaled by a
     running estimate of the returns' std (VecNormalize), so the value function learns numbers
     near 1, not thousands; the observations are left as they are, so the ONNX export and
     Controller need nothing more. log_std_init: the log of the starting exploration noise (0: an
     std of 1 on actions in [-1, 1]; -1: 0.37)."""
+    import torch
     from stable_baselines3 import PPO
     from stable_baselines3.common.env_util import make_vec_env
     from stable_baselines3.common.vec_env import SubprocVecEnv, VecNormalize
 
-    vec = make_vec_env(TrackingEnv, envs, seed=seed, vec_env_cls=SubprocVecEnv,
-                       env_kwargs={"data": data, "alpha": alpha, "kp_fw": kp_fw})  # fmt: skip
+    kwargs = {"data": data, "alpha": alpha, "kp_fw": kp_fw, "only": only}
+    vec = make_vec_env(TrackingEnv, envs, seed=seed, vec_env_cls=SubprocVecEnv, env_kwargs=kwargs)
     if norm_reward:
         vec = VecNormalize(vec, norm_obs=False, norm_reward=True)
-    kwargs = {"log_std_init": log_std_init}
-    model = PPO("MlpPolicy", vec, verbose=1, seed=seed, policy_kwargs=kwargs)
-    history = History()
+    model = PPO("MlpPolicy", vec, verbose=1, seed=seed,
+                policy_kwargs={"log_std_init": log_std_init})  # fmt: skip
+    with torch.no_grad():  # the residual starts at 0: training starts from playback [Silver 2018]
+        model.policy.action_net.weight.zero_()
+        model.policy.action_net.bias.zero_()
+    history = History(out, TrackingEnv(data, alpha, kp_fw))
     model.learn(total_timesteps=steps, callback=history)
     out.parent.mkdir(parents=True, exist_ok=True)
     model.save(f"{out}.zip")  # out may hold dots (alpha0.1): append, never replace
@@ -263,13 +272,23 @@ def train(data: Path, steps: int, envs: int, out: Path, alpha: float, kp_fw: flo
 
 class History(BaseCallback):
     """Per PPO rollout: the step rewards, the advantages before PPO normalises them, the value
-    targets (returns), the episodes' outcomes, and the previous update's losses."""
+    targets (returns), the episodes' outcomes, and the previous update's losses. The outcomes and
+    the tracking errors also go to the printed table (climb/), and every `every` steps the policy
+    is exported as <out>_<k>k.onnx, so a run can be evaluated before it ends or if it is cut."""
+
+    def __init__(self, out: Path | None = None, env: "TrackingEnv | None" = None,
+                 every: int = 100_000) -> None:  # fmt: skip
+        super().__init__()
+        self.out, self.env, self.every = out, env, every
 
     def _on_training_start(self) -> None:
-        self.rows, self.ends = [], []
+        self.rows, self.ends, self.errors, self.balls = [], [], [], []
+        self.next_save = self.every
 
     def _on_step(self) -> bool:
         for info, done in zip(self.locals["infos"], self.locals["dones"], strict=True):
+            self.errors.append(info["error"])
+            self.balls.append(info["ball"])
             if done:
                 self.ends.append(
                     "success" if info["success"] else "failed" if info["failed"] else "timeout"
@@ -292,7 +311,15 @@ class History(BaseCallback):
             "explained_variance": logged.get("train/explained_variance", np.nan),
             "std": logged.get("train/std", np.nan),
         })  # fmt: skip
-        self.ends = []
+        for key in ("success", "failed", "timeout"):
+            self.logger.record(f"climb/{key}", round(self.rows[-1][key], 3))
+        self.logger.record("climb/episodes", len(self.ends))
+        self.logger.record("climb/joint_err", round(float(np.mean(self.errors)), 4))
+        self.logger.record("climb/ball_mm", round(1000 * float(np.mean(self.balls)), 1))
+        self.ends, self.errors, self.balls = [], [], []
+        if self.out is not None and self.num_timesteps >= self.next_save:
+            export(self.model, Path(f"{self.out}_{self.next_save // 1000}k"), self.env)
+            self.next_save += self.every
 
 
 def spread(name: str, x: np.ndarray) -> dict:
@@ -367,7 +394,8 @@ def export(model, out: Path, env: TrackingEnv) -> None:
     obs = torch.zeros(1, tracking.OBS_SIZE)
     torch.onnx.export(Mean(model.policy), obs, f"{out}.onnx", input_names=["obs"],
                       dynamo=False)  # fmt: skip
-    meta = {"alpha": env.alpha, "kp_fw": env.kp_fw, "joints": list(tracking.JOINTS),
+    meta = {"action": tracking.ACTION, "alpha": env.alpha, "kp_fw": env.kp_fw,
+            "joints": list(tracking.JOINTS),
             "low": env.low.tolist(), "high": env.high.tolist()}  # fmt: skip
     Path(f"{out}.json").write_text(json.dumps(meta, indent=1))
     print(f"saved {out}.onnx and {out}.json")
@@ -385,11 +413,12 @@ if __name__ == "__main__":
     parser.add_argument("--steps", type=int, default=2_000_000, help="training steps")
     parser.add_argument("--envs", type=int, default=8, help="parallel sims")
     parser.add_argument("--out", type=Path, default=Path("build/rl/policy"))
-    parser.add_argument("--alpha", type=float, default=tracking.ALPHA, help="the policy's share")
+    parser.add_argument("--alpha", type=float, default=tracking.ALPHA, help="max residual, rad")
     parser.add_argument("--norm-reward", action="store_true", help="train: VecNormalize rewards")
     parser.add_argument("--seed", type=int, default=0, help="train: PPO and environment seed")
     parser.add_argument("--kp", type=float, default=tracking.KP_FW, help="servo P gain (kp_fw)")
     parser.add_argument("--log-std-init", type=float, default=0.0, help="train: log starting noise")
+    parser.add_argument("--moves", help="train: only these moves, e.g. 6,18,26 (default: all)")
     args = parser.parse_args()
     if args.command == "import":
         import_npz(args.npz, args.wall, args.data)
@@ -404,6 +433,7 @@ if __name__ == "__main__":
             args.norm_reward,
             args.seed,
             args.log_std_init,
+            [int(k) for k in args.moves.split(",")] if args.moves else None,
         )
     elif args.command == "plot":
         plot(Path(f"{args.out}_history.npz"))

@@ -16,7 +16,7 @@ from rcr.types import JointTargets, RobotState, Trajectory
 
 
 class Controller:
-    """Playback of the trajectory's feedforward, blended with a policy's own targets if given.
+    """Playback of the trajectory's feedforward, plus a policy's residual correction if given.
 
     policy: a .onnx file from scripts/train_controller.py, with its .json (alpha, servo gain kp_fw,
     joint order and limits) next to it; the robot must run at that kp_fw. None plays the
@@ -35,6 +35,8 @@ class Controller:
             meta = json.loads(Path(policy).with_suffix(".json").read_text())
             if tuple(meta["joints"]) != tracking.JOINTS:
                 raise ValueError(f"{policy} was trained with another joint order")
+            if meta.get("action") != tracking.ACTION:
+                raise ValueError(f"{policy} was trained with another action (not residual)")
             self.alpha = meta["alpha"]
             self.reference = tracking.reference(trajectory, meta.get("kp_fw", tracking.KP_FW))
             self.low, self.high = np.array(meta["low"]), np.array(meta["high"])
@@ -46,7 +48,8 @@ class Controller:
         if self.policy is not None:
             q = [state.joint_positions[n] for n in tracking.JOINTS]
             dq = [state.joint_velocities[n] for n in tracking.JOINTS]
-            obs = tracking.observation(planned, q, dq, state.imu_quat, state.gyro)
+            ahead = tracking.at(self.reference, state.time + tracking.LOOKAHEAD_S)[1]
+            obs = tracking.observation(planned, ahead, q, dq, state.imu_quat, state.gyro)
             action = self.policy.run(None, {"obs": obs[None]})[0][0]
             q_target = tracking.targets(q_target, action, self.alpha, self.low, self.high)
         return JointTargets(dict(zip(tracking.JOINTS, map(float, q_target), strict=True)))

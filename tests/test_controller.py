@@ -55,19 +55,21 @@ def test_gravity_from_the_trunk_orientation():
 
 
 def test_observation_layout():
-    planned, q = np.full(19, 0.5), np.full(19, 0.2)
-    obs = tracking.observation(planned, q, np.zeros(19), (1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 0.1))
+    planned, ahead, q = np.full(19, 0.5), np.full(19, 0.7), np.full(19, 0.2)
+    obs = tracking.observation(planned, ahead, q, np.zeros(19), (1.0, 0.0, 0.0, 0.0),
+                               (0.0, 0.0, 0.1))  # fmt: skip
     assert obs.shape == (tracking.OBS_SIZE,) and obs.dtype == np.float32
-    assert np.allclose(obs[:19], 0.3) and np.allclose(obs[19:38], 0.2)
+    assert np.allclose(obs[:19], 0.3) and np.allclose(obs[19:38], 0.5)
+    assert np.allclose(obs[38:57], 0.2)
     assert np.allclose(obs[-6:], (0.0, 0.0, -1.0, 0.0, 0.0, 0.1))
 
 
-def test_targets_blend_the_feedforward_and_the_policy():
+def test_targets_add_the_residual_to_the_feedforward():
     ff, low, high = np.full(19, 0.5), np.full(19, -1.0), np.full(19, 1.0)
-    assert np.allclose(tracking.targets(ff, np.ones(19), 0.0, low, high), 0.5)  # playback
-    assert np.allclose(tracking.targets(ff, np.full(19, -1.0), 1.0, low, high), -1.0)  # own
-    assert np.allclose(tracking.targets(ff, np.zeros(19), 0.2, low, high), 0.8 * 0.5)  # mid: 0
-    assert np.allclose(tracking.targets(ff, np.full(19, 3.0), 1.0, low, high), 1.0)  # action <= 1
+    assert np.allclose(tracking.targets(ff, np.zeros(19), 0.2, low, high), 0.5)  # 0: playback
+    assert np.allclose(tracking.targets(ff, np.ones(19), 0.0, low, high), 0.5)  # alpha 0: too
+    assert np.allclose(tracking.targets(ff, np.full(19, -1.0), 0.2, low, high), 0.3)
+    assert np.allclose(tracking.targets(ff, np.full(19, 3.0), 0.2, low, high), 0.7)  # a <= 1
     assert np.allclose(tracking.targets(np.full(19, 2.0), np.ones(19), 0.0, low, high), 1.0)
 
 

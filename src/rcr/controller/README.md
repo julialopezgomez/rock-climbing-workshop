@@ -26,14 +26,20 @@
 ## v0 could be
 Trajectory playback: interpolate `positions` at `state.time` and return them.
 
-## Residual tracking (exploring on `controller/rl-tracking`, D4 still open) [Ours]
-`Controller(trajectory, policy=None)`: every tick, targets = (1 − α) × feedforward + α × the policy's own targets
-(its action mapped onto the joint ranges), the feedforward being `positions` with the pre-load rescaled from kp_fw
-400 to `KP_FW` = 125 (the simulator's gain for learned policies). α is a curriculum: small first, so the
-feedforward decides, raised as the policy learns; each policy's `.json` records its α. Without a policy it is playback; without `planned_positions` (the link's robot part) it plays
-`positions` back as they are. [tracking.py](tracking.py) holds the numbers training and the robot must share
-(joint order, interpolation, observation, targets); `scripts/train_controller.py` trains the policy with PPO in the
-organisers' sim and exports it to ONNX, with a `.json` (alpha, joint order, limits) that `Controller` checks.
+## Residual tracking (exploring on `controller/rl-residual`, D4 still open) [Ours]
+`Controller(trajectory, policy=None)`: every tick, targets = clip(feedforward + α × action, joint limits), action in
+[−1, 1], so α (rad) is the largest correction and action 0 is playback (residual policy learning, Silver et al. 2018).
+The feedforward is `positions` with the pre-load rescaled from kp_fw 400 to the policy's kp_fw. The policy sees the
+error to `planned_positions` now and 0.1 s ahead, q, dq, gravity and gyro (82 numbers). Without a policy it is
+playback; without `planned_positions` (the link's robot part) it plays `positions` back as they are.
+[tracking.py](tracking.py) holds the numbers training and the robot must share (joint order, interpolation,
+observation, targets); `scripts/train_controller.py` trains the policy with PPO in the organisers' sim (last layer
+started at zero, so training starts from playback; DeepMimic-style bounded reward) and exports it to ONNX, with a
+`.json` (action "residual", α, kp_fw, joint order, limits) that `Controller` checks.
+
+On N1 (`wall-1-ik.npz`), 100 single moves at kp_fw 1000: playback 47 slot-ins, residual policies 59–81 (the gain is on
+hand moves, which playback never completes). The two best are in `data/policies/`. At kp_fw 2000–5000 playback is
+already 66–76 and the residual adds 0–6.
 
 ## Candidates later (not decided)
 - Playback plus feedforward sag compensation (≈ τ / kp, see optimiser README);
