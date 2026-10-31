@@ -192,9 +192,9 @@ def ball_path(p_a, p_b):
     return B
 
 
-def timing(t):
-    """s(t): min-jerk, from 0 to 1 over MOVE_TIME, zero velocity and acceleration at both ends."""
-    tau = min(max(t / MOVE_TIME, 0.0), 1.0)
+def timing(t, duration=MOVE_TIME):
+    """s(t): min-jerk, from 0 to 1 over duration, zero velocity and acceleration at both ends."""
+    tau = min(max(t / duration, 0.0), 1.0)
     return 10 * tau**3 - 15 * tau**4 + 6 * tau**5
 
 
@@ -206,10 +206,13 @@ def moving_limb(a: Stance, b: Stance) -> str:
 def track_move(wall: WallModel, a: Stance, b: Stance, q0):
     """The configurations of the move a -> b, one every DT from q0 (excluded) to the end: at each
     sample, ITERATIONS IK steps closing GAIN of each ball's error to its target (the moving ball's
-    on ball_path, the others' their sockets). Where the path is out of the limb's reach, the
-    moving ball only gets as close as it can (ik_step). Also the moving ball's worst distance from
-    its path [m]. ValueError, naming the move, if a held ball gets MAX_ERROR from its socket."""
+    on ball_path, the others' their sockets), the joints pulled toward the hang pose's. Where the
+    path is out of the limb's reach, the moving ball only gets as close as it can (ik_step). It
+    ends exactly in b's stance pose, where b -> c starts: from within JOINT_TOL it jumps there,
+    from further it blends there over BLEND_TIME, balls held. Also the moving ball's worst distance
+    from its path [m]. ValueError, naming the move, if a ball gets MAX_ERROR from its socket."""
     limb = moving_limb(a, b)
+    move = f"{limb} {a.contacts[limb]} -> {b.contacts[limb]}"
     i = LIMBS.index(limb)
     held = sockets(wall, a)
     B = ball_path(held[i], sockets(wall, b)[i])
@@ -219,39 +222,47 @@ def track_move(wall: WallModel, a: Stance, b: Stance, q0):
         target[i] = B(timing(k * DT))
         height = target[:, 2].mean() + TRUNK_HEIGHT
         for _ in range(ITERATIONS):
-            q = ik_step(q, GAIN * (target - balls(q)), moving=limb, height=height)
+            q = ik_step(q, GAIN * (target - balls(q)), moving=limb, height=height, posture=Q_HANG)
         error = norm(target - balls(q), axis=1)
         if not np.delete(error, i).max() <= MAX_ERROR:  # also NaN: the IK diverged
-            move = f"{limb} {a.contacts[limb]} -> {b.contacts[limb]}"
             e = np.delete(error, i).max() * 1000
             raise ValueError(f"{move}: a held ball {e:.0f} mm from its socket at {k * DT:.2f} s")
         worst = max(worst, error[i])
         out.append(q)
+    qb, sockets_b = start_pose(wall, b), sockets(wall, b)
+    if np.abs(q[7:] - qb[7:]).max() > JOINT_TOL:
+        q_end = q
+        for k in range(1, round(BLEND_TIME / DT) + 1):
+            q = pin.interpolate(model, q_end, qb, timing(k * DT, BLEND_TIME))
+            e = norm(sockets_b - balls(q), axis=1).max()
+            if not e <= MAX_ERROR:
+                raise ValueError(f"{move}: a ball {e * 1000:.0f} mm from its socket, blending into b")
+            out.append(q)
+    out[-1] = qb
     return out, worst
 
 
+_cache = {}  # (wall id, a, b) -> Feasibility
+
+
 def feasible_ik_traj(wall: WallModel, a: Stance, b: Stance) -> Feasibility:
-    """Reach, then IK, on the trajectory from stance a to stance b (does not depend on a, so cached).
-    The trajectory is feasible if all the held balls stay within MAX_ERROR of their sockets."""
-    # k = (wall.id, *astar.key(b))
-    # if k not in _cache: # TODO: need to check how cache is implemented. Actually, should implement it from scratch.
-    #     try:
-    #         q0 = start_pose(wall, a) # TODO: need to check what this start pose is. In later steps, we should check this to make sure this pose maximises torque manipulability, and possibly COM stability. 
-    #         _, worst = track_move(wall, a, b, q0)
-    #         _cache[k] = Feasibility(reason=None if worst <= MAX_ERROR else "There is not an ik trajectory that satisfies the robot limits and reaches b from a.")
-    #     except ValueError as e:
-    #         _cache[k] = Feasibility(reason=str(e))
-    # return _cache[k]
-    #TODO: recover code above when cache is implemented. For now, just check if the trajectory is feasible without caching.
-    try:
-        q0 = start_pose(wall, a) # TODO: need to check what this start pose is. In later steps, we should check this to make sure this pose maximises torque manipulability, and possibly COM stability. 
-        _, worst = track_move(wall, a, b, q0)
-        if worst <= MAX_ERROR:
-            return Feasibility(feasible=True, reason=None)
-        else:
-            return Feasibility(feasible=False, reason="There is not an ik trajectory that satisfies the robot limits and reaches b from a.")
-    except ValueError as e:
-        return Feasibility(feasible=False, reason=str(e))
+    """Can the robot go from stance a to stance b? track_move from a's stance pose: every move ends
+    in its stance pose, so this is the move optimise makes, and cached. Infeasible if a stance pose
+    is not reached, a ball gets MAX_ERROR from its socket, or the moving ball MAX_ERROR from its
+    path (whose end is socket b). An IK that diverges (NaN) is one of these: no overflow warning."""
+    k = (wall.id, key(a), key(b))
+    if k not in _cache:
+        try:
+            with np.errstate(over="ignore", invalid="ignore"):
+                _, worst = track_move(wall, a, b, start_pose(wall, a))
+            if worst <= MAX_ERROR:
+                _cache[k] = Feasibility(True, cost=worst)
+            else:
+                reason = f"{key(a)} -> {key(b)}: the moving ball {worst * 1000:.0f} mm off its path"
+                _cache[k] = Feasibility(False, reason=reason)
+        except ValueError as e:
+            _cache[k] = Feasibility(False, reason=str(e))
+    return _cache[k]
 
 
 #TODO: probably in another file that's planner/kinematics/etc agnostic. But we need to come up with a good cache implementation. This should include: 
