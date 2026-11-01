@@ -49,7 +49,7 @@ OUT = 0.04
 EPSILON = 1e-3
 MAX_ITERATIONS = 200
 IK_STEP = 0.2
-POSTURE_GAIN = 0.1
+POSTURE_GAIN = 0.2
 LIMIT_GAIN = 0.02  # soft push towards joint-limit midpoints
 VELOCITY_GAIN = 0.02  # soft preference for the previous output sample
 
