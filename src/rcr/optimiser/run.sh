@@ -18,8 +18,15 @@ cd "$(dirname "$0")/../../.."  # the repository root
 #        the solver's starting guess for each move it has too (from the same stance to the same
 #        stance), so it converges faster; the other moves start as usual. "" for none. With
 #        W_TRACK > 0 the result is also kept near it (then it must have every move).
-PLAN="data/results/to_n2/plan_N2.json"
-GUESS="data/results/to_n2/wall-2-ik.npz"
+# START: optional, a trajectory PLAN continues (.json, as saved here): PLAN starts at its last
+#        pose (it must be on PLAN's first stance), and the saved trajectory is it followed by
+#        PLAN's moves. "" to start from a static pose of PLAN's first stance.
+# N2, moves 34-55 (plan_N2_rest.json, extended to the top of the wall in small steps, see the
+# optimiser README): no IK there, so no GUESS (W_TRACK 0), continuing the first 34 moves solved
+# with it (plan_N2.json and wall-2-ik.npz, saved as trajectory_plan_N2_local.json).
+PLAN="data/results/to_n2/plan_N2_rest.json"
+GUESS=""
+START="data/results/to_n2/trajectory_plan_N2_local.json"
 
 # --- Constraints -----------------------------------------------------------------------------------
 TAU_LIMIT=0.9   # motor torque limit, as a fraction of the servo's 0.605 N·m
@@ -48,6 +55,9 @@ if [[ "${1:-}" == --play ]]; then
 fi
 
 args=("$PLAN")
+if [[ -n "$START" && "$mode" == --save ]]; then
+    args+=(--start "$START")
+fi
 if [[ -n "$GUESS" ]]; then
     args+=(--guess "$GUESS")
 else

@@ -446,14 +446,16 @@ def test_an_impossible_transition_raises_naming_it():
 
 
 def solve_in_background(
-    wall: WallModel, plan: ContactPlan, out, cfg=None, references=None, near=None
+    wall: WallModel, plan: ContactPlan, out, cfg=None, references=None, near=None, q_start=None
 ) -> None:
     """Worker process: the plan's start pose, then each transition in order, each starting where
     the previous one ended. Each is sent on `out` (one end of a Pipe) as soon as it is solved:
     ("start", q), ("transition", i, TransitionResult, seconds), then ("done",) or ("error", text).
     references, near: a reference motion to follow (rcr.optimiser.reference): per transition its
     samples, and the configuration the start pose stays near; how far each solved transition
-    ended up from it is printed. Exits as soon as the runner is gone, however it ended.
+    ended up from it is printed. q_start: the start pose as it is (the end of an earlier
+    trajectory, --start), instead of solving one. Exits as soon as the runner is gone, however it
+    ended.
     """
     import threading
 
@@ -467,7 +469,7 @@ def solve_in_background(
     threading.Thread(target=watch, daemon=True).start()
     try:
         cfg = cfg or tr.TransitionConfig()
-        q = start_pose(wall, plan, cfg, near)
+        q = start_pose(wall, plan, cfg, near) if q_start is None else q_start
         out.send(("start", q))
         start = time.perf_counter()
         for i, result in enumerate(iter_plan(wall, plan, q, cfg, references)):
@@ -568,6 +570,34 @@ def planned_pose(traj: Trajectory, t: float) -> np.ndarray:
     return q
 
 
+# [m] the most a ball of --start's last pose may be from the plan's first stance [Ours]
+START_TOLERANCE = 2e-3
+
+
+def last_pose(traj: Trajectory) -> np.ndarray:
+    """A saved trajectory's last configuration (NQ: trunk pose, then MICROBAN_JOINTS)."""
+    order = [traj.joint_names.index(name) for name in MICROBAN_JOINTS]
+    return np.concatenate([traj.trunk_poses[-1], np.asarray(traj.planned_positions[-1])[order]])
+
+
+def joined(before: Trajectory, after: Trajectory) -> Trajectory:
+    """before, then after (which starts on before's last pose: its first sample is dropped),
+    after's times shifted to follow; joint columns in after's order."""
+    order = [before.joint_names.index(name) for name in after.joint_names]
+
+    def rows(table):
+        return [[float(row[j]) for j in order] for row in table]
+
+    end = before.times[-1]
+    return Trajectory(
+        joint_names=list(after.joint_names),
+        times=[*before.times, *(end + t for t in after.times[1:])],
+        positions=rows(before.positions) + after.positions[1:],
+        planned_positions=rows(before.planned_positions) + after.planned_positions[1:],
+        trunk_poses=[*before.trunk_poses, *after.trunk_poses[1:]],
+    )
+
+
 def run_plan(
     wall: WallModel,
     plan: ContactPlan,
@@ -578,6 +608,7 @@ def run_plan(
     references=None,
     near=None,
     out: Path | None = None,
+    before: Trajectory | None = None,
 ):
     """Solve the plan in a worker process and play each transition in the sim as it arrives.
     save: write `out` (default trajectory_file(wall.id)) after every solved transition (what is
@@ -585,7 +616,9 @@ def run_plan(
     send: the robot's address; each solved transition goes to it as the trajectory's next
     segment (rcr.link), so it can climb while the rest is solved. It is not started here.
     cfg: the optimiser's settings (default TransitionConfig()).
-    references, near: a reference motion to follow (see solve_in_background)."""
+    references, near: a reference motion to follow (see solve_in_background).
+    before: an earlier trajectory this plan continues (--start): the plan starts at its last
+    pose, and what is saved is it followed by the new moves, one trajectory."""
     import multiprocessing
 
     from rcr import link
@@ -594,8 +627,10 @@ def run_plan(
     messages, worker_end = context.Pipe(duplex=False)
     # stopped in `finally`
     cfg, results = cfg or tr.TransitionConfig(), []
+    q_start = None if before is None else last_pose(before)
     worker = context.Process(
-        target=solve_in_background, args=(wall, plan, worker_end, cfg, references, near)
+        target=solve_in_background,
+        args=(wall, plan, worker_end, cfg, references, near, q_start),
     )
     worker.start()
     worker_end.close()  # this process only reads
@@ -634,7 +669,8 @@ def run_plan(
             if message[0] == "transition" and save:
                 path = out or trajectory_file(wall.id)
                 path.parent.mkdir(parents=True, exist_ok=True)
-                io.save_trajectory(to_trajectory(results, cfg), path)
+                traj = to_trajectory(results, cfg)
+                io.save_trajectory(traj if before is None else joined(before, traj), path)
                 print(f"  saved {len(results)} of {count} transitions in {path}", flush=True)
             if robot is not None and message[0] != "start":
                 to_robot(message)
@@ -707,12 +743,15 @@ def play(wall: WallModel, pose, done, view: bool) -> None:
 
 USAGE = """usage: tests/test_optimiser.py [PLAN | --track FILE] [--save | --replay] [--out FILE]
                                 [--samples N] [--tau-limit F] [--swing W] [--keep-out W] [--hook W]
-                                [--set NAME=VALUE ...] [--send PI] [--headless]
+                                [--set NAME=VALUE ...] [--start FILE] [--send PI] [--headless]
     PLAN              the contact plan to solve (default build/plan_N1.json): each move is solved
                       and played in the organisers' sim as it comes
     --guess FILE      with PLAN: a motion (.npz, as --track's) as the solver's starting guess,
                       for each of PLAN's moves it also has (from the same stance to the same
                       stance); the others start as usual. With w_track > 0 also followed
+    --start FILE      with PLAN: continue the trajectory in FILE (.json, as --save writes): PLAN
+                      starts at its last pose (on PLAN's first stance), and --save writes FILE's
+                      samples followed by PLAN's moves, one trajectory
     --track FILE      instead of a plan: follow the motion in FILE (.npz, q: T x 26 at 50 Hz, e.g.
                       an IK trajectory), made feasible: its plan, wall (N1-N3) and timing are read
                       from it, each move stays as close to it as balance and torques allow
@@ -765,6 +804,16 @@ if __name__ == "__main__":
             sys.exit("--guess needs a motion file (.npz with q)\n" + USAGE)
         guess = Path(args.pop(i + 1))
         args.pop(i)
+    before = None
+    if "--start" in args:
+        i = args.index("--start")
+        if i + 1 >= len(args) or args[i + 1].startswith("--"):
+            sys.exit("--start needs a trajectory file (.json, as --save writes)\n" + USAGE)
+        before_file = Path(args.pop(i + 1))
+        args.pop(i)
+        if not before_file.exists():
+            sys.exit(f"--start {before_file}: no such file")
+        before = io.load_trajectory(before_file)
     if track:  # before the weights below, which may still change what tracking_config sets
         from rcr.optimiser import reference
 
@@ -857,6 +906,15 @@ if __name__ == "__main__":
     wall, view = (track_wall if track else plan_walls(plan)), "--headless" not in flags
     if track:
         _SIM_WALLS[wall.id] = organisers_wall(wall.id)
+    if before is not None:
+        if track or "--replay" in flags:
+            sys.exit("--start continues a trajectory with PLAN's moves: not with --track/--replay")
+        model = rm.load_robot_model()
+        balls = np.array(model.limb_positions(last_pose(before)))
+        off = np.linalg.norm(balls - tr.contact_points(wall, plan.stances[0], cfg), axis=0).max()
+        if off > START_TOLERANCE:
+            sys.exit(f"--start: its last pose is {off * 1000:.1f} mm from PLAN's first stance")
+        print(f"start: the last pose of {before_file} ({before.times[-1]:.1f} s)", flush=True)
     if "--replay" in flags:
         replay(wall, view, out)
     elif guess:
@@ -870,7 +928,7 @@ if __name__ == "__main__":
         near = references[0][0] if references and references[0] is not None else None
         run_plan(
             wall, plan, view, save="--save" in flags, send=send, cfg=cfg,
-            references=references, near=near, out=out,
+            references=references, near=near, out=out, before=before,
         )  # fmt: skip
     elif track:
         references = [reference.move_samples(q_ref, move, cfg) for move in moves]
@@ -879,4 +937,6 @@ if __name__ == "__main__":
             references=references, near=q_ref[moves[0].start], out=out,
         )  # fmt: skip
     else:
-        run_plan(wall, plan, view, save="--save" in flags, send=send, cfg=cfg, out=out)
+        run_plan(
+            wall, plan, view, save="--save" in flags, send=send, cfg=cfg, out=out, before=before
+        )

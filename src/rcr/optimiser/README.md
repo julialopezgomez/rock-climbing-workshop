@@ -151,6 +151,19 @@ plan and guess meant for another machine (the cluster) go in `data/results/<run>
 (`data/results/to_n2/`: `plan_N2.json`, seed 66102, and its IK reference `wall-2-ik.npz`). There, commit the
 trajectory and pull it here, then `bash src/rcr/optimiser/run.sh --play`.
 
+**Continuing a trajectory** (`--start FILE`; `run.sh`'s `START`): the plan starts at the last pose of a saved
+trajectory (its balls within 2 mm of the plan's first stance), and what is saved is that trajectory followed by the
+new moves. **N2 to the top** [Ours]: the planner stops `plan_N2.json` at 0.985 m (stance 34). `scripts/extend_plan.py`
+plans on from there with two limits loosened (`MAX_LEVEL` 0.12 m, a limb's step at most 0.105 m). Big steps failed on
+the real robot, so it takes the smallest steps it can: the fewest over 90 mm (the longest in the first 34 moves), then
+the fewest moves. Four steps of 96–105 mm stay (moves 46, 47, 48, 50): on this wall rows 72 and 79 are 105 mm apart,
+with one hold between them. Each new move is then checked without solving its motion: a balanced pose with the
+moving limb unloaded, at its release and at its landing, each held ball within Caron's 5 N (|fx| + |fy| + fz), the
+torques within 0.8 of `run.sh`'s limit. That makes `plan_N2_full.json` (56 moves, a hand on the top hold) and
+`plan_N2_rest.json` (moves 34–55); every check passes with the CoM at least 5.7 mm inside Caron's polygon.
+`run.sh` solves the rest with no IK (`GUESS` empty, so `w_track` 0), continuing `trajectory_plan_N2_local.json` (the
+first 34 moves, solved locally with the IK).
+
 ```bash
 git submodule update --init                       # Microban and the organisers' simulator (once)
 uv sync --group optimiser --group sim             # casadi (IPOPT), pin (tests), their sim (playback)

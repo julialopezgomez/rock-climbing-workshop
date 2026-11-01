@@ -1,0 +1,190 @@
+{
+  "schema": "contact_plan/1",
+  "wall_id": "l2_s66102",
+  "stances": [
+    {
+      "contacts": {
+        "right_hand": "r65_c26",
+        "left_hand": "r61_c16",
+        "right_foot": "r44_c29",
+        "left_foot": "r47_c16"
+      }
+    },
+    {
+      "contacts": {
+        "right_hand": "r65_c26",
+        "left_hand": "r61_c16",
+        "right_foot": "r44_c29",
+        "left_foot": "r44_c21"
+      }
+    },
+    {
+      "contacts": {
+        "right_hand": "r65_c26",
+        "left_hand": "r61_c16",
+        "right_foot": "r47_c31",
+        "left_foot": "r44_c21"
+      }
+    },
+    {
+      "contacts": {
+        "right_hand": "r68_c31",
+        "left_hand": "r61_c16",
+        "right_foot": "r47_c31",
+        "left_foot": "r44_c21"
+      }
+    },
+    {
+      "contacts": {
+        "right_hand": "r68_c31",
+        "left_hand": "r65_c18",
+        "right_foot": "r47_c31",
+        "left_foot": "r44_c21"
+      }
+    },
+    {
+      "contacts": {
+        "right_hand": "r68_c31",
+        "left_hand": "r65_c21",
+        "right_foot": "r47_c31",
+        "left_foot": "r44_c21"
+      }
+    },
+    {
+      "contacts": {
+        "right_hand": "r68_c31",
+        "left_hand": "r65_c21",
+        "right_foot": "r47_c31",
+        "left_foot": "r47_c24"
+      }
+    },
+    {
+      "contacts": {
+        "right_hand": "r68_c31",
+        "left_hand": "r65_c21",
+        "right_foot": "r47_c31",
+        "left_foot": "r51_c21"
+      }
+    },
+    {
+      "contacts": {
+        "right_hand": "r68_c31",
+        "left_hand": "r65_c21",
+        "right_foot": "r51_c29",
+        "left_foot": "r51_c21"
+      }
+    },
+    {
+      "contacts": {
+        "right_hand": "r68_c31",
+        "left_hand": "r68_c16",
+        "right_foot": "r51_c29",
+        "left_foot": "r51_c21"
+      }
+    },
+    {
+      "contacts": {
+        "right_hand": "r72_c29",
+        "left_hand": "r68_c16",
+        "right_foot": "r51_c29",
+        "left_foot": "r51_c21"
+      }
+    },
+    {
+      "contacts": {
+        "right_hand": "r72_c29",
+        "left_hand": "r72_c18",
+        "right_foot": "r51_c29",
+        "left_foot": "r51_c21"
+      }
+    },
+    {
+      "contacts": {
+        "right_hand": "r72_c29",
+        "left_hand": "r72_c18",
+        "right_foot": "r51_c29",
+        "left_foot": "r54_c16"
+      }
+    },
+    {
+      "contacts": {
+        "right_hand": "r72_c29",
+        "left_hand": "r72_c18",
+        "right_foot": "r58_c29",
+        "left_foot": "r54_c16"
+      }
+    },
+    {
+      "contacts": {
+        "right_hand": "r72_c29",
+        "left_hand": "r72_c18",
+        "right_foot": "r58_c29",
+        "left_foot": "r58_c21"
+      }
+    },
+    {
+      "contacts": {
+        "right_hand": "r79_c29",
+        "left_hand": "r72_c18",
+        "right_foot": "r58_c29",
+        "left_foot": "r58_c21"
+      }
+    },
+    {
+      "contacts": {
+        "right_hand": "r79_c29",
+        "left_hand": "r72_c18",
+        "right_foot": "r58_c29",
+        "left_foot": "r61_c16"
+      }
+    },
+    {
+      "contacts": {
+        "right_hand": "r79_c29",
+        "left_hand": "r79_c18",
+        "right_foot": "r58_c29",
+        "left_foot": "r61_c16"
+      }
+    },
+    {
+      "contacts": {
+        "right_hand": "r79_c29",
+        "left_hand": "r82_c16",
+        "right_foot": "r58_c29",
+        "left_foot": "r61_c16"
+      }
+    },
+    {
+      "contacts": {
+        "right_hand": "r79_c29",
+        "left_hand": "r82_c16",
+        "right_foot": "r61_c24",
+        "left_foot": "r61_c16"
+      }
+    },
+    {
+      "contacts": {
+        "right_hand": "r79_c29",
+        "left_hand": "r82_c16",
+        "right_foot": "r65_c26",
+        "left_foot": "r61_c16"
+      }
+    },
+    {
+      "contacts": {
+        "right_hand": "r79_c29",
+        "left_hand": "r82_c16",
+        "right_foot": "r65_c26",
+        "left_foot": "r65_c18"
+      }
+    },
+    {
+      "contacts": {
+        "right_hand": "r79_c29",
+        "left_hand": "r86_c18",
+        "right_foot": "r65_c26",
+        "left_foot": "r65_c18"
+      }
+    }
+  ]
+}
