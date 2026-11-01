@@ -6,4 +6,6 @@ __pycache__/
 dist/
 runs/
 build/
+local-tools/recordings/
+local-tools/tmp/
 .DS_Store

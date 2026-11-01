@@ -34,6 +34,7 @@ CONTRIBUTING.md          branches, PRs, reviews
 data/examples/           tiny L1 wall, 2-move contact plan, tiny trajectory
 scripts/run_pipeline.py  --check: examples through every stage's signature
 scripts/make_wall.py     random L1/L2/L3 walls (show, save to data/walls/), or --check a wall file
+local-tools/             portable dashboard, real-robot replay and wall-editor launchers
 tests/                   format round-trips, Pi-safe imports, planner boundary
 src/rcr/
   types.py  io.py        contracts and save/load (Pi-safe)
@@ -88,6 +89,27 @@ uv run ruff check . && uv run ruff format --check .
 
 `--check` prints one line per stage, either `stub` or `ok`. A stage counts as done for Phase 1 when it says `ok`.
 CI runs all of the above on every push and PR.
+
+## Local dashboard and robot replay
+
+The portable launchers in [`local-tools/`](local-tools/README.md) use the `.venv` created by `uv sync` and find the
+repository automatically. From the repository root:
+
+```bash
+sh local-tools/run-dashboard.sh --robot 192.168.111.104 --model-name Climber
+
+sh local-tools/run-robot-replay.sh \
+  --host 192.168.111.104 \
+  --trajectory /absolute/path/to/trajectory.npz \
+  --kp 1000 --ki 600 --kd 1000
+
+sh local-tools/run-wall-editor.sh
+```
+
+The dashboard opens at <http://127.0.0.1:8780>, replay at <http://localhost:8080>, and the wall editor at
+<http://127.0.0.1:8765>. The replay command controls the physical robot: deploy the compatible Microban commit first,
+support the robot during initial testing, and do not continue after a motor hardware error. Only one replay viewer can
+use port 8080 at a time. Trajectories and dashboard recordings remain untracked.
 
 Random walls for testing (`rcr.walls`, see its docstring for what each level means):
 

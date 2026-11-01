@@ -1,0 +1,2 @@
+Replay runtime snapshot imported into the workshop on branch ruchira/replay-updates.
+It is intentionally independent of the active src/rcr package and uses this repository's simulator environment.
