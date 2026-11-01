@@ -131,7 +131,7 @@ STEP = 0.105
 MIN_APART = 1.0  # two balls at least this fraction of their roots' distance apart [Ours]
 # and at most this fraction of their reaches + roots' distance [Ours]
 HAND_MAX_APART = 0.7  # a pair with a hand (hand-hand, hand-foot)
-FEET_MAX_APART = 0.35  # the two feet
+FEET_MAX_APART = 0.32  # the two feet
 # [m] most one hand is above the other, and one foot above the other [Ours]: the example
 # plan the optimiser solved has up to 0.195 m (hands) and 0.135 m (feet)
 MAX_LEVEL = 0.10
@@ -139,7 +139,7 @@ MAX_LEVEL = 0.10
 # solved has 0.35 m
 HAND_FEET_MAX_APART = 0.39
 HAND_FEET_MIN_APART = 0.14  # [m] the lower hand is at least this above the higher foot [Ours]: the example plan the optimiser solved has 0.25 m
-MAX_TRANSITION_DISTANCE = STEP  # [m] most a limb's hold in b is from its hold in a [Ours]
+MAX_TRANSITION_DISTANCE = 0.12  # [m] most a limb's hold in b is from its hold in a [Ours]
 
 Q_HANG = pin.neutral(model)
 for name, angle in json.loads(HANG.read_text())["joints"].items():
