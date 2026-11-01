@@ -5,7 +5,7 @@ Uses the organisers' ClimbingSim physics directly, bypassing the
 built-in position-controlled servos.
 
 Run:
-    uv run python scripts/aro_mujoco_id.py
+    uv run python scripts/mujoco_sim.py
 
 On macOS with the MuJoCo viewer, use mjpython.
 """
@@ -21,7 +21,7 @@ from climbing_sim.scene import BALL_SITES, JOINTS
 from rcr import io
 from rcr.kinematics import ik
 from rcr.kinematics.bezier import Bezier, connecting
-from rcr.types import Stance
+from rcr.types import LIMBS, Stance
 
 
 # ------------------------------------------------------------
@@ -34,7 +34,7 @@ DESTINATION = "c29_r27"
 METHOD = "qp"  # or "pinv"
 
 # Same PD gain structure as ARO
-KP = 300.0
+KP = 3000.0
 KV = 2.0 * np.sqrt(KP)
 
 # Additional linear contact forces
@@ -43,8 +43,14 @@ CONTACT_KD = 1.0
 NORMAL_PRELOAD = 0.15  # N, into the wall (+y)
 MAX_CONTACT_FORCE = 0.5  # N
 
-# Illustrative safety cap, not a validated Microban torque rating
-MAX_MOTOR_TORQUE = 0.15  # Nm
+# The moving limb tracks its ball, not its joints: the joints track well, but the trunk (not
+# actuated, no feedback on it) drifts from its plan and takes the ball with it
+BALL_DAMPING = 0.03  # of the limb's damped inverse, as DAMPING in the kinematics
+
+# The XL330's torque at its 1.75 A current limit [Microban]
+MAX_MOTOR_TORQUE = 0.605  # Nm
+
+SETTLE_TIME = 1.0  # s holding the last target, for the ball to seat in its socket
 
 KNOT_STRIDE = 3  # One Bezier knot every 3 IK configurations
 RENDER = True
@@ -68,7 +74,7 @@ def pin_q_from_mujoco(sim):
     for name in JOINTS:
         joint_id = ik.model.getJointId(name)
         q_index = ik.model.idx_qs[joint_id]
-        q[q_index] = d.qpos[sim.model.joint(name).qposadr]
+        q[q_index] = d.qpos[sim.model.joint(name).qposadr[0]]
 
     return q
 
@@ -85,7 +91,9 @@ def make_joint_bezier(qs):
 
     Only the 19 actuated joints are interpolated.
     """
-    q = np.asarray(qs)[:, 7:]
+    # ik's q is in Pinocchio's joint order; sim._qadr is in the sim's (JOINTS)
+    joints = [ik.model.idx_qs[ik.model.getJointId(name)] for name in JOINTS]
+    q = np.asarray(qs)[:, joints]
     times = np.arange(len(q)) * ik.DT
 
     indices = np.r_[
@@ -169,7 +177,7 @@ def make_joint_bezier(qs):
 # ARO-style inverse-dynamics controller
 # ------------------------------------------------------------
 
-def control_law(sim, desired, t, held_targets):
+def control_law(sim, desired, t, held_targets, ball_target):
     """Compute ID/PD torques plus linear contact-force torques."""
     m = sim.model
     d = sim.data
@@ -182,16 +190,35 @@ def control_law(sim, desired, t, held_targets):
     q = d.qpos[sim._qadr]
     v = d.qvel[sim._vadr]
 
+    # The moving limb's joint error: its ball's error through a damped inverse of its Jacobian.
+    # Only that limb's joints move its ball.
+    jacobian = np.zeros((3, m.nv))
+    site_id = m.site(BALL_SITES[MOVING]).id
+
+    mujoco.mj_jacSite(
+        m, d, jacobian, None, site_id
+    )
+
+    J_actuated = jacobian[:, sim._vadr]
+    limb = np.flatnonzero(np.abs(J_actuated).sum(axis=0) > 0.0)
+    J_limb = J_actuated[:, limb]
+
+    q_error = q_des - q
+    q_error[limb] = J_limb.T @ np.linalg.solve(
+        J_limb @ J_limb.T + BALL_DAMPING**2 * np.eye(3),
+        ball_target - d.site_xpos[site_id],
+    )
+
     # ARO PD tracking with feedforward acceleration
     a_cmd = (
         a_des
-        + KP * (q_des - q)
+        + KP * q_error
         + KV * (v_des - v)
     )
 
     # MuJoCo generalized mass matrix
     M = np.empty((m.nv, m.nv))
-    mujoco.mj_fullM(m, M, d.qM)
+    mujoco.mj_fullM(m, d, M)
 
     # Desired base acceleration set to zero for this baseline
     full_acc = np.zeros(m.nv)
@@ -204,7 +231,6 @@ def control_law(sim, desired, t, held_targets):
     tau = tau_full[sim._vadr].copy()
 
     # Add contact-force torques, as in ARO
-    jacobian = np.zeros((3, m.nv))
     max_contact_error = 0.0
 
     for limb, target in held_targets.items():
@@ -313,6 +339,12 @@ def main():
     # Fit the ARO-style joint-space Bezier
     desired = make_joint_bezier(qs)
 
+    # Where the plan puts the moving ball, at each IK configuration
+    ball_path = np.array([
+        ik.ball_positions(q)[LIMBS.index(MOVING)]
+        for q in qs
+    ])
+
     # Three limbs stay attached
     initial_balls = sim.ball_positions()
 
@@ -333,7 +365,7 @@ def main():
     physics_dt = sim.model.opt.timestep
 
     duration = (len(qs) - 1) * ik.DT
-    n_steps = round(duration / physics_dt)
+    n_steps = round((duration + SETTLE_TIME) / physics_dt)
 
     max_held_error = 0.0
     saturated = 0
@@ -342,8 +374,10 @@ def main():
         for k in range(n_steps):
             t = k * physics_dt
 
+            sample = min(round(t / ik.DT), len(qs) - 1)
+
             contact_error, peak_tau = control_law(
-                sim, desired, t, held_targets
+                sim, desired, t, held_targets, ball_path[sample]
             )
 
             max_held_error = max(
