@@ -1,8 +1,13 @@
+"""Whole-body inverse-dynamics climb of a whole npz trajectory in MuJoCo [Ours].
 
-"""ARO-style Bezier trajectory + inverse-dynamics control in MuJoCo.
+Uses the organisers' ClimbingSim physics directly, with torque control and the sim's true state:
+no servo model, no sensor delays. It tests the trajectory, not what the robot can do.
 
-Uses the organisers' ClimbingSim physics directly, bypassing the
-built-in position-controlled servos.
+Each control step solves the accelerations for the tasks together (trunk pose, moving ball, held
+balls still, moving foot's orientation, joints softly), then the contact forces and joint torques
+that produce them: M a + h = S^T tau + J_c^T f.
+
+Prints how many moves it made in a row, and stops at the first one it fails.
 
 Run:
     uv run python scripts/mujoco_sim.py
@@ -14,426 +19,366 @@ from pathlib import Path
 
 import mujoco
 import numpy as np
+from climbing_sim import JOINTS, ClimbingSim
+from climbing_sim.routes import generate_wall
+from climbing_sim.scene import BALL_SITES
 
-from climbing_sim import ClimbingSim, Wall
-from climbing_sim.scene import BALL_SITES, JOINTS
-
-from rcr import io
-from rcr.kinematics import ik
-from rcr.kinematics.bezier import Bezier, connecting
-from rcr.types import LIMBS, Stance
-
+from rcr.types import LIMBS, MICROBAN_JOINTS
 
 # ------------------------------------------------------------
 # Experiment
 # ------------------------------------------------------------
 
-WALL_NAME = "N1"
-MOVING = "right_hand"
-DESTINATION = "c29_r27"
-METHOD = "qp"  # or "pinv"
+# Mohammadreza's IK of level 3, seed 41545 (optimiser/swing-path-n2, data/results/to_n3)
+NPZ = Path(__file__).parents[1] / "npz/wall-3-ik_l3_s41545.npz"
+LEVEL, SEED = 3, 41545
 
-# Same PD gain structure as ARO
-KP = 3000.0
-KV = 2.0 * np.sqrt(KP)
+DT = 0.02  # s between the rows of the npz
+SPEED = 0.5  # of the trajectory's speed
+SETTLE_TIME = 0.5  # s holding the first pose
+GRACE_TIME = 0.5  # s for a moved ball to seat, holding the end of its move
+HOOK_TOL = 0.006  # m, a ball this close to a socket's centre sits in it [simulator hooked()]
 
-# Additional linear contact forces
-CONTACT_KP = 15.0
-CONTACT_KD = 1.0
-NORMAL_PRELOAD = 0.15  # N, into the wall (+y)
-MAX_CONTACT_FORCE = 2.  # N
+# PD gains on each task's acceleration, and its weight
+KP_JOINT, W_JOINT = 1000.0, 0.001  # soft, so that a leg can give way when it hits a hold
+KP_TRUNK, W_TRUNK = 400.0, 10.0
+KP_BALL, W_BALL = 1000.0, 10.0
+KP_FOOT, W_FOOT = 1000.0, 100.0
+KD_HELD, W_HELD = 40.0, 100.0
 
-# The moving limb tracks its ball, not its joints: the joints track well, but the trunk (not
-# actuated, no feedback on it) drifts from its plan and takes the ball with it
-TRACK_BALL = False
-BALL_DAMPING = 0.03  # of the limb's damped inverse, as DAMPING in the kinematics
+TRUNK_OFFSET = np.array(
+    [0.0, -0.01, 0.0]
+)  # m, further from the wall than planned: fewer collisions
+FORCE_REG = 1e-3  # contact forces against joint torques
 
 # The XL330's torque at its 1.75 A current limit [Microban]
 MAX_MOTOR_TORQUE = 0.605  # Nm
 
-SETTLE_TIME = 1.0  # s holding the last target, for the ball to seat in its socket
+# The search for each foot move's tilt about the wall's x, relative to the plan: the plan's foot
+# hits its next hold with its shaft, just before the ball seats
+TILTS = np.arange(-35.0, 36.0, 5.0)  # deg
+TILT_STRIDE = 2  # samples between searched tilts
+TILT_CHANGE_COST = 0.15  # mm of penetration per degree of change between samples
+TILT_COST = 0.01  # mm of penetration per degree of tilt
+OUT_OF_REACH_COST = 1e3
 
-KNOT_STRIDE = 3  # One Bezier knot every 3 IK configurations
 RENDER = True
 REALTIME = True
 
 
 # ------------------------------------------------------------
-# Initial state conversion
+# The trajectory
 # ------------------------------------------------------------
 
-def pin_q_from_mujoco(sim):
-    """Convert actual MuJoCo configuration to Pinocchio layout."""
-    q = np.zeros(ik.model.nq)
-    d = sim.data
 
-    q[:3] = d.qpos[:3]
+def load_route():
+    """The npz as (trunk positions, trunk quaternions w x y z, joints in the sim's order)."""
+    q = np.load(NPZ)["q"]
+    order = [MICROBAN_JOINTS.index(name) for name in JOINTS]
+    return q[:, :3], q[:, 3:7], q[:, 7:][:, order]
 
-    # MuJoCo: wxyz; Pinocchio: xyzw
-    q[3:7] = d.qpos[[4, 5, 6, 3]]
 
-    for name in JOINTS:
-        joint_id = ik.model.getJointId(name)
-        q_index = ik.model.idx_qs[joint_id]
-        q[q_index] = d.qpos[sim.model.joint(name).qposadr[0]]
+def find_moves(balls, sockets):
+    """Per move: its first and last sample, the moving limb's index, and the socket of each ball
+    before and after. A stance is a sample with all four balls in sockets."""
+    stances = []
+    for i, at in enumerate(balls):
+        d = np.linalg.norm(sockets[None] - at[:, None], axis=2)
+        if (d.min(axis=1) < HOOK_TOL).all():
+            stance = tuple(int(j) for j in d.argmin(axis=1))
+            if not stances or stance != stances[-1][1]:
+                stances.append((i, stance))
+    moves = []
+    for (i0, before), (i1, after) in zip(stances, stances[1:], strict=False):
+        (limb,) = [k for k in range(len(LIMBS)) if before[k] != after[k]]
+        moves.append({"i0": i0, "i1": i1, "limb": limb, "before": before, "after": after})
+    return moves
 
-    return q
+
+def smooth(x, n=5):
+    """Moving average over n samples, per column."""
+    pad = np.pad(x, ((n // 2, n - 1 - n // 2), (0, 0)), mode="edge")
+    return np.array([np.convolve(c, np.ones(n) / n, mode="valid") for c in pad.T]).T
+
+
+def tilted(quat, degrees):
+    """The quaternion turned by this many degrees about the wall's x."""
+    rotation, out = np.zeros(4), np.zeros(4)
+    mujoco.mju_axisAngle2Quat(rotation, np.array([1.0, 0.0, 0.0]), np.radians(degrees))
+    mujoco.mju_mulQuat(out, rotation, quat)
+    return out
+
+
+def site_quat(data, site):
+    out = np.zeros(4)
+    mujoco.mju_mat2Quat(out, data.site_xmat[site])
+    return out
+
+
+def foot_tilts(sim, route, balls, move):
+    """(samples, tilts): the foot's tilt along this move, by dynamic programming. The cheapest
+    in penetration of the foot's body, changing slowly, from no tilt to no tilt. On `sim`, which
+    this leaves anywhere: pass one that is not climbing."""
+    m, d = sim.model, sim.data
+    pos, quat, joints = route
+    name = LIMBS[move["limb"]]
+    site = m.site(BALL_SITES[name]).id
+    body = m.site_bodyid[site]
+    ball_geom = m.geom(f"{name}_ball_coll").id
+    jp, jr = np.zeros((3, m.nv)), np.zeros((3, m.nv))
+
+    def place(i):
+        d.qpos[:3] = pos[i] + TRUNK_OFFSET
+        d.qpos[3:7] = quat[i]
+        d.qpos[sim._qadr] = joints[i]
+        mujoco.mj_kinematics(m, d)
+
+    place(move["i0"])
+    mujoco.mj_comPos(m, d)
+    mujoco.mj_jacSite(m, d, jp, jr, site)
+    leg = np.flatnonzero(np.abs(jp[:, sim._vadr]).sum(axis=0) > 0)
+    q_leg, v_leg = sim._qadr[leg], sim._vadr[leg]
+    low, high = sim.joint_range[leg].T
+
+    samples = list(range(move["i0"], move["i1"] + 1, TILT_STRIDE))
+    if samples[-1] != move["i1"]:
+        samples.append(move["i1"])
+    cost = np.zeros((len(samples), len(TILTS)))
+    for a, i in enumerate(samples):
+        place(i)
+        planned, q0 = site_quat(d, site), d.qpos[q_leg].copy()
+        for b, tilt in enumerate(TILTS):
+            target = tilted(planned, tilt)
+            d.qpos[q_leg] = q0
+            for _ in range(40):  # the leg's IK on the ball and the tilted orientation
+                mujoco.mj_kinematics(m, d)
+                mujoco.mj_comPos(m, d)
+                mujoco.mj_jacSite(m, d, jp, jr, site)
+                e_ball = balls[i, move["limb"]] - d.site_xpos[site]
+                e_rot = np.zeros(3)
+                mujoco.mju_subQuat(e_rot, target, site_quat(d, site))
+                e_rot = d.site_xmat[site].reshape(3, 3) @ e_rot
+                if np.linalg.norm(e_ball) < 5e-4 and np.linalg.norm(e_rot) < 5e-3:
+                    break
+                j = np.vstack([jp[:, v_leg], 0.1 * jr[:, v_leg]])
+                step = j.T @ np.linalg.solve(j @ j.T + 1e-4 * np.eye(6), np.r_[e_ball, 0.1 * e_rot])
+                d.qpos[q_leg] = np.clip(d.qpos[q_leg] + step, low, high)
+            out_of_reach = np.linalg.norm(e_ball) > 2e-3 or np.linalg.norm(e_rot) > 0.05
+            mujoco.mj_forward(m, d)
+            deepest = 0.0
+            for k in range(d.ncon):
+                c = d.contact[k]
+                on_foot = body in (m.geom_bodyid[c.geom1], m.geom_bodyid[c.geom2])
+                if on_foot and ball_geom not in (c.geom1, c.geom2):
+                    deepest = min(deepest, c.dist)
+            cost[a, b] = OUT_OF_REACH_COST * out_of_reach - 1000 * deepest + TILT_COST * abs(tilt)
+
+    change = np.abs(TILTS[None] - TILTS[:, None]) * TILT_CHANGE_COST
+    none = int(np.argmin(np.abs(TILTS)))
+    total = np.full(cost.shape, np.inf)
+    total[0, none] = cost[0, none]
+    back = np.zeros(cost.shape, dtype=int)
+    for a in range(1, len(samples)):
+        options = total[a - 1][None] + change
+        back[a] = options.argmin(axis=1)
+        total[a] = options.min(axis=1) + cost[a]
+    path = [none]
+    for a in range(len(samples) - 1, 0, -1):
+        path.append(back[a, path[-1]])
+    return samples, TILTS[path[::-1]]
 
 
 # ------------------------------------------------------------
-# Joint-space Bezier trajectory
+# Whole-body controller
 # ------------------------------------------------------------
 
-def make_joint_bezier(qs):
-    """Create a C2 joint trajectory from the IK configurations.
 
-    Uses quintic Bezier segments through selected IK configurations.
-    Returns a function desired(t) -> (q, dq, ddq).
+class Controller:
+    def __init__(self, sim, planner, route, balls):
+        self.sim, self.planner, self.balls = sim, planner, balls
+        self.pos, self.quat, self.joints = route
+        self.v_joints = np.gradient(self.joints, DT, axis=0)
+        self.a_joints = np.gradient(smooth(self.v_joints), DT, axis=0)
+        self.v_pos = np.gradient(self.pos, DT, axis=0)
+        self.v_balls = np.gradient(balls, DT, axis=0)
+        self.v_rot = np.zeros((len(self.pos), 3))
+        for i in range(len(self.pos) - 1):
+            mujoco.mju_subQuat(self.v_rot[i], self.quat[i + 1], self.quat[i])
+        self.v_rot /= DT
+        m = sim.model
+        self.sites = [m.site(BALL_SITES[limb]).id for limb in LIMBS]
+        self.actuators = [mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_ACTUATOR, n) for n in JOINTS]
+        self.mass = np.empty((m.nv, m.nv))
+        self.jacobians = np.zeros((len(LIMBS), 3, m.nv))
+        self.saturated = 0
 
-    Only the 19 actuated joints are interpolated.
-    """
-    # ik's q is in Pinocchio's joint order; sim._qadr is in the sim's (JOINTS)
-    joints = [ik.model.idx_qs[ik.model.getJointId(name)] for name in JOINTS]
-    q = np.asarray(qs)[:, joints]
-    times = np.arange(len(q)) * ik.DT
+    def planned_foot_quat(self, i, limb):
+        """The foot's orientation in the plan at sample i."""
+        m, d = self.planner.model, self.planner.data
+        d.qpos[:3], d.qpos[3:7] = self.pos[i], self.quat[i]
+        d.qpos[self.planner._qadr] = self.joints[i]
+        mujoco.mj_kinematics(m, d)
+        return site_quat(d, self.sites[limb])
 
-    indices = np.r_[
-        np.arange(0, len(q) - 1, KNOT_STRIDE),
-        len(q) - 1,
-    ]
+    def step(self, i, alpha, held, moving=None, tilts=None):
+        """Set the motors' torques for sample i + alpha, then take a physics step."""
+        sim, m, d = self.sim, self.sim.model, self.sim.data
+        va, nv = sim._vadr, m.nv
+        j1 = min(i + 1, len(self.pos) - 1)
+        mujoco.mj_forward(m, d)
+        mujoco.mj_fullM(m, d, self.mass)
+        for k, site in enumerate(self.sites):
+            mujoco.mj_jacSite(m, d, self.jacobians[k], None, site)
+        rows, targets = [], []
 
-    knots = q[indices]
-    knot_times = times[indices]
+        def task(jacobian, acceleration, weight):
+            rows.append(np.sqrt(weight) * jacobian)
+            targets.append(np.sqrt(weight) * acceleration)
 
-    if len(knots) >= 3:
-        velocities = np.gradient(
-            knots, knot_times, axis=0
-        )
+        def kd(kp):
+            return 2.0 * np.sqrt(kp)
 
-        accelerations = np.gradient(
-            velocities, knot_times, axis=0
-        )
-    else:
-        velocities = np.zeros_like(knots)
-        accelerations = np.zeros_like(knots)
+        trunk = np.zeros((6, nv))
+        trunk[:6, :6] = np.eye(6)
+        at = self.pos[i] + alpha * (self.pos[j1] - self.pos[i]) + TRUNK_OFFSET
+        e_rot = np.zeros(3)
+        mujoco.mju_subQuat(e_rot, self.quat[i], d.qpos[3:7])
+        a_trunk = np.r_[
+            KP_TRUNK * (at - d.qpos[:3]) + kd(KP_TRUNK) * (SPEED * self.v_pos[i] - d.qvel[:3]),
+            KP_TRUNK * e_rot + kd(KP_TRUNK) * (SPEED * self.v_rot[i] - d.qvel[3:6]),
+        ]
+        task(trunk, a_trunk, W_TRUNK)
 
-    # Start and end at rest
-    velocities[0] = 0.0
-    velocities[-1] = 0.0
-    accelerations[0] = 0.0
-    accelerations[-1] = 0.0
+        for k in held:
+            task(self.jacobians[k], -KD_HELD * (self.jacobians[k] @ d.qvel), W_HELD)
 
-    curves = []
-
-    for i in range(len(knots) - 1):
-        T = knot_times[i + 1] - knot_times[i]
-
-        start = (
-            knots[i],
-            velocities[i],
-            accelerations[i],
-        )
-
-        end = (
-            knots[i + 1],
-            velocities[i + 1],
-            accelerations[i + 1],
-        )
-
-        control_points = connecting(start, end, T)
-
-        curves.append(
-            Bezier(
-                control_points,
-                t_min=float(knot_times[i]),
-                t_max=float(knot_times[i + 1]),
+        if moving is not None:
+            j, site = self.jacobians[moving], self.sites[moving]
+            at = self.balls[i, moving] + alpha * (self.balls[j1, moving] - self.balls[i, moving])
+            a_ball = KP_BALL * (at - d.site_xpos[site]) + kd(KP_BALL) * (
+                SPEED * self.v_balls[i, moving] - j @ d.qvel
             )
+            task(j, a_ball, W_BALL)
+
+        if tilts is not None:
+            site = self.sites[moving]
+            j = np.zeros((3, nv))
+            mujoco.mj_jacSite(m, d, None, j, site)
+            tilt = np.interp(i + alpha, tilts[0], tilts[1])
+            target = tilted(self.planned_foot_quat(i, moving), tilt)
+            e_rot = np.zeros(3)
+            mujoco.mju_subQuat(e_rot, target, site_quat(d, site))
+            e_rot = d.site_xmat[site].reshape(3, 3) @ e_rot
+            task(j, KP_FOOT * e_rot - kd(KP_FOOT) * (j @ d.qvel), W_FOOT)
+
+        joints = np.zeros((len(JOINTS), nv))
+        joints[np.arange(len(JOINTS)), va] = 1.0
+        at = self.joints[i] + alpha * (self.joints[j1] - self.joints[i])
+        a_joints = (
+            SPEED**2 * self.a_joints[i]
+            + KP_JOINT * (at - d.qpos[sim._qadr])
+            + kd(KP_JOINT) * (SPEED * self.v_joints[i] - d.qvel[va])
         )
+        task(joints, a_joints, W_JOINT)
 
-    v_curves = [c.derivative(1) for c in curves]
-    a_curves = [c.derivative(2) for c in curves]
+        acceleration = np.linalg.lstsq(np.vstack(rows), np.concatenate(targets), rcond=None)[0]
+        need = self.mass @ acceleration + d.qfrc_bias
 
-    def desired(t):
-        t = float(np.clip(
-            t, knot_times[0], knot_times[-1]
-        ))
-
-        i = min(
-            np.searchsorted(
-                knot_times[1:], t, side="left"
-            ),
-            len(curves) - 1,
+        # The base has no motor: the held balls' forces make its rows, with the least joint torque
+        contact = np.vstack([self.jacobians[k] for k in held])
+        base, actuated = contact[:, :6].T, contact[:, va].T
+        n = base.shape[1]
+        kkt = np.block(
+            [
+                [actuated.T @ actuated + FORCE_REG * np.eye(n), base.T],
+                [base, np.zeros((6, 6))],
+            ]
         )
+        rhs = np.r_[actuated.T @ need[va], need[:6]]
+        forces = np.linalg.lstsq(kkt, rhs, rcond=None)[0][:n]
+        tau = need[va] - actuated @ forces
 
-        return (
-            curves[i](t),
-            v_curves[i](t),
-            a_curves[i](t),
-        )
-
-    return desired
-
-
-# ------------------------------------------------------------
-# ARO-style inverse-dynamics controller
-# ------------------------------------------------------------
-
-def control_law(sim, desired, t, held_targets, ball_target):
-    """Compute ID/PD torques plus linear contact-force torques."""
-    m = sim.model
-    d = sim.data
-
-    mujoco.mj_forward(m, d)
-
-    q_des, v_des, a_des = desired(t)
-
-    # Actual actuated joint positions and velocities
-    q = d.qpos[sim._qadr]
-    v = d.qvel[sim._vadr]
-
-    # The moving limb's joint error: its ball's error through a damped inverse of its Jacobian.
-    # Only that limb's joints move its ball.
-    jacobian = np.zeros((3, m.nv))
-    site_id = m.site(BALL_SITES[MOVING]).id
-
-    mujoco.mj_jacSite(
-        m, d, jacobian, None, site_id
-    )
-
-    J_actuated = jacobian[:, sim._vadr]
-    limb = np.flatnonzero(np.abs(J_actuated).sum(axis=0) > 0.0)
-    J_limb = J_actuated[:, limb]
-
-    q_error = q_des - q
-    if TRACK_BALL: q_error[limb] = J_limb.T @ np.linalg.solve(
-        J_limb @ J_limb.T + BALL_DAMPING**2 * np.eye(3),
-        ball_target - d.site_xpos[site_id],
-    )
-
-    # ARO PD tracking with feedforward acceleration
-    a_cmd = (
-        a_des
-        + KP * q_error
-        + KV * (v_des - v)
-    )
-
-    # MuJoCo generalized mass matrix
-    M = np.empty((m.nv, m.nv))
-    mujoco.mj_fullM(m, d, M)
-
-    # Desired base acceleration set to zero for this baseline
-    full_acc = np.zeros(m.nv)
-    full_acc[sim._vadr] = a_cmd
-
-    # tau = M(q) * ddq_cmd + h(q, dq)
-    tau_full = M @ full_acc + d.qfrc_bias
-
-    # The base has no motor: the held balls carry what its rows ask (the robot's weight). The
-    # smallest contact forces that do, then the joint torques that produce them:
-    # M a + h = S^T tau + J_c^T f [as rcr.controller.inverse_dynamics]
-    J_contact = np.zeros((3 * len(held_targets), m.nv))
-
-    for i, limb in enumerate(held_targets):
-        mujoco.mj_jacSite(
-            m, d, J_contact[3 * i:3 * i + 3], None, m.site(BALL_SITES[limb]).id
-        )
-
-    forces = np.linalg.lstsq(
-        J_contact[:, :6].T, tau_full[:6], rcond=None
-    )[0]
-
-    # Only the actuated joints receive motor torques
-    tau = tau_full[sim._vadr] - J_contact[:, sim._vadr].T @ forces
-
-    # Add contact-force torques, as in ARO
-    max_contact_error = 0.0
-
-    for limb, target in held_targets.items():
-        site_id = m.site(BALL_SITES[limb]).id
-
-        p = d.site_xpos[site_id]
-
-        mujoco.mj_jacSite(
-            m, d, jacobian, None, site_id
-        )
-
-        v_ball = jacobian @ d.qvel
-
-        error = target - p
-        max_contact_error = max(
-            max_contact_error,
-            np.linalg.norm(error),
-        )
-
-        # Small linear spring-damper force
-        force = (
-            CONTACT_KP * error
-            - CONTACT_KD * v_ball
-        )
-
-        # Push slightly into the wall
-        force += np.array([
-            0.0, NORMAL_PRELOAD, 0.0
-        ])
-
-        magnitude = np.linalg.norm(force)
-
-        if magnitude > MAX_CONTACT_FORCE:
-            force *= MAX_CONTACT_FORCE / magnitude
-
-        # Cartesian force -> joint torques
-        J_actuated = jacobian[:, sim._vadr]
-
-        tau += J_actuated.T @ force
-
-    # Motor torque saturation
-    tau = np.clip(
-        tau,
-        -MAX_MOTOR_TORQUE,
-        MAX_MOTOR_TORQUE,
-    )
-
-    # Apply torque to the corresponding MuJoCo motor actuator
-    for name, torque in zip(JOINTS, tau):
-        actuator_id = mujoco.mj_name2id(
-            m,
-            mujoco.mjtObj.mjOBJ_ACTUATOR,
-            name,
-        )
-
-        if actuator_id == -1:
-            candidates = np.where(
-                m.actuator_trnid[:, 0]
-                == m.joint(name).id
-            )[0]
-
-            if len(candidates) != 1:
-                raise ValueError(
-                    f"Cannot find actuator for {name}"
-                )
-
-            actuator_id = int(candidates[0])
-
-        d.ctrl[actuator_id] = torque
-
-    return max_contact_error, np.max(np.abs(tau))
+        self.saturated += np.abs(tau).max() >= MAX_MOTOR_TORQUE
+        d.ctrl[self.actuators] = np.clip(tau, -MAX_MOTOR_TORQUE, MAX_MOTOR_TORQUE)
+        mujoco.mj_step(m, d)
 
 
 # ------------------------------------------------------------
 # Run in MuJoCo
 # ------------------------------------------------------------
 
-def main():
-    # Organisers' wall and simulator
-    sim_wall = Wall.load(WALL_NAME)
-    sim = ClimbingSim(sim_wall, cameras=[])
 
-    sim.reset_hanging()
-
-    # Our corresponding wall model and stances
-    wall = io.load_wall(
-        Path("data/examples") / f"{WALL_NAME}.json"
+def climb(sim, planner, viewer=None):
+    """The npz's moves in a row, stopping at the first one that fails. (moves made, how many, why
+    it stopped)."""
+    d = sim.data
+    route = load_route()
+    pos, quat, joints = route
+    balls = np.array(
+        [
+            [planner.ball_positions_at(joints[i], pos[i], quat[i])[limb] for limb in LIMBS]
+            for i in range(len(pos))
+        ]
     )
+    sockets = sim.wall.sockets()
+    moves = find_moves(balls, sockets)
+    controller = Controller(sim, planner, route, balls)
 
-    a = wall.start
-
-    contacts = dict(a.contacts)
-    contacts[MOVING] = DESTINATION
-
-    b = Stance(contacts=contacts)
-
-    # Use the actual settled simulator configuration
-    # as the starting point for IK
-    q0 = pin_q_from_mujoco(sim)
-
-    # Generate the configurations using existing IK
-    qs = ik.ik_traj(
-        wall, a, b, q0, method=METHOD
-    )
-
-    # Fit the ARO-style joint-space Bezier
-    desired = make_joint_bezier(qs)
-
-    # Where the plan puts the moving ball, at each IK configuration
-    ball_path = np.array([
-        ik.ball_positions(q)[LIMBS.index(MOVING)]
-        for q in qs
-    ])
-
-    # Three limbs stay attached
-    initial_balls = sim.ball_positions()
-
-    held_targets = {
-        limb: p.copy()
-        for limb, p in initial_balls.items()
-        if limb != MOVING
-    }
-
-    print("Initial hooked:", sim.hooked())
-
-    viewer = (
-        sim.view(realtime=REALTIME)
-        if RENDER else None
-    )
-
-    # MuJoCo physics timestep, typically 2 ms
     physics_dt = sim.model.opt.timestep
+    substeps = round(DT / physics_dt / SPEED)
+    sync_every = round(DT / physics_dt)
+    steps = 0
 
-    duration = (len(qs) - 1) * ik.DT
-    n_steps = round((duration + SETTLE_TIME) / physics_dt)
+    def sync():
+        nonlocal steps
+        steps += 1
+        if viewer is not None and steps % sync_every == 0:
+            sim._sync_viewer()
 
-    max_held_error = 0.0
-    saturated = 0
+    sim.reset(pos[0], quat[0], dict(zip(JOINTS, joints[0], strict=True)))
+    for _ in range(round(SETTLE_TIME / physics_dt)):
+        controller.step(0, 0.0, range(len(LIMBS)))
+        sync()
 
+    def hooked(limb):
+        return sim.hooked()[LIMBS[limb]]
+
+    for n, move in enumerate(moves):
+        limb = move["limb"]
+        name = LIMBS[limb]
+        held = [k for k in range(len(LIMBS)) if k != limb]
+        tilts = foot_tilts(planner, route, balls, move) if "foot" in name else None
+        for i in range(move["i0"], move["i1"]):
+            for sub in range(substeps):
+                controller.step(i, sub / substeps, held, limb, tilts)
+                sync()
+            for k in held:
+                if hooked(k) != move["before"][k]:
+                    return n, len(moves), f"move {n} ({name}): {LIMBS[k]} left its hold"
+        for _ in range(round(GRACE_TIME / DT)):
+            if hooked(limb) == move["after"][limb]:
+                break
+            for _ in range(substeps):
+                controller.step(move["i1"], 0.0, held, limb, tilts)
+                sync()
+        if hooked(limb) != move["after"][limb]:
+            socket = sockets[move["after"][limb]]
+            miss = 1000 * np.linalg.norm(d.site_xpos[controller.sites[limb]] - socket)
+            return n, len(moves), f"move {n} ({name}): ball stopped {miss:.1f} mm from socket"
+        print(f"move {n:2d} {name:<10} hooked, t = {d.time:.1f} s", flush=True)
+    return len(moves), len(moves), "reached the end"
+
+
+def main():
+    wall = generate_wall(LEVEL, SEED)
+    sim = ClimbingSim(wall, cameras=[])
+    planner = ClimbingSim(wall, cameras=[])  # kinematics only, so as not to disturb the climb
+    viewer = sim.view(realtime=REALTIME) if RENDER else None
     try:
-        for k in range(n_steps):
-            t = k * physics_dt
-
-            sample = min(round(t / ik.DT), len(qs) - 1)
-
-            contact_error, peak_tau = control_law(
-                sim, desired, t, held_targets, ball_path[sample]
-            )
-
-            max_held_error = max(
-                max_held_error, contact_error
-            )
-
-            if peak_tau >= MAX_MOTOR_TORQUE - 1e-8:
-                saturated += 1
-
-            # Direct physics stepping, not sim.step()
-            mujoco.mj_step(sim.model, sim.data)
-
-            # Update the viewer every 20 ms
-            if (k + 1) % sim.n_sub == 0:
-                if viewer is not None:
-                    if not viewer.is_running():
-                        break
-                    sim._sync_viewer()
-
-                if (k + 1) % (10 * sim.n_sub) == 0:
-                    print(
-                        f"t={sim.data.time:.2f}s | "
-                        f"held error={1000*contact_error:.1f} mm | "
-                        f"hooked={sim.hooked()}"
-                    )
-
+        made, total, why = climb(sim, planner, viewer)
     finally:
         sim.close()
-
-    print(
-        "Maximum held-ball error:",
-        max_held_error * 1000,
-        "mm",
-    )
-    print(
-        "Motor saturation:",
-        saturated,
-        "/",
-        n_steps,
-        "physics steps",
-    )
+    print(f"{made} of {total} moves in a row: {why}")
     print("Final hooked:", sim.hooked())
 
 
