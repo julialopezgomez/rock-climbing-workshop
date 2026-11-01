@@ -21,12 +21,13 @@ cd "$(dirname "$0")/../../.."  # the repository root
 # START: optional, a trajectory PLAN continues (.json, as saved here): PLAN starts at its last
 #        pose (it must be on PLAN's first stance), and the saved trajectory is it followed by
 #        PLAN's moves. "" to start from a static pose of PLAN's first stance.
-# N2, moves 34-55 (plan_N2_rest.json, extended to the top of the wall in small steps, see the
-# optimiser README): no IK there, so no GUESS (W_TRACK 0), continuing the first 34 moves solved
-# with it (plan_N2.json and wall-2-ik.npz, saved as trajectory_plan_N2_local.json).
-PLAN="data/results/to_n2/plan_N2_rest.json"
-GUESS=""
-START="data/results/to_n2/trajectory_plan_N2_local.json"
+# N3 (generated, seed 41545: wall l3_s41545), all 46 moves of plan_N3.json, tracking its IK
+# (wall-3-ik.npz, the 46-move IK for this plan), from a static pose of the first stance.
+# N2 was (data/results/to_n2): PLAN plan_N2_rest.json, GUESS "",
+# START trajectory_plan_N2_local.json.
+PLAN="data/results/to_n3/plan_N3.json"
+GUESS="data/results/to_n3/wall-3-ik.npz"
+START=""
 
 # --- Constraints -----------------------------------------------------------------------------------
 TAU_LIMIT=0.9   # motor torque limit, as a fraction of the servo's 0.605 N·m
