@@ -2,19 +2,24 @@
 """Kinematic trajectory generation for the climbing robot.
 
 The moving ball follows a C2 piecewise Bezier trajectory through six
-Cartesian waypoints, while the other three balls remain fixed.
+Cartesian waypoints. The other three balls remain in their sockets.
 
-Two interchangeable IK solvers:
-    - ik_pinv: hierarchical pseudoinverse IK
-    - ik_qp:   hierarchical constrained QP IK
+Two interchangeable IK methods:
+    pinv: hierarchical pseudoinverse IK
+    qp:   single constrained quadratic program
 
-Priorities:
-    1. Keep supporting balls fixed.
-    2. Track the moving ball.
-    3. Prefer the hanging posture, joint-limit clearance,
-       low joint motion, and smooth joint velocities.
+QP formulation:
+    Hard constraints:
+        - Supporting ball positions (linearized)
+        - Joint position limits
+        - Sampled joint velocity limits
 
-Joint position and sampled velocity limits are imposed for both methods.
+    Soft objectives:
+        - Moving ball tracking, with slack
+        - Nominal hanging posture
+        - Joint-limit clearance
+        - Joint velocity smoothness (acceleration regularisation)
+
 No dynamics or collision avoidance is included.
 """
 
@@ -25,7 +30,11 @@ import quadprog
 from numpy.linalg import norm, pinv
 
 from rcr.kinematics.bezier import Bezier, connecting
-from rcr.planner.astar import Q_HANG, initial_q, targets as stance_targets
+from rcr.planner.astar import (
+    Q_HANG,
+    initial_q,
+    targets as stance_targets,
+)
 from rcr.types import (
     LIMBS,
     MICROBAN_JOINTS,
@@ -51,16 +60,22 @@ EPSILON = 1e-3
 MAX_ITERATIONS = 200
 IK_STEP = 0.2
 
+# Pseudoinverse soft-task gains.
 POSTURE_GAIN = 0.2
 LIMIT_GAIN = 0.02
-VELOCITY_GAIN = 0.02
 ACCEL_GAIN = 0.5
 
 MAX_STEP_NORM = 0.1
 
-RIDGE = 1e-6
-SLACK_WEIGHT = 1e3
+# Single-QP objective weights.
+QP_TRACK_WEIGHT = 1e4
+QP_POSTURE_WEIGHT = 0.2
+QP_LIMIT_WEIGHT = 0.02
+QP_ACCEL_WEIGHT = 0.5
+QP_RIDGE = 1e-6
 
+# Bounds on one numerical IK correction.
+# These are not the physical velocity limits.
 MAX_INNER_JOINT_STEP = 0.1
 MAX_INNER_BASE_TRANSLATION = 0.05
 MAX_INNER_BASE_ROTATION = 0.15
@@ -97,7 +112,7 @@ def stance_key(stance: Stance):
 
 
 def ball_positions(q):
-    """World positions of all four balls in LIMBS order."""
+    """World positions of the four balls, in LIMBS order."""
     pin.framesForwardKinematics(model, data, q)
 
     return np.array([
@@ -106,8 +121,12 @@ def ball_positions(q):
     ])
 
 
-def joint_bounds(q0, dt=None):
-    """Joint position bounds, optionally limited by one output timestep."""
+def joint_bounds(sample_q, dt=None):
+    """Allowed joint positions for the next output sample.
+
+    When dt is given, also enforce the joint velocity limits
+    relative to sample_q (the previous output configuration).
+    """
     lower = model.lowerPositionLimit[7:].copy()
     upper = model.upperPositionLimit[7:].copy()
 
@@ -117,23 +136,90 @@ def joint_bounds(q0, dt=None):
         if np.any(vmax <= 0):
             raise ValueError("Nonpositive joint velocity limit")
 
-        lower = np.maximum(lower, q0[7:] - vmax * dt)
-        upper = np.minimum(upper, q0[7:] + vmax * dt)
+        lower = np.maximum(
+            lower, sample_q[7:] - vmax * dt
+        )
+        upper = np.minimum(
+            upper, sample_q[7:] + vmax * dt
+        )
 
-    if np.any(lower > upper + 1e-10):
+    if np.any(lower > upper):
         raise ValueError("Empty joint position/velocity interval")
 
     return lower, upper
 
 
+def errors_and_jacobians(q, targets):
+    """Cartesian ball position errors and Jacobians."""
+    pin.computeJointJacobians(model, data, q)
+    pin.updateFramePlacements(model, data)
+
+    errors = {}
+    jacobians = {}
+
+    for limb in LIMBS:
+        frame = BALL[limb]
+
+        errors[limb] = (
+            targets[limb] - data.oMf[frame].translation
+        )
+
+        jacobians[limb] = pin.getFrameJacobian(
+            model,
+            data,
+            frame,
+            pin.LOCAL_WORLD_ALIGNED,
+        )[:3]
+
+    return errors, jacobians
+
+
+def joint_references(q, sample_q, previous_q=None, dt=None):
+    """Preferred corrections for the 19 actuated joints.
+
+    All corrections are relative to the current numerical
+    IK configuration q.
+    """
+    # Stay close to the nominal hanging joint posture.
+    posture = Q_HANG[7:] - q[7:]
+
+    # Stay away from joint position limits.
+    lower = model.lowerPositionLimit[7:]
+    upper = model.upperPositionLimit[7:]
+
+    finite = np.isfinite(lower) & np.isfinite(upper)
+
+    limits = np.zeros(model.nv - 6)
+    midpoint = (lower[finite] + upper[finite]) / 2
+
+    limits[finite] = midpoint - q[7:][finite]
+
+    # Prefer the previous commanded joint velocity.
+    smooth = np.zeros(model.nv - 6)
+
+    if dt is not None:
+        if previous_q is None:
+            previous_step = np.zeros(model.nv - 6)
+        else:
+            previous_step = pin.difference(
+                model, previous_q, sample_q
+            )[6:]
+
+        predicted = sample_q[7:] + previous_step
+        smooth = predicted - q[7:]
+
+    return posture, limits, smooth
+
+
 # ---------------------------------------------------------------------
-# Cartesian ball trajectory
+# Cartesian ball trajectory (C-CROC)
 # ---------------------------------------------------------------------
 
 def limb_traj(p_a, p_b):
-    """C2 piecewise quintic Bezier trajectory through six waypoints.
+    """C2 piecewise quintic Bezier through six waypoints.
 
-    Returns B(t), with:
+    Returns:
+        B(t)
         B.velocity(t)
         B.acceleration(t)
         B.waypoints
@@ -170,7 +256,7 @@ def limb_traj(p_a, p_b):
 
     durations = np.diff(times)
 
-    # Desired velocity at each waypoint.
+    # Prescribed velocities at the waypoints.
     velocities = np.zeros_like(points)
 
     for i in range(1, len(points) - 1):
@@ -189,7 +275,7 @@ def limb_traj(p_a, p_b):
                 0.5 * speed * tangent / norm(tangent)
             )
 
-    # Shared accelerations at waypoints.
+    # Shared zero accelerations give C2 continuity.
     accelerations = np.zeros_like(points)
 
     curves = []
@@ -200,7 +286,6 @@ def limb_traj(p_a, p_b):
             velocities[i],
             accelerations[i],
         )
-
         end = (
             points[i + 1],
             velocities[i + 1],
@@ -215,11 +300,10 @@ def limb_traj(p_a, p_b):
             )
         )
 
-    # Precompute analytic derivative curves.
     velocity_curves = [c.derivative(1) for c in curves]
     acceleration_curves = [c.derivative(2) for c in curves]
 
-    def evaluate(t, curves_to_evaluate):
+    def evaluate(t, selected_curves):
         t = float(np.clip(t, 0.0, MOVE_TIME))
 
         i = min(
@@ -227,14 +311,13 @@ def limb_traj(p_a, p_b):
             len(curves) - 1,
         )
 
-        return curves_to_evaluate[i](t)
+        return selected_curves[i](t)
 
     def B(t):
         return evaluate(t, curves)
 
     B.velocity = lambda t: evaluate(t, velocity_curves)
     B.acceleration = lambda t: evaluate(t, acceleration_curves)
-
     B.waypoints = points
     B.times = times
 
@@ -242,102 +325,17 @@ def limb_traj(p_a, p_b):
 
 
 # ---------------------------------------------------------------------
-# Shared IK tasks
-# ---------------------------------------------------------------------
-
-def errors_and_jacobians(q, targets):
-    """Cartesian ball-position errors and Jacobians."""
-    pin.computeJointJacobians(model, data, q)
-    pin.updateFramePlacements(model, data)
-
-    errors = {}
-    jacobians = {}
-
-    for limb in LIMBS:
-        frame = BALL[limb]
-
-        errors[limb] = (
-            targets[limb] - data.oMf[frame].translation
-        )
-
-        jacobians[limb] = pin.getFrameJacobian(
-            model,
-            data,
-            frame,
-            pin.LOCAL_WORLD_ALIGNED,
-        )[:3]
-
-    return errors, jacobians
-
-
-def soft_target(q, sample_q, previous_q=None, dt=None):
-    """Lowest-priority joint preference shared by both solvers.
-
-    sample_q: previous output configuration q[k-1].
-    previous_q: configuration q[k-2].
-
-    Acceleration regularisation encourages:
-
-        q[k] - q[k-1] ~= q[k-1] - q[k-2]
-
-    Only the actuated joints are regularised.
-    """
-    soft = np.zeros(model.nv)
-
-    # Nominal hanging posture.
-    soft[6:] = POSTURE_GAIN * (
-        Q_HANG[7:] - q[7:]
-    )
-
-    # Prefer joint-limit midpoints.
-    lower = model.lowerPositionLimit[7:]
-    upper = model.upperPositionLimit[7:]
-
-    finite = np.isfinite(lower) & np.isfinite(upper)
-
-    midpoint = np.zeros_like(lower)
-    midpoint[finite] = (
-        lower[finite] + upper[finite]
-    ) / 2.0
-
-    soft[6:][finite] += LIMIT_GAIN * (
-        midpoint[finite] - q[7:][finite]
-    )
-
-    if dt is not None:
-        # Prefer smaller movement from previous output.
-        soft[6:] += VELOCITY_GAIN * (
-            sample_q[7:] - q[7:]
-        )
-
-        if previous_q is not None:
-            # Previous commanded joint displacement.
-            previous_step = pin.difference(
-                model, previous_q, sample_q
-            )[6:]
-
-            # Constant-velocity prediction.
-            predicted = sample_q[7:] + previous_step
-
-            soft[6:] += ACCEL_GAIN * (
-                predicted - q[7:]
-            )
-
-    return soft
-
-
-# ---------------------------------------------------------------------
-# Pseudoinverse IK
+# Pseudoinverse IK (baseline)
 # ---------------------------------------------------------------------
 
 def ik_pinv(q0, targets, moving=None, dt=None, previous_q=None):
-    """Hierarchical pseudoinverse IK.
+    """Hierarchical pseudoinverse IK with joint bounds.
 
     Priority 1: supporting contacts.
     Priority 2: moving ball.
-    Priority 3: joint regularisation.
+    Priority 3: posture, limits and smoothness.
 
-    Position and sampled velocity limits are enforced by clipping.
+    Joint bounds are enforced by clipping.
     """
     q = q0.copy()
     held = [limb for limb in LIMBS if limb != moving]
@@ -350,13 +348,13 @@ def ik_pinv(q0, targets, moving=None, dt=None, previous_q=None):
         if max(norm(e) for e in errors.values()) < EPSILON:
             return q
 
-        # Priority 1: supporting contacts.
+        # Priority 1: supporting balls.
         Jc = np.vstack([J[limb] for limb in held])
         ec = np.concatenate([errors[limb] for limb in held])
 
         Jc_inv = pinv(Jc)
-
         dq = Jc_inv @ ec
+
         P = np.eye(model.nv) - Jc_inv @ Jc
 
         # Priority 2: moving ball.
@@ -368,21 +366,24 @@ def ik_pinv(q0, targets, moving=None, dt=None, previous_q=None):
                 em - Jm @ dq
             )
 
-        # Priority 3: posture, joint limits and smooth velocity.
-        J_all = np.vstack([
-            J[limb] for limb in LIMBS
-        ])
+        # Priority 3: joint preferences in the null space.
+        J_all = np.vstack([J[limb] for limb in LIMBS])
+        P_all = np.eye(model.nv) - pinv(J_all) @ J_all
 
-        P_all = (
-            np.eye(model.nv)
-            - pinv(J_all) @ J_all
-        )
-
-        dq += P_all @ soft_target(
+        posture, limits, smooth = joint_references(
             q, q0, previous_q, dt
         )
 
-        # Numerical step limit.
+        soft = np.zeros(model.nv)
+        soft[6:] = (
+            POSTURE_GAIN * posture
+            + LIMIT_GAIN * limits
+            + ACCEL_GAIN * smooth
+        )
+
+        dq += P_all @ soft
+
+        # Bounded numerical correction.
         step = IK_STEP * dq
 
         if norm(step) > MAX_STEP_NORM:
@@ -390,7 +391,8 @@ def ik_pinv(q0, targets, moving=None, dt=None, previous_q=None):
 
         q = pin.integrate(model, q, step)
 
-        # Clamp against the SAME output-sample bounds.
+        # Enforce the SAME sample-based bounds throughout
+        # the numerical iterations.
         q[7:] = np.clip(q[7:], lower, upper)
 
         if not np.all(np.isfinite(q)):
@@ -402,17 +404,48 @@ def ik_pinv(q0, targets, moving=None, dt=None, previous_q=None):
 
 
 # ---------------------------------------------------------------------
-# QP helpers
+# Single-QP helpers
 # ---------------------------------------------------------------------
 
+def qp_step_bounds(q, sample_q, dt):
+    """Bounds on the next numerical IK correction."""
+    lower = np.full(model.nv, -np.inf)
+    upper = np.full(model.nv, np.inf)
+
+    # Floating-base numerical trust region.
+    lower[:3] = -MAX_INNER_BASE_TRANSLATION
+    upper[:3] = MAX_INNER_BASE_TRANSLATION
+
+    lower[3:6] = -MAX_INNER_BASE_ROTATION
+    upper[3:6] = MAX_INNER_BASE_ROTATION
+
+    # Actuated joint position and velocity bounds.
+    q_lower, q_upper = joint_bounds(sample_q, dt)
+
+    lower[6:] = np.maximum(
+        q_lower - q[7:],
+        -MAX_INNER_JOINT_STEP,
+    )
+
+    upper[6:] = np.minimum(
+        q_upper - q[7:],
+        MAX_INNER_JOINT_STEP,
+    )
+
+    if np.any(lower > upper):
+        raise ValueError("No feasible QP correction")
+
+    return lower, upper
+
+
 def solve_qp(G, a, E, f, lower, upper):
-    """Solve:
+    """Solve a QP with equality constraints and box bounds.
 
-        min 0.5*x.T@G@x - a.T@x
+    min 0.5*x.T@G@x - a.T@x
 
-        subject to:
-            E@x = f
-            lower <= x <= upper
+    subject to:
+        E@x = f
+        lower <= x <= upper
     """
     n = len(a)
 
@@ -423,14 +456,12 @@ def solve_qp(G, a, E, f, lower, upper):
         if np.isfinite(lower[j]):
             col = np.zeros(n)
             col[j] = 1.0
-
             columns.append(col)
             rhs.append(lower[j])
 
         if np.isfinite(upper[j]):
             col = np.zeros(n)
             col[j] = -1.0
-
             columns.append(col)
             rhs.append(-upper[j])
 
@@ -455,107 +486,24 @@ def solve_qp(G, a, E, f, lower, upper):
         ) from exc
 
 
-def qp_step_bounds(q, sample_q, dt):
-    """Limits on one numerical QP correction.
-
-    Physical joint velocity bounds are relative to sample_q,
-    not to the current numerical IK iterate.
-    """
-    lower = np.full(model.nv, -np.inf)
-    upper = np.full(model.nv, np.inf)
-
-    # Floating-base numerical trust region.
-    lower[:3] = -MAX_INNER_BASE_TRANSLATION
-    upper[:3] = MAX_INNER_BASE_TRANSLATION
-
-    lower[3:6] = -MAX_INNER_BASE_ROTATION
-    upper[3:6] = MAX_INNER_BASE_ROTATION
-
-    # Actuated joint bounds.
-    q_lower, q_upper = joint_bounds(sample_q, dt)
-
-    lower[6:] = np.maximum(
-        q_lower - q[7:],
-        -MAX_INNER_JOINT_STEP,
-    )
-
-    upper[6:] = np.minimum(
-        q_upper - q[7:],
-        MAX_INNER_JOINT_STEP,
-    )
-
-    if np.any(lower > upper + 1e-9):
-        raise ValueError("No feasible QP correction")
-
-    return lower, upper
-
-
-def task_qp(
-    J,
-    error,
-    lower,
-    upper,
-    frozen_J=None,
-    frozen_value=None,
-):
-    """Cartesian task QP with explicit slack.
-
-    Higher-priority corrections can be frozen as equalities.
-    """
-    ne = len(error)
-    n = model.nv + ne
-
-    G = np.diag(
-        np.r_[
-            np.full(model.nv, RIDGE),
-            np.full(ne, SLACK_WEIGHT),
-        ]
-    )
-
-    a = np.zeros(n)
-
-    # J*d + slack = error.
-    E = np.hstack((J, np.eye(ne)))
-    f = np.asarray(error)
-
-    if frozen_J is not None:
-        frozen = np.hstack((
-            frozen_J,
-            np.zeros((len(frozen_value), ne)),
-        ))
-
-        E = np.vstack((E, frozen))
-        f = np.r_[f, frozen_value]
-
-    lower_full = np.r_[
-        lower,
-        np.full(ne, -np.inf),
-    ]
-
-    upper_full = np.r_[
-        upper,
-        np.full(ne, np.inf),
-    ]
-
-    return solve_qp(
-        G,
-        a,
-        E,
-        f,
-        lower_full,
-        upper_full,
-    )[:model.nv]
-
-
 # ---------------------------------------------------------------------
-# QP IK
+# Single constrained QP IK
 # ---------------------------------------------------------------------
 
 def ik_qp(q0, targets, moving=None, dt=None, previous_q=None):
-    """Hierarchical constrained QP IK.
+    """Single constrained QP IK.
 
-    Same tasks as ik_pinv, but with joint constraints built
-    directly into the optimization.
+    Hard:
+        - Supporting ball tracking (linearized)
+        - Joint position and velocity bounds
+
+    Soft:
+        - Moving ball tracking, with slack
+        - Nominal posture
+        - Joint limit clearance
+        - Velocity continuity
+
+    If moving=None, all four ball positions are hard constraints.
     """
     q = q0.copy()
     held = [limb for limb in LIMBS if limb != moving]
@@ -568,59 +516,114 @@ def ik_qp(q0, targets, moving=None, dt=None, previous_q=None):
 
         lower, upper = qp_step_bounds(q, q0, dt)
 
-        Jc = np.vstack([
-            J[limb] for limb in held
-        ])
+        Jc = np.vstack([J[limb] for limb in held])
+        ec = np.concatenate([errors[limb] for limb in held])
 
-        ec = np.concatenate([
-            errors[limb] for limb in held
-        ])
-
-        # Priority 1: supporting balls.
-        dq = task_qp(
-            Jc,
-            IK_STEP * ec,
-            lower,
-            upper,
+        posture, limits, smooth = joint_references(
+            q, q0, previous_q, dt
         )
 
-        achieved = Jc @ dq
+        # -------------------------------------------------------------
+        # Decision variable:
+        #
+        # x = [d, s]
+        #
+        # d: generalized configuration correction (25)
+        # s: moving-ball tracking slack (3), if moving
+        # -------------------------------------------------------------
 
-        # Priority 2: moving ball.
+        nv = model.nv
+        ns = 3 if moving is not None else 0
+        n = nv + ns
+
+        # -------------------------------------------------------------
+        # Objective:
+        #
+        # 0.5 * w_track * ||s||^2
+        # + 0.5 * w_posture * ||d_j - d_posture||^2
+        # + 0.5 * w_limits  * ||d_j - d_limits||^2
+        # + 0.5 * w_accel   * ||d_j - d_smooth||^2
+        # + 0.5 * ridge * ||d||^2
+        #
+        # Here the preferred corrections are scaled by IK_STEP.
+        # -------------------------------------------------------------
+
+        G = QP_RIDGE * np.eye(nv)
+        a = np.zeros(nv)
+
+        joint_weight = (
+            QP_POSTURE_WEIGHT
+            + QP_LIMIT_WEIGHT
+            + (QP_ACCEL_WEIGHT if dt is not None else 0.0)
+        )
+
+        G[6:, 6:] += joint_weight * np.eye(nv - 6)
+
+        a[6:] = IK_STEP * (
+            QP_POSTURE_WEIGHT * posture
+            + QP_LIMIT_WEIGHT * limits
+        )
+
+        if dt is not None:
+            a[6:] += QP_ACCEL_WEIGHT * smooth
+
+        # Add moving-ball slack to the objective.
         if moving is not None:
-            Jm = J[moving]
-
-            dq = task_qp(
-                Jm,
-                IK_STEP * errors[moving],
-                lower,
-                upper,
-                frozen_J=Jc,
-                frozen_value=achieved,
+            G_full = np.zeros((n, n))
+            G_full[:nv, :nv] = G
+            G_full[nv:, nv:] = (
+                QP_TRACK_WEIGHT * np.eye(ns)
             )
 
-            E = np.vstack((Jc, Jm))
+            a_full = np.r_[a, np.zeros(ns)]
+        else:
+            G_full = G
+            a_full = a
+
+        # -------------------------------------------------------------
+        # Equality constraints:
+        #
+        # Jc*d = IK_STEP * ec
+        #
+        # Jm*d + s = IK_STEP * em
+        # -------------------------------------------------------------
+
+        if moving is not None:
+            Jm = J[moving]
+            em = errors[moving]
+
+            E = np.vstack([
+                np.hstack((Jc, np.zeros((len(ec), ns)))),
+                np.hstack((Jm, np.eye(ns))),
+            ])
+
+            f = IK_STEP * np.r_[ec, em]
+
+            lower_full = np.r_[
+                lower, np.full(ns, -np.inf)
+            ]
+            upper_full = np.r_[
+                upper, np.full(ns, np.inf)
+            ]
 
         else:
             E = Jc
+            f = IK_STEP * ec
 
-        # Priority 3: posture and velocity smoothness.
-        target_dq = dq + IK_STEP * soft_target(
-            q,
-            q0,
-            previous_q,
-            dt,
-        )
+            lower_full = lower
+            upper_full = upper
 
-        # Keep higher-priority Cartesian corrections unchanged.
-        dq = solve_qp(
-            np.eye(model.nv),
-            target_dq,
+        # Solve the single QP.
+        solution = solve_qp(
+            G_full,
+            a_full,
             E,
-            E @ dq,
-            lower,
-            upper,
+            f,
+            lower_full,
+            upper_full,
         )
+
+        dq = solution[:nv]
 
         q = pin.integrate(model, q, dq)
 
@@ -644,7 +647,7 @@ def solve_ik(
     method="qp",
     previous_q=None,
 ):
-    """Solve IK using either pseudoinverse or QP."""
+    """Select pseudoinverse or single-QP IK."""
     if method == "pinv":
         return ik_pinv(
             q0,
@@ -675,7 +678,7 @@ def start_pose(
     stance: Stance,
     method="qp",
 ):
-    """Compute an initial configuration with all four balls fixed."""
+    """Find an initial configuration with all four balls in sockets."""
     p = stance_targets(wall, stance_key(stance))
 
     targets = {
@@ -694,7 +697,7 @@ def start_pose(
 
 
 # ---------------------------------------------------------------------
-# Single climbing movement
+# Single movement
 # ---------------------------------------------------------------------
 
 def ik_traj(
@@ -705,7 +708,7 @@ def ik_traj(
     method="qp",
     previous_q=None,
 ):
-    """Generate IK configurations at 50 Hz for one climbing movement."""
+    """Track one climbing movement at 50 Hz."""
     moving = [
         limb for limb in LIMBS
         if a.contacts[limb] != b.contacts[limb]
@@ -724,7 +727,6 @@ def ik_traj(
 
     q = q0.copy()
 
-    # Assume rest at the first move unless a previous sample is supplied.
     prev = (
         q.copy()
         if previous_q is None
@@ -774,9 +776,10 @@ def feasible_ik_traj(
     b: Stance,
     method="qp",
 ) -> Feasibility:
-    """Preliminary trajectory feasibility from nominal starting stance."""
+    """Preliminary feasibility check from a nominal starting stance."""
     try:
         q0 = start_pose(wall, a, method=method)
+
         qs = ik_traj(
             wall,
             a,
@@ -816,7 +819,7 @@ def feasible_ik_traj(
 
 
 # ---------------------------------------------------------------------
-# Complete trajectory
+# Complete climbing trajectory
 # ---------------------------------------------------------------------
 
 def generate_trajectory(
@@ -825,7 +828,7 @@ def generate_trajectory(
     method="qp",
     q0=None,
 ):
-    """Chain climbing moves, preserving previous joint velocity."""
+    """Chain moves, preserving configuration and velocity history."""
     stances = plan.stances
 
     if not stances:
@@ -863,7 +866,7 @@ def generate_trajectory(
 # ---------------------------------------------------------------------
 
 def to_trajectory(qs: np.ndarray) -> Trajectory:
-    """Convert Pinocchio configurations into robot commands."""
+    """Convert Pinocchio configurations to the robot trajectory format."""
     times = [
         round(k * DT, 9)
         for k in range(len(qs))
@@ -874,8 +877,8 @@ def to_trajectory(qs: np.ndarray) -> Trajectory:
         for q in qs
     ]
 
-    # Pinocchio quaternion: (x, y, z, w).
-    # Trajectory quaternion: (w, x, y, z).
+    # Pinocchio quaternion: xyzw.
+    # Robot trajectory quaternion: wxyz.
     trunk_poses = [
         [
             float(v)
@@ -916,7 +919,7 @@ def joint_motion(qs):
 
 
 def check_velocity_limits(qs):
-    """Check actuated joint velocity limits at 50 Hz."""
+    """Check actuator velocity limits at 50 Hz."""
     qs = np.asarray(qs)
 
     if len(qs) < 2:
