@@ -45,7 +45,7 @@ MAX_CONTACT_FORCE = 2.  # N
 
 # The moving limb tracks its ball, not its joints: the joints track well, but the trunk (not
 # actuated, no feedback on it) drifts from its plan and takes the ball with it
-TRACK_BALL = True
+TRACK_BALL = False
 BALL_DAMPING = 0.03  # of the limb's damped inverse, as DAMPING in the kinematics
 
 # The XL330's torque at its 1.75 A current limit [Microban]
