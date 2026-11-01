@@ -37,7 +37,8 @@ uv run --no-sync scripts/train_controller.py evaluate --data build/rl/wall1_dyn 
 # 3. The same without the policy, for comparison: 79 %
 uv run --no-sync scripts/train_controller.py baseline --data build/rl/wall1_dyn --kp 3000 --episodes 100
 
-# 4. Watch it in MuJoCo's viewer, the moves chained (macOS: mjpython; Linux: python)
+# 4. Watch the policy climb in MuJoCo's viewer, from the first move to the top, live (macOS: mjpython;
+#    Linux: python). After a fall it carries on from the next move's start.
 uv run --no-sync mjpython scripts/train_controller.py evaluate --data build/rl/wall1_dyn \
     --policy data/wall1_best/wall1_policy_P5_19100k.onnx --episodes 51 --watch
 

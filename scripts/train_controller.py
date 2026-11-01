@@ -194,8 +194,9 @@ def evaluate(data: Path, episodes: int, policy: Path | None = None, watch: bool 
              kp_fw: float = tracking.KP_FW) -> None:  # fmt: skip
     """Episodes with the ONNX policy (at the alpha and servo gain it was trained with), or
     playback (alpha 0, at kp_fw) without one: what the policy has to beat. Each from a random
-    reference start, or, with watch, in MuJoCo's viewer and chained (a success carries on to the
-    next move) like a climb."""
+    reference start, or, with watch, in MuJoCo's viewer as a climb: from the first move to the
+    last, a success carrying on where it ended, a fall or a timeout put back at the next move's
+    reference start."""
     act = lambda obs: np.zeros(len(tracking.JOINTS))  # noqa: E731
     alpha = 0.0
     if policy is not None:
@@ -210,9 +211,25 @@ def evaluate(data: Path, episodes: int, policy: Path | None = None, watch: bool 
     if watch:
         env.sim.view()
     results = {k: [] for k in range(len(env.moves))}
+    if watch:  # the route in order, from its first move
+        episodes, k = len(env.moves), -1
     for _ in range(episodes):
-        env.chain = env.chain and watch
-        obs, _ = env.reset()
+        if watch:
+            if k + 1 >= len(env.moves):
+                break
+            if env.chain:  # a success: carry on from where it ended
+                env.only = None
+            else:  # the start, or after a fall or a timeout: the next move's reference start
+                env.only = [k + 1]
+            try:
+                obs, _ = env.reset()
+            except RuntimeError:  # that start cannot be held: the move after it
+                print(f"move {k + 1}: its reference start is not held, skipped")
+                k += 1
+                continue
+        else:
+            env.chain = False
+            obs, _ = env.reset()
         k, errors, balls, actions, done, info = env.k, [], [], [], False, {}
         while not done:
             action = act(obs)
