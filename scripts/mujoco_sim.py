@@ -41,10 +41,11 @@ KV = 2.0 * np.sqrt(KP)
 CONTACT_KP = 15.0
 CONTACT_KD = 1.0
 NORMAL_PRELOAD = 0.15  # N, into the wall (+y)
-MAX_CONTACT_FORCE = 0.5  # N
+MAX_CONTACT_FORCE = 2.  # N
 
 # The moving limb tracks its ball, not its joints: the joints track well, but the trunk (not
 # actuated, no feedback on it) drifts from its plan and takes the ball with it
+TRACK_BALL = True
 BALL_DAMPING = 0.03  # of the limb's damped inverse, as DAMPING in the kinematics
 
 # The XL330's torque at its 1.75 A current limit [Microban]
@@ -204,7 +205,7 @@ def control_law(sim, desired, t, held_targets, ball_target):
     J_limb = J_actuated[:, limb]
 
     q_error = q_des - q
-    q_error[limb] = J_limb.T @ np.linalg.solve(
+    if TRACK_BALL: q_error[limb] = J_limb.T @ np.linalg.solve(
         J_limb @ J_limb.T + BALL_DAMPING**2 * np.eye(3),
         ball_target - d.site_xpos[site_id],
     )
@@ -227,8 +228,22 @@ def control_law(sim, desired, t, held_targets, ball_target):
     # tau = M(q) * ddq_cmd + h(q, dq)
     tau_full = M @ full_acc + d.qfrc_bias
 
+    # The base has no motor: the held balls carry what its rows ask (the robot's weight). The
+    # smallest contact forces that do, then the joint torques that produce them:
+    # M a + h = S^T tau + J_c^T f [as rcr.controller.inverse_dynamics]
+    J_contact = np.zeros((3 * len(held_targets), m.nv))
+
+    for i, limb in enumerate(held_targets):
+        mujoco.mj_jacSite(
+            m, d, J_contact[3 * i:3 * i + 3], None, m.site(BALL_SITES[limb]).id
+        )
+
+    forces = np.linalg.lstsq(
+        J_contact[:, :6].T, tau_full[:6], rcond=None
+    )[0]
+
     # Only the actuated joints receive motor torques
-    tau = tau_full[sim._vadr].copy()
+    tau = tau_full[sim._vadr] - J_contact[:, sim._vadr].T @ forces
 
     # Add contact-force torques, as in ARO
     max_contact_error = 0.0
