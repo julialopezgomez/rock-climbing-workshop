@@ -41,7 +41,11 @@ uv run --no-sync scripts/train_controller.py baseline --data build/rl/wall1_dyn 
 uv run --no-sync mjpython scripts/train_controller.py evaluate --data build/rl/wall1_dyn \
     --policy data/wall1_best/wall1_policy_P5_19100k.onnx --episodes 51 --watch
 
-# 5. The full route from the start, open loop vs closed loop (prints moves in a row)
+# 5. Watch a robot file (.npz) replayed open loop, as the robot plays it (real time)
+uv run --no-sync mjpython scripts/watch_npz.py data/wall1_best/ROBOT_wall1_first4moves_x13_to_top.npz
+#    (--speed 1.25 as on the robot; --headless prints the holds instead of a window)
+
+# 6. The full route from the start, open loop vs closed loop (prints moves in a row)
 uv run --no-sync python scripts/closed_vs_open.py --data build/rl/wall1_dyn \
     --policy data/wall1_best/wall1_policy_P5_19100k.onnx --npz data/wall1_best/ROBOT_wall1_full_route_31moves.npz
 ```
