@@ -34,6 +34,7 @@ from rcr.types import (
     Trajectory,
     WallModel,
 )
+from rcr.kinematics.bezier import Bezier, connecting
 
 
 # ---------------------------------------------------------------------
@@ -113,11 +114,14 @@ def ball_positions(q):
 # Task-space trajectory
 # ---------------------------------------------------------------------
 
-def limb_traj(p_a, p_b):
-    """Piecewise-linear ball trajectory from socket a to socket b.
 
-    The ball moves up, away from the wall, across, inward, and down.
-    Returns B(t), defined for t in [0, MOVE_TIME].
+def limb_traj(p_a, p_b):
+    """C2 piecewise Bezier trajectory through the six ball waypoints.
+
+    Each segment connects two states (position, velocity, acceleration)
+    using C-CROC's connecting().
+
+    Returns B(t), with B.velocity(t) and B.acceleration(t).
     """
     p_a = np.asarray(p_a, dtype=float)
     p_b = np.asarray(p_b, dtype=float)
@@ -134,29 +138,82 @@ def limb_traj(p_a, p_b):
         p_b,
     ])
 
-    lengths = norm(np.diff(points, axis=0), axis=1)
+    # Allocate time proportionally to segment length.
+    segments = np.diff(points, axis=0)
+    lengths = norm(segments, axis=1)
 
-    if lengths.sum() == 0 or np.any(lengths == 0):
+    if np.any(lengths <= 1e-10):
         raise ValueError("Degenerate limb trajectory")
 
     times = MOVE_TIME * np.r_[
-        0.0,
-        np.cumsum(lengths) / lengths.sum(),
-    ] # get times according to the lengths of the segments
+        0.0, np.cumsum(lengths) / lengths.sum()
+    ]
+    durations = np.diff(times)
 
-    def B(t):
-        t = np.clip(t, 0.0, MOVE_TIME)
+    # Desired velocities at the waypoints.
+    velocities = np.zeros_like(points)
 
-        i = min(
-            np.searchsorted(times[1:], t),
-            len(points) - 2,
+    # Estimate tangent directions using neighboring segments.
+    for i in range(1, len(points) - 1):
+        before = segments[i - 1] / lengths[i - 1]
+        after = segments[i] / lengths[i]
+
+        tangent = before + after
+
+        if norm(tangent) > 1e-10:
+            tangent /= norm(tangent)
+
+            speed = min(
+                lengths[i - 1] / durations[i - 1],
+                lengths[i] / durations[i],
+            )
+
+            velocities[i] = 0.5 * speed * tangent
+
+    # Stop at the initial and final sockets.
+    velocities[0] = 0.0
+    velocities[-1] = 0.0
+
+    # Equal acceleration at each shared waypoint.
+    # Zero is a simple first choice.
+    accelerations = np.zeros_like(points)
+
+    # Build five C-CROC Bezier segments.
+    curves = []
+
+    for i in range(len(points) - 1):
+        start = (points[i], velocities[i], accelerations[i])
+        end = (points[i + 1], velocities[i + 1], accelerations[i + 1])
+
+        curves.append(
+            Bezier(
+                connecting(start, end, durations[i]),
+                t_min=float(times[i]),
+                t_max=float(times[i + 1]),
+            )
         )
 
-        s = (t - times[i]) / (times[i + 1] - times[i])
+    def evaluate(t, derivative=0):
+        t = float(np.clip(t, 0.0, MOVE_TIME))
 
-        return (1 - s) * points[i] + s * points[i + 1]
+        i = min(
+            np.searchsorted(times[1:], t, side="left"),
+            len(curves) - 1,
+        )
+
+        return curves[i].derivative(derivative)(t)
+
+    def B(t):
+        return evaluate(t)
+
+    B.velocity = lambda t: evaluate(t, 1)
+    B.acceleration = lambda t: evaluate(t, 2)
+
+    B.waypoints = points
+    B.times = times
 
     return B
+
 
 
 # ---------------------------------------------------------------------
