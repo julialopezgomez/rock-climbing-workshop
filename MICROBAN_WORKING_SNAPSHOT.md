@@ -4,8 +4,8 @@ Recorded on 2026-11-01 and preserved on Ruchira's Microban fork.
 
 - Microban fork: `https://github.com/rayruchira/microban.git`
 - Microban branch: `ruchira-replay-gains`
-- Microban commit: `ea61e7f2606337dd623bb39968c6cdb1024d0452`
-- Commit subject: `Allow higher Kp values in replay`
+- Microban commit: `71e73f6`
+- Latest commit subject: `Allow full Kp register range in move API`
 - Checkout location: `third_party/microban`
 - `src/moves/replay.py` permits `kp` through `POSITION_GAIN_MAX` (`16383`) instead of limiting it to `1000`.
 
