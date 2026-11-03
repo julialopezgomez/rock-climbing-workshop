@@ -2,9 +2,6 @@ version = 1
 revision = 5
 requires-python = ">=3.12"
 
-[manifest]
-overrides = [{ name = "microban-model", git = "https://github.com/MohammadrezaDindarloo/microban_model?lfs=true&rev=4e8a1f0929f42742e705bcf51e7f93feaa99eca6" }]
-
 [[package]]
 name = "absl-py"
 version = "2.5.1"
@@ -227,20 +224,6 @@ wheels = [
 ]
 
 [[package]]
-name = "coacd"
-version = "1.0.14"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "numpy" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/3d/94/622a380a5c4cac78c1f19379b1d3fa193903f848311c200924309797abf8/coacd-1.0.14-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:4cd9e1f327af766f6364e79e384ebfe152780a3d8dbbd09ce0756ec14f9e1256", size = 3426003, upload-time = "2026-08-28T21:53:32.005Z" },
-    { url = "https://files.pythonhosted.org/packages/d6/3e/e930a366ec69a966f1a55307b52d036d266314e2f6c58e72e212fdc09182/coacd-1.0.14-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:1242941fc9d49ebcb0368c68f31c86e278b9a6f1a255d11da2f1668797e2626e", size = 2584591, upload-time = "2026-08-28T21:53:33.537Z" },
-    { url = "https://files.pythonhosted.org/packages/88/7c/ec7edfc77c48fe97434ae813eca7614103289105bb546952ed9a0a266ce8/coacd-1.0.14-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6c135b717af096523bbebf1fd8d326e8950c024237fe9806ad46dedd8b4c31f0", size = 2651838, upload-time = "2026-08-28T21:53:34.776Z" },
-    { url = "https://files.pythonhosted.org/packages/5f/28/edbc4d6766fb3504bf15dabe7340e5686c72b9e3be030b3c8c40469e7af6/coacd-1.0.14-cp39-abi3-win_amd64.whl", hash = "sha256:6b548f44d9a4694cde594dc8cc8fefa678fb7c88153583be4e8b2c707de8fbbd", size = 1487726, upload-time = "2026-08-28T21:53:36.6Z" },
-]
-
-[[package]]
 name = "coal"
 version = "3.0.3"
 source = { registry = "https://pypi.org/simple" }
@@ -393,7 +376,7 @@ wheels = [
 [[package]]
 name = "microban-model"
 version = "2.0.0"
-source = { git = "https://github.com/MohammadrezaDindarloo/microban_model?lfs=true&rev=4e8a1f0929f42742e705bcf51e7f93feaa99eca6#4e8a1f0929f42742e705bcf51e7f93feaa99eca6" }
+source = { git = "https://github.com/Rhoban/microban_model?lfs=true#8e42ef70673b5747dbdca3efaf60bc0f8ec7ea6d" }
 
 [[package]]
 name = "microban-sim"
@@ -517,6 +500,25 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/b7/b5/4da41c328788f575838f97a098fe8ca691ebc6f6fd73ad4a262ee40b184d/numpy-2.5.4-cp315-cp315t-win32.whl", hash = "sha256:ad62a416ddcf863bf44bba76fbf6b53366ab0692e294f51cae4b5fbe0d246788", size = 6335804, upload-time = "2026-10-10T20:05:19.921Z" },
     { url = "https://files.pythonhosted.org/packages/98/94/6482ddfa3d312490cb9358f375bf2ad56427dbea8769187158e94d653753/numpy-2.5.4-cp315-cp315t-win_amd64.whl", hash = "sha256:38f47be9f74ab870d2633b5456ae519c43758a8d1fd05342f0ce4ecc034396ee", size = 12890095, upload-time = "2026-10-10T20:05:21.875Z" },
     { url = "https://files.pythonhosted.org/packages/48/7f/c2d1b436b6e7cfebac140c2579a298344b85f2991a2ce5c3615cefb29400/numpy-2.5.4-cp315-cp315t-win_arm64.whl", hash = "sha256:7a14a461d9340f1b46b8648578aed9cdb8b3b018a8fac6c1dde2c9192a01a87f", size = 10883718, upload-time = "2026-10-10T20:05:28.547Z" },
+]
+
+[[package]]
+name = "opencv-contrib-python-headless"
+version = "5.0.0.93"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/fd/85/da534b90d99a040fbdccc6eb2c3d1c6c6d0e1f7d54732f4ce7d2e1726b29/opencv_contrib_python_headless-5.0.0.93.tar.gz", hash = "sha256:6a8c34de905f59b038f6ab0475e73fb0a0f345c3582ec3aeaeb1c0912e80cddb", size = 154148527, upload-time = "2026-07-02T06:59:00.233Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/50/b9/2a3a9e23d7894f816792f93f2e73c017765a29e854ba343cb260da400a7e/opencv_contrib_python_headless-5.0.0.93-cp37-abi3-macosx_13_0_arm64.whl", hash = "sha256:bf1e2b3c502b4fbe7b06e307bd15c4e7bea7da8895de19c189db01d53062f997", size = 55653233, upload-time = "2026-07-02T05:50:39.358Z" },
+    { url = "https://files.pythonhosted.org/packages/63/72/1b7d64b03e54f775035bda1dc363dfde89e9301a9bdf82949b239ddf80ad/opencv_contrib_python_headless-5.0.0.93-cp37-abi3-macosx_14_0_x86_64.whl", hash = "sha256:68eb7b803f68998552a83b5f3c69bfb1c7d6c114dc30f828657bddc7ca68573a", size = 42828135, upload-time = "2026-07-02T05:51:44.374Z" },
+    { url = "https://files.pythonhosted.org/packages/61/14/f12a54f7e5e8783adf905bb863ef2257e41d73d44793851d318e35ee8121/opencv_contrib_python_headless-5.0.0.93-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:c035e12b6078b3351ad577e90a4ff4ead74155fa5470eb8df8f5b54a8ce7727f", size = 43800290, upload-time = "2026-07-02T06:51:24.76Z" },
+    { url = "https://files.pythonhosted.org/packages/cf/c0/a51fd47d4f82cbc0bb36d082c87f6da25e4fb2a1cdec307a72f063cf3d55/opencv_contrib_python_headless-5.0.0.93-cp37-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:2ff190c4ebfa2839bdcaff1810061bc82f9ce5cf37e28953fb57fa5ed519b9d1", size = 64676895, upload-time = "2026-07-02T06:52:01.148Z" },
+    { url = "https://files.pythonhosted.org/packages/51/78/11f0704e94ebf92f748c789cf5d430d4459ae3649263c712d81772cc4360/opencv_contrib_python_headless-5.0.0.93-cp37-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:01331ae1a65a21d81310b5584900f73c3012ab4bdcf6aa26085c1870eea45da8", size = 44443761, upload-time = "2026-07-02T06:52:22.433Z" },
+    { url = "https://files.pythonhosted.org/packages/c3/87/3a803f04a28d0161fd9f5e085595507d7008d760ba95be6afa5760a41bbf/opencv_contrib_python_headless-5.0.0.93-cp37-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:63ddadd47e36fbc903d5ac141d5c90bd305a8044188dd4936a73de80007c9e6c", size = 69475842, upload-time = "2026-07-02T06:52:49.523Z" },
+    { url = "https://files.pythonhosted.org/packages/30/9f/11dd169d7a037c35b1fec0eb766c07bc62cde6428f2762df233111a43204/opencv_contrib_python_headless-5.0.0.93-cp37-abi3-win32.whl", hash = "sha256:ca47e569680df6eb7317b54f463bc766832d3d87854988168673bb0c52d6d9d4", size = 44203828, upload-time = "2026-07-02T05:50:20.943Z" },
+    { url = "https://files.pythonhosted.org/packages/9e/f3/6d7a7e512d88df0358c09c36cfac1a9050c50df547c64d32dc5f82fade49/opencv_contrib_python_headless-5.0.0.93-cp37-abi3-win_amd64.whl", hash = "sha256:72605e3ae78f66592705b1abe62e60f57dd9050787fdd99711b85a02760d5259", size = 53654741, upload-time = "2026-07-02T05:50:17.153Z" },
 ]
 
 [[package]]
@@ -687,16 +689,18 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "opencv-contrib-python-headless" },
     { name = "pytest" },
     { name = "ruff" },
 ]
 optimiser = [
     { name = "casadi" },
     { name = "climbing-sim" },
-    { name = "coacd" },
-    { name = "coal" },
     { name = "microban-model" },
     { name = "pin" },
+]
+perception = [
+    { name = "opencv-contrib-python-headless" },
 ]
 sim = [
     { name = "climbing-sim" },
@@ -706,28 +710,27 @@ sim = [
 [package.metadata]
 requires-dist = [
     { name = "climbing-sim", directory = "third_party/simulator" },
-    { name = "microban-model", git = "https://github.com/MohammadrezaDindarloo/microban_model?lfs=true&rev=4e8a1f0929f42742e705bcf51e7f93feaa99eca6" },
+    { name = "microban-model", git = "https://github.com/Rhoban/microban_model?lfs=true&rev=8e42ef70673b5747dbdca3efaf60bc0f8ec7ea6d" },
     { name = "numpy" },
     { name = "pin", specifier = ">=4.1.0" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "opencv-contrib-python-headless", specifier = ">=4.10" },
     { name = "pytest" },
     { name = "ruff" },
 ]
 optimiser = [
     { name = "casadi", specifier = ">=3.8.1" },
     { name = "climbing-sim", directory = "third_party/simulator" },
-    { name = "coacd", specifier = ">=1.0.14" },
-    { name = "coal", specifier = ">=3.0.3" },
-    { name = "microban-model", git = "https://github.com/MohammadrezaDindarloo/microban_model?lfs=true&rev=4e8a1f0929f42742e705bcf51e7f93feaa99eca6" },
+    { name = "microban-model", git = "https://github.com/Rhoban/microban_model?lfs=true&rev=8e42ef70673b5747dbdca3efaf60bc0f8ec7ea6d" },
     { name = "pin", specifier = ">=4.1.0" },
 ]
-perception = []
+perception = [{ name = "opencv-contrib-python-headless", specifier = ">=4.10" }]
 sim = [
     { name = "climbing-sim", directory = "third_party/simulator" },
-    { name = "microban-model", git = "https://github.com/MohammadrezaDindarloo/microban_model?lfs=true&rev=4e8a1f0929f42742e705bcf51e7f93feaa99eca6" },
+    { name = "microban-model", git = "https://github.com/Rhoban/microban_model?lfs=true&rev=8e42ef70673b5747dbdca3efaf60bc0f8ec7ea6d" },
 ]
 
 [[package]]

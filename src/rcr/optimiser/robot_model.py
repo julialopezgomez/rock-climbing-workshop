@@ -2,9 +2,8 @@
 
 The URDF (microban_model, climbing variant: rcr.robot.microban) is read as is, never edited or
 copied. Its climbing forearms and feet end in balls, the limbs' contact points, found from
-rcr.robot.hooks (as in the sim).
-The URDF has no collision shapes; they are in the model's MJCF, whose bodies are the URDF's
-links. They are read from there.
+rcr.robot.hooks (as in the sim). The body's shape, for keeping it off the cups, comes from the
+visual meshes of the model's MJCF (keep_out_points).
 
 Configuration q (NQ = 26), the same layout as the sim's MuJoCo qpos:
     q[0:3]   trunk position in the wall frame [m]
@@ -26,7 +25,7 @@ from pathlib import Path
 import casadi as ca
 import numpy as np
 
-from rcr.robot import microban
+from rcr.robot import hooks, microban
 from rcr.robot.hooks import HOOKS, ball_centre
 from rcr.types import LIMBS, MICROBAN_JOINTS
 
@@ -66,111 +65,6 @@ class Urdf:
 def urdf_path() -> Path:
     """The climbing model's URDF (rcr.robot.microban: microban_model, or MICROBAN_URDF)."""
     return microban.urdf_path()
-
-
-def mjcf_path() -> Path:
-    """The robot's MJCF (rcr.robot.microban: microban_model's climbing variant)."""
-    return microban.mjcf_path()
-
-
-@dataclass(frozen=True)
-class CollisionShape:
-    """One of Microban's collision shapes [Microban MJCF], in its link's frame."""
-
-    link: str
-    kind: str  # "box" or "cylinder" (the axis is the shape's local z)
-    size: np.ndarray  # MJCF convention: box half-sizes (3); cylinder radius and half-length (2)
-    offset: np.ndarray  # [m] the shape's centre, link frame
-    rotation: np.ndarray  # 3x3, the shape's axes in the link frame
-
-
-def read_collision_shapes(path: Path) -> list[CollisionShape]:
-    """The model's box and cylinder collision shapes (MJCF geoms of class "collision"), on the
-    URDF's links. Its mesh pieces are left to the collision check (collision.robot_shapes)."""
-    shapes = []
-    for body in ET.parse(path).getroot().iter("body"):
-        for geom in body.findall("geom"):
-            if geom.get("class") != "collision":
-                continue
-            kind = geom.get("type")
-            if kind not in ("box", "cylinder"):
-                continue
-            shapes.append(
-                CollisionShape(
-                    link=body.get("name"),
-                    kind=kind,
-                    size=_floats(geom.get("size"), "0 0 0")[: 3 if kind == "box" else 2],
-                    offset=_floats(geom.get("pos"), "0 0 0"),
-                    rotation=_quat_rotation(geom.get("quat")),
-                )
-            )
-    return shapes
-
-
-@dataclass(frozen=True)
-class VisualShape:
-    """One of Microban's visual meshes [Microban MJCF]: what the sim draws, in its link's frame."""
-
-    link: str
-    mesh: Path  # STL, in metres
-    offset: np.ndarray  # [m] the mesh frame's origin, link frame
-    rotation: np.ndarray  # 3x3, the mesh frame's axes in the link frame
-
-
-def read_visual_shapes(path: Path, collision: bool = False) -> list[VisualShape]:
-    """The model's visual meshes (MJCF geoms of class "visual"), on the URDF's links; with
-    collision, its collision meshes instead (every other mesh geom: convex pieces, as coll_*)."""
-    root = ET.parse(path).getroot()
-    meshdir = path.parent / root.find("compiler").get("meshdir", ".")
-    files = {}
-    for mesh in root.iter("mesh"):
-        file = mesh.get("file")
-        files[mesh.get("name", Path(file).stem)] = meshdir / file
-    shapes = []
-    for body in root.iter("body"):
-        for geom in body.findall("geom"):
-            # a mesh geom: its type may come from its class, but it always names its mesh
-            if geom.get("mesh") and (geom.get("class") == "visual") != collision:
-                shapes.append(
-                    VisualShape(
-                        link=body.get("name"),
-                        mesh=files[geom.get("mesh")],
-                        offset=_floats(geom.get("pos"), "0 0 0"),
-                        rotation=_quat_rotation(geom.get("quat")),
-                    )
-                )
-    return shapes
-
-
-def read_collision_points(path: Path) -> dict[str, np.ndarray]:
-    """link -> P x 3 points [m, link frame] on Microban's collision shapes, to keep out of the wall.
-
-    Boxes give their 8 corners; cylinders 8 points on the rims of their two ends.
-    """
-    points: dict[str, list[np.ndarray]] = {}
-    for shape in read_collision_shapes(path):
-        if shape.kind == "box":
-            local = [np.array([sx, sy, sz]) * shape.size
-                     for sx in (-1, 1) for sy in (-1, 1) for sz in (-1, 1)]  # fmt: skip
-        else:
-            radius, half = shape.size
-            rim = ((1, 0), (0, 1), (-1, 0), (0, -1))
-            local = [np.array([radius * c, radius * s, half * end])
-                     for c, s in rim for end in (-1, 1)]  # fmt: skip
-        points.setdefault(shape.link, []).extend(shape.offset + shape.rotation @ p for p in local)
-    return {link: np.array(p) for link, p in points.items()}
-
-
-def _quat_rotation(text: str | None) -> np.ndarray:
-    """3x3 rotation of an MJCF quat attribute (w, x, y, z)."""
-    w, x, y, z = _floats(text, "1 0 0 0") / np.linalg.norm(_floats(text, "1 0 0 0"))
-    return np.array(
-        [
-            [1 - 2 * (y * y + z * z), 2 * (x * y - w * z), 2 * (x * z + w * y)],
-            [2 * (x * y + w * z), 1 - 2 * (x * x + z * z), 2 * (y * z - w * x)],
-            [2 * (x * z - w * y), 2 * (y * z + w * x), 1 - 2 * (x * x + y * y)],
-        ]
-    )
 
 
 def rpy_matrix(roll: float, pitch: float, yaw: float) -> np.ndarray:
@@ -349,6 +243,74 @@ def difference(q0: np.ndarray, q1: np.ndarray) -> np.ndarray:
     return np.concatenate([v, omega, np.asarray(q1[7:]) - np.asarray(q0[7:])])
 
 
+# --- The body's shape, for keeping it off the cups ----------------------------------------------
+
+# [m] around each ball, the part of its forearm or foot (the hook, the ball) that may go into a
+# cup; beyond it, the rest of the limb is kept out (the forearm reaches 88 mm from its ball, the
+# foot's sole plate 115 mm) [Ours]
+BALL_ZONE = 0.05
+
+
+# [m] the hook's shaft: the part of a forearm or foot this far from its ball (beyond the ball's
+# surface), whose direction is the hook's (hook_axes) [Ours]
+HOOK_SHAFT = 0.03
+
+
+@lru_cache(maxsize=1)
+def link_shapes() -> dict[str, np.ndarray]:
+    """link -> Nx3 points of its drawn shape in the link frame: the vertices of the visual meshes
+    of Microban's MJCF, whose bodies are the URDF's links (checked to 1e-8 m)."""
+    import mujoco  # with the organisers' simulator, which the optimiser needs anyway
+
+    m = mujoco.MjModel.from_xml_path(str(microban.mjcf_path()))
+    shapes = {}
+    for body in range(1, m.nbody):
+        shape = []
+        for g in np.flatnonzero((m.geom_bodyid == body) & (m.geom_group == 2)):
+            if m.geom_type[g] != mujoco.mjtGeom.mjGEOM_MESH:
+                continue
+            mesh = m.geom_dataid[g]
+            start, count = m.mesh_vertadr[mesh], m.mesh_vertnum[mesh]
+            rotation = np.zeros(9)
+            mujoco.mju_quat2Mat(rotation, m.geom_quat[g])
+            shape.append(
+                m.mesh_vert[start : start + count] @ rotation.reshape(3, 3).T + m.geom_pos[g]
+            )
+        if shape:
+            shapes[mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_BODY, body)] = np.vstack(shape)
+    return shapes
+
+
+@lru_cache(maxsize=1)
+def keep_out_points() -> list[tuple[str, np.ndarray]]:
+    """(link, point in the link frame): the 8 corners of a box around each link's shape
+    (link_shapes), without the part of a forearm or foot within BALL_ZONE of its ball. A box
+    contains its shape, so with all 8 corners on one side of a plane, the whole link is."""
+    balls = {hook.link: ball_centre(hook) for hook in HOOKS.values()}
+    points = []
+    for link, shape in link_shapes().items():
+        if link in balls:
+            shape = shape[np.linalg.norm(shape - balls[link], axis=1) > BALL_ZONE]
+        low, high = shape.min(axis=0), shape.max(axis=0)
+        points += [(link, np.where([i & 1, i & 2, i & 4], high, low)) for i in range(8)]
+    return points
+
+
+@lru_cache(maxsize=1)
+def hook_axes() -> dict[str, np.ndarray]:
+    """limb -> unit vector in its link's frame, from its ball along its hook: towards the middle
+    of the shape between the ball's surface and HOOK_SHAFT from its centre. The hands' hooks are
+    straight shafts along the forearm (-x right, +x left); the feet's, a stub along +y."""
+    axes = {}
+    for limb, hook in HOOKS.items():
+        shape, centre = link_shapes()[hook.link], ball_centre(hook)
+        distance = np.linalg.norm(shape - centre, axis=1)
+        shaft = shape[(distance > hooks.BALL_RADIUS + 0.002) & (distance < HOOK_SHAFT)]
+        axis = shaft.mean(axis=0) - centre
+        axes[limb] = axis / np.linalg.norm(axis)
+    return axes
+
+
 # --- The model ----------------------------------------------------------------------------------
 
 
@@ -357,25 +319,21 @@ class RobotModel:
     """CasADi functions of the robot. Each takes q (NQ); see the module docstring.
 
     limb_positions(q) -> 3x4   ball centres [m], one column per limb in rcr.types.LIMBS order
+    body_points(q) -> 3xP      the corners of the body's boxes [m] (keep_out_points)
+    hook_directions(q) -> 3x4  each limb's hook direction, a unit vector (hook_axes), LIMBS order
     limb_jacobians(q) -> 3x76  d(ball centre)/d(motor angles), the four 3x19 blocks side by side
     com(q) -> 3                centre of mass [m]
-    body_points(q) -> 3xP      points on Microban's collision shapes [m], to keep out of the wall
     gravity_torques(q) -> 19   motor torques [N·m] that hold the robot against gravity alone
     integrate(q, dq) -> NQ     q (+) dq
     """
 
     limb_positions: ca.Function
+    body_points: ca.Function
+    hook_directions: ca.Function
     limb_jacobians: ca.Function
     com: ca.Function
-    body_points: ca.Function
     gravity_torques: ca.Function
     integrate: ca.Function
-    # link_frames(q) -> (3xL positions, 3x3L rotations side by side), links in link_names order
-    link_frames: ca.Function
-    # point_jacobian[link](q0, dq, p) -> (x, dx/ddq): the world position of point p (link frame)
-    # at q = integrate(q0, dq), and its 3xNV Jacobian w.r.t. dq, for collision gradients
-    point_jacobian: dict[str, ca.Function] = field(repr=False)
-    link_names: tuple[str, ...] = field(repr=False)
     mass: float  # [kg] the whole climbing model
     lower: np.ndarray = field(repr=False)  # [rad] motor limits from the URDF, MICROBAN_JOINTS order
     upper: np.ndarray = field(repr=False)
@@ -410,88 +368,24 @@ def load_robot_model() -> RobotModel:
     mass = sum(m for m, _, _ in point_masses)
     com = sum(m * (poses[n][0] + poses[n][1] @ p) for m, p, n in point_masses) / mass
 
-    collision = read_collision_points(mjcf_path())
-    unknown = set(collision) - set(urdf.links)
-    if unknown:
-        raise ValueError(f"MJCF collision shapes on links not in the URDF: {sorted(unknown)}")
-    body = ca.horzcat(*[poses[n][0] + poses[n][1] @ p for n, pts in collision.items() for p in pts])
+    points = ca.horzcat(*[poses[link][0] + poses[link][1] @ p for link, p in keep_out_points()])
+    axes = hook_axes()
+    hook_dirs = ca.horzcat(*[poses[HOOKS[limb].link][1] @ axes[limb] for limb in LIMBS])
 
     angles = q[7:]
     jacobians = ca.horzcat(*[ca.jacobian(limb_positions[:, i], angles) for i in range(4)])
     gravity = mass * GRAVITY * ca.jacobian(com[2], angles).T  # d(potential energy)/d(angles)
 
     dq = ca.SX.sym("dq", NV)
-    names = tuple(poses)
-    frames = ca.Function(
-        "link_frames",
-        [q],
-        [ca.horzcat(*[poses[n][0] for n in names]), ca.horzcat(*[poses[n][1] for n in names])],
-    )
     return RobotModel(
         limb_positions=ca.Function("limb_positions", [q], [limb_positions]),
+        body_points=ca.Function("body_points", [q], [points]),
+        hook_directions=ca.Function("hook_directions", [q], [hook_dirs]),
         limb_jacobians=ca.Function("limb_jacobians", [q], [jacobians]),
         com=ca.Function("com", [q], [com]),
-        body_points=ca.Function("body_points", [q], [body]),
         gravity_torques=ca.Function("gravity_torques", [q], [gravity]),
         integrate=ca.Function("integrate", [q, dq], [integrate_expression(q, dq)]),
-        link_frames=frames,
-        point_jacobian=_point_jacobians(urdf, names),
-        link_names=names,
         mass=float(mass),
         lower=np.array([revolute[n].lower for n in MICROBAN_JOINTS]),
         upper=np.array([revolute[n].upper for n in MICROBAN_JOINTS]),
     )
-
-
-@lru_cache(maxsize=1)
-def limb_reach() -> dict[str, tuple[np.ndarray, float]]:
-    """limb -> (its first joint's origin in the trunk frame [m], the furthest its ball can get
-    from there [m]), from the URDF and the hooks. An upper bound, never an underestimate:
-        the first joint turns about an axis through that origin, so it does not change the
-        distance; down the chain (joint origins, then the ball), the distance between every other
-        point depends on the one joint between them only; its largest over that joint's range
-        (sampled, plus how far the point can move between two samples), summed, bounds the reach.
-    Arms 0.153 m and legs 0.238 m, against 0.150 m and 0.219 m over 20000 random poses."""
-    urdf = read_urdf(urdf_path())
-    by_child = {j.child: j for j in urdf.joints}
-    out = {}
-    for limb, hook in HOOKS.items():
-        chain, link = [], hook.link
-        while link != ROOT_LINK:
-            chain.append(by_child[link])
-            link = chain[-1].parent
-        chain.reverse()
-        # hops[m]: point m+1 from point m, in the frame of the link point m is the origin of
-        hops = [j.xyz for j in chain[1:]] + [ball_centre(hook)]
-        reach = 0.0
-        for m in range(0, len(hops), 2):
-            if m + 1 == len(hops):
-                reach += float(np.linalg.norm(hops[m]))
-                continue
-            joint = chain[m + 1]  # between points m+1 and m+2: the only angle their distance has
-            angles = np.linspace(joint.lower, joint.upper, 2001) if joint.revolute else [0.0]
-            step = (joint.upper - joint.lower) / 2000 if joint.revolute else 0.0
-            far = max(
-                np.linalg.norm(hops[m] + joint.rotation @ _rodrigues(joint.axis, a) @ hops[m + 1])
-                for a in angles
-            )
-            reach += float(far + np.linalg.norm(hops[m + 1]) * step / 2)
-        out[limb] = (chain[0].xyz, reach)
-    return out
-
-
-def _rodrigues(axis: np.ndarray, angle: float) -> np.ndarray:
-    k = np.array([[0, -axis[2], axis[1]], [axis[2], 0, -axis[0]], [-axis[1], axis[0], 0]])
-    return np.eye(3) + np.sin(angle) * k + (1 - np.cos(angle)) * (k @ k)
-
-
-def _point_jacobians(urdf: Urdf, names: tuple[str, ...]) -> dict[str, ca.Function]:
-    """Per link: (q0, dq, p) -> (x, dx/ddq) for a point p fixed on that link, x in the wall frame
-    at q = integrate(q0, dq). The Jacobian is w.r.t. the optimisation variable dq itself."""
-    q0, dq, point = ca.SX.sym("q0", NQ), ca.SX.sym("dq", NV), ca.SX.sym("p", 3)
-    poses = link_poses(urdf, integrate_expression(q0, dq))
-    out = {}
-    for i, name in enumerate(names):  # (CasADi names cannot hold Microban's double underscores)
-        x = poses[name][0] + poses[name][1] @ point
-        out[name] = ca.Function(f"point_on_link_{i}", [q0, dq, point], [x, ca.jacobian(x, dq)])
-    return out

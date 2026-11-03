@@ -25,6 +25,11 @@ A\* over stances (`astar.py`), started over from v0 to keep it minimal:
   - collision: the simulator's MuJoCo scene of the wall; any robot contact counts except a ball in its own hold and
     self pairs already touching in the hanging posture (our SRDF).
 
+**Replanning** (`replan(wall, feasible, start, failed_moves, failed_stances)`) [Ours]: the same A\* from `start`
+(where the robot is) instead of `wall.start`. It never takes a move `(a, b)` in `failed_moves` and never enters a
+stance in `failed_stances`, whatever `feasible` says. A limb on `None` (off any hold) is placed first; IK and reach
+then leave it out. `ik()` returns, besides the verdict, which balls reached their sockets.
+
 The robot comes only from files Microban and the simulator use:
 | What | Source |
 |---|---|
