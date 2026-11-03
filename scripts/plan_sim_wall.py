@@ -9,7 +9,7 @@ import argparse
 import random
 import time
 from collections import Counter
-from itertools import pairwise
+from itertools import count, pairwise
 from pathlib import Path
 
 import mujoco
@@ -18,8 +18,30 @@ from climbing_sim.routes import generate_wall
 from numpy.linalg import norm
 
 from rcr import io, kinematics
-from rcr.planner import astar, feasible, plan
+from rcr.kinematics import feasible_ik_traj
+from rcr.planner import astar, feasible_ik_contact, plan, replan
 from rcr.types import LIMBS, ContactPlan, Hold, Stance, Trajectory, WallModel
+
+NPZ = Path(__file__).parents[1] / "npz"  # where --save-npz saves the trajectories
+
+
+def feasible_ik_contact_traj(wall: WallModel, a: Stance, b: Stance):
+    """The planner's check of stance b (reach, IK, collision; cached and quick) first, then the IK
+    motion a -> b (kinematics), which costs ~65 ms a move."""
+    contact = feasible_ik_contact(wall, a, b)
+    return feasible_ik_traj(wall, a, b) if contact.feasible else contact
+
+
+def logged(feasible, every=50):
+    """feasible, printing how many moves it has checked so far every `every` checks."""
+    calls, clock = count(1), time.perf_counter()
+
+    def check(wall, a, b):
+        if (n := next(calls)) % every == 0:
+            print(f"  checked {n} moves ({time.perf_counter() - clock:.0f} s)", flush=True)
+        return feasible(wall, a, b)
+
+    return check
 
 
 def hold_id(hold) -> str:
@@ -33,7 +55,7 @@ def to_wall_model(sim_wall, level: int, seed: int) -> WallModel:
     return WallModel(id=f"l{level}_s{seed}", level=level, holds=holds, start=start)
 
 
-def why_stuck(wall: WallModel, last: Stance) -> None:
+def why_stuck(wall: WallModel, last: Stance, feasible) -> None:
     """The moves from the last stance that would put a hand higher than it has been (a hand to a
     higher free hold), counted by why they fail, with one example of the values."""
     k = astar.key(last)
@@ -101,7 +123,11 @@ def main() -> None:
     )
     parser.add_argument("--save-trajectory", help="save the optimiser's trajectory to this file")
     parser.add_argument(
-        "--save-npz", help="save the optimiser's trajectory as a .npz (q: N x 26, every 0.02 s)"
+        "--save-npz",
+        nargs="?",
+        const="",
+        metavar="NAME",
+        help="save the trajectory as npz/<timestamp>[_NAME].npz (q: N x 26, every 0.02 s)",
     )
     parser.add_argument(
         "--heuristic-weight", type=float, default=astar.WEIGHT, help="A* heuristic weight"
@@ -111,6 +137,7 @@ def main() -> None:
         type=Path,
         help="load a wall from this JSON file instead of generating one. Options: N1, N2, N3",
     )
+    parser.add_argument("--feasibility", choices=("ik_contact", "ik_traj"), default="ik_traj", help="choose the feasibility function to use") #TODO: in the future, constance's RL feasibility will be added here.
     args = parser.parse_args()
 
     seed = random.randrange(10_000) if args.seed is None else args.seed
@@ -122,8 +149,17 @@ def main() -> None:
         wall = to_wall_model(sim_wall, args.level, seed)
     print(f"wall: level {args.level}, seed {seed}, {len(wall.holds)} holds")
 
+    #TODO: Future: if we have more feasibility checkers, add them here.
+    if args.feasibility == "ik_contact":
+        feasible = feasible_ik_contact
+    elif args.feasibility == "ik_traj":
+        feasible = feasible_ik_contact_traj
+    else:
+        raise ValueError("Invalid feasibility function")
+
+    print(f"planning the contact plan (A*, feasibility {args.feasibility})...", flush=True)
     clock = time.perf_counter()
-    contact_plan = plan(wall, feasible, HEURISTIC_WEIGHT=args.heuristic_weight)
+    contact_plan = plan(wall, logged(feasible), HEURISTIC_WEIGHT=args.heuristic_weight)
     seconds = time.perf_counter() - clock
     for a, b in pairwise(contact_plan.stances):
         (limb,) = [limb for limb in LIMBS if a.contacts[limb] != b.contacts[limb]]
@@ -136,15 +172,19 @@ def main() -> None:
         f"top {top:.3f} m: {'reached' if hand == top else 'NOT reached'}"
     )
     if hand != top:
-        why_stuck(wall, contact_plan.stances[-1])
+        print("why stuck: checking the moves from the last stance...", flush=True)
+        why_stuck(wall, contact_plan.stances[-1], feasible)
 
     if args.save:
         Path(args.save).parent.mkdir(parents=True, exist_ok=True)
         io.save_contact_plan(contact_plan, args.save)
         print(f"saved {args.save}")
     if args.show:
+        print("showing the stances in MuJoCo...", flush=True)
         show(sim_wall, wall, contact_plan)
-    if (args.play or args.save_trajectory or args.save_npz) and len(contact_plan.stances) > 1:
+    wanted = args.play or args.save_trajectory or args.save_npz is not None
+    if wanted and len(contact_plan.stances) > 1:
+        print("generating the trajectory (kinematics.optimise)...", flush=True)
         clock = time.perf_counter()
         trajectory = kinematics.optimise(wall, contact_plan)
         seconds = time.perf_counter() - clock
@@ -153,11 +193,14 @@ def main() -> None:
             Path(args.save_trajectory).parent.mkdir(parents=True, exist_ok=True)
             io.save_trajectory(trajectory, args.save_trajectory)
             print(f"saved {args.save_trajectory}")
-        if args.save_npz:
-            Path(args.save_npz).parent.mkdir(parents=True, exist_ok=True)
-            kinematics.convert_trajectory_to_npz(trajectory, args.save_npz)
-            print(f"saved {args.save_npz}")
+        if args.save_npz is not None:  # "" when --save-npz is given without a name
+            name = Path(args.save_npz).stem
+            path = NPZ / f"{time.strftime('%Y%m%d-%H%M%S')}{f'_{name}' if name else ''}.npz"
+            NPZ.mkdir(exist_ok=True)
+            kinematics.convert_trajectory_to_npz(trajectory, path)
+            print(f"saved {path}")
         if args.play:
+            print("playing the trajectory in MuJoCo...", flush=True)
             play(sim_wall, trajectory)
 
 

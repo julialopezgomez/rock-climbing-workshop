@@ -7,6 +7,8 @@ optimiser is rcr.optimiser.
 
 import numpy as np
 
+from rcr.kinematics.ik import feasible_ik_traj
+
 from rcr.types import (
     LIMBS,
     MICROBAN_JOINTS,
@@ -53,10 +55,6 @@ def validate_plan(wall: WallModel, plan: ContactPlan) -> None:
         if len(moved) != 1:
             raise ValueError(f"stances {n} -> {n + 1}: {len(moved)} limbs move, not 1")
 
-
-def feasibility(wall: WallModel, a: Stance, b: Stance) -> Feasibility:
-    """Can the robot go from stance a to stance b? Passed to the planner as FeasibilityFn."""
-    raise NotImplementedError
 
 
 def convert_trajectory_to_npz(trajectory: Trajectory, filename: str) -> None:

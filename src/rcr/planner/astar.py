@@ -22,7 +22,7 @@ HANG = Path(__file__).parents[3] / "third_party/simulator/climbing_sim/assets/po
 EPSILON = 1e-3  # [m]
 DT = 0.5
 MAX_ITERATIONS = 200
-WEIGHT = 1.0  # A* heuristic weight: 1.0 = admissible, 0.0 = Dijkstra
+WEIGHT = 1.7  # A* heuristic weight: 1.0 = admissible, 0.0 = Dijkstra
 # TODO: order by move: moving arm, diagonal leg, other leg, other arm
 TASK_ORDER = ("right_hand", "left_hand", "right_foot", "left_foot")
 # trunk z up, x into the wall (+y)
@@ -134,11 +134,12 @@ HAND_MAX_APART = 0.7  # a pair with a hand (hand-hand, hand-foot)
 FEET_MAX_APART = 0.27  # the two feet
 # [m] most one hand is above the other, and one foot above the other [Ours]: the example
 # plan the optimiser solved has up to 0.195 m (hands) and 0.135 m (feet)
-MAX_LEVEL = 0.1
+MAX_LEVEL = 0.08
 # [m] most the higher hand is above the lower foot [Ours]: the example plan the optimiser
 # solved has 0.35 m
 HAND_FEET_MAX_APART = 0.36
-MAX_TRANSITION_DISTANCE = 0.09  # [m] most a limb's hold in b is from its hold in a [Ours]
+HAND_FEET_MIN_APART = 0.20  # [m] least the higher hand is above the lower foot [Ours]: the example plan the optimiser solved has 0.08 m
+MAX_TRANSITION_DISTANCE = STEP  # [m] most a limb's hold in b is from its hold in a [Ours]
 
 Q_HANG = pin.neutral(model)
 for name, angle in json.loads(HANG.read_text())["joints"].items():
@@ -175,9 +176,13 @@ def reach(targets):
     if abs(right_foot[2] - left_foot[2]) > MAX_LEVEL:
         level = abs(right_foot[2] - left_foot[2])
         return fail(f"reach: one foot too far above the other ({mm(level)} > {mm(MAX_LEVEL)})")
-    level = abs(max(right_hand[2], left_hand[2]) - min(right_foot[2], left_foot[2]))
-    if level > HAND_FEET_MAX_APART:
+    
+    if abs(max(right_hand[2], left_hand[2]) - min(right_foot[2], left_foot[2])) > HAND_FEET_MAX_APART:
+        level = abs(max(right_hand[2], left_hand[2]) - min(right_foot[2], left_foot[2]))
         return fail(f"reach: a hand too far above a foot ({mm(level)} > {mm(HAND_FEET_MAX_APART)})")
+    if abs(min(right_hand[2], left_hand[2]) - max(right_foot[2], left_foot[2])) < HAND_FEET_MIN_APART:
+        level = abs(min(right_hand[2], left_hand[2]) - max(right_foot[2], left_foot[2]))
+        return fail(f"reach: a hand too close to a foot ({mm(level)} < {mm(HAND_FEET_MIN_APART)})")
     return None
 
 
@@ -276,11 +281,14 @@ def targets(wall, k):
 _cache = {}
 
 
-def feasible(wall: WallModel, a: Stance, b: Stance) -> Feasibility:
+
+#TODO: move this to a feasibility file. This feasibility file should deifne different feasible functions for different levels of feasibility. This should
+def feasible_ik_contact(wall: WallModel, a: Stance, b: Stance) -> Feasibility:
     """Reach, then IK, on stance b (does not depend on a, so cached)."""
     k = (wall.id, *key(b))
     if k not in _cache:
-        _cache[k] = reach(targets(wall, key(b))) or ik(wall, key(b))[0]
+        _cache[k] = reach(targets(wall, key(b))) or ik(wall, key(b))[0] # This is because reach returns None if successful. So both reach and ik need to be true.
+        
     return _cache[k]
 
 
