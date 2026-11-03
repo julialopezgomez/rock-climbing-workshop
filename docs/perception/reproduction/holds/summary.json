@@ -1,0 +1,32 @@
+{
+  "passed": true,
+  "cases": 5,
+  "records": [
+    {
+      "case": "000000",
+      "exact": true,
+      "predicted_holds": 10
+    },
+    {
+      "case": "000024",
+      "exact": true,
+      "predicted_holds": 10
+    },
+    {
+      "case": "000049",
+      "exact": true,
+      "predicted_holds": 10
+    },
+    {
+      "case": "000074",
+      "exact": true,
+      "predicted_holds": 10
+    },
+    {
+      "case": "000099",
+      "exact": true,
+      "predicted_holds": 10
+    }
+  ],
+  "scope": "Replay of published benchmark examples; not a new blind evaluation"
+}

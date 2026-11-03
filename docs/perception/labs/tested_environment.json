@@ -1,0 +1,10 @@
+{
+  "python": "3.12.3",
+  "packages": {
+    "numpy": "2.3.5",
+    "scipy": "1.18.1",
+    "matplotlib": "3.11.2",
+    "opencv-python": "5.0.0.93"
+  },
+  "scope": "Versions used to run these simplified examples; not a lockfile for every research environment"
+}

@@ -1,0 +1,349 @@
+{
+  "schema": "rcr-perception-output-v1",
+  "prediction": {
+    "schema": "robot-pose-v1",
+    "parent_frame": "wall",
+    "child_frame": "trunk",
+    "units": "metres",
+    "timestamp_s": 0.0,
+    "method": "resilient_max_aruco",
+    "valid": true,
+    "confidence": null,
+    "confidence_note": "Residuals are diagnostic; probability is not calibrated.",
+    "inputs": [
+      "RGB pair",
+      "intrinsics",
+      "image-based aruco wall calibration",
+      "19 synchronized measured joint angles",
+      "public climbing CAD",
+      "trained Microban keypoint initialization",
+      "Optional robust CAD stages"
+    ],
+    "diagnostics": {
+      "stages": {
+        "keypoints": {
+          "cost": 36.889364463060176,
+          "nfev": 2,
+          "reprojection_median_px": 0.9136143866026856,
+          "initializer_count": 2,
+          "retained_keypoints": 40,
+          "runtime_s": 0.049510128796100616,
+          "checkpoint_sha256": "204d78d9bf09229a1c36bedc58956223e909396aba084071e8ddac0958117e6c",
+          "proposal": "learned",
+          "joint_mode": "known",
+          "landmark_indices": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19
+          ],
+          "estimated_joints": false,
+          "landmarks_by_camera": [
+            20,
+            20
+          ]
+        },
+        "m3t": {
+          "m3t_update_seconds": 0.013509649,
+          "client_seconds": 0.020505471155047417,
+          "float32_rotation_orthogonality_error": 9.191340914648991e-07,
+          "persistent_process": true,
+          "raw_rgb_transport": true,
+          "measured_links_fixed": true,
+          "reset": true,
+          "frame_index": 2,
+          "correspondence_iterations": 7,
+          "update_iterations": 2,
+          "free_parameters": "six global trunk parameters"
+        }
+      },
+      "runtime_s": 1.2178957490250468,
+      "setup_seconds": 0.9738872037269175,
+      "setup_included_in_runtime": false,
+      "profile": "resilient_max",
+      "sequence": false,
+      "frame_index": 2,
+      "reacquired": true,
+      "timing": {
+        "skew_s": 0.0,
+        "clock_domain": "sim"
+      },
+      "fixed_camera_rig": false,
+      "used_in_sequence_calibration_cache": false,
+      "camera_metadata_changed": false,
+      "calibration": [
+        {
+          "T_camera_wall": [
+            [
+              0.9428717718051475,
+              -0.00012127864288729662,
+              0.3331558302424133,
+              -0.37706540289248663
+            ],
+            [
+              0.004221527020899644,
+              -0.9999153000266215,
+              -0.012311437051916431,
+              0.7281615591032979
+            ],
+            [
+              0.3331291050668385,
+              0.013014532806146596,
+              -0.9427913986101087,
+              2.081196250627236
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          "camera_position_wall_m": [
+            -0.3408566736255853,
+            0.7009683569784666,
+            2.0967201764658285
+          ],
+          "marker_ids": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "reprojection_rms_px": 0.346254833060064,
+          "inlier_count": 16
+        },
+        {
+          "T_camera_wall": [
+            [
+              0.974770101572707,
+              7.317156654288847e-05,
+              -0.22321120878185394,
+              -0.3900041615819313
+            ],
+            [
+              0.013975597622667885,
+              -0.9980579263553925,
+              0.06070468112314993,
+              0.7228969482342362
+            ],
+            [
+              -0.22277327431948343,
+              -0.062292618223156154,
+              -0.9728780488652626,
+              2.793260274426731
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          "camera_position_wall_m": [
+            0.9923252166884031,
+            0.8955210622115372,
+            2.586565076693012
+          ],
+          "marker_ids": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "reprojection_rms_px": 0.3806425420506908,
+          "inlier_count": 16
+        }
+      ],
+      "endpoints_wall_m": {
+        "left_hand": [
+          0.31536456104725236,
+          0.8108055250757564,
+          0.008769194613512235
+        ],
+        "right_hand": [
+          0.48040088539190806,
+          0.7807910976212518,
+          0.053559114441801656
+        ],
+        "left_foot": [
+          0.33698631734825146,
+          0.5345906307750933,
+          -0.06540270173467304
+        ],
+        "right_foot": [
+          0.41788964347226953,
+          0.4949959400129439,
+          0.005579292221131585
+        ]
+      },
+      "native_depth_used": false,
+      "imu_used": false,
+      "contact_truth_used": false,
+      "scope": "Local live Microban estimator; no official offline robot schema or score",
+      "refinement_stages": {
+        "differentiable_CAD": {
+          "loss": 0.03207535296678543,
+          "initial_loss": 0.03268572688102722,
+          "render_evaluations": 28,
+          "runtime_s": 0.16777540417388082,
+          "optimizer": "six-parameter L-BFGS; multi-view RGB silhouettes",
+          "float32_rotation_orthogonality_error": 7.059507665345968e-08,
+          "mask_pixels": [
+            6107,
+            4837
+          ],
+          "accepted": true
+        },
+        "exact_CAD": {
+          "loss": 0.030355066992342472,
+          "render_evaluations": 417,
+          "seconds": 0.9127357839606702,
+          "orientation_source": "RGB multi-start",
+          "mask_pixels": [
+            6107,
+            4837
+          ],
+          "boxes": [
+            [
+              595,
+              315,
+              684,
+              481
+            ],
+            [
+              593,
+              323,
+              667,
+              461
+            ]
+          ],
+          "hypothesis_count": 2,
+          "q_source": "named measured encoders",
+          "image_only_segmentation": true,
+          "runtime_s": 0.9331866269931197,
+          "initial_loss": 0.03378620930016041,
+          "refined_loss": 0.030355066992342472,
+          "selected": 1,
+          "selection": "Minimum common observed RGB silhouette loss; no pose labels"
+        }
+      },
+      "rgb_preprocessing": [
+        {
+          "exposure": {
+            "highlight_percentile": 99,
+            "highlight_value": 255,
+            "gain": 1.0,
+            "policy": "RGB highlight correction; no light or pose ground truth"
+          },
+          "noise_estimate_sigma": 0.0,
+          "bilateral_applied": false
+        },
+        {
+          "exposure": {
+            "highlight_percentile": 99,
+            "highlight_value": 255,
+            "gain": 1.0,
+            "policy": "RGB highlight correction; no light or pose ground truth"
+          },
+          "noise_estimate_sigma": 0.0,
+          "bilateral_applied": false
+        }
+      ]
+    },
+    "joints_rad": {
+      "head": 0.17029514848759672,
+      "right_shoulder_pitch": -0.8706522811351673,
+      "right_shoulder_roll": -0.029949063220878813,
+      "right_elbow": 0.05439447617946075,
+      "right_hip_yaw": 0.08770515687018278,
+      "right_hip_roll": -0.18706551915979025,
+      "right_hip_pitch": 0.06629611782431506,
+      "right_knee": -0.09459903186628414,
+      "right_ankle_pitch": -0.057374967985726735,
+      "right_ankle_roll": -0.047526145996093394,
+      "left_shoulder_pitch": -1.1337443451672837,
+      "left_shoulder_roll": 0.25889273551794095,
+      "left_elbow": 0.35892746161943,
+      "left_hip_yaw": 0.07431384295500569,
+      "left_hip_roll": 0.076889637821549,
+      "left_hip_pitch": -0.29517802348010436,
+      "left_knee": -0.1365896254822046,
+      "left_ankle_pitch": 0.20126389578535542,
+      "left_ankle_roll": -0.09329409443920261
+    },
+    "reason": null,
+    "T_wall_trunk": [
+      [
+        0.3482436489164022,
+        -0.9298025374983397,
+        0.11913690549547663,
+        0.35671274248520396
+      ],
+      [
+        0.14176533993325954,
+        0.1778690540769397,
+        0.9737890880449331,
+        0.6314426111774216
+      ],
+      [
+        -0.9266223337385071,
+        -0.3222263813895803,
+        0.19375554122032182,
+        0.09641825751599166
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "translation_m": [
+      0.35671274248520396,
+      0.6314426111774216,
+      0.09641825751599166
+    ],
+    "rotation_wxyz": [
+      0.6557187362378902,
+      -0.49412019125389445,
+      0.39870724345696806,
+      0.4085470714088463
+    ]
+  },
+  "team_pose": {
+    "position": [
+      0.35671274248520396,
+      -0.09641825751599166,
+      0.6314426111774216
+    ],
+    "quat": [
+      0.8130589029017079,
+      0.11426742698806285,
+      -0.006957809070482099,
+      0.5708150001837177
+    ],
+    "frame": "team_wall",
+    "units": "metres",
+    "axes": "x right, y into wall, z up",
+    "timestamp_s": 0.0
+  },
+  "source_input": "data/perception/robot/scenes/000041/input.json",
+  "contact_loading_confirmed": false
+}

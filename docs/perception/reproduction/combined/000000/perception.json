@@ -1,0 +1,5907 @@
+{
+  "schema": "rcr-perception-output-v1",
+  "prediction": {
+    "schema": "live-perception-v2",
+    "frame": "wall",
+    "units": "metres",
+    "quaternion_order": "WXYZ",
+    "timestamp_s": 0.0,
+    "holds": [
+      {
+        "id": "cup_c18_r02",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r02/mount",
+          "translation_m": [
+            0.3025,
+            0.04,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r02/socket",
+          "translation_m": [
+            0.3025,
+            0.026,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004317029000355242,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.36702823638916016,
+              "observed_to_model_area_ratio": 1.0485436893203883,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.19316385686397552,
+              "observed_to_model_area_ratio": 1.0,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0018116556844111314,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c21_r02",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r02/mount",
+          "translation_m": [
+            0.34750000000000003,
+            0.04,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r02/socket",
+          "translation_m": [
+            0.34750000000000003,
+            0.026,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004718629941842921,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.3817371726036072,
+              "observed_to_model_area_ratio": 0.985781990521327,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.2710098624229431,
+              "observed_to_model_area_ratio": 1.008130081300813,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0020357263685351736,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c26_r02",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r02/mount",
+          "translation_m": [
+            0.4225,
+            0.04,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r02/socket",
+          "translation_m": [
+            0.4225,
+            0.026,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004603467176738374,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.29992347955703735,
+              "observed_to_model_area_ratio": 1.0047619047619047,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.3228490948677063,
+              "observed_to_model_area_ratio": 1.0,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0025161400500831005,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c29_r02",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r02/mount",
+          "translation_m": [
+            0.4675,
+            0.04,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r02/socket",
+          "translation_m": [
+            0.4675,
+            0.026,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.005188826884780311,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.16591297090053558,
+              "observed_to_model_area_ratio": 1.0048543689320388,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.18874891102313995,
+              "observed_to_model_area_ratio": 1.02,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0018458620048113275,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c18_r07",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r07/mount",
+          "translation_m": [
+            0.3025,
+            0.11499999999999999,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r07/socket",
+          "translation_m": [
+            0.3025,
+            0.10099999999999999,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004357255654227097,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.47006189823150635,
+              "observed_to_model_area_ratio": 1.0439024390243903,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.20944440364837646,
+              "observed_to_model_area_ratio": 1.0,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0023182241148020657,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c21_r07",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r07/mount",
+          "translation_m": [
+            0.34750000000000003,
+            0.11499999999999999,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r07/socket",
+          "translation_m": [
+            0.34750000000000003,
+            0.10099999999999999,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004622828037178545,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.23062878847122192,
+              "observed_to_model_area_ratio": 0.9903846153846154,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.39116042852401733,
+              "observed_to_model_area_ratio": 1.04149377593361,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0018471467260842255,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c26_r07",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r07/mount",
+          "translation_m": [
+            0.4225,
+            0.11499999999999999,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r07/socket",
+          "translation_m": [
+            0.4225,
+            0.10099999999999999,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004355550891049939,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.328158974647522,
+              "observed_to_model_area_ratio": 1.0048543689320388,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.2837889790534973,
+              "observed_to_model_area_ratio": 0.992,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0016264577860389726,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c29_r07",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r07/mount",
+          "translation_m": [
+            0.4675,
+            0.11499999999999999,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r07/socket",
+          "translation_m": [
+            0.4675,
+            0.10099999999999999,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.005264547522796587,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.3027999997138977,
+              "observed_to_model_area_ratio": 1.0098522167487685,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.18054541945457458,
+              "observed_to_model_area_ratio": 1.0285714285714285,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0021372043076744,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c18_r12",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r12/mount",
+          "translation_m": [
+            0.3025,
+            0.19,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r12/socket",
+          "translation_m": [
+            0.3025,
+            0.176,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.0037071988543275133,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.318310022354126,
+              "observed_to_model_area_ratio": 1.0297029702970297,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.2700083553791046,
+              "observed_to_model_area_ratio": 1.0083333333333333,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0015311486269051974,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c21_r12",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r12/mount",
+          "translation_m": [
+            0.34750000000000003,
+            0.19,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r12/socket",
+          "translation_m": [
+            0.34750000000000003,
+            0.176,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004706686688831903,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.34923264384269714,
+              "observed_to_model_area_ratio": 0.9853658536585366,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.3204249143600464,
+              "observed_to_model_area_ratio": 1.0166666666666666,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0014915280094759148,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c26_r12",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r12/mount",
+          "translation_m": [
+            0.4225,
+            0.19,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r12/socket",
+          "translation_m": [
+            0.4225,
+            0.176,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004562733989486228,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.2789138853549957,
+              "observed_to_model_area_ratio": 1.0149253731343284,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.3617437481880188,
+              "observed_to_model_area_ratio": 1.008130081300813,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.001588389295364723,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c29_r12",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r12/mount",
+          "translation_m": [
+            0.4675,
+            0.19,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r12/socket",
+          "translation_m": [
+            0.4675,
+            0.176,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004505685360071827,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.27753323316574097,
+              "observed_to_model_area_ratio": 1.0100502512562815,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.2458283007144928,
+              "observed_to_model_area_ratio": 1.0040650406504066,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0016154876419722125,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c18_r17",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r17/mount",
+          "translation_m": [
+            0.3025,
+            0.265,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r17/socket",
+          "translation_m": [
+            0.3025,
+            0.251,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.0035455134385699518,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.3018302023410797,
+              "observed_to_model_area_ratio": 1.0459183673469388,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.280504047870636,
+              "observed_to_model_area_ratio": 1.0,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0015425757178246565,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c21_r17",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r17/mount",
+          "translation_m": [
+            0.34750000000000003,
+            0.265,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r17/socket",
+          "translation_m": [
+            0.34750000000000003,
+            0.251,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.0044055005271673355,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.2376657873392105,
+              "observed_to_model_area_ratio": 0.9655172413793104,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.14252790808677673,
+              "observed_to_model_area_ratio": 1.0084745762711864,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0016038243626107672,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c26_r17",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r17/mount",
+          "translation_m": [
+            0.4225,
+            0.265,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r17/socket",
+          "translation_m": [
+            0.4225,
+            0.251,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004515061008252289,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.2083905041217804,
+              "observed_to_model_area_ratio": 1.0151515151515151,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.29201993346214294,
+              "observed_to_model_area_ratio": 0.9876543209876543,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0012894674575282502,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c29_r17",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r17/mount",
+          "translation_m": [
+            0.4675,
+            0.265,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r17/socket",
+          "translation_m": [
+            0.4675,
+            0.251,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004433488605298676,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.17413601279258728,
+              "observed_to_model_area_ratio": 1.0153846153846153,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.22790613770484924,
+              "observed_to_model_area_ratio": 1.0083333333333333,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.001521506590459345,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c18_r22",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r22/mount",
+          "translation_m": [
+            0.3025,
+            0.33999999999999997,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r22/socket",
+          "translation_m": [
+            0.3025,
+            0.32599999999999996,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.00379309196746377,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.3083221912384033,
+              "observed_to_model_area_ratio": 1.057591623036649,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.36370158195495605,
+              "observed_to_model_area_ratio": 0.9957264957264957,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0013117815716361524,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c21_r22",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r22/mount",
+          "translation_m": [
+            0.34750000000000003,
+            0.33999999999999997,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r22/socket",
+          "translation_m": [
+            0.34750000000000003,
+            0.32599999999999996,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004931070807642743,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.2080976963043213,
+              "observed_to_model_area_ratio": 1.0155440414507773,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.17914605140686035,
+              "observed_to_model_area_ratio": 1.0265486725663717,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0010637891303516462,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c26_r22",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r22/mount",
+          "translation_m": [
+            0.4225,
+            0.33999999999999997,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r22/socket",
+          "translation_m": [
+            0.4225,
+            0.32599999999999996,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.00467180553474445,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.12350831925868988,
+              "observed_to_model_area_ratio": 1.0153061224489797,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.35790663957595825,
+              "observed_to_model_area_ratio": 0.9915966386554622,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0012218659505839587,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c29_r22",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r22/mount",
+          "translation_m": [
+            0.4675,
+            0.33999999999999997,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r22/socket",
+          "translation_m": [
+            0.4675,
+            0.32599999999999996,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.00451367721706131,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.19226747751235962,
+              "observed_to_model_area_ratio": 1.0157894736842106,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.3198511600494385,
+              "observed_to_model_area_ratio": 0.99581589958159,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.001309250763061485,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c18_r27",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r27/mount",
+          "translation_m": [
+            0.3025,
+            0.415,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r27/socket",
+          "translation_m": [
+            0.3025,
+            0.40099999999999997,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004789085653118194,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.3013524115085602,
+              "observed_to_model_area_ratio": 0.9948453608247423,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 1.1187320947647095,
+              "observed_to_model_area_ratio": 1.0043859649122806,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0008216563227076098,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c21_r27",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r27/mount",
+          "translation_m": [
+            0.34750000000000003,
+            0.415,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r27/socket",
+          "translation_m": [
+            0.34750000000000003,
+            0.40099999999999997,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.005315209949600854,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.2153855264186859,
+              "observed_to_model_area_ratio": 1.0104712041884816,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.051329709589481354,
+              "observed_to_model_area_ratio": 1.0132743362831858,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.000985380501694345,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c26_r27",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r27/mount",
+          "translation_m": [
+            0.4225,
+            0.415,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r27/socket",
+          "translation_m": [
+            0.4225,
+            0.40099999999999997,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004635798890481826,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.14750470221042633,
+              "observed_to_model_area_ratio": 1.0052356020942408,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.26016533374786377,
+              "observed_to_model_area_ratio": 0.9871794871794872,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.00150925186262385,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c29_r27",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r27/mount",
+          "translation_m": [
+            0.4675,
+            0.415,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r27/socket",
+          "translation_m": [
+            0.4675,
+            0.40099999999999997,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.0046416460376395244,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.2116287499666214,
+              "observed_to_model_area_ratio": 1.0,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.2522973418235779,
+              "observed_to_model_area_ratio": 1.030701754385965,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0010928059997441545,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c18_r32",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r32/mount",
+          "translation_m": [
+            0.3025,
+            0.49,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r32/socket",
+          "translation_m": [
+            0.3025,
+            0.476,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004696912083733804,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.3932633399963379,
+              "observed_to_model_area_ratio": 1.0209424083769634,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 1.0579885244369507,
+              "observed_to_model_area_ratio": 0.995475113122172,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0012340369429498284,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c21_r32",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r32/mount",
+          "translation_m": [
+            0.34750000000000003,
+            0.49,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r32/socket",
+          "translation_m": [
+            0.34750000000000003,
+            0.476,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.005118764340057613,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.11918188631534576,
+              "observed_to_model_area_ratio": 1.010752688172043,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.16217948496341705,
+              "observed_to_model_area_ratio": 1.0227272727272727,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0011646866018973545,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c26_r32",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r32/mount",
+          "translation_m": [
+            0.4225,
+            0.49,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r32/socket",
+          "translation_m": [
+            0.4225,
+            0.476,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004570227161789339,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.37152373790740967,
+              "observed_to_model_area_ratio": 1.0211640211640212,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 1.1694920063018799,
+              "observed_to_model_area_ratio": 0.9868995633187773,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0009749465348143369,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c29_r32",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r32/mount",
+          "translation_m": [
+            0.4675,
+            0.49,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r32/socket",
+          "translation_m": [
+            0.4675,
+            0.476,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.005218209875297084,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 1.1426829099655151,
+              "observed_to_model_area_ratio": 1.010989010989011,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.24446028470993042,
+              "observed_to_model_area_ratio": 1.0220264317180616,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0010114823748260653,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c18_r37",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r37/mount",
+          "translation_m": [
+            0.3025,
+            0.565,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r37/socket",
+          "translation_m": [
+            0.3025,
+            0.5509999999999999,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.005180246841287598,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.18063247203826904,
+              "observed_to_model_area_ratio": 1.005464480874317,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.39648085832595825,
+              "observed_to_model_area_ratio": 0.9513274336283186,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0007406383463942461,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c21_r37",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r37/mount",
+          "translation_m": [
+            0.34750000000000003,
+            0.565,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r37/socket",
+          "translation_m": [
+            0.34750000000000003,
+            0.5509999999999999,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.00498586247145837,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.28977471590042114,
+              "observed_to_model_area_ratio": 0.9946808510638298,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.24244976043701172,
+              "observed_to_model_area_ratio": 1.0231481481481481,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0008525102930687473,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c26_r37",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r37/mount",
+          "translation_m": [
+            0.4225,
+            0.565,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r37/socket",
+          "translation_m": [
+            0.4225,
+            0.5509999999999999,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004922728533597113,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 1.4251388311386108,
+              "observed_to_model_area_ratio": 0.9841269841269841,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.32938605546951294,
+              "observed_to_model_area_ratio": 1.0136363636363637,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0010574824903799756,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c29_r37",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r37/mount",
+          "translation_m": [
+            0.4675,
+            0.565,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r37/socket",
+          "translation_m": [
+            0.4675,
+            0.5509999999999999,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004951951997635708,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.2664673626422882,
+              "observed_to_model_area_ratio": 1.010928961748634,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 1.1211769580841064,
+              "observed_to_model_area_ratio": 1.0318181818181817,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0005645119470184258,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c18_r42",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r42/mount",
+          "translation_m": [
+            0.3025,
+            0.64,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r42/socket",
+          "translation_m": [
+            0.3025,
+            0.626,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.0056541969910914374,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.1832352578639984,
+              "observed_to_model_area_ratio": 1.0279329608938548,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 1.0982478857040405,
+              "observed_to_model_area_ratio": 1.0,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0005286050369730925,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c21_r42",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r42/mount",
+          "translation_m": [
+            0.34750000000000003,
+            0.64,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r42/socket",
+          "translation_m": [
+            0.34750000000000003,
+            0.626,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.005383953347529547,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 1.318691372871399,
+              "observed_to_model_area_ratio": 1.022099447513812,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 1.1697940826416016,
+              "observed_to_model_area_ratio": 1.0,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0009039399913268682,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c26_r42",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r42/mount",
+          "translation_m": [
+            0.4225,
+            0.64,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r42/socket",
+          "translation_m": [
+            0.4225,
+            0.626,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004356797800049556,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.382316917181015,
+              "observed_to_model_area_ratio": 0.9787234042553191,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.2619988024234772,
+              "observed_to_model_area_ratio": 1.0045045045045045,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.00025589044668669533,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c29_r42",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r42/mount",
+          "translation_m": [
+            0.4675,
+            0.64,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r42/socket",
+          "translation_m": [
+            0.4675,
+            0.626,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004391983230691276,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 1.3974261283874512,
+              "observed_to_model_area_ratio": 0.994475138121547,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 1.0348531007766724,
+              "observed_to_model_area_ratio": 1.0,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0006042626686048819,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c18_r47",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r47/mount",
+          "translation_m": [
+            0.3025,
+            0.715,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r47/socket",
+          "translation_m": [
+            0.3025,
+            0.701,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.005030678150233946,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.09686680138111115,
+              "observed_to_model_area_ratio": 1.0054945054945055,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 1.2387205362319946,
+              "observed_to_model_area_ratio": 0.9814814814814815,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.00028320895919721495,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c21_r47",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r47/mount",
+          "translation_m": [
+            0.34750000000000003,
+            0.715,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r47/socket",
+          "translation_m": [
+            0.34750000000000003,
+            0.701,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.005121948133521867,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 1.5024839639663696,
+              "observed_to_model_area_ratio": 0.9668508287292817,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 1.1315678358078003,
+              "observed_to_model_area_ratio": 1.0138248847926268,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0006746141489099222,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c26_r47",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r47/mount",
+          "translation_m": [
+            0.4225,
+            0.715,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r47/socket",
+          "translation_m": [
+            0.4225,
+            0.701,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.00443880909572392,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.40161430835723877,
+              "observed_to_model_area_ratio": 1.0055555555555555,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 1.1683133840560913,
+              "observed_to_model_area_ratio": 0.9771689497716894,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0002626311360645483,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c29_r47",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r47/mount",
+          "translation_m": [
+            0.4675,
+            0.715,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r47/socket",
+          "translation_m": [
+            0.4675,
+            0.701,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004726536480567424,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 1.577919840812683,
+              "observed_to_model_area_ratio": 0.9444444444444444,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 1.107432246208191,
+              "observed_to_model_area_ratio": 1.0137614678899083,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0004291298210120022,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c18_r52",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r52/mount",
+          "translation_m": [
+            0.3025,
+            0.79,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r52/socket",
+          "translation_m": [
+            0.3025,
+            0.776,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004540926148866895,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 4.673700332641602,
+              "observed_to_model_area_ratio": 0.4971751412429379,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": false
+            },
+            {
+              "boundary_loss_px2": 1.3373494148254395,
+              "observed_to_model_area_ratio": 0.9952380952380953,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "cad_accepted": true,
+              "scene_cup_iou": 0.9366666666666666,
+              "scene_score_gap": 1.0,
+              "hypotheses": 1,
+              "robot_pose_source": "microban_fast_aruco",
+              "occlusion_model": "RGB-estimated configured robot, public wall/floor"
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c21_r52",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r52/mount",
+          "translation_m": [
+            0.34750000000000003,
+            0.79,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r52/socket",
+          "translation_m": [
+            0.34750000000000003,
+            0.776,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004883305248435495,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.20659860968589783,
+              "observed_to_model_area_ratio": 0.9886363636363636,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.2460511326789856,
+              "observed_to_model_area_ratio": 1.0144230769230769,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "cad_accepted": true,
+              "scene_cup_iou": 0.9568527918781726,
+              "scene_score_gap": 1.0,
+              "hypotheses": 1,
+              "robot_pose_source": "microban_fast_aruco",
+              "occlusion_model": "RGB-estimated configured robot, public wall/floor"
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c26_r52",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r52/mount",
+          "translation_m": [
+            0.4225,
+            0.79,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r52/socket",
+          "translation_m": [
+            0.4225,
+            0.776,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.0048236321961716835,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 1.3963627815246582,
+              "observed_to_model_area_ratio": 1.0333333333333334,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 1.237617015838623,
+              "observed_to_model_area_ratio": 0.954954954954955,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "cad_accepted": true,
+              "scene_cup_iou": 0.9582309582309583,
+              "scene_score_gap": 1.0,
+              "hypotheses": 1,
+              "robot_pose_source": "microban_fast_aruco",
+              "occlusion_model": "RGB-estimated configured robot, public wall/floor"
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c29_r52",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r52/mount",
+          "translation_m": [
+            0.4675,
+            0.79,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r52/socket",
+          "translation_m": [
+            0.4675,
+            0.776,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004627435822810492,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 1.4481171369552612,
+              "observed_to_model_area_ratio": 0.9831460674157303,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 1.3294204473495483,
+              "observed_to_model_area_ratio": 0.9954545454545455,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0007527077779327865,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c18_r57",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r57/mount",
+          "translation_m": [
+            0.3025,
+            0.865,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r57/socket",
+          "translation_m": [
+            0.3025,
+            0.851,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.003417390530193874,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 7.395103454589844,
+              "observed_to_model_area_ratio": 0.3707865168539326,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": false
+            },
+            {
+              "boundary_loss_px2": 2.3391857147216797,
+              "observed_to_model_area_ratio": 0.9342723004694836,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "cad_accepted": true,
+              "scene_cup_iou": 0.9588014981273408,
+              "scene_score_gap": 1.0,
+              "hypotheses": 1,
+              "robot_pose_source": "microban_fast_aruco",
+              "occlusion_model": "RGB-estimated configured robot, public wall/floor"
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c21_r57",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r57/mount",
+          "translation_m": [
+            0.34750000000000003,
+            0.865,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r57/socket",
+          "translation_m": [
+            0.34750000000000003,
+            0.851,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.005133523942979211,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.2891603112220764,
+              "observed_to_model_area_ratio": 0.9662921348314607,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 1.469789743423462,
+              "observed_to_model_area_ratio": 0.9530516431924883,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "cad_accepted": true,
+              "scene_cup_iou": 0.9557291666666666,
+              "scene_score_gap": 1.0,
+              "hypotheses": 1,
+              "robot_pose_source": "microban_fast_aruco",
+              "occlusion_model": "RGB-estimated configured robot, public wall/floor"
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c26_r57",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r57/mount",
+          "translation_m": [
+            0.4225,
+            0.865,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r57/socket",
+          "translation_m": [
+            0.4225,
+            0.851,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004113384434409093,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 1.544148325920105,
+              "observed_to_model_area_ratio": 0.9885714285714285,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 1.3878947496414185,
+              "observed_to_model_area_ratio": 0.9436619718309859,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "cad_accepted": true,
+              "scene_cup_iou": 0.9633507853403142,
+              "scene_score_gap": 1.0,
+              "hypotheses": 1,
+              "robot_pose_source": "microban_fast_aruco",
+              "occlusion_model": "RGB-estimated configured robot, public wall/floor"
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c29_r57",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r57/mount",
+          "translation_m": [
+            0.4675,
+            0.865,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r57/socket",
+          "translation_m": [
+            0.4675,
+            0.851,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004373793083857899,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 1.6778180599212646,
+              "observed_to_model_area_ratio": 0.9647058823529412,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.2613680362701416,
+              "observed_to_model_area_ratio": 0.985781990521327,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.00043232863573661537,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c18_r62",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r62/mount",
+          "translation_m": [
+            0.3025,
+            0.94,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r62/socket",
+          "translation_m": [
+            0.3025,
+            0.9259999999999999,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_1"
+        ],
+        "association_residual_m": null,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 1.6279433965682983,
+              "observed_to_model_area_ratio": 0.9707317073170731,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "cad_accepted": true,
+              "scene_cup_iou": 0.9299065420560748,
+              "scene_score_gap": 1.0,
+              "hypotheses": 1,
+              "robot_pose_source": "microban_fast_aruco",
+              "occlusion_model": "RGB-estimated configured robot, public wall/floor"
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c21_r62",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r62/mount",
+          "translation_m": [
+            0.34750000000000003,
+            0.94,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r62/socket",
+          "translation_m": [
+            0.34750000000000003,
+            0.9259999999999999,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.0045481992388075035,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.4426136314868927,
+              "observed_to_model_area_ratio": 0.9385474860335196,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 0.48253604769706726,
+              "observed_to_model_area_ratio": 0.9764150943396226,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "cad_accepted": true,
+              "scene_cup_iou": 0.9561855670103093,
+              "scene_score_gap": 1.0,
+              "hypotheses": 1,
+              "robot_pose_source": "microban_fast_aruco",
+              "occlusion_model": "RGB-estimated configured robot, public wall/floor"
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c26_r62",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r62/mount",
+          "translation_m": [
+            0.4225,
+            0.94,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r62/socket",
+          "translation_m": [
+            0.4225,
+            0.9259999999999999,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.0042063491351718284,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 1.3634532690048218,
+              "observed_to_model_area_ratio": 1.0060240963855422,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 1.3883453607559204,
+              "observed_to_model_area_ratio": 0.9289099526066351,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "cad_accepted": true,
+              "scene_cup_iou": 0.9450261780104712,
+              "scene_score_gap": 1.0,
+              "hypotheses": 1,
+              "robot_pose_source": "microban_fast_aruco",
+              "occlusion_model": "RGB-estimated configured robot, public wall/floor"
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c29_r62",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r62/mount",
+          "translation_m": [
+            0.4675,
+            0.94,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r62/socket",
+          "translation_m": [
+            0.4675,
+            0.9259999999999999,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004478844545703888,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 1.4334163665771484,
+              "observed_to_model_area_ratio": 0.9880952380952381,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 1.7044974565505981,
+              "observed_to_model_area_ratio": 0.9299065420560748,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0001914701296816374,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c18_r67",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r67/mount",
+          "translation_m": [
+            0.3025,
+            1.015,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r67/socket",
+          "translation_m": [
+            0.3025,
+            1.001,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_1"
+        ],
+        "association_residual_m": null,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 1.7814794778823853,
+              "observed_to_model_area_ratio": 0.910377358490566,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "cad_accepted": true,
+              "scene_cup_iou": 0.9359605911330049,
+              "scene_score_gap": 1.0,
+              "hypotheses": 1,
+              "robot_pose_source": "microban_fast_aruco",
+              "occlusion_model": "RGB-estimated configured robot, public wall/floor"
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c21_r67",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r67/mount",
+          "translation_m": [
+            0.34750000000000003,
+            1.015,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r67/socket",
+          "translation_m": [
+            0.34750000000000003,
+            1.001,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004647780911976053,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 7.009285926818848,
+              "observed_to_model_area_ratio": 0.5056179775280899,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": false
+            },
+            {
+              "boundary_loss_px2": 0.4724849462509155,
+              "observed_to_model_area_ratio": 0.9951690821256038,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "cad_accepted": true,
+              "scene_cup_iou": 0.9568106312292359,
+              "scene_score_gap": 1.0,
+              "hypotheses": 1,
+              "robot_pose_source": "microban_fast_aruco",
+              "occlusion_model": "RGB-estimated configured robot, public wall/floor"
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c26_r67",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r67/mount",
+          "translation_m": [
+            0.4225,
+            1.015,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r67/socket",
+          "translation_m": [
+            0.4225,
+            1.001,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.003844960844672058,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.5624164938926697,
+              "observed_to_model_area_ratio": 0.9491525423728814,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 1.6507307291030884,
+              "observed_to_model_area_ratio": 0.9120370370370371,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "cad_accepted": true,
+              "scene_cup_iou": 0.9477806788511749,
+              "scene_score_gap": 1.0,
+              "hypotheses": 1,
+              "robot_pose_source": "microban_fast_aruco",
+              "occlusion_model": "RGB-estimated configured robot, public wall/floor"
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c29_r67",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r67/mount",
+          "translation_m": [
+            0.4675,
+            1.015,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r67/socket",
+          "translation_m": [
+            0.4675,
+            1.001,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004480612199732154,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 1.5388518571853638,
+              "observed_to_model_area_ratio": 0.9325842696629213,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 1.491837978363037,
+              "observed_to_model_area_ratio": 1.0,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0002991330780022235,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c18_r72",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r72/mount",
+          "translation_m": [
+            0.3025,
+            1.09,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r72/socket",
+          "translation_m": [
+            0.3025,
+            1.076,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": null,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 6.829800605773926,
+              "observed_to_model_area_ratio": 0.24154589371980675,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": false
+            },
+            {
+              "cad_accepted": true,
+              "scene_cup_iou": 0.9014084507042254,
+              "scene_score_gap": 0.5572526065483812,
+              "hypotheses": 17,
+              "robot_pose_source": "microban_fast_aruco",
+              "occlusion_model": "RGB-estimated configured robot, public wall/floor"
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c21_r72",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r72/mount",
+          "translation_m": [
+            0.34750000000000003,
+            1.09,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r72/socket",
+          "translation_m": [
+            0.34750000000000003,
+            1.076,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": null,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 5.1122002601623535,
+              "observed_to_model_area_ratio": 0.5418994413407822,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": false
+            },
+            {
+              "cad_accepted": true,
+              "scene_cup_iou": 0.8548387096774194,
+              "scene_score_gap": 0.283410138248848,
+              "hypotheses": 25,
+              "robot_pose_source": "microban_fast_aruco",
+              "occlusion_model": "RGB-estimated configured robot, public wall/floor"
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c26_r72",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r72/mount",
+          "translation_m": [
+            0.4225,
+            1.09,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r72/socket",
+          "translation_m": [
+            0.4225,
+            1.076,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004171017971038429,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 1.630871057510376,
+              "observed_to_model_area_ratio": 0.9827586206896551,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 1.5217156410217285,
+              "observed_to_model_area_ratio": 0.9289099526066351,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "cad_accepted": true,
+              "scene_cup_iou": 0.9230769230769231,
+              "scene_score_gap": 1.0,
+              "hypotheses": 1,
+              "robot_pose_source": "microban_fast_aruco",
+              "occlusion_model": "RGB-estimated configured robot, public wall/floor"
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c29_r72",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r72/mount",
+          "translation_m": [
+            0.4675,
+            1.09,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r72/socket",
+          "translation_m": [
+            0.4675,
+            1.076,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004570486391822401,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 1.4535073041915894,
+              "observed_to_model_area_ratio": 0.9441340782122905,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 1.7935006618499756,
+              "observed_to_model_area_ratio": 0.9339622641509434,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.00040894730301781266,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c18_r77",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r77/mount",
+          "translation_m": [
+            0.3025,
+            1.165,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r77/socket",
+          "translation_m": [
+            0.3025,
+            1.151,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": null,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 1.9692151546478271,
+              "observed_to_model_area_ratio": 0.8813559322033898,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "cad_accepted": true,
+              "scene_cup_iou": 0.6247787610619469,
+              "scene_score_gap": 1.0,
+              "hypotheses": 1,
+              "robot_pose_source": "microban_fast_aruco",
+              "occlusion_model": "RGB-estimated configured robot, public wall/floor"
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c21_r77",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r77/mount",
+          "translation_m": [
+            0.34750000000000003,
+            1.165,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r77/socket",
+          "translation_m": [
+            0.34750000000000003,
+            1.151,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": null,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.4511438310146332,
+              "observed_to_model_area_ratio": 0.9659090909090909,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "cad_accepted": true,
+              "scene_cup_iou": 0.5986622073578596,
+              "scene_score_gap": 1.0,
+              "hypotheses": 1,
+              "robot_pose_source": "microban_fast_aruco",
+              "occlusion_model": "RGB-estimated configured robot, public wall/floor"
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c26_r77",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r77/mount",
+          "translation_m": [
+            0.4225,
+            1.165,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r77/socket",
+          "translation_m": [
+            0.4225,
+            1.151,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_1"
+        ],
+        "association_residual_m": null,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 1.5334078073501587,
+              "observed_to_model_area_ratio": 0.9154929577464789,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.001851870309114765,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c29_r77",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r77/mount",
+          "translation_m": [
+            0.4675,
+            1.165,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r77/socket",
+          "translation_m": [
+            0.4675,
+            1.151,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_1"
+        ],
+        "association_residual_m": null,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 1.595536231994629,
+              "observed_to_model_area_ratio": 0.9423076923076923,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0018870003558103875,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c18_r82",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r82/mount",
+          "translation_m": [
+            0.3025,
+            1.24,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r82/socket",
+          "translation_m": [
+            0.3025,
+            1.226,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0"
+        ],
+        "association_residual_m": null,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 1.5302289724349976,
+              "observed_to_model_area_ratio": 0.96,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.002501461743734089,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c21_r82",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r82/mount",
+          "translation_m": [
+            0.34750000000000003,
+            1.24,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r82/socket",
+          "translation_m": [
+            0.34750000000000003,
+            1.226,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0"
+        ],
+        "association_residual_m": null,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.690266489982605,
+              "observed_to_model_area_ratio": 0.9101123595505618,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0021108266713318396,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c26_r82",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r82/mount",
+          "translation_m": [
+            0.4225,
+            1.24,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r82/socket",
+          "translation_m": [
+            0.4225,
+            1.226,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004350582901610475,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 1.6288303136825562,
+              "observed_to_model_area_ratio": 0.9213483146067416,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 1.753583550453186,
+              "observed_to_model_area_ratio": 0.9120370370370371,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0007048790987235833,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c29_r82",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r82/mount",
+          "translation_m": [
+            0.4675,
+            1.24,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r82/socket",
+          "translation_m": [
+            0.4675,
+            1.226,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0",
+          "cam_1"
+        ],
+        "association_residual_m": 0.004116285319537487,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 1.1176302433013916,
+              "observed_to_model_area_ratio": 0.9659090909090909,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            },
+            {
+              "boundary_loss_px2": 1.51261568069458,
+              "observed_to_model_area_ratio": 0.9669811320754716,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0008460745586349292,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c18_r87",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r87/mount",
+          "translation_m": [
+            0.3025,
+            1.315,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c18_r87/socket",
+          "translation_m": [
+            0.3025,
+            1.301,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0"
+        ],
+        "association_residual_m": null,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 0.8888719081878662,
+              "observed_to_model_area_ratio": 0.9497206703910615,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0025784157557349353,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c21_r87",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r87/mount",
+          "translation_m": [
+            0.34750000000000003,
+            1.315,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c21_r87/socket",
+          "translation_m": [
+            0.34750000000000003,
+            1.301,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_0"
+        ],
+        "association_residual_m": null,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 1.8525006771087646,
+              "observed_to_model_area_ratio": 0.8956043956043956,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.0026723762136950887,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c26_r87",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r87/mount",
+          "translation_m": [
+            0.4225,
+            1.315,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c26_r87/socket",
+          "translation_m": [
+            0.4225,
+            1.301,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_1"
+        ],
+        "association_residual_m": null,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 1.9640495777130127,
+              "observed_to_model_area_ratio": 0.9065420560747663,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.002943133174636585,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      },
+      {
+        "id": "cup_c29_r87",
+        "type": "cup",
+        "model_identity": "released_simulator_upright_cup",
+        "mounting_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r87/mount",
+          "translation_m": [
+            0.4675,
+            1.315,
+            0.0
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "contact_transform": {
+          "parent_frame": "wall",
+          "child_frame": "cup_c29_r87/socket",
+          "translation_m": [
+            0.4675,
+            1.301,
+            0.026
+          ],
+          "rotation_wxyz": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "timestamp_s": 0.0
+        },
+        "mount_reference": "Midpoint of the two mounting holes",
+        "entry_direction_wall": [
+          0,
+          1,
+          0
+        ],
+        "observed_by": [
+          "cam_1"
+        ],
+        "association_residual_m": null,
+        "confidence": null,
+        "confidence_note": "Image residuals and prior checks are not calibrated probabilities",
+        "diagnostics": {
+          "view_quality": [
+            {
+              "boundary_loss_px2": 1.7611064910888672,
+              "observed_to_model_area_ratio": 0.9124423963133641,
+              "definition": "boundary loss<=4pixel\u00b2 and observed area>=65%projected CAD area; development threshold",
+              "cad_accepted": true
+            }
+          ],
+          "snapped_to_public_lattice": true,
+          "grid_residual_m": 0.002305382724296032,
+          "grid_origin_socket_m": [
+            0.0325,
+            -0.004,
+            0.026
+          ]
+        }
+      }
+    ],
+    "robot_pose": {
+      "schema": "robot-pose-v1",
+      "parent_frame": "wall",
+      "child_frame": "trunk",
+      "units": "metres",
+      "timestamp_s": 0.0,
+      "method": "microban_fast_aruco",
+      "valid": true,
+      "confidence": null,
+      "confidence_note": "Residuals are diagnostic; probability is not calibrated.",
+      "inputs": [
+        "RGB pair",
+        "intrinsics",
+        "image-based aruco wall calibration",
+        "19 synchronized measured joint angles",
+        "public climbing CAD",
+        "trained Microban keypoint initialization"
+      ],
+      "diagnostics": {
+        "stages": {
+          "keypoints": {
+            "cost": 18.2573969710365,
+            "nfev": 2,
+            "reprojection_median_px": 0.6373607536616556,
+            "initializer_count": 2,
+            "retained_keypoints": 40,
+            "runtime_s": 1.0489498591050506,
+            "checkpoint_sha256": "204d78d9bf09229a1c36bedc58956223e909396aba084071e8ddac0958117e6c",
+            "proposal": "learned",
+            "joint_mode": "known",
+            "landmark_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19
+            ],
+            "estimated_joints": false,
+            "landmarks_by_camera": [
+              20,
+              20
+            ]
+          },
+          "m3t": {
+            "m3t_update_seconds": 0.012148994,
+            "client_seconds": 0.3192299180664122,
+            "float32_rotation_orthogonality_error": 2.355832077460302e-07,
+            "persistent_process": true,
+            "raw_rgb_transport": true,
+            "measured_links_fixed": true,
+            "reset": true,
+            "frame_index": 0,
+            "correspondence_iterations": 5,
+            "update_iterations": 2,
+            "free_parameters": "six global trunk parameters"
+          }
+        },
+        "runtime_s": 2.2068517110310495,
+        "setup_seconds": 0.7967429612763226,
+        "setup_included_in_runtime": false,
+        "profile": "fast",
+        "sequence": false,
+        "frame_index": 0,
+        "reacquired": true,
+        "timing": {
+          "skew_s": 0.0,
+          "clock_domain": "sim"
+        },
+        "fixed_camera_rig": false,
+        "used_in_sequence_calibration_cache": false,
+        "camera_metadata_changed": false,
+        "calibration": [
+          {
+            "T_camera_wall": [
+              [
+                0.9668128127664444,
+                -8.253447766491673e-05,
+                0.2554857691901787,
+                -0.3866507975033021
+              ],
+              [
+                -0.016953171028107505,
+                -0.9978166440976671,
+                0.0638320824802173,
+                0.7350195272599698
+              ],
+              [
+                0.25492268448046945,
+                -0.06604496914776722,
+                -0.9647033155263547,
+                2.3614160895273786
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ],
+            "camera_position_wall_m": [
+              -0.21569867187049857,
+              0.889342458793063,
+              2.32993188022384
+            ],
+            "marker_ids": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "reprojection_rms_px": 0.3801731142410343,
+            "inlier_count": 16
+          },
+          {
+            "T_camera_wall": [
+              [
+                0.9683912295312603,
+                3.116342976602904e-06,
+                -0.24943621741283195,
+                -0.38740339193743173
+              ],
+              [
+                0.01474175026310079,
+                -0.9982527657508418,
+                0.05721972098826935,
+                0.7227419029112057
+              ],
+              [
+                -0.24900021559451213,
+                -0.05908820238493832,
+                -0.9666992691487891,
+                2.35023889064567
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ],
+            "camera_position_wall_m": [
+              0.949713556874854,
+              0.8603517020104013,
+              2.1339866911833463
+            ],
+            "marker_ids": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "reprojection_rms_px": 0.3660439589812729,
+            "inlier_count": 16
+          }
+        ],
+        "endpoints_wall_m": {
+          "left_hand": [
+            0.1983528738578569,
+            1.1483142383237,
+            0.08404657648754046
+          ],
+          "right_hand": [
+            0.3531335371565818,
+            1.0714114196328008,
+            0.04825724625905786
+          ],
+          "left_foot": [
+            0.15351749765437722,
+            0.8205571108161136,
+            0.06382302164224396
+          ],
+          "right_foot": [
+            0.24872178757163121,
+            0.8064914795859055,
+            0.06068504926899179
+          ]
+        },
+        "native_depth_used": false,
+        "imu_used": false,
+        "contact_truth_used": false,
+        "scope": "Local live Microban estimator; no official offline robot schema or score",
+        "timing_scope": "Complete live RGB/map/robot inference including map refreshes"
+      },
+      "joints_rad": {
+        "head": -0.03994009917454871,
+        "right_shoulder_pitch": -1.0139565129087396,
+        "right_shoulder_roll": -0.1891270225619181,
+        "right_elbow": 0.41498112700359036,
+        "right_hip_yaw": 0.039253819366502504,
+        "right_hip_roll": -0.11927763989355702,
+        "right_hip_pitch": -0.06259556520312269,
+        "right_knee": -0.10737598436337664,
+        "right_ankle_pitch": 0.06961729177384751,
+        "right_ankle_roll": -0.024755099317959987,
+        "left_shoulder_pitch": -1.220931788616809,
+        "left_shoulder_roll": 0.07122708656797098,
+        "left_elbow": 0.1324781256546024,
+        "left_hip_yaw": 0.10989619765882302,
+        "left_hip_roll": 0.016610384411080363,
+        "left_hip_pitch": -0.12618681480142183,
+        "left_knee": -0.07197503458722757,
+        "left_ankle_pitch": 0.19861901030369894,
+        "left_ankle_roll": -0.09979436508330251
+      },
+      "reason": null,
+      "T_wall_trunk": [
+        [
+          -0.07731888000418613,
+          -0.9726141680745206,
+          0.21918820875130646,
+          0.2424605489
+        ],
+        [
+          -0.014539658058233429,
+          0.22092293769462762,
+          0.9751828823066601,
+          0.9578617215
+        ],
+        [
+          -0.9969003907805674,
+          0.07221312665356427,
+          -0.031222991536179967,
+          0.1609119773
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "translation_m": [
+        0.2424605489,
+        0.9578617215,
+        0.1609119773
+      ],
+      "rotation_wxyz": [
+        0.5273473869647648,
+        -0.4280715985198522,
+        0.5765121007478928,
+        0.4541951537536972
+      ]
+    },
+    "map_timestamp_s": 0.0,
+    "map_updated": true,
+    "map_method": "scene_grid_dense",
+    "map_calibration": "aruco",
+    "rejected_map_proposals": [
+      {
+        "point_m": [
+          0.4407600658225446,
+          1.2971861732041978,
+          0.0259999999999998
+        ],
+        "reason": "No uniquely supported cup/robot scene hypothesis",
+        "best_scene_iou": 0.6422182468694096,
+        "scene_score_gap": 0.00846600270423914
+      },
+      {
+        "point_m": [
+          0.4396109251085159,
+          1.1492370428633245,
+          0.0259999999999998
+        ],
+        "reason": "No uniquely supported cup/robot scene hypothesis",
+        "best_scene_iou": 0.6486486486486487,
+        "scene_score_gap": 0.013101072347032838
+      },
+      {
+        "point_m": [
+          0.33051076152815106,
+          1.2972734858767534,
+          0.0259999999999998
+        ],
+        "reason": "No uniquely supported cup/robot scene hypothesis",
+        "best_scene_iou": 0.6060606060606061,
+        "scene_score_gap": 0.009450436569080622
+      },
+      {
+        "point_m": [
+          0.33035575259297156,
+          1.2232706027750893,
+          0.0259999999999998
+        ],
+        "reason": "No uniquely supported cup/robot scene hypothesis",
+        "best_scene_iou": 0.6105442176870748,
+        "scene_score_gap": 0.01088493318963013
+      }
+    ],
+    "map_refresh_error": null,
+    "map_runtime_s": 0.8264554804190993,
+    "runtime_s": 2.2068517110310495,
+    "confirmed_contacts": {},
+    "assumptions": [
+      "Wall holds remain static during a sequence",
+      "Contact loading is not inferred from planned or true contact flags",
+      "Socket proximity is a conditional geometric prior; it does not confirm contact or loading"
+    ],
+    "integration_status": "Versioned perception measurements; no closed-loop climb or physical-camera validation is claimed",
+    "visual_robot_pose": {
+      "schema": "robot-pose-v1",
+      "parent_frame": "wall",
+      "child_frame": "trunk",
+      "units": "metres",
+      "timestamp_s": 0.0,
+      "method": "microban_fast_aruco",
+      "valid": true,
+      "confidence": null,
+      "confidence_note": "Residuals are diagnostic; probability is not calibrated.",
+      "inputs": [
+        "RGB pair",
+        "intrinsics",
+        "image-based aruco wall calibration",
+        "19 synchronized measured joint angles",
+        "public climbing CAD",
+        "trained Microban keypoint initialization"
+      ],
+      "diagnostics": {
+        "stages": {
+          "keypoints": {
+            "cost": 18.2573969710365,
+            "nfev": 2,
+            "reprojection_median_px": 0.6373607536616556,
+            "initializer_count": 2,
+            "retained_keypoints": 40,
+            "runtime_s": 1.0489498591050506,
+            "checkpoint_sha256": "204d78d9bf09229a1c36bedc58956223e909396aba084071e8ddac0958117e6c",
+            "proposal": "learned",
+            "joint_mode": "known",
+            "landmark_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19
+            ],
+            "estimated_joints": false,
+            "landmarks_by_camera": [
+              20,
+              20
+            ]
+          },
+          "m3t": {
+            "m3t_update_seconds": 0.012148994,
+            "client_seconds": 0.3192299180664122,
+            "float32_rotation_orthogonality_error": 2.355832077460302e-07,
+            "persistent_process": true,
+            "raw_rgb_transport": true,
+            "measured_links_fixed": true,
+            "reset": true,
+            "frame_index": 0,
+            "correspondence_iterations": 5,
+            "update_iterations": 2,
+            "free_parameters": "six global trunk parameters"
+          }
+        },
+        "runtime_s": 2.2068517110310495,
+        "setup_seconds": 0.7967429612763226,
+        "setup_included_in_runtime": false,
+        "profile": "fast",
+        "sequence": false,
+        "frame_index": 0,
+        "reacquired": true,
+        "timing": {
+          "skew_s": 0.0,
+          "clock_domain": "sim"
+        },
+        "fixed_camera_rig": false,
+        "used_in_sequence_calibration_cache": false,
+        "camera_metadata_changed": false,
+        "calibration": [
+          {
+            "T_camera_wall": [
+              [
+                0.9668128127664444,
+                -8.253447766491673e-05,
+                0.2554857691901787,
+                -0.3866507975033021
+              ],
+              [
+                -0.016953171028107505,
+                -0.9978166440976671,
+                0.0638320824802173,
+                0.7350195272599698
+              ],
+              [
+                0.25492268448046945,
+                -0.06604496914776722,
+                -0.9647033155263547,
+                2.3614160895273786
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ],
+            "camera_position_wall_m": [
+              -0.21569867187049857,
+              0.889342458793063,
+              2.32993188022384
+            ],
+            "marker_ids": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "reprojection_rms_px": 0.3801731142410343,
+            "inlier_count": 16
+          },
+          {
+            "T_camera_wall": [
+              [
+                0.9683912295312603,
+                3.116342976602904e-06,
+                -0.24943621741283195,
+                -0.38740339193743173
+              ],
+              [
+                0.01474175026310079,
+                -0.9982527657508418,
+                0.05721972098826935,
+                0.7227419029112057
+              ],
+              [
+                -0.24900021559451213,
+                -0.05908820238493832,
+                -0.9666992691487891,
+                2.35023889064567
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ],
+            "camera_position_wall_m": [
+              0.949713556874854,
+              0.8603517020104013,
+              2.1339866911833463
+            ],
+            "marker_ids": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "reprojection_rms_px": 0.3660439589812729,
+            "inlier_count": 16
+          }
+        ],
+        "endpoints_wall_m": {
+          "left_hand": [
+            0.1983528738578569,
+            1.1483142383237,
+            0.08404657648754046
+          ],
+          "right_hand": [
+            0.3531335371565818,
+            1.0714114196328008,
+            0.04825724625905786
+          ],
+          "left_foot": [
+            0.15351749765437722,
+            0.8205571108161136,
+            0.06382302164224396
+          ],
+          "right_foot": [
+            0.24872178757163121,
+            0.8064914795859055,
+            0.06068504926899179
+          ]
+        },
+        "native_depth_used": false,
+        "imu_used": false,
+        "contact_truth_used": false,
+        "scope": "Local live Microban estimator; no official offline robot schema or score",
+        "timing_scope": "Complete live RGB/map/robot inference including map refreshes"
+      },
+      "joints_rad": {
+        "head": -0.03994009917454871,
+        "right_shoulder_pitch": -1.0139565129087396,
+        "right_shoulder_roll": -0.1891270225619181,
+        "right_elbow": 0.41498112700359036,
+        "right_hip_yaw": 0.039253819366502504,
+        "right_hip_roll": -0.11927763989355702,
+        "right_hip_pitch": -0.06259556520312269,
+        "right_knee": -0.10737598436337664,
+        "right_ankle_pitch": 0.06961729177384751,
+        "right_ankle_roll": -0.024755099317959987,
+        "left_shoulder_pitch": -1.220931788616809,
+        "left_shoulder_roll": 0.07122708656797098,
+        "left_elbow": 0.1324781256546024,
+        "left_hip_yaw": 0.10989619765882302,
+        "left_hip_roll": 0.016610384411080363,
+        "left_hip_pitch": -0.12618681480142183,
+        "left_knee": -0.07197503458722757,
+        "left_ankle_pitch": 0.19861901030369894,
+        "left_ankle_roll": -0.09979436508330251
+      },
+      "reason": null,
+      "T_wall_trunk": [
+        [
+          -0.07731888000418613,
+          -0.9726141680745206,
+          0.21918820875130646,
+          0.2424605489
+        ],
+        [
+          -0.014539658058233429,
+          0.22092293769462762,
+          0.9751828823066601,
+          0.9578617215
+        ],
+        [
+          -0.9969003907805674,
+          0.07221312665356427,
+          -0.031222991536179967,
+          0.1609119773
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "translation_m": [
+        0.2424605489,
+        0.9578617215,
+        0.1609119773
+      ],
+      "rotation_wxyz": [
+        0.5273473869647648,
+        -0.4280715985198522,
+        0.5765121007478928,
+        0.4541951537536972
+      ]
+    },
+    "mapped_socket_hypothesis": {
+      "accepted": false,
+      "geometric_hypotheses": [],
+      "contact_status": "Unverified proximity hypotheses; seating/loading is not inferred",
+      "reason": "Fewer than three unambiguous nearby socket hypotheses"
+    }
+  },
+  "team_pose": {
+    "position": [
+      0.2424605489,
+      -0.1609119773,
+      0.9578617215
+    ],
+    "quat": [
+      0.6755832435105443,
+      0.07019858321703878,
+      0.08649114267363117,
+      0.728820089076243
+    ],
+    "frame": "team_wall",
+    "units": "metres",
+    "axes": "x right, y into wall, z up",
+    "timestamp_s": 0.0
+  },
+  "source_input": "data/perception/robot/scenes/000000/input.json",
+  "contact_loading_confirmed": false
+}

@@ -1,0 +1,26 @@
+{
+  "lab": "contact_registration",
+  "seed": 7,
+  "noise_mm": 0.5,
+  "injected_outliers": 2,
+  "gate_mm": 3.0,
+  "retained": [
+    false,
+    false,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+  ],
+  "least_squares_all": {
+    "position_error_mm": 14.687946597903837,
+    "rotation_error_deg": 5.931538868892005
+  },
+  "sample_consensus": {
+    "position_error_mm": 0.3840963590715872,
+    "rotation_error_deg": 0.2040428652077346
+  },
+  "scope": "Given synthetic point correspondences; does not confirm contact loading"
+}

@@ -1,0 +1,48 @@
+{
+  "cases": 5,
+  "root_passes": 5,
+  "endpoint_passes": 5,
+  "records": [
+    {
+      "case": "000000",
+      "position_mm": 1.1387369284247681,
+      "rotation_deg": 0.17227925531077112,
+      "worst_endpoint_mm": 1.6406192919784695,
+      "passed_root": true,
+      "passed_endpoints": true
+    },
+    {
+      "case": "000023",
+      "position_mm": 0.2089299470056101,
+      "rotation_deg": 0.39057275647589296,
+      "worst_endpoint_mm": 0.9608506495046085,
+      "passed_root": true,
+      "passed_endpoints": true
+    },
+    {
+      "case": "000041",
+      "position_mm": 0.8212474004527148,
+      "rotation_deg": 0.32303992929935027,
+      "worst_endpoint_mm": 1.5934798983218283,
+      "passed_root": true,
+      "passed_endpoints": true
+    },
+    {
+      "case": "000062",
+      "position_mm": 0.3509997641504514,
+      "rotation_deg": 0.1101582026884646,
+      "worst_endpoint_mm": 0.5536211880685172,
+      "passed_root": true,
+      "passed_endpoints": true
+    },
+    {
+      "case": "000089",
+      "position_mm": 0.22708438460045166,
+      "rotation_deg": 0.05086178114144794,
+      "worst_endpoint_mm": 0.2849369514207588,
+      "passed_root": true,
+      "passed_endpoints": true
+    }
+  ],
+  "scope": "Saved-case regression under local 5mm/5degree root and all-endpoints-5mm criteria"
+}

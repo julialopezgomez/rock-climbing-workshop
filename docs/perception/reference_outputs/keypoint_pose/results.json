@@ -1,0 +1,37 @@
+{
+  "lab": "keypoint_pose",
+  "seed": 7,
+  "noise_px": 0.5,
+  "outlier_fraction": 0.15,
+  "joint_error_deg": 0.0,
+  "retained_per_camera": [
+    14,
+    14
+  ],
+  "position_error_mm": 0.38310664026509056,
+  "rotation_error_deg": 0.25195744362940653,
+  "worst_endpoint_error_mm": 1.176191347823322,
+  "rotation_model_to_camera0": [
+    [
+      0.944388641434226,
+      -0.3179875939421044,
+      -0.08374953151467954
+    ],
+    [
+      0.2922406564984047,
+      0.9283837595107167,
+      -0.22956261404272504
+    ],
+    [
+      0.15074976822336553,
+      0.1923213071286149,
+      0.9696839805859135
+    ]
+  ],
+  "translation_model_to_camera0_m": [
+    0.024860694016180438,
+    -0.0151321724821686,
+    0.8503315041110524
+  ],
+  "scope": "Synthetic identified landmarks; no learned detector or Microban benchmark"
+}

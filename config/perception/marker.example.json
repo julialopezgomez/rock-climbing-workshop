@@ -1,0 +1,8 @@
+{
+  "measured": false,
+  "marker_id": 5,
+  "code_size_m": 0.05,
+  "T_trunk_marker": [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]],
+  "wall": {},
+  "instructions": "Measure the black code size and marker-to-trunk transform. Replace the identity example, then set measured=true. Do not use this example transform as a robot measurement."
+}

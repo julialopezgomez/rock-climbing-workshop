@@ -1,0 +1,2992 @@
+{
+  "scope": "Saved results only; this report runs no new experiments.",
+  "source_sha256": {
+    "benchmark.json": "418051533195e2ec4768d9964090d827e874bf72fb9a0b05fd17caa616326461",
+    "hold_benchmark.json": "4cf761000ee72cc1301c48b21573c2a181a3ea96ad5c24c910b07903c8c4b2ce",
+    "readiness.json": "80b3854f3352b52de969132db1d2fd5eb8be94af2f1e160c4b4cd4e6d0705cef",
+    "overview.html": "f543cb866d579d46f91f9fb25ddab55bf80d339e9450ca46bf621fa58ef110a4",
+    "holds_overview.html": "4d634fa5e02bfccf2388d422f3a5ebdc065192848e889c19a5d45cd78dedf407",
+    "live_overview.html": "4391bc76494d0ab9a3798824ce3a15126b364338cc83a766bd10748da89399be"
+  },
+  "robot_methods": [
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 0,
+      "endpoint_success_5mm": 0,
+      "translation_mm": {
+        "median": 245.93980894556603,
+        "p90": 390.7389047634577,
+        "max": 479.0019390600049
+      },
+      "rotation_deg": {
+        "median": 18.573696299732283,
+        "p90": 24.55275081811063,
+        "max": 28.38165703996953
+      },
+      "endpoint_max_mm": {
+        "median": 271.37551062265413,
+        "p90": 425.30132562316254,
+        "max": 497.70410275549165
+      },
+      "id": "initial_mean",
+      "label": "Initial mean-pose prior",
+      "inputs": "prior only",
+      "timing_scope": "complete",
+      "markerless": false,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 0,
+          "endpoint_success_5mm": 0,
+          "translation_mm": {
+            "median": 274.24205422854357,
+            "p90": 407.0666688169298,
+            "max": 434.857470766305
+          },
+          "rotation_deg": {
+            "median": 17.635431772939498,
+            "p90": 22.985659905687427,
+            "max": 24.511823131689507
+          },
+          "endpoint_max_mm": {
+            "median": 269.74026221547916,
+            "p90": 426.42108897299954,
+            "max": 436.7561192035981
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 0,
+          "endpoint_success_5mm": 0,
+          "translation_mm": {
+            "median": 241.5526484159621,
+            "p90": 389.9277389685134,
+            "max": 479.0019390600049
+          },
+          "rotation_deg": {
+            "median": 19.093227901555746,
+            "p90": 25.231485099798018,
+            "max": 28.38165703996953
+          },
+          "endpoint_max_mm": {
+            "median": 271.5188628924201,
+            "p90": 419.47880832292225,
+            "max": 497.70410275549165
+          }
+        }
+      },
+      "runtime_median_s": 0.0,
+      "endpoint_output_available": false,
+      "artifacts": "development/outputs/perception/robot_pose/prior_all"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 60,
+      "endpoint_success_5mm": 8,
+      "translation_mm": {
+        "median": 3.7792020895030145,
+        "p90": 7.184130069775041,
+        "max": 62.77311810624252
+      },
+      "rotation_deg": {
+        "median": 3.999838800825559,
+        "p90": 6.97962096855216,
+        "max": 34.003553689498624
+      },
+      "endpoint_max_mm": {
+        "median": 13.809769319177096,
+        "p90": 25.98467265407158,
+        "max": 161.24700187551718
+      },
+      "id": "initial_marker_rgb",
+      "label": "Synthetic50mm robot marker",
+      "inputs": "RGB + marker",
+      "timing_scope": "complete",
+      "markerless": false,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 13,
+          "endpoint_success_5mm": 1,
+          "translation_mm": {
+            "median": 3.809577425582833,
+            "p90": 7.088978857469857,
+            "max": 9.300562766602773
+          },
+          "rotation_deg": {
+            "median": 4.088577841664136,
+            "p90": 5.657643854895001,
+            "max": 8.64081939315502
+          },
+          "endpoint_max_mm": {
+            "median": 14.240180082338306,
+            "p90": 23.919514210995327,
+            "max": 34.239404287622605
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 47,
+          "endpoint_success_5mm": 7,
+          "translation_mm": {
+            "median": 3.7792020895030145,
+            "p90": 7.184130069775041,
+            "max": 62.77311810624252
+          },
+          "rotation_deg": {
+            "median": 3.999838800825559,
+            "p90": 7.068513226797997,
+            "max": 34.003553689498624
+          },
+          "endpoint_max_mm": {
+            "median": 13.809769319177096,
+            "p90": 26.9677647617267,
+            "max": 161.24700187551718
+          }
+        }
+      },
+      "runtime_median_s": 0.08565799053758383,
+      "endpoint_output_available": false,
+      "artifacts": "development/outputs/perception/robot_pose/marker_rgb_all"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 98,
+      "endpoint_success_5mm": 98,
+      "translation_mm": {
+        "median": 1.1055897775198682,
+        "p90": 2.3310815957740574,
+        "max": 72.57718484109027
+      },
+      "rotation_deg": {
+        "median": 1.018519638350823e-14,
+        "p90": 1.9596163213065773e-14,
+        "max": 3.5726597663988575e-14
+      },
+      "endpoint_max_mm": {
+        "median": 1.1055897775199073,
+        "p90": 2.3310815957740827,
+        "max": 72.57718484109033
+      },
+      "id": "initial_marker_imu",
+      "label": "Synthetic marker + static IMU",
+      "inputs": "RGB + marker + static IMU",
+      "timing_scope": "complete",
+      "markerless": false,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 20,
+          "endpoint_success_5mm": 20,
+          "translation_mm": {
+            "median": 0.9742569314260259,
+            "p90": 2.1441626325704384,
+            "max": 3.165081743936086
+          },
+          "rotation_deg": {
+            "median": 9.353012926454617e-15,
+            "p90": 1.6260787387160735e-14,
+            "max": 1.9235953448451797e-14
+          },
+          "endpoint_max_mm": {
+            "median": 0.9742569314260431,
+            "p90": 2.144162632570465,
+            "max": 3.1650817439361236
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 78,
+          "endpoint_success_5mm": 78,
+          "translation_mm": {
+            "median": 1.1226215640710941,
+            "p90": 2.364469619860067,
+            "max": 72.57718484109027
+          },
+          "rotation_deg": {
+            "median": 1.0303575966117835e-14,
+            "p90": 2.0177138085687826e-14,
+            "max": 3.5726597663988575e-14
+          },
+          "endpoint_max_mm": {
+            "median": 1.122621564071152,
+            "p90": 2.3644696198600923,
+            "max": 72.57718484109033
+          }
+        }
+      },
+      "runtime_median_s": 0.09605422266758978,
+      "endpoint_output_available": false,
+      "artifacts": "development/outputs/perception/robot_pose/marker_imu_all"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 48,
+      "endpoint_success_5mm": 3,
+      "translation_mm": {
+        "median": 3.847278016268926,
+        "p90": 6.996416163132077,
+        "max": 12.299844005386227
+      },
+      "rotation_deg": {
+        "median": 4.714621907852386,
+        "p90": 10.153271663923686,
+        "max": 18.378247045156535
+      },
+      "endpoint_max_mm": {
+        "median": 16.15181784298307,
+        "p90": 32.14001228418096,
+        "max": 63.82344592786324
+      },
+      "id": "initial_trunk",
+      "label": "Initial geometric rigid trunk",
+      "inputs": "RGB only",
+      "timing_scope": "complete",
+      "markerless": false,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 11,
+          "endpoint_success_5mm": 1,
+          "translation_mm": {
+            "median": 2.671714391101451,
+            "p90": 5.8893473280873865,
+            "max": 11.858953720020372
+          },
+          "rotation_deg": {
+            "median": 4.178020912277114,
+            "p90": 10.46275115773336,
+            "max": 18.378247045156535
+          },
+          "endpoint_max_mm": {
+            "median": 14.84666521735322,
+            "p90": 30.492261001857837,
+            "max": 63.82344592786324
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 37,
+          "endpoint_success_5mm": 2,
+          "translation_mm": {
+            "median": 4.150209037911321,
+            "p90": 7.347747100882629,
+            "max": 12.299844005386227
+          },
+          "rotation_deg": {
+            "median": 4.775672525369092,
+            "p90": 10.024520762098545,
+            "max": 14.03952541174633
+          },
+          "endpoint_max_mm": {
+            "median": 16.59100996120439,
+            "p90": 32.14001228418096,
+            "max": 48.36316609286668
+          }
+        }
+      },
+      "runtime_median_s": 4.668525054818019,
+      "endpoint_output_available": false,
+      "artifacts": "development/outputs/perception/robot_pose/trunk_dev, development/outputs/perception/robot_pose/trunk_validation"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 100,
+      "endpoint_success_5mm": 100,
+      "translation_mm": {
+        "median": 0.36684796566446387,
+        "p90": 0.9577104479546367,
+        "max": 3.158263866228189
+      },
+      "rotation_deg": {
+        "median": 0.11853293880388514,
+        "p90": 0.40272948481827614,
+        "max": 0.6980439836181528
+      },
+      "endpoint_max_mm": {
+        "median": 0.6231028739221336,
+        "p90": 1.7714439576570824,
+        "max": 3.7743852796148345
+      },
+      "id": "initial_q_rgb",
+      "label": "Initial exact CAD",
+      "inputs": "q + RGB",
+      "timing_scope": "complete",
+      "markerless": false,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 20,
+          "endpoint_success_5mm": 20,
+          "translation_mm": {
+            "median": 0.3216315880447279,
+            "p90": 0.6044992342987594,
+            "max": 0.8669508463033614
+          },
+          "rotation_deg": {
+            "median": 0.13246609304466112,
+            "p90": 0.3225119976608637,
+            "max": 0.5514496895146174
+          },
+          "endpoint_max_mm": {
+            "median": 0.5832532264526504,
+            "p90": 1.1672394701476443,
+            "max": 1.7695595809910543
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 80,
+          "endpoint_success_5mm": 80,
+          "translation_mm": {
+            "median": 0.37568194127402826,
+            "p90": 1.005295262021368,
+            "max": 3.158263866228189
+          },
+          "rotation_deg": {
+            "median": 0.10892013808937545,
+            "p90": 0.40272948481827614,
+            "max": 0.6980439836181528
+          },
+          "endpoint_max_mm": {
+            "median": 0.6269879631061113,
+            "p90": 1.9744936546300575,
+            "max": 3.7743852796148345
+          }
+        }
+      },
+      "runtime_median_s": 6.993136650882661,
+      "endpoint_output_available": true,
+      "artifacts": "development/outputs/perception/robot_pose/final_aruco_rgb_dev, development/outputs/perception/robot_pose/final_aruco_rgb_validation"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 100,
+      "endpoint_success_5mm": 100,
+      "translation_mm": {
+        "median": 0.29438821591749265,
+        "p90": 0.7767137600180826,
+        "max": 3.573284552277588
+      },
+      "rotation_deg": {
+        "median": 1.018519638350823e-14,
+        "p90": 1.9596163213065773e-14,
+        "max": 3.5726597663988575e-14
+      },
+      "endpoint_max_mm": {
+        "median": 0.2943882159175807,
+        "p90": 0.7767137600181243,
+        "max": 3.573284552277688
+      },
+      "id": "initial_q_imu",
+      "label": "Initial CAD + stationary IMU",
+      "inputs": "q + static IMU + RGB",
+      "timing_scope": "complete",
+      "markerless": false,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 20,
+          "endpoint_success_5mm": 20,
+          "translation_mm": {
+            "median": 0.2487250569839139,
+            "p90": 0.4869934183227461,
+            "max": 0.9816438022556112
+          },
+          "rotation_deg": {
+            "median": 9.353012926454617e-15,
+            "p90": 1.6260787387160735e-14,
+            "max": 1.9235953448451797e-14
+          },
+          "endpoint_max_mm": {
+            "median": 0.24872505698395492,
+            "p90": 0.4869934183227714,
+            "max": 0.9816438022556648
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 80,
+          "endpoint_success_5mm": 80,
+          "translation_mm": {
+            "median": 0.299733703770346,
+            "p90": 0.8245014359394901,
+            "max": 3.573284552277588
+          },
+          "rotation_deg": {
+            "median": 1.0303575966117835e-14,
+            "p90": 2.0177138085687826e-14,
+            "max": 3.5726597663988575e-14
+          },
+          "endpoint_max_mm": {
+            "median": 0.2997337037704507,
+            "p90": 0.8245014359395201,
+            "max": 3.573284552277688
+          }
+        }
+      },
+      "runtime_median_s": 1.2519693376962095,
+      "endpoint_output_available": true,
+      "artifacts": "development/outputs/perception/robot_pose/final_aruco_imu_all"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 100,
+      "endpoint_success_5mm": 100,
+      "translation_mm": {
+        "median": 0.9744645676127748,
+        "p90": 1.8060314758895346,
+        "max": 2.885786644382119
+      },
+      "rotation_deg": {
+        "median": 0.24960796960203432,
+        "p90": 0.6083147671681456,
+        "max": 1.099675680095576
+      },
+      "endpoint_max_mm": {
+        "median": 1.5693538279955026,
+        "p90": 2.6711093007402136,
+        "max": 4.309822410399206
+      },
+      "id": "initial_boundary_rgb",
+      "label": "Initial exact CAD, markerless",
+      "inputs": "q + RGB",
+      "timing_scope": "complete",
+      "markerless": true,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 20,
+          "endpoint_success_5mm": 20,
+          "translation_mm": {
+            "median": 0.8230487961356094,
+            "p90": 1.3219822444837033,
+            "max": 1.9174161263805825
+          },
+          "rotation_deg": {
+            "median": 0.2713691852440647,
+            "p90": 0.40485735735186507,
+            "max": 0.6053390564937317
+          },
+          "endpoint_max_mm": {
+            "median": 1.443683448041871,
+            "p90": 1.9555870184165756,
+            "max": 2.009827058364548
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 80,
+          "endpoint_success_5mm": 80,
+          "translation_mm": {
+            "median": 0.9964799336373473,
+            "p90": 1.8262989907036324,
+            "max": 2.885786644382119
+          },
+          "rotation_deg": {
+            "median": 0.2409857487934644,
+            "p90": 0.6482905322370006,
+            "max": 1.099675680095576
+          },
+          "endpoint_max_mm": {
+            "median": 1.5968859145933647,
+            "p90": 2.8587454799609393,
+            "max": 4.309822410399206
+          }
+        }
+      },
+      "runtime_median_s": 6.661007877904922,
+      "endpoint_output_available": true,
+      "artifacts": "development/outputs/perception/robot_pose/final_boundary_rgb_dev, development/outputs/perception/robot_pose/final_boundary_rgb_validation"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 100,
+      "endpoint_success_5mm": 100,
+      "translation_mm": {
+        "median": 0.9539493953019744,
+        "p90": 1.6031452445619625,
+        "max": 3.458389432508128
+      },
+      "rotation_deg": {
+        "median": 1.018519638350823e-14,
+        "p90": 1.9596163213065773e-14,
+        "max": 3.5726597663988575e-14
+      },
+      "endpoint_max_mm": {
+        "median": 0.9539493953021059,
+        "p90": 1.603145244562067,
+        "max": 3.45838943250833
+      },
+      "id": "initial_boundary_imu",
+      "label": "Initial CAD + static IMU, markerless",
+      "inputs": "q + static IMU + RGB",
+      "timing_scope": "complete",
+      "markerless": true,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 20,
+          "endpoint_success_5mm": 20,
+          "translation_mm": {
+            "median": 0.9132264053095625,
+            "p90": 1.181990464155062,
+            "max": 1.672518282424642
+          },
+          "rotation_deg": {
+            "median": 9.353012926454617e-15,
+            "p90": 1.6260787387160735e-14,
+            "max": 1.9235953448451797e-14
+          },
+          "endpoint_max_mm": {
+            "median": 0.9132264053096601,
+            "p90": 1.1819904641551322,
+            "max": 1.67251828242477
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 80,
+          "endpoint_success_5mm": 80,
+          "translation_mm": {
+            "median": 0.9685563424164807,
+            "p90": 1.631540749995679,
+            "max": 3.458389432508128
+          },
+          "rotation_deg": {
+            "median": 1.0303575966117835e-14,
+            "p90": 2.0177138085687826e-14,
+            "max": 3.5726597663988575e-14
+          },
+          "endpoint_max_mm": {
+            "median": 0.9685563424166088,
+            "p90": 1.6315407499957435,
+            "max": 3.45838943250833
+          }
+        }
+      },
+      "runtime_median_s": 1.1230426875408739,
+      "endpoint_output_available": true,
+      "artifacts": "development/outputs/perception/robot_pose/final_boundary_imu_all"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 100,
+      "endpoint_success_5mm": 70,
+      "translation_mm": {
+        "median": 1.4487924218128807,
+        "p90": 2.5045978268749067,
+        "max": 4.655675745331582
+      },
+      "rotation_deg": {
+        "median": 1.0604862632761227,
+        "p90": 1.8290959317603264,
+        "max": 3.9121626678653256
+      },
+      "endpoint_max_mm": {
+        "median": 4.376415929220967,
+        "p90": 6.33797882788612,
+        "max": 11.87060933995359
+      },
+      "id": "keypoints_gray_all",
+      "label": "Learned keypoints, gray proposal + PnP",
+      "inputs": "q + RGB",
+      "timing_scope": "complete",
+      "markerless": false,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 20,
+          "endpoint_success_5mm": 17,
+          "translation_mm": {
+            "median": 1.378671774041207,
+            "p90": 2.165226133314232,
+            "max": 2.5803272230883967
+          },
+          "rotation_deg": {
+            "median": 0.8847480545446242,
+            "p90": 1.7471183518794051,
+            "max": 2.9898122409616557
+          },
+          "endpoint_max_mm": {
+            "median": 4.091144134728332,
+            "p90": 6.03183487274545,
+            "max": 6.3052293270277895
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 80,
+          "endpoint_success_5mm": 53,
+          "translation_mm": {
+            "median": 1.48972030531981,
+            "p90": 2.6349210077655187,
+            "max": 4.655675745331582
+          },
+          "rotation_deg": {
+            "median": 1.1159604136882362,
+            "p90": 1.8290959317603264,
+            "max": 3.9121626678653256
+          },
+          "endpoint_max_mm": {
+            "median": 4.464601211623243,
+            "p90": 6.689698047439144,
+            "max": 11.87060933995359
+          }
+        }
+      },
+      "runtime_median_s": 0.05296484683640301,
+      "endpoint_output_available": true,
+      "artifacts": "development/outputs/perception/robot_pose_portfolio/keypoints_dev, development/outputs/perception/robot_pose_portfolio/keypoints_validation"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 99,
+      "endpoint_success_5mm": 82,
+      "translation_mm": {
+        "median": 1.4117152653104208,
+        "p90": 2.462348122373468,
+        "max": 5.261603950990459
+      },
+      "rotation_deg": {
+        "median": 0.9564749471198849,
+        "p90": 1.5043324714845863,
+        "max": 3.52054447046967
+      },
+      "endpoint_max_mm": {
+        "median": 3.794837596722687,
+        "p90": 5.8125193618958315,
+        "max": 12.236198336534333
+      },
+      "id": "keypoints_gpn_all",
+      "label": "Learned keypoints + PoseLib generalized PnP",
+      "inputs": "q + RGB",
+      "timing_scope": "complete",
+      "markerless": false,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 20,
+          "endpoint_success_5mm": 19,
+          "translation_mm": {
+            "median": 1.1863244032578928,
+            "p90": 2.3360118657271087,
+            "max": 2.8167453201987818
+          },
+          "rotation_deg": {
+            "median": 0.822503461396682,
+            "p90": 1.3547272111752868,
+            "max": 2.543132468712506
+          },
+          "endpoint_max_mm": {
+            "median": 3.6240051352816014,
+            "p90": 4.635156758118772,
+            "max": 5.8427773858906695
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 79,
+          "endpoint_success_5mm": 63,
+          "translation_mm": {
+            "median": 1.4899023968991876,
+            "p90": 2.462348122373468,
+            "max": 5.261603950990459
+          },
+          "rotation_deg": {
+            "median": 0.9847947128578051,
+            "p90": 1.5043324714845863,
+            "max": 3.52054447046967
+          },
+          "endpoint_max_mm": {
+            "median": 3.8143611480239406,
+            "p90": 5.878719472137207,
+            "max": 12.236198336534333
+          }
+        }
+      },
+      "runtime_median_s": 0.035368331940844655,
+      "endpoint_output_available": true,
+      "artifacts": "development/outputs/perception/robot_pose_portfolio/keypoints_gpn_dev, development/outputs/perception/robot_pose_portfolio/keypoints_gpn_validation"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 100,
+      "endpoint_success_5mm": 67,
+      "translation_mm": {
+        "median": 1.3321404090629665,
+        "p90": 2.4961741307363843,
+        "max": 4.273018507393181
+      },
+      "rotation_deg": {
+        "median": 1.0504504666255599,
+        "p90": 2.2032447051147694,
+        "max": 4.1156286212243955
+      },
+      "endpoint_max_mm": {
+        "median": 3.9892391159720733,
+        "p90": 7.345695586190255,
+        "max": 13.093246180932109
+      },
+      "id": "keypoints_flex_known_learned_all",
+      "label": "Learned keypoints + PnP",
+      "inputs": "q + RGB",
+      "timing_scope": "complete",
+      "markerless": false,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 20,
+          "endpoint_success_5mm": 15,
+          "translation_mm": {
+            "median": 1.4419056368875682,
+            "p90": 2.3345956939265244,
+            "max": 4.273018507393181
+          },
+          "rotation_deg": {
+            "median": 0.9867844177063121,
+            "p90": 1.9639935974803273,
+            "max": 2.663712785472327
+          },
+          "endpoint_max_mm": {
+            "median": 3.8938571286874564,
+            "p90": 7.252438946888544,
+            "max": 8.066329205874762
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 80,
+          "endpoint_success_5mm": 52,
+          "translation_mm": {
+            "median": 1.2903573623937126,
+            "p90": 2.4961741307363843,
+            "max": 4.1713716771335205
+          },
+          "rotation_deg": {
+            "median": 1.0534682684986225,
+            "p90": 2.2032447051147694,
+            "max": 4.1156286212243955
+          },
+          "endpoint_max_mm": {
+            "median": 4.12381309318388,
+            "p90": 7.345695586190255,
+            "max": 13.093246180932109
+          }
+        }
+      },
+      "runtime_median_s": 0.04740521893836558,
+      "endpoint_output_available": true,
+      "artifacts": "development/outputs/perception/robot_pose_portfolio/keypoints_flex_known_learned_all"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 100,
+      "endpoint_success_5mm": 54,
+      "translation_mm": {
+        "median": 1.8564389478315637,
+        "p90": 2.7874902427305543,
+        "max": 4.951292554395397
+      },
+      "rotation_deg": {
+        "median": 1.092132287382662,
+        "p90": 1.920003260785343,
+        "max": 3.475810781259739
+      },
+      "endpoint_max_mm": {
+        "median": 4.8251253289268625,
+        "p90": 7.09148422006867,
+        "max": 12.306278846962414
+      },
+      "id": "keypoints_markerless_all",
+      "label": "Keypoints + PnP, markerless",
+      "inputs": "q + RGB",
+      "timing_scope": "complete",
+      "markerless": true,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 20,
+          "endpoint_success_5mm": 15,
+          "translation_mm": {
+            "median": 1.3886814107290166,
+            "p90": 2.2702065202331707,
+            "max": 2.5213008804470016
+          },
+          "rotation_deg": {
+            "median": 0.9074593929397472,
+            "p90": 1.8882482515639156,
+            "max": 2.9835669204132946
+          },
+          "endpoint_max_mm": {
+            "median": 3.9810121737989914,
+            "p90": 6.19897908283557,
+            "max": 6.550254655301878
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 80,
+          "endpoint_success_5mm": 39,
+          "translation_mm": {
+            "median": 1.912721127321642,
+            "p90": 2.92007027880056,
+            "max": 4.951292554395397
+          },
+          "rotation_deg": {
+            "median": 1.1213388520378706,
+            "p90": 1.920003260785343,
+            "max": 3.475810781259739
+          },
+          "endpoint_max_mm": {
+            "median": 5.018028429932057,
+            "p90": 7.282775495257927,
+            "max": 12.306278846962414
+          }
+        }
+      },
+      "runtime_median_s": 0.07136513502337039,
+      "endpoint_output_available": true,
+      "artifacts": "development/outputs/perception/robot_pose_portfolio/keypoints_markerless_all"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 64,
+      "endpoint_success_5mm": 3,
+      "translation_mm": {
+        "median": 2.8160690943521267,
+        "p90": 6.305595944698428,
+        "max": 7.67970389339917
+      },
+      "rotation_deg": {
+        "median": 3.9276115433274583,
+        "p90": 6.655248252797918,
+        "max": 9.608685060933128
+      },
+      "endpoint_max_mm": {
+        "median": 13.803517146212357,
+        "p90": 25.245783746052545,
+        "max": 37.66488915800749
+      },
+      "id": "keypoints_flex_unknown_gray_all",
+      "label": "Whole-body network, rigid points only",
+      "inputs": "RGB only",
+      "timing_scope": "complete",
+      "markerless": false,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 11,
+          "endpoint_success_5mm": 1,
+          "translation_mm": {
+            "median": 3.0184648934591123,
+            "p90": 6.523153587300907,
+            "max": 6.974112353646219
+          },
+          "rotation_deg": {
+            "median": 4.348189422045934,
+            "p90": 6.591693555600595,
+            "max": 7.310096973072505
+          },
+          "endpoint_max_mm": {
+            "median": 13.601641170875805,
+            "p90": 25.245783746052545,
+            "max": 30.05447500665975
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 53,
+          "endpoint_success_5mm": 2,
+          "translation_mm": {
+            "median": 2.758790396942657,
+            "p90": 6.207115223405769,
+            "max": 7.67970389339917
+          },
+          "rotation_deg": {
+            "median": 3.900444712670962,
+            "p90": 6.655248252797918,
+            "max": 9.608685060933128
+          },
+          "endpoint_max_mm": {
+            "median": 14.018746801120324,
+            "p90": 25.09783984250583,
+            "max": 37.66488915800749
+          }
+        }
+      },
+      "runtime_median_s": 0.05017367331311107,
+      "endpoint_output_available": false,
+      "artifacts": "development/outputs/perception/robot_pose_portfolio/keypoints_flex_unknown_gray_all"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 100,
+      "endpoint_success_5mm": 72,
+      "translation_mm": {
+        "median": 0.9736065190696859,
+        "p90": 2.3333962079009085,
+        "max": 4.508879638957035
+      },
+      "rotation_deg": {
+        "median": 1.0868492258781184,
+        "p90": 1.8466883177562075,
+        "max": 4.9323519215379354
+      },
+      "endpoint_max_mm": {
+        "median": 3.8377734279255398,
+        "p90": 7.2543870140804625,
+        "max": 18.2306408754284
+      },
+      "id": "dedicated_trunk_all",
+      "label": "Dedicated trunk keypoint network",
+      "inputs": "RGB only",
+      "timing_scope": "complete",
+      "markerless": false,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 20,
+          "endpoint_success_5mm": 15,
+          "translation_mm": {
+            "median": 1.243111698417001,
+            "p90": 1.9976510518030508,
+            "max": 2.7504932747922233
+          },
+          "rotation_deg": {
+            "median": 1.1592726097817587,
+            "p90": 1.726295352704255,
+            "max": 2.2954311803781353
+          },
+          "endpoint_max_mm": {
+            "median": 4.129192482902152,
+            "p90": 7.201504666736234,
+            "max": 9.697246492889263
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 80,
+          "endpoint_success_5mm": 57,
+          "translation_mm": {
+            "median": 0.952609477096938,
+            "p90": 2.3333962079009085,
+            "max": 4.508879638957035
+          },
+          "rotation_deg": {
+            "median": 1.0868492258781184,
+            "p90": 1.8466883177562075,
+            "max": 4.9323519215379354
+          },
+          "endpoint_max_mm": {
+            "median": 3.7902972596144657,
+            "p90": 7.2543870140804625,
+            "max": 18.2306408754284
+          }
+        }
+      },
+      "runtime_median_s": 0.05284198606386781,
+      "endpoint_output_available": false,
+      "artifacts": "development/outputs/perception/robot_pose_portfolio/dedicated_trunk_all"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 100,
+      "endpoint_success_5mm": 100,
+      "translation_mm": {
+        "median": 0.6779574577465309,
+        "p90": 1.3121876494099702,
+        "max": 4.007438004842048
+      },
+      "rotation_deg": {
+        "median": 0.2513789345077389,
+        "p90": 0.49105985167469574,
+        "max": 0.8744903170669142
+      },
+      "endpoint_max_mm": {
+        "median": 1.26027097237459,
+        "p90": 2.028254495982268,
+        "max": 4.49566434323908
+      },
+      "id": "m3t_all",
+      "label": "M3T, CAD initialization",
+      "inputs": "q + RGB",
+      "timing_scope": "M3T update only",
+      "markerless": false,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 20,
+          "endpoint_success_5mm": 20,
+          "translation_mm": {
+            "median": 0.5195017605212676,
+            "p90": 1.1469441183001132,
+            "max": 1.4521836857061616
+          },
+          "rotation_deg": {
+            "median": 0.19499300895039767,
+            "p90": 0.42940672113714917,
+            "max": 0.4499023941128906
+          },
+          "endpoint_max_mm": {
+            "median": 1.0771749653748706,
+            "p90": 1.8507195370194556,
+            "max": 2.3836001177817283
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 80,
+          "endpoint_success_5mm": 80,
+          "translation_mm": {
+            "median": 0.6917387600399714,
+            "p90": 1.3172640976638474,
+            "max": 4.007438004842048
+          },
+          "rotation_deg": {
+            "median": 0.27398172082116373,
+            "p90": 0.5155360299121798,
+            "max": 0.8744903170669142
+          },
+          "endpoint_max_mm": {
+            "median": 1.3177364414492665,
+            "p90": 2.064940777270388,
+            "max": 4.49566434323908
+          }
+        }
+      },
+      "runtime_median_s": 0.0295325535,
+      "endpoint_output_available": true,
+      "artifacts": "development/outputs/perception/robot_pose_portfolio/m3t_all"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 100,
+      "endpoint_success_5mm": 100,
+      "translation_mm": {
+        "median": 0.6678094879216006,
+        "p90": 1.337430675966576,
+        "max": 3.8864702890512803
+      },
+      "rotation_deg": {
+        "median": 0.29560313881304,
+        "p90": 0.6854346119963334,
+        "max": 1.2487758823263524
+      },
+      "endpoint_max_mm": {
+        "median": 1.3863465643584476,
+        "p90": 2.4326137069676346,
+        "max": 4.740164198697368
+      },
+      "id": "m3t_keypoints_all",
+      "label": "Learned keypoints + M3T",
+      "inputs": "q + RGB",
+      "timing_scope": "M3T update only",
+      "markerless": false,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 20,
+          "endpoint_success_5mm": 20,
+          "translation_mm": {
+            "median": 0.6262126153874148,
+            "p90": 1.2363897357009053,
+            "max": 1.396829646174367
+          },
+          "rotation_deg": {
+            "median": 0.2539571968471826,
+            "p90": 0.6310982729395146,
+            "max": 0.7585976378274534
+          },
+          "endpoint_max_mm": {
+            "median": 1.2971648202435948,
+            "p90": 2.1944385600534955,
+            "max": 2.510243825598884
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 80,
+          "endpoint_success_5mm": 80,
+          "translation_mm": {
+            "median": 0.6881089430832891,
+            "p90": 1.427494309874866,
+            "max": 3.8864702890512803
+          },
+          "rotation_deg": {
+            "median": 0.3063920757110207,
+            "p90": 0.6854346119963334,
+            "max": 1.2487758823263524
+          },
+          "endpoint_max_mm": {
+            "median": 1.433764629294224,
+            "p90": 2.5096049062966332,
+            "max": 4.740164198697368
+          }
+        }
+      },
+      "runtime_median_s": 0.0252048295,
+      "endpoint_output_available": true,
+      "artifacts": "development/outputs/perception/robot_pose_portfolio/m3t_keypoints_all"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 100,
+      "endpoint_success_5mm": 99,
+      "translation_mm": {
+        "median": 0.9647842812267171,
+        "p90": 1.6608951340019686,
+        "max": 3.496663479409255
+      },
+      "rotation_deg": {
+        "median": 0.37114375229149754,
+        "p90": 0.7042741706713633,
+        "max": 1.3857520551707763
+      },
+      "endpoint_max_mm": {
+        "median": 1.7277123974504296,
+        "p90": 2.9467815395527346,
+        "max": 6.032203881629672
+      },
+      "id": "m3t_keypoints_markerless",
+      "label": "Keypoints + M3T, markerless",
+      "inputs": "q + RGB",
+      "timing_scope": "M3T update only",
+      "markerless": true,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 20,
+          "endpoint_success_5mm": 20,
+          "translation_mm": {
+            "median": 0.9096790514418251,
+            "p90": 1.2346877829700589,
+            "max": 1.3595131251235433
+          },
+          "rotation_deg": {
+            "median": 0.2628518720924822,
+            "p90": 0.5861801049188493,
+            "max": 0.8093058008030897
+          },
+          "endpoint_max_mm": {
+            "median": 1.4088604801766085,
+            "p90": 2.0816723601303337,
+            "max": 3.0798344553642085
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 80,
+          "endpoint_success_5mm": 79,
+          "translation_mm": {
+            "median": 1.0032914753971403,
+            "p90": 1.7446309750411773,
+            "max": 3.496663479409255
+          },
+          "rotation_deg": {
+            "median": 0.3963023172190858,
+            "p90": 0.7071861255578161,
+            "max": 1.3857520551707763
+          },
+          "endpoint_max_mm": {
+            "median": 1.9135963629325894,
+            "p90": 3.01185752527815,
+            "max": 6.032203881629672
+          }
+        }
+      },
+      "runtime_median_s": 0.0249081995,
+      "endpoint_output_available": true,
+      "artifacts": "development/outputs/perception/robot_pose_portfolio/m3t_keypoints_markerless"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 100,
+      "endpoint_success_5mm": 99,
+      "translation_mm": {
+        "median": 0.7301434180612438,
+        "p90": 1.3565499129796268,
+        "max": 3.940143757762588
+      },
+      "rotation_deg": {
+        "median": 0.32470702242928007,
+        "p90": 0.6941529452213491,
+        "max": 1.4764363802233045
+      },
+      "endpoint_max_mm": {
+        "median": 1.4988585742398888,
+        "p90": 2.713994071265035,
+        "max": 5.271864944530588
+      },
+      "id": "m3t_foundationpose_all",
+      "label": "FoundationPose initialization + M3T",
+      "inputs": "q + RGB stereo",
+      "timing_scope": "M3T update only",
+      "markerless": false,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 20,
+          "endpoint_success_5mm": 20,
+          "translation_mm": {
+            "median": 0.6222230666315169,
+            "p90": 1.2460282985950595,
+            "max": 1.3908613893458746
+          },
+          "rotation_deg": {
+            "median": 0.32345988420583593,
+            "p90": 0.6956946495259817,
+            "max": 0.7831122506501283
+          },
+          "endpoint_max_mm": {
+            "median": 1.460961954646188,
+            "p90": 2.3027195884392277,
+            "max": 2.5323954473094403
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 80,
+          "endpoint_success_5mm": 79,
+          "translation_mm": {
+            "median": 0.7669168477024138,
+            "p90": 1.3625796463473616,
+            "max": 3.940143757762588
+          },
+          "rotation_deg": {
+            "median": 0.33064634382358415,
+            "p90": 0.6542738831620346,
+            "max": 1.4764363802233045
+          },
+          "endpoint_max_mm": {
+            "median": 1.4988585742398888,
+            "p90": 2.82425129294875,
+            "max": 5.271864944530588
+          }
+        }
+      },
+      "runtime_median_s": 0.025303639500000003,
+      "endpoint_output_available": true,
+      "artifacts": "development/outputs/perception/robot_pose_portfolio/m3t_foundationpose_all"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 100,
+      "endpoint_success_5mm": 100,
+      "translation_mm": {
+        "median": 0.46092886529226407,
+        "p90": 1.0935689162886988,
+        "max": 3.889698442658418
+      },
+      "rotation_deg": {
+        "median": 0.20666629774900572,
+        "p90": 0.4320266899006783,
+        "max": 0.9278770914042758
+      },
+      "endpoint_max_mm": {
+        "median": 0.9932491006243807,
+        "p90": 1.8949517347035174,
+        "max": 4.472240617915207
+      },
+      "id": "differentiable_m3t_all",
+      "label": "M3T + differentiable CAD",
+      "inputs": "q + RGB",
+      "timing_scope": "CAD refinement only",
+      "markerless": false,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 20,
+          "endpoint_success_5mm": 20,
+          "translation_mm": {
+            "median": 0.3935927725771571,
+            "p90": 0.933381123765545,
+            "max": 1.18367668393332
+          },
+          "rotation_deg": {
+            "median": 0.2419115388767265,
+            "p90": 0.34162371627657184,
+            "max": 0.44809991683494343
+          },
+          "endpoint_max_mm": {
+            "median": 0.9932491006243807,
+            "p90": 1.6661906196866203,
+            "max": 1.914410364628457
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 80,
+          "endpoint_success_5mm": 80,
+          "translation_mm": {
+            "median": 0.4653430158861941,
+            "p90": 1.1072290203558857,
+            "max": 3.889698442658418
+          },
+          "rotation_deg": {
+            "median": 0.19405450915463995,
+            "p90": 0.4666073840968956,
+            "max": 0.9278770914042758
+          },
+          "endpoint_max_mm": {
+            "median": 0.9911448101703937,
+            "p90": 2.030404762959038,
+            "max": 4.472240617915207
+          }
+        }
+      },
+      "runtime_median_s": 0.19694036687724292,
+      "endpoint_output_available": true,
+      "artifacts": "development/outputs/perception/robot_pose_portfolio/differentiable_m3t_all"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 100,
+      "endpoint_success_5mm": 99,
+      "translation_mm": {
+        "median": 0.9522174269336448,
+        "p90": 1.6631141275173758,
+        "max": 3.241863956709516
+      },
+      "rotation_deg": {
+        "median": 0.30092018174425156,
+        "p90": 0.5724684144369203,
+        "max": 1.1765634649717363
+      },
+      "endpoint_max_mm": {
+        "median": 1.5309511721764977,
+        "p90": 2.6028492905001586,
+        "max": 5.047931560506775
+      },
+      "id": "differentiable_m3t_markerless",
+      "label": "M3T + differentiable CAD, markerless",
+      "inputs": "q + RGB",
+      "timing_scope": "CAD refinement only",
+      "markerless": true,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 20,
+          "endpoint_success_5mm": 20,
+          "translation_mm": {
+            "median": 0.9339762070171114,
+            "p90": 1.2331643669771555,
+            "max": 1.5791464923308967
+          },
+          "rotation_deg": {
+            "median": 0.26091600365437784,
+            "p90": 0.4789302404184283,
+            "max": 0.6080795499503242
+          },
+          "endpoint_max_mm": {
+            "median": 1.3941935450565306,
+            "p90": 1.9606692246375932,
+            "max": 2.058775628602429
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 80,
+          "endpoint_success_5mm": 79,
+          "translation_mm": {
+            "median": 0.972240090447757,
+            "p90": 1.67852786257327,
+            "max": 3.241863956709516
+          },
+          "rotation_deg": {
+            "median": 0.3241461657276631,
+            "p90": 0.6057971862978974,
+            "max": 1.1765634649717363
+          },
+          "endpoint_max_mm": {
+            "median": 1.6007236608721667,
+            "p90": 2.8936803729584484,
+            "max": 5.047931560506775
+          }
+        }
+      },
+      "runtime_median_s": 0.23091897810809314,
+      "endpoint_output_available": true,
+      "artifacts": "development/outputs/perception/robot_pose_portfolio/differentiable_m3t_markerless"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 98,
+      "endpoint_success_5mm": 62,
+      "translation_mm": {
+        "median": 2.017683407223439,
+        "p90": 3.4600549616573253,
+        "max": 6.1646551053784595
+      },
+      "rotation_deg": {
+        "median": 1.0425370068022448,
+        "p90": 2.402583757182912,
+        "max": 5.066625215777285
+      },
+      "endpoint_max_mm": {
+        "median": 4.088260768168441,
+        "p90": 7.634308499805984,
+        "max": 13.438907000587802
+      },
+      "id": "foundationpose_configured_uniform_serial_all",
+      "label": "FoundationPose + FoundationStereo",
+      "inputs": "q + RGB stereo",
+      "timing_scope": "pose only; stereo extra",
+      "markerless": false,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 20,
+          "endpoint_success_5mm": 12,
+          "translation_mm": {
+            "median": 1.673446352747836,
+            "p90": 2.786461576989527,
+            "max": 3.4669983866100775
+          },
+          "rotation_deg": {
+            "median": 1.5817413223183392,
+            "p90": 2.559350404435484,
+            "max": 3.0630844206791794
+          },
+          "endpoint_max_mm": {
+            "median": 4.4811905593721955,
+            "p90": 6.7773113704853305,
+            "max": 7.3392017474027265
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 78,
+          "endpoint_success_5mm": 50,
+          "translation_mm": {
+            "median": 2.0750623246649464,
+            "p90": 3.694439534678175,
+            "max": 6.1646551053784595
+          },
+          "rotation_deg": {
+            "median": 0.984323743537839,
+            "p90": 2.33237235454849,
+            "max": 5.066625215777285
+          },
+          "endpoint_max_mm": {
+            "median": 4.0341681303027155,
+            "p90": 7.9108553436355304,
+            "max": 13.438907000587802
+          }
+        }
+      },
+      "runtime_median_s": 3.6297818082384765,
+      "endpoint_output_available": true,
+      "artifacts": "development/outputs/perception/robot_pose_portfolio/foundationpose_configured_uniform_serial_all"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 96,
+      "endpoint_success_5mm": 66,
+      "translation_mm": {
+        "median": 1.9379297536234084,
+        "p90": 3.4821977609614607,
+        "max": 6.226318682214315
+      },
+      "rotation_deg": {
+        "median": 1.094045514534574,
+        "p90": 2.1013026392822125,
+        "max": 2.930910636034217
+      },
+      "endpoint_max_mm": {
+        "median": 4.3132392958928625,
+        "p90": 7.595682965913675,
+        "max": 13.848605121447967
+      },
+      "id": "foundationpose_configured_color_serial_all",
+      "label": "FoundationPose, CAD colors",
+      "inputs": "q + RGB stereo",
+      "timing_scope": "pose only; stereo extra",
+      "markerless": false,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 20,
+          "endpoint_success_5mm": 14,
+          "translation_mm": {
+            "median": 1.6811942831865148,
+            "p90": 3.019207983592508,
+            "max": 4.4084792909051265
+          },
+          "rotation_deg": {
+            "median": 1.315928999529656,
+            "p90": 2.137988011266536,
+            "max": 2.6731116625652898
+          },
+          "endpoint_max_mm": {
+            "median": 4.546151634575947,
+            "p90": 6.677216472348067,
+            "max": 8.799650530704973
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 76,
+          "endpoint_success_5mm": 52,
+          "translation_mm": {
+            "median": 2.0024590695143587,
+            "p90": 3.632957294025571,
+            "max": 6.226318682214315
+          },
+          "rotation_deg": {
+            "median": 1.0405514225447356,
+            "p90": 1.7870496906423363,
+            "max": 2.930910636034217
+          },
+          "endpoint_max_mm": {
+            "median": 4.2763501049890715,
+            "p90": 7.7783357543610485,
+            "max": 13.848605121447967
+          }
+        }
+      },
+      "runtime_median_s": 3.6140244838315994,
+      "endpoint_output_available": true,
+      "artifacts": "development/outputs/perception/robot_pose_portfolio/foundationpose_configured_color_serial_all"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 6,
+      "endpoint_success_5mm": 2,
+      "translation_mm": {
+        "median": 21.90534183280888,
+        "p90": 62.50320274483754,
+        "max": 299.64902193739374
+      },
+      "rotation_deg": {
+        "median": 2.352575404557837,
+        "p90": 161.40827793467747,
+        "max": 177.4024993904401
+      },
+      "endpoint_max_mm": {
+        "median": 29.270634596157727,
+        "p90": 281.9897746244521,
+        "max": 511.9779210277926
+      },
+      "id": "megapose_configured_uniform_all",
+      "label": "MegaPose configured mesh",
+      "inputs": "q + RGB",
+      "timing_scope": "pose only",
+      "markerless": false,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 1,
+          "endpoint_success_5mm": 1,
+          "translation_mm": {
+            "median": 32.60282072457658,
+            "p90": 98.72504958086257,
+            "max": 299.64902193739374
+          },
+          "rotation_deg": {
+            "median": 2.6530185583921773,
+            "p90": 174.7953478728531,
+            "max": 177.4024993904401
+          },
+          "endpoint_max_mm": {
+            "median": 55.084009379947126,
+            "p90": 330.4278376391236,
+            "max": 511.9779210277926
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 5,
+          "endpoint_success_5mm": 1,
+          "translation_mm": {
+            "median": 20.820023692514724,
+            "p90": 61.28374986679559,
+            "max": 141.0623323005086
+          },
+          "rotation_deg": {
+            "median": 2.352575404557837,
+            "p90": 155.8537513282857,
+            "max": 174.7637136160013
+          },
+          "endpoint_max_mm": {
+            "median": 26.502663026985935,
+            "p90": 265.7729327939255,
+            "max": 403.50535784070155
+          }
+        }
+      },
+      "runtime_median_s": 2.9487697607837617,
+      "endpoint_output_available": true,
+      "artifacts": "development/outputs/perception/robot_pose_portfolio/megapose_configured_uniform_all"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 100,
+      "endpoint_success_5mm": 99,
+      "translation_mm": {
+        "median": 0.7528212003449473,
+        "p90": 1.3447022467758307,
+        "max": 3.6573425801369766
+      },
+      "rotation_deg": {
+        "median": 0.3222402103454918,
+        "p90": 0.6683377863240798,
+        "max": 1.5915241802693025
+      },
+      "endpoint_max_mm": {
+        "median": 1.5018374373951777,
+        "p90": 2.5993232610027572,
+        "max": 5.125655797968166
+      },
+      "id": "pipeline_fast_aruco_all",
+      "label": "Fast M3T (selected tracking core)",
+      "inputs": "q + RGB",
+      "timing_scope": "complete warm process",
+      "markerless": false,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 20,
+          "endpoint_success_5mm": 20,
+          "translation_mm": {
+            "median": 0.7889367985905704,
+            "p90": 1.2876867714906428,
+            "max": 1.5182580556865597
+          },
+          "rotation_deg": {
+            "median": 0.20673981048098244,
+            "p90": 0.6249643530068693,
+            "max": 0.7064000071461539
+          },
+          "endpoint_max_mm": {
+            "median": 1.442565924482925,
+            "p90": 2.260740303980598,
+            "max": 2.6887919071437327
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 80,
+          "endpoint_success_5mm": 79,
+          "translation_mm": {
+            "median": 0.750309029121588,
+            "p90": 1.4035141675108591,
+            "max": 3.6573425801369766
+          },
+          "rotation_deg": {
+            "median": 0.3501583141527501,
+            "p90": 0.6683377863240798,
+            "max": 1.5915241802693025
+          },
+          "endpoint_max_mm": {
+            "median": 1.524212744384727,
+            "p90": 2.616429773769854,
+            "max": 5.125655797968166
+          }
+        }
+      },
+      "runtime_median_s": 0.07589406333863735,
+      "endpoint_output_available": true,
+      "artifacts": "development/outputs/perception/robot_pose_portfolio/pipeline_fast_aruco_all"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 100,
+      "endpoint_success_5mm": 100,
+      "translation_mm": {
+        "median": 0.4879370465659073,
+        "p90": 1.0047494615342503,
+        "max": 3.947375092304066
+      },
+      "rotation_deg": {
+        "median": 0.22299331058699084,
+        "p90": 0.4614692679572911,
+        "max": 1.0462529532009293
+      },
+      "endpoint_max_mm": {
+        "median": 1.134782401179229,
+        "p90": 1.842399593892095,
+        "max": 4.538765709143898
+      },
+      "id": "pipeline_accuracy_aruco_all",
+      "label": "v1 accuracy",
+      "inputs": "q + RGB",
+      "timing_scope": "complete warm process",
+      "markerless": false,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 20,
+          "endpoint_success_5mm": 20,
+          "translation_mm": {
+            "median": 0.4400008062759316,
+            "p90": 0.8458359267541745,
+            "max": 1.0708243891608455
+          },
+          "rotation_deg": {
+            "median": 0.21077327630314702,
+            "p90": 0.44592608411598783,
+            "max": 0.6681087675892827
+          },
+          "endpoint_max_mm": {
+            "median": 1.1049164618560876,
+            "p90": 1.961822134211256,
+            "max": 2.321722446649001
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 80,
+          "endpoint_success_5mm": 80,
+          "translation_mm": {
+            "median": 0.5372570793052734,
+            "p90": 1.0188091359986566,
+            "max": 3.947375092304066
+          },
+          "rotation_deg": {
+            "median": 0.22299331058699084,
+            "p90": 0.4614692679572911,
+            "max": 1.0462529532009293
+          },
+          "endpoint_max_mm": {
+            "median": 1.149875905094202,
+            "p90": 1.7909308668719441,
+            "max": 4.538765709143898
+          }
+        }
+      },
+      "runtime_median_s": 0.31298306700773537,
+      "endpoint_output_available": true,
+      "artifacts": "development/outputs/perception/robot_pose_portfolio/pipeline_accuracy_aruco_all"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 100,
+      "endpoint_success_5mm": 100,
+      "translation_mm": {
+        "median": 0.3460481954852225,
+        "p90": 0.8221464591913719,
+        "max": 3.261024134424955
+      },
+      "rotation_deg": {
+        "median": 0.11958812548766426,
+        "p90": 0.29222631423736656,
+        "max": 0.9274895948660016
+      },
+      "endpoint_max_mm": {
+        "median": 0.6506241693904803,
+        "p90": 1.3749888164075788,
+        "max": 4.2823325997669635
+      },
+      "id": "pipeline_max_aruco_all",
+      "label": "v1 max",
+      "inputs": "q + RGB",
+      "timing_scope": "complete warm process",
+      "markerless": false,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 20,
+          "endpoint_success_5mm": 20,
+          "translation_mm": {
+            "median": 0.28256010498238515,
+            "p90": 0.7419254843473202,
+            "max": 0.8625017191226533
+          },
+          "rotation_deg": {
+            "median": 0.1535710929958477,
+            "p90": 0.2690002877032345,
+            "max": 0.5999585122676293
+          },
+          "endpoint_max_mm": {
+            "median": 0.6672794901181314,
+            "p90": 1.2032975619439403,
+            "max": 2.3022158783027717
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 80,
+          "endpoint_success_5mm": 80,
+          "translation_mm": {
+            "median": 0.3492148866014743,
+            "p90": 0.8280418708343189,
+            "max": 3.261024134424955
+          },
+          "rotation_deg": {
+            "median": 0.11432666402830095,
+            "p90": 0.31216151564375405,
+            "max": 0.9274895948660016
+          },
+          "endpoint_max_mm": {
+            "median": 0.6248758147355011,
+            "p90": 1.3749888164075788,
+            "max": 4.2823325997669635
+          }
+        }
+      },
+      "runtime_median_s": 0.8665855545550585,
+      "endpoint_output_available": true,
+      "artifacts": "development/outputs/perception/robot_pose_portfolio/pipeline_max_aruco_all"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 100,
+      "endpoint_success_5mm": 100,
+      "translation_mm": {
+        "median": 0.9321759271184348,
+        "p90": 1.5797262061885384,
+        "max": 2.7576189193135976
+      },
+      "rotation_deg": {
+        "median": 0.24158633212176955,
+        "p90": 0.4702407665575209,
+        "max": 1.0614472154408299
+      },
+      "endpoint_max_mm": {
+        "median": 1.4537143512259734,
+        "p90": 2.4275094700448157,
+        "max": 4.073978131073472
+      },
+      "id": "pipeline_max_boundary_all",
+      "label": "v1 max, fully markerless",
+      "inputs": "q + RGB",
+      "timing_scope": "complete warm process",
+      "markerless": true,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 20,
+          "endpoint_success_5mm": 20,
+          "translation_mm": {
+            "median": 0.8753681043240794,
+            "p90": 1.1683168837405946,
+            "max": 1.6190624810470837
+          },
+          "rotation_deg": {
+            "median": 0.18338442064003388,
+            "p90": 0.34824308593460745,
+            "max": 0.46092805570901313
+          },
+          "endpoint_max_mm": {
+            "median": 1.3224531110184148,
+            "p90": 1.691175118009396,
+            "max": 1.770342962550792
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 80,
+          "endpoint_success_5mm": 80,
+          "translation_mm": {
+            "median": 0.9592161771780898,
+            "p90": 1.6185740528141808,
+            "max": 2.7576189193135976
+          },
+          "rotation_deg": {
+            "median": 0.24776925021694107,
+            "p90": 0.49883453110061104,
+            "max": 1.0614472154408299
+          },
+          "endpoint_max_mm": {
+            "median": 1.5058473840181348,
+            "p90": 2.605155777062641,
+            "max": 4.073978131073472
+          }
+        }
+      },
+      "runtime_median_s": 0.8623687538783997,
+      "endpoint_output_available": true,
+      "artifacts": "development/outputs/perception/robot_pose_portfolio/pipeline_max_boundary_all"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 99,
+      "endpoint_success_5mm": 99,
+      "translation_mm": {
+        "median": 1.2048174582986415,
+        "p90": 2.5894417264383383,
+        "max": 5.7232620010959225
+      },
+      "rotation_deg": {
+        "median": 0.19741344702082103,
+        "p90": 0.480206867837131,
+        "max": 1.1436050257300245
+      },
+      "endpoint_max_mm": {
+        "median": 1.773092432185039,
+        "p90": 3.6513835278805313,
+        "max": 7.120996382857424
+      },
+      "id": "grid_pose_max_all",
+      "label": "Experimental hole-grid calibration + max",
+      "inputs": "q + RGB",
+      "timing_scope": "complete warm process",
+      "markerless": true,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 20,
+          "endpoint_success_5mm": 20,
+          "translation_mm": {
+            "median": 1.026241295354239,
+            "p90": 1.7819251511153988,
+            "max": 2.235257699441316
+          },
+          "rotation_deg": {
+            "median": 0.11665242467873949,
+            "p90": 0.28228161531510004,
+            "max": 0.5756400159909594
+          },
+          "endpoint_max_mm": {
+            "median": 1.2817345953807313,
+            "p90": 2.339415949720239,
+            "max": 2.465947237527891
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 79,
+          "endpoint_success_5mm": 79,
+          "translation_mm": {
+            "median": 1.371459110644548,
+            "p90": 2.9995558150538555,
+            "max": 5.7232620010959225
+          },
+          "rotation_deg": {
+            "median": 0.22014571093217417,
+            "p90": 0.5031366255772974,
+            "max": 1.1436050257300245
+          },
+          "endpoint_max_mm": {
+            "median": 1.9250176171393998,
+            "p90": 3.667554822878789,
+            "max": 7.120996382857424
+          }
+        }
+      },
+      "runtime_median_s": 1.312421408481896,
+      "endpoint_output_available": true,
+      "artifacts": "development/outputs/perception/robot_pose_portfolio/grid_pose_max_all"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 100,
+      "endpoint_success_5mm": 100,
+      "translation_mm": {
+        "median": 0.3477540183377721,
+        "p90": 0.8354301178193922,
+        "max": 3.263116470520901
+      },
+      "rotation_deg": {
+        "median": 0.11958812548766426,
+        "p90": 0.33936747015483637,
+        "max": 0.6819883419283842
+      },
+      "endpoint_max_mm": {
+        "median": 0.7025782983288497,
+        "p90": 1.4607384068156493,
+        "max": 4.129343799693226
+      },
+      "id": "resilient_all_max",
+      "label": "v2 protected max",
+      "inputs": "q + RGB",
+      "timing_scope": "complete warm process",
+      "markerless": false,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 20,
+          "endpoint_success_5mm": 20,
+          "translation_mm": {
+            "median": 0.33517741689806807,
+            "p90": 0.7419254843473202,
+            "max": 1.2129105507715776
+          },
+          "rotation_deg": {
+            "median": 0.14197428577916826,
+            "p90": 0.23919875039711866,
+            "max": 0.28669188244816757
+          },
+          "endpoint_max_mm": {
+            "median": 0.6846718886929168,
+            "p90": 1.3177071417518145,
+            "max": 1.936395846905242
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 80,
+          "endpoint_success_5mm": 80,
+          "translation_mm": {
+            "median": 0.35289506472184196,
+            "p90": 0.8827063734467572,
+            "max": 3.263116470520901
+          },
+          "rotation_deg": {
+            "median": 0.1129122420451007,
+            "p90": 0.3590672007877622,
+            "max": 0.6819883419283842
+          },
+          "endpoint_max_mm": {
+            "median": 0.7037673682757498,
+            "p90": 1.4607384068156493,
+            "max": 4.129343799693226
+          }
+        }
+      },
+      "runtime_median_s": 0.9310876757372171,
+      "endpoint_output_available": true,
+      "artifacts": "development/outputs/perception/robot_pose_portfolio/resilient_all_max"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 100,
+      "endpoint_success_5mm": 100,
+      "translation_mm": {
+        "median": 0.4878967680043529,
+        "p90": 1.004756133202266,
+        "max": 3.947375092304066
+      },
+      "rotation_deg": {
+        "median": 0.21738578390807006,
+        "p90": 0.46146819055631993,
+        "max": 0.8306069903636981
+      },
+      "endpoint_max_mm": {
+        "median": 1.1244190235704634,
+        "p90": 1.8422997860140327,
+        "max": 4.5387661736108385
+      },
+      "id": "resilient_all_accuracy",
+      "label": "Accuracy (selected)",
+      "inputs": "q + RGB",
+      "timing_scope": "complete warm process",
+      "markerless": false,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 20,
+          "endpoint_success_5mm": 20,
+          "translation_mm": {
+            "median": 0.43981860695211494,
+            "p90": 0.8457694262009765,
+            "max": 1.0708243891608455
+          },
+          "rotation_deg": {
+            "median": 0.21079754099647124,
+            "p90": 0.44588061512444965,
+            "max": 0.6681087675892827
+          },
+          "endpoint_max_mm": {
+            "median": 1.1123499908686996,
+            "p90": 1.9612285777244767,
+            "max": 2.32159024778468
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 80,
+          "endpoint_success_5mm": 80,
+          "translation_mm": {
+            "median": 0.5132456245090202,
+            "p90": 1.0188002841142674,
+            "max": 3.947375092304066
+          },
+          "rotation_deg": {
+            "median": 0.21738578390807006,
+            "p90": 0.46146819055631993,
+            "max": 0.8306069903636981
+          },
+          "endpoint_max_mm": {
+            "median": 1.1397307097722227,
+            "p90": 1.7909271049655766,
+            "max": 4.5387661736108385
+          }
+        }
+      },
+      "runtime_median_s": 0.3275175041053444,
+      "endpoint_output_available": true,
+      "artifacts": "development/outputs/perception/robot_pose_portfolio/resilient_all_accuracy"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 100,
+      "endpoint_success_5mm": 72,
+      "translation_mm": {
+        "median": 0.9956725027000544,
+        "p90": 1.8760121376687533,
+        "max": 3.5440165521670934
+      },
+      "rotation_deg": {
+        "median": 1.0543201367940558,
+        "p90": 1.7218600647780224,
+        "max": 3.7472086555699726
+      },
+      "endpoint_max_mm": {
+        "median": 3.6540454966028504,
+        "p90": 6.257411612911524,
+        "max": 14.312853607246769
+      },
+      "id": "trunk_dual_tta3_all",
+      "label": "Trunk ensemble (selected)",
+      "inputs": "RGB only",
+      "timing_scope": "complete warm process",
+      "markerless": false,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 20,
+          "endpoint_success_5mm": 17,
+          "translation_mm": {
+            "median": 1.0211233675560507,
+            "p90": 1.4612048294425701,
+            "max": 1.7735449059604005
+          },
+          "rotation_deg": {
+            "median": 0.8648771081566309,
+            "p90": 1.3615461065688013,
+            "max": 1.7001611505832495
+          },
+          "endpoint_max_mm": {
+            "median": 3.095031798100848,
+            "p90": 5.12431810087659,
+            "max": 6.42374555695239
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 80,
+          "endpoint_success_5mm": 55,
+          "translation_mm": {
+            "median": 0.9956725027000544,
+            "p90": 2.377638703826039,
+            "max": 3.5440165521670934
+          },
+          "rotation_deg": {
+            "median": 1.0725018174712975,
+            "p90": 1.8092034886876072,
+            "max": 3.7472086555699726
+          },
+          "endpoint_max_mm": {
+            "median": 3.7583089075827543,
+            "p90": 7.33752709765415,
+            "max": 14.312853607246769
+          }
+        }
+      },
+      "runtime_median_s": 0.09341462864540517,
+      "endpoint_output_available": false,
+      "artifacts": "development/outputs/perception/robot_pose_portfolio/trunk_dual_tta3_all"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 99,
+      "endpoint_success_5mm": 70,
+      "translation_mm": {
+        "median": 1.3858425989039524,
+        "p90": 2.8958824562912437,
+        "max": 5.277737641410207
+      },
+      "rotation_deg": {
+        "median": 1.0012063656502432,
+        "p90": 1.7219237887052146,
+        "max": 3.572636669857393
+      },
+      "endpoint_max_mm": {
+        "median": 3.994731819250707,
+        "p90": 7.083148537132243,
+        "max": 16.420609033827468
+      },
+      "id": "trunk_dual_tta3_all_boundary",
+      "label": "Trunk ensemble, markerless",
+      "inputs": "RGB only",
+      "timing_scope": "complete warm process",
+      "markerless": true,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 20,
+          "endpoint_success_5mm": 18,
+          "translation_mm": {
+            "median": 1.0760657164042724,
+            "p90": 1.6690208228887513,
+            "max": 2.5322866544000893
+          },
+          "rotation_deg": {
+            "median": 0.8828377295205164,
+            "p90": 1.308407394544426,
+            "max": 1.6119268544984282
+          },
+          "endpoint_max_mm": {
+            "median": 3.405095592196364,
+            "p90": 5.023197332902953,
+            "max": 6.015783553470968
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 79,
+          "endpoint_success_5mm": 52,
+          "translation_mm": {
+            "median": 1.640492811305624,
+            "p90": 3.2176148669669535,
+            "max": 5.277737641410207
+          },
+          "rotation_deg": {
+            "median": 1.0367656278871,
+            "p90": 1.9048022470802681,
+            "max": 3.572636669857393
+          },
+          "endpoint_max_mm": {
+            "median": 4.056344496169623,
+            "p90": 7.784878993428959,
+            "max": 16.420609033827468
+          }
+        }
+      },
+      "runtime_median_s": 0.11258496949449182,
+      "endpoint_output_available": false,
+      "artifacts": "development/outputs/perception/robot_pose_portfolio/trunk_dual_tta3_all_boundary"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 100,
+      "endpoint_success_5mm": 100,
+      "translation_mm": {
+        "median": 0.35563518546655715,
+        "p90": 0.8942409823976681,
+        "max": 3.6506114959977785
+      },
+      "rotation_deg": {
+        "median": 0.1178675024813307,
+        "p90": 0.3374601722231985,
+        "max": 0.7690683168317629
+      },
+      "endpoint_max_mm": {
+        "median": 0.6471096021500846,
+        "p90": 1.6091618302811708,
+        "max": 4.655458333526198
+      },
+      "id": "adaptive_all_max",
+      "label": "Max (selected)",
+      "inputs": "q + RGB",
+      "timing_scope": "complete warm process",
+      "markerless": false,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 20,
+          "endpoint_success_5mm": 20,
+          "translation_mm": {
+            "median": 0.33637871430244803,
+            "p90": 0.7419254843473202,
+            "max": 0.9524478061000925
+          },
+          "rotation_deg": {
+            "median": 0.10683294848886905,
+            "p90": 0.2686620289725045,
+            "max": 0.43158853432379973
+          },
+          "endpoint_max_mm": {
+            "median": 0.6021713487614659,
+            "p90": 1.2032976142591676,
+            "max": 2.3215470946467707
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 80,
+          "endpoint_success_5mm": 80,
+          "translation_mm": {
+            "median": 0.35563518546655715,
+            "p90": 0.9434863036439985,
+            "max": 3.6506114959977785
+          },
+          "rotation_deg": {
+            "median": 0.12093099607071339,
+            "p90": 0.3374601722231985,
+            "max": 0.7690683168317629
+          },
+          "endpoint_max_mm": {
+            "median": 0.681355895874209,
+            "p90": 1.7645728861965466,
+            "max": 4.655458333526198
+          }
+        }
+      },
+      "runtime_median_s": 0.8771902516018599,
+      "endpoint_output_available": true,
+      "artifacts": "development/outputs/perception/robot_pose_portfolio/adaptive_all_max"
+    },
+    {
+      "cases": 100,
+      "valid": 100,
+      "failures": 0,
+      "strict_5mm_5deg": 100,
+      "endpoint_success_5mm": 100,
+      "translation_mm": {
+        "median": 0.9269711061296979,
+        "p90": 1.5797262061885384,
+        "max": 3.4864622889966306
+      },
+      "rotation_deg": {
+        "median": 0.26303016842522564,
+        "p90": 0.5276848529500426,
+        "max": 0.995224406831754
+      },
+      "endpoint_max_mm": {
+        "median": 1.497406948282343,
+        "p90": 2.5967657099158368,
+        "max": 4.2682054281639665
+      },
+      "id": "adaptive_all_boundary",
+      "label": "Max, fully markerless (selected)",
+      "inputs": "q + RGB",
+      "timing_scope": "complete warm process",
+      "markerless": true,
+      "splits": {
+        "development": {
+          "cases": 20,
+          "valid": 20,
+          "failures": 0,
+          "strict_5mm_5deg": 20,
+          "endpoint_success_5mm": 20,
+          "translation_mm": {
+            "median": 0.9126942191720698,
+            "p90": 1.2381609977276398,
+            "max": 1.6190624810470837
+          },
+          "rotation_deg": {
+            "median": 0.2686873768958178,
+            "p90": 0.37415050581145337,
+            "max": 0.46092805570901313
+          },
+          "endpoint_max_mm": {
+            "median": 1.3589021484980883,
+            "p90": 1.7289308289067848,
+            "max": 1.776985047124839
+          }
+        },
+        "validation": {
+          "cases": 80,
+          "valid": 80,
+          "failures": 0,
+          "strict_5mm_5deg": 80,
+          "endpoint_success_5mm": 80,
+          "translation_mm": {
+            "median": 0.9490359104303756,
+            "p90": 1.6185740528141808,
+            "max": 3.4864622889966306
+          },
+          "rotation_deg": {
+            "median": 0.26303016842522564,
+            "p90": 0.5917740882702252,
+            "max": 0.995224406831754
+          },
+          "endpoint_max_mm": {
+            "median": 1.5419464334062967,
+            "p90": 2.6820113448933305,
+            "max": 4.2682054281639665
+          }
+        }
+      },
+      "runtime_median_s": 0.8669736846350133,
+      "endpoint_output_available": true,
+      "artifacts": "development/outputs/perception/robot_pose_portfolio/adaptive_all_boundary"
+    }
+  ],
+  "hold_sets": {
+    "blind100": {
+      "cases": 100,
+      "evaluation_utc": "2026-10-30T00:27:14.572456+00:00",
+      "scope": "New anonymous full32-bit scenes; frozen inference before label access",
+      "methods": {
+        "cad": {
+          "tp": 999,
+          "fp": 0,
+          "fn": 1,
+          "strict_5mm_15deg": 998,
+          "position_median_mm": 0.10417878927492784,
+          "position_p90_mm": 0.2623417022036541,
+          "rotation_median_deg": 9.361984173631972e-06,
+          "rotation_p90_deg": 9.361984173631972e-06,
+          "exact_source_json_scenes": 0
+        },
+        "native": {
+          "tp": 1000,
+          "fp": 0,
+          "fn": 0,
+          "strict_5mm_15deg": 1000,
+          "position_median_mm": 0.0,
+          "position_p90_mm": 0.0,
+          "rotation_median_deg": 0.0,
+          "rotation_p90_deg": 0.0,
+          "exact_source_json_scenes": 100
+        }
+      }
+    },
+    "latest100": {
+      "cases": 100,
+      "evaluation_utc": "2026-10-30T01:22:43.764665+00:00",
+      "scope": "New anonymous full32-bit scenes; frozen inference before label access",
+      "methods": {
+        "cad": {
+          "tp": 998,
+          "fp": 0,
+          "fn": 2,
+          "strict_5mm_15deg": 995,
+          "position_median_mm": 0.10786643990432374,
+          "position_p90_mm": 0.2428126918689129,
+          "rotation_median_deg": 9.361984173631972e-06,
+          "rotation_p90_deg": 9.361984173631972e-06,
+          "exact_source_json_scenes": 0
+        },
+        "native": {
+          "tp": 1000,
+          "fp": 0,
+          "fn": 0,
+          "strict_5mm_15deg": 1000,
+          "position_median_mm": 0.0,
+          "position_p90_mm": 0.0,
+          "rotation_median_deg": 0.0,
+          "rotation_p90_deg": 0.0,
+          "exact_source_json_scenes": 100
+        }
+      }
+    }
+  },
+  "readiness": {
+    "checked_utc": "2026-10-30T04:25:41.075232+00:00",
+    "deep_executed": true,
+    "passed": true,
+    "checks": [
+      {
+        "name": "overlay_inventory",
+        "passed": true,
+        "value": "{\"passed\": true, \"checks\": 12, \"failed\": [], \"report\": \"/workspace/development/outputs/perception/final/offline_readiness.json\"}\n"
+      },
+      {
+        "name": "fresh_offline_restore",
+        "passed": true,
+        "value": true
+      },
+      {
+        "name": "restored_CUDA_forward_backward",
+        "passed": true,
+        "value": true
+      },
+      {
+        "name": "execute_tests",
+        "passed": true,
+        "value": "{\"timestamp_utc\": \"2026-10-30T04:25:07.359917+00:00\", \"state\": \"running_owned_experiment\", \"pid\": 406964, \"command\": [\"/workspace/development/envs/robot-pose-gpu/bin/python\", \"-m\", \"pytest\", \"perception/tests\", \"perception/robot_pose/tests\", \"development/tests\", \"-q\", \"--junitxml=/workspace/development/outputs/perception/final/all_tests.xml\"], \"allowed\": true, \"gpu\": {\"utilization_percent\": 0.0, \"used_mib\": 1165.0, \"free_mib\": 31059.0, \"total_mib\": 32760.0}, \"average_utilization_percent\": 0.0, \"required_free_mib\": 6000}\n{\"timestamp_utc\": \"2026-10-30T04:25:15.212554+00:00\", \"state\": \"finished\", \"returncode\": 0, \"log\": \"/workspace/development/outputs/perception/final/all_tests.log\", \"gpu\": {\"utilization_percent\": 0.0, \"used_mib\": 1165.0, \"free_mib\": 31059.0, \"total_mib\": 32760.0}}\n"
+      },
+      {
+        "name": "execute_standalone_entrypoints",
+        "passed": true,
+        "value": "lowed\": true, \"gpu\": {\"utilization_percent\": 0.0, \"used_mib\": 1165.0, \"free_mib\": 31059.0, \"total_mib\": 32760.0}, \"average_utilization_percent\": 33.333333333333336, \"required_free_mib\": 8000}\n{\"timestamp_utc\": \"2026-10-30T04:25:28.742652+00:00\", \"state\": \"finished\", \"returncode\": 0, \"log\": \"/workspace/development/outputs/perception/final/standalone_verify_20261030_042515/robot/run.log\", \"gpu\": {\"utilization_percent\": 0.0, \"used_mib\": 1165.0, \"free_mib\": 31059.0, \"total_mib\": 32760.0}}\n{\"returncode\": 0, \"artifacts\": \"/workspace/development/outputs/perception/final/standalone_verify_20261030_042515/robot\", \"log\": \"/workspace/development/outputs/perception/final/standalone_verify_20261030_042515/robot/run.log\"}\n{\"timestamp_utc\": \"2026-10-30T04:25:30.833796+00:00\", \"state\": \"running_owned_experiment\", \"pid\": 407742, \"command\": [\"/workspace/development/envs/robot-pose-gpu/bin/python\", \"-m\", \"perception.robot_pose.trunk_ensemble\", \"--input\", \"/workspace/development/outputs/perception/final/standalone_verify_20261030_042515/inputs/trunk/input.json\", \"--profile\", \"trunk\", \"--out\", \"/workspace/development/outputs/perception/final/standalone_verify_20261030_042515/trunk\", \"--large-weights\", \"/workspace/development/outputs/perception/robot_pose_portfolio/training_trunk_s/microban_trunk/weights/best.pt\", \"--rgb-correction\", \"--gpu-confirmed\"], \"allowed\": true, \"gpu\": {\"utilization_percent\": 0.0, \"used_mib\": 1165.0, \"free_mib\": 31059.0, \"total_mib\": 32760.0}, \"average_utilization_percent\": 0.0, \"required_free_mib\": 8000}\n{\"timestamp_utc\": \"2026-10-30T04:25:33.640835+00:00\", \"state\": \"finished\", \"returncode\": 0, \"log\": \"/workspace/development/outputs/perception/final/standalone_verify_20261030_042515/trunk/run.log\", \"gpu\": {\"utilization_percent\": 5.0, \"used_mib\": 1165.0, \"free_mib\": 31059.0, \"total_mib\": 32760.0}}\n{\"returncode\": 0, \"artifacts\": \"/workspace/development/outputs/perception/final/standalone_verify_20261030_042515/trunk\", \"log\": \"/workspace/development/outputs/perception/final/standalone_verify_20261030_042515/trunk/run.log\"}\n{\"timestamp_utc\": \"2026-10-30T04:25:35.738455+00:00\", \"state\": \"running_owned_experiment\", \"pid\": 407867, \"command\": [\"/workspace/development/envs/robot-pose-gpu/bin/python\", \"-m\", \"perception.enhanced_live\", \"--input\", \"/workspace/development/outputs/perception/final/standalone_verify_20261030_042515/inputs/robot/input.json\", \"--profile\", \"max\", \"--cup-method\", \"scene_grid\", \"--out\", \"/workspace/development/outputs/perception/final/standalone_verify_20261030_042515/live\", \"--socket-refinement\", \"--resilient\", \"--gpu-confirmed\"], \"allowed\": true, \"gpu\": {\"utilization_percent\": 0.0, \"used_mib\": 1165.0, \"free_mib\": 31059.0, \"total_mib\": 32760.0}, \"average_utilization_percent\": 2.6666666666666665, \"required_free_mib\": 8000}\n{\"timestamp_utc\": \"2026-10-30T04:25:40.970467+00:00\", \"state\": \"finished\", \"returncode\": 0, \"log\": \"/workspace/development/outputs/perception/final/standalone_verify_20261030_042515/live/run.log\", \"gpu\": {\"utilization_percent\": 4.0, \"used_mib\": 1165.0, \"free_mib\": 31059.0, \"total_mib\": 32760.0}}\n{\"returncode\": 0, \"artifacts\": \"/workspace/development/outputs/perception/final/standalone_verify_20261030_042515/live\", \"log\": \"/workspace/development/outputs/perception/final/standalone_verify_20261030_042515/live/run.log\"}\n{\n  \"passed\": true,\n  \"jobs\": [\n    {\n      \"name\": \"holds\",\n      \"returncode\": 0,\n      \"reused_existing_successful_entrypoint\": false\n    },\n    {\n      \"name\": \"robot\",\n      \"returncode\": 0,\n      \"reused_existing_successful_entrypoint\": false\n    },\n    {\n      \"name\": \"trunk\",\n      \"returncode\": 0,\n      \"reused_existing_successful_entrypoint\": false\n    },\n    {\n      \"name\": \"live\",\n      \"returncode\": 0,\n      \"reused_existing_successful_entrypoint\": false\n    }\n  ],\n  \"input_sha256\": {\n    \"inputs/trunk/input.json\": \"ad884d0ee7bb2a88742f7591d3695782c4e78d7f057548f2165f25f8fe312a4e\",\n    \"inputs/trunk/rgb_1.png\": \"e1e660cbb4c912aae192d6da2bb91650c8c044a539dc1a537518b244953f3ef7\",\n    \"inputs/trunk/rgb_0.png\": \"c24dcdd4e452dd96610636f7f236c03837b0baa8a9bf71e62f61dc85f35cdba2\",\n    \"inputs/robot/input.json\": \"54a76e11856a6811ee983de415d6cfb1dae5b90b89ae4c899b5342513fd96145\",\n    \"inputs/robot/rgb_1.png\": \"e1e660cbb4c912aae192d6da2bb91650c8c044a539dc1a537518b244953f3ef7\",\n    \"inputs/robot/rgb_0.png\": \"c24dcdd4e452dd96610636f7f236c03837b0baa8a9bf71e62f61dc85f35cdba2\",\n    \"inputs/holds/calibration.json\": \"bf7ce070484c398f143ba9e162d36c086614feee971d5a89a6534c1c1722c59b\",\n    \"inputs/holds/stereo.png\": \"2cde25a42ab9aaf766e367ea6e83ad7c3c8d5294ebd8ce0486a40870793c0ab7\"\n  },\n  \"native_holds_exact\": true,\n  \"robot_difference_from_frozen_mm\": 0.0,\n  \"robot_difference_from_frozen_deg\": 0.0,\n  \"trunk_joint_free\": true,\n  \"live_holds\": 70,\n  \"no_contact_truth\": true,\n  \"missing_velocity_rejected\": true,\n  \"frames_verified\": [\n    \"wall\",\n    \"world\"\n  ],\n  \"scope\": \"Standalone RGB/input JSON only; no evaluation files are copied into inference directories\"\n}\n"
+      },
+      {
+        "name": "test_suite",
+        "passed": true,
+        "value": {
+          "tests": 179,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      },
+      {
+        "name": "standalone_smoke",
+        "passed": true,
+        "value": true
+      },
+      {
+        "name": "complete_benchmark",
+        "passed": true,
+        "value": {
+          "methods": 34,
+          "cases_per_method": 100
+        }
+      },
+      {
+        "name": "overview_browser_QA",
+        "passed": true,
+        "value": {
+          "methods": 34,
+          "trajectories": 3,
+          "downloads": 10
+        }
+      },
+      {
+        "name": "selected_static_results",
+        "passed": true,
+        "value": {
+          "original": 100,
+          "fresh": 200,
+          "markerless_original": 100,
+          "markerless_fresh": 100
+        }
+      },
+      {
+        "name": "selected_live_results",
+        "passed": true,
+        "value": {
+          "frames_per_calibration_mode": 1826,
+          "recordings": [
+            1092,
+            634,
+            100
+          ],
+          "scope": "Correlated recorded physics rerenders"
+        }
+      },
+      {
+        "name": "socket_negative_control",
+        "passed": true,
+        "value": true
+      },
+      {
+        "name": "hold_native_blind100",
+        "passed": true,
+        "value": true
+      },
+      {
+        "name": "hold_native_latest100",
+        "passed": true,
+        "value": true
+      },
+      {
+        "name": "preserved_robot_pose/frozen_selection.json",
+        "passed": true,
+        "value": true
+      },
+      {
+        "name": "preserved_robot_pose_portfolio/final_selection_v1.json",
+        "passed": true,
+        "value": true
+      },
+      {
+        "name": "preserved_robot_pose_portfolio/final_selection_v2.json",
+        "passed": true,
+        "value": true
+      },
+      {
+        "name": "upstream_development/external/competition/simulator",
+        "passed": true,
+        "value": true
+      },
+      {
+        "name": "upstream_development/external/competition/microban",
+        "passed": true,
+        "value": true
+      },
+      {
+        "name": "upstream_development/external/3DObjectTracking",
+        "passed": true,
+        "value": true
+      },
+      {
+        "name": "upstream_development/external/rcr-perception",
+        "passed": true,
+        "value": true
+      },
+      {
+        "name": "upstream_development/external/rcr-perception-latest",
+        "passed": true,
+        "value": true
+      }
+    ],
+    "source_sha256": {
+      "perception/configs/rcr_latest_default_800x720.json": "fd32026a34101a922e5967830501937ba9f6dc479f8c5492c8e2904d60d0ecf8",
+      "perception/dense_cup_map.py": "40c8448515dedace04642ce540e36ace8483df05bb144ceb55298e2b458dd3fd",
+      "perception/enhanced_live.py": "8d355da4bab5999d5996b09f009b04896362d89a328137980b2e990ac6f6f05c",
+      "perception/exchange.py": "bbac661e2e9bfe092d0d7aa451bde5ee76c9843049000b1121216246a43dd7bf",
+      "perception/live_pipeline.py": "8859b6e0f9668a97b737d8e4730e52b2b7bf68fe8ecc9722101d41afe17aabf8",
+      "perception/realsense_capture.py": "07af7aa04394c46eab9ad4a2ad583d6fcdddf2560b3f3da7d04d372fd0d013b4",
+      "perception/robot_pose/__init__.py": "869880a1f66a8c2408271acfe94835932eca55e61d70ac8826e95f1df38c1001",
+      "perception/robot_pose/benchmark.py": "54f66a8a876a1b526d2fd1005faa8076011b8e2bdb48a5412383aa263374ede9",
+      "perception/robot_pose/configured_fit.py": "94262fe2a1133bbde1b4ed12f3fcc17df45a959a895d36d8f6e3b8b7cceb713d",
+      "perception/robot_pose/contact_pose.py": "4c6f96a79310d65457f4fe765c36e1f23e593fbe8f95c2fd89813569ed5cef22",
+      "perception/robot_pose/contact_predict.py": "096c1bfcdc56d5d4407bb6c565ef4a4c54e2e59ba497eff4d6482f744b88b512",
+      "perception/robot_pose/contenders/__init__.py": "b1af118732401f7714e8b904743516494cae07a34cb4cec400c7eeef0bb62acf",
+      "perception/robot_pose/contenders/cup_map_benchmark.py": "0a749b84d72d7343e368dd2c31356f31616bd97789cb00f2aef21eb68c0c3426",
+      "perception/robot_pose/contenders/cup_visibility.py": "962a3321f49782e1707eccbae372a919938dfcf21354198c78073daf5b214289",
+      "perception/robot_pose/contenders/depth_predict.py": "bf3f959ff20dcd62e1d3d91a9be30ee581d8c82da91ee7a80a0af3ac7d4c473e",
+      "perception/robot_pose/contenders/diameter.py": "57573967d7f3a9f82cc8eba7983580cd2ca574b2c13a2fbe499d86605bb31728",
+      "perception/robot_pose/contenders/exact_refine.py": "3034dd86d6f1ff2b6427c6dbede0e956c6f25fb9dad5a0c0948ddcff68173e90",
+      "perception/robot_pose/contenders/geometry.py": "0d716a233833330cbebe5edcce9871a2aa2927ae3043d5c8319d3007a6cff3e5",
+      "perception/robot_pose/contenders/grid_pose.py": "6c67029f2e7b22e2b5dc7cd9f0b43fa6b5c14ccdb259c093d4dd73f3d038129c",
+      "perception/robot_pose/contenders/keypoint_data.py": "2cd70eb3f87ecc3c2067524c57caa6804522c78b4615d7939d3df17625c19d76",
+      "perception/robot_pose/contenders/keypoint_generate.py": "d16c421a0e093fa8dd21641d1cbbb2b2c3f0870b2ef8de5e3158f58c3efe713d",
+      "perception/robot_pose/contenders/keypoint_predict.py": "bfeddeb9d5cf5b0f03ff2daf6cc626c2c54037e9b64e0adbc14d1e15202e93bb",
+      "perception/robot_pose/contenders/keypoint_train.py": "c4725531a0454481561aab8f288b3f379fdfbcb8452e3addf8a434d0b12b3c9c",
+      "perception/robot_pose/contenders/learned_predict.py": "7ed5c025d87abe6e05f102ba4c892b12cc8056e66067fb48893d0e7baad63ca6",
+      "perception/robot_pose/contenders/live_evaluate.py": "4d8e8463301a9ec0e7cabc2d55e316bcf14ae2c1a7d49a8d96b8f6c1288ed144",
+      "perception/robot_pose/contenders/m3t/headless.cpp": "35c9006be0700ac7cb6bf64d21374369fceeb8249e80c101bb074ef8ec30f8d0",
+      "perception/robot_pose/contenders/m3t/main.cpp": "814c9650092a2d03effe942d8833d38a0560a13ef7c595ea4f9228a4776ac7b7",
+      "perception/robot_pose/contenders/m3t_collect.py": "1a85ef1e998a2022a07ae5669464cbd83213a5c0b6de03bfa32d026b41d9b5c4",
+      "perception/robot_pose/contenders/make_stress.py": "beeeb5578f4477a0dd1c1b7d687ca3976ca7e36522933ad81d9f6294fc67f70b",
+      "perception/robot_pose/contenders/material_meshes.py": "b81beac39483b0f4fc622264c050f6513106743889ec2d8065869c0abd1698fe",
+      "perception/robot_pose/contenders/megapose_validate.py": "cef2495f6dcb7016f18f3e933b7b658bbb8944190a5aa9cc5309d6810b07146d",
+      "perception/robot_pose/contenders/oracle_depth.py": "c92fe033c5400de6dc29f9ae8763888f8072f4fbfeddd95a58f00915b00ae815",
+      "perception/robot_pose/contenders/prepare.py": "56f3336b4b85e05de30c017b1f442a21a3d43aa8acdfaeda8cd8c5d343ee8360",
+      "perception/robot_pose/contenders/score.py": "e6e9647ecd04956013f08e70484b20fdb7921e228c388588f055652a14da8c61",
+      "perception/robot_pose/contenders/stereo.py": "9277a513d1db20dbdf9fa84c51523d70c27bbb7696e2bc84c32c7dfe6f08c341",
+      "perception/robot_pose/contenders/stream_benchmark.py": "548435a2b72ad832cba119ff4ef95ab36d6b10f6c44115c54c463f1ef3b47a3e",
+      "perception/robot_pose/contenders/trace_render.py": "8a22f754351666ec08b601f97122f89430b4b07db50a38fc2f1eb5e6611a75c6",
+      "perception/robot_pose/contenders/train_trunk_repeat.py": "de93df820fd4e5fdb67dd018cc3b76daafe52fb0d34292cc92345c64189bc604",
+      "perception/robot_pose/contract.py": "f5716f79ac79a0dfd1366ce7dc96b64bf36b733b46d0c39477a36f420b484413",
+      "perception/robot_pose/contract.yaml": "4bf31d3a83842693517bd6860229e82f72d8d395697bbc63826f69caf97741d2",
+      "perception/robot_pose/differentiable_fit.py": "5b1cda3707e540341e7d0d74907fa71478f4c5d5cc8b61847b02568164ab0549",
+      "perception/robot_pose/evaluate.py": "64bb4d9875bdd8bf3ada7b2f19128578e758371ec4969cb6c8009069e1051184",
+      "perception/robot_pose/exact_refine.py": "350c7afd624a690f21fd85a3184a1962d500b66bf2be1e7c6e6615980f3bdb05",
+      "perception/robot_pose/examples.py": "9c4a9494f953cc4ddd5d44d182b61f43530bc0fc2aeb1c7ef9804ec5fa6adca6",
+      "perception/robot_pose/final_report.py": "643ab601bee7520906f1f9b79dcf1b0309bf0ba3918afb82a49397a459d805ae",
+      "perception/robot_pose/frame_conventions.py": "3acd53ebccb2fd115d859df318875f676e8217f12fb9934d765edb00e3ec00a1",
+      "perception/robot_pose/generate.py": "ff51bbf680c790d4698a2a126dc06634390eb0153f5f8cef4905fc55f45142cd",
+      "perception/robot_pose/generate_sequence.py": "013bdb5465ffd8bdef2de59cb9d677fa0a15cdf5ad55aa96bc870df39337ddcc",
+      "perception/robot_pose/grid_calibration.py": "a0fa2469e841c6cfa713f946e06cf7666f5cf828a48073ca1cc8d2c31597bad7",
+      "perception/robot_pose/keypoint_ensemble.py": "6a1196068214cac8b531383d09565f823b8a2f80deaa2327796fd19962e7d9b6",
+      "perception/robot_pose/keypoint_frontend.py": "b131ebeb102a935d8bfa225c08a2c6b79d8ce917b7327dc0c05e4dec19bdf3ae",
+      "perception/robot_pose/keypoint_pose.py": "58d8a2499cc560990c5d5ad0280a5f5f08b775f53a7076a4a62f4ef781e65aee",
+      "perception/robot_pose/live_report.py": "9f90c5f766be0a1f8644173a600fa2dd7efdb91bc47fc47440e560a2a2bbfde3",
+      "perception/robot_pose/m3t_tracker.py": "2fc6d9b4d08aba04e0e3aa30ba0bd3a436b86ae6f899d5e7fde9f9598f01d37b",
+      "perception/robot_pose/mapped_socket_refine.py": "11b2098f5b082c5f7716c961ff2ff587458cfa86edc1576e8e6dca4497ea2107",
+      "perception/robot_pose/marker_experiment.py": "29738e0abd1128ca9a0efb81d039fd9911f1154daf1192d58e8515d5f67b7648",
+      "perception/robot_pose/marker_pose.py": "a6898b51cea837de421c6c30be00aa28a1869e7ea9d462fa1701b756430d0fd0",
+      "perception/robot_pose/marker_predict.py": "ec1edd1ed49c7e4c3b696d5d64448673ae11b1a60628ad55a7672bc97666a87d",
+      "perception/robot_pose/model_adapter.py": "ea8e69e63087b73a86b23bb8c2727a5ebc576cde4804a71eae2b1f8d46f87589",
+      "perception/robot_pose/model_tracker_adapter.py": "429d78065650db10204b30e56c7e2119192fcf53b77e70ad9845babec5a0d817",
+      "perception/robot_pose/numeric_controls.py": "96a72fcdfcae3dff88256376401e419b18e182cb7e44d834b49684d2020e910c",
+      "perception/robot_pose/pipeline.py": "98cbd6f2c9a7d6b760c9dd543d44bb9e0a145ee06f8c5b763816aa85e942ea98",
+      "perception/robot_pose/predict.py": "588c706f699998a7c566a6096759b1da8c008a9b1e2bd2582737ad731f1437ef",
+      "perception/robot_pose/prior_baseline.py": "0cbdcdfdbb22a53009e385d14654e437a5d8e3725d9d473310e6f924e1caa0b6",
+      "perception/robot_pose/refine.py": "8846bd94bdbd120d610f37d9748a643131d3fdbd29e8ac5afb6e51214ad74efc",
+      "perception/robot_pose/report.py": "2a238a9217af10302b15b0d18c3f6d9db07d123e658d3b72a2ca5bac54f174d2",
+      "perception/robot_pose/resilient_pipeline.py": "31f2a04f3b36f463f723d00bb66ededb7629d1082970d030841947d56de34eae",
+      "perception/robot_pose/rigid_pose_adapter.py": "2b310a64fe1c25f74723b6803e301a0d35dadec676f8e231fea925ba2d7e96d4",
+      "perception/robot_pose/rigid_predict.py": "b298056ce132c5ff32a24a5a3087eef942caf5c065d46e67b2865c4c5fce54db",
+      "perception/robot_pose/robust_edges.py": "90e6e688e21f7593e9c1bd06c5987da3bcfc317dbf86eece9a6d915ecd5bf3bd",
+      "perception/robot_pose/robust_pipeline.py": "80e8f8aae3969dd9bfe71fe25d54dba435640d6d80f7e8bb0f2c61360df22d20",
+      "perception/robot_pose/sequence_benchmark.py": "96b70857b7d773cc8db97c1518413d9fff3759d69e2faa38af5d46182c01c14a",
+      "perception/robot_pose/tests/__init__.py": "51a230c5f31c310674c9097665157756ec298dddc08df9031cca8822a3491ffe",
+      "perception/robot_pose/tests/test_contenders.py": "bfad134277fe464cc52166c9355418a0aabd063a417c0803b9e7471cba1b86c0",
+      "perception/robot_pose/tests/test_emitted_endpoints.py": "06ee244034bffbab83cf505befb83bbf93f2c846db2a8ac7fe7b7ecaedca3aa1",
+      "perception/robot_pose/tests/test_exposure.py": "08114a4a62e488caab135b0c27f665e2fb12807722b6679dd9b2c660cca104d9",
+      "perception/robot_pose/tests/test_geometry.py": "41332b17a47c3b5eb3121b61087628f70402493c03fa9b8231652233c2ade83b",
+      "perception/robot_pose/tests/test_mapped_socket.py": "6cd638444246d063f7f8262d12abe57c7fe8c8d6be4e885554b84a7797bfd4da",
+      "perception/robot_pose/tests/test_pipeline.py": "ddebd6b1d6560ca6dc6fa057c7424f9ced8c867a648623e56eaa2072b34c3c19",
+      "perception/robot_pose/tests/test_poselib.py": "74e2dd81c32164099f6386780bf16bd1810327772c6b2fac3d49d2aeda2b5285",
+      "perception/robot_pose/tests/test_report_failures.py": "db7ef785cb5d0ca62ac4ba22969ef35f99cd94faf3e09f08ffa01cdf184209ec",
+      "perception/robot_pose/tests/test_resilient.py": "c7df08fe6e64f999976ac80b5708230b1a40f49715fcec3262f3c9a0b250d7b3",
+      "perception/robot_pose/trunk_benchmark.py": "5f217dd8b358c5f0b2188f023154de03239d23a0ae12452afe5d709589038c5b",
+      "perception/robot_pose/trunk_ensemble.py": "d3a1f787e159d8a2db2fa2a57c4ca16571bcb66d73d1fae968628cbc55773a91",
+      "perception/robot_pose/trunk_keypoints.py": "99046b2b5cfb2258095ec0ae472dd20ef794361d3ae1a83b718ff7e4d978f999",
+      "perception/robot_pose/trunk_repeated.py": "ff6773ba65b82765eed8a24c676b752fde375124290c9cc2fd068aa544b263bb",
+      "perception/run.py": "1096893891e33bbccb2949ad86b4efaf38334cb1c9fc6b4853fc4e06aebd2102",
+      "perception/scene_cup_map.py": "dc7189c123cb8698e07212b84131238fe36b01194371600aa9eaf1a507fe98db",
+      "perception/src/build_report.py": "95963def0ed31f11244dc577faa3bfaf56ac277e5a831722b2e1fb9da707b608",
+      "perception/src/cad_pose.py": "c1080630e0ac48c0436e00b074e5c99403bce9f8851848849e6d97a6133f11af",
+      "perception/src/cad_ransac.py": "34d3718c7301420c3a90961dceb8d09e644eee0676e15bf838b3d079e039c42c",
+      "perception/src/cad_silhouette.py": "d06958321ea258acbf7aaaca28b9904f02a4c0adfe8e7fc13db3c39eae67ad0a",
+      "perception/src/cad_templates.py": "d752cdf650debfc1a5dbe9179e013e9bd09f91b6e46e205a1cf82b65fff18595",
+      "perception/src/calibration.py": "31c6bf8871a8acdfc206f2c7714850e769e3b83726992c409c952fc06f282cbd",
+      "perception/src/camera_io.py": "7f8397a9e1fd717c45f71466d658aba7cd6ab046398e2d1dbcbfeaccdd84287f",
+      "perception/src/evaluate_pose_results.py": "454e1eaa706f7e5c49fd8a68b70c7e1504bc573909e34625afeb5ce8e8deea7c",
+      "perception/src/evaluate_silhouette_pairs.py": "9334466c93ebe35def1a643593370591c4de8baff50073a60c05c3e29b76e528",
+      "perception/src/geometric_holds.py": "42c33d0358d592c42d728a0498f93103d2023cc38faeb06e98d5c95d9181dab4",
+      "perception/src/live_estimator.py": "c78396004e75f1e7f0c6ad9f7486a93bf5846dad5e2538dc2dbacc99aa8a6df6",
+      "perception/src/pose_retries.py": "307f39b1643df22d939b5b88e473b91730ff3be30ff634415e68dc47351581c5",
+      "perception/src/rcr_benchmark.py": "935c7e985a5571299928d766cbaa9a76c4a827e8f81f71d87721288656bf57a4",
+      "perception/src/rcr_best_search.py": "f6cfff45f2fb46953fbe8572c023b0b9c3e515f61a6e737e1cd883e3d3deee30",
+      "perception/src/rcr_blind_benchmark.py": "a2770fbec91a5e2bf7ef8da0b9ae5fcb2174c53c0f6c7ba39e8627d47a2eab1a",
+      "perception/src/rcr_candidate_filter.py": "df7c440ade96bc4ed09b32178c96315106de9e72682599d8458a51601cdcaa21",
+      "perception/src/rcr_contract.py": "4ba13323c78b45d4c756f721485f7af33cb4e79ef622dace2176538df83820c6",
+      "perception/src/rcr_depth_comparison.py": "2778a9ddea9ea1653f5b02ed1221ce67fd6605913b41aa625578405efdeafd75",
+      "perception/src/rcr_depth_diagnostics.py": "fd13784ca1dae76f0adc705a588e6a1bb1fe42b38993d7948136237ba37e9fda",
+      "perception/src/rcr_exact_fit.py": "4a4622af16893bda0edc5d9dbb4369afec580c954eb19a58f4651eef35c61119",
+      "perception/src/rcr_final_report.py": "da346242953ed9eb75e8bcaca60429a3270c6653045e5c125390b565bfef44df",
+      "perception/src/rcr_foundationpose.py": "a538aac3fb8b041dc9f6ceaf2ff694955ea51457c9cc3e504a24648f2780fc43",
+      "perception/src/rcr_fp_additions.py": "710eab31fc67d2afefe8d67e61ca9821c1474afd83ff906b8eae26553e6600c5",
+      "perception/src/rcr_hackathon.py": "94733f34f31ad061d2c081b972143c34bdcd9680e46c6795591e292cfa8438d5",
+      "perception/src/rcr_hybrid.py": "1ee5dc677169c26ba08f5a323e64bfd628aea1113ce962c714cc5d2736fb73a4",
+      "perception/src/rcr_learned.py": "fdab822a0910a1caaf9a8915bd2ea3d698a8741ee4e08a9940e50f17d2b9e3f1",
+      "perception/src/rcr_learned_depth.py": "48713741a008f9abd4bfb3f9c05b8f38327ba20afb4c353444823c1dbdb81b3f",
+      "perception/src/rcr_max_benchmark.py": "25c8b365432b9afd02f37d062decce36da4e88c358413677e579d2d68eba8107",
+      "perception/src/rcr_max_report.py": "f180424e01ad9ffbd935975e59dd87098c20dbf8e12bf0721a3eeb519f645770",
+      "perception/src/rcr_maxfit.py": "91c3c4f35d22ab23ae1630919acfce8769562a528ff21b91f78befc9f3c81c4c",
+      "perception/src/rcr_methods.py": "ad022a85f29dc47b15f866e4b0c5092952c0e855c4825c6aafd3638d90cf3824",
+      "perception/src/rcr_native_geometry.py": "351bccf986438d59a060ce6c83f21c838e04b650c8947f906500c72a826aa551",
+      "perception/src/rcr_overview.py": "b7b2e319b0acaea9aadcb8fccf7cadd1568d4532f78b67953cbdea5a19d6556e",
+      "perception/src/rcr_pose_selection.py": "4a0b5ad9b7ebcf998ee3069a818349c1cebf954a7f478a93e893e4a770c4282d",
+      "perception/src/rcr_predict.py": "c3e237560466c3748a1c7ec434053a2b2e48b0d429e37040cd70bfcd53810d59",
+      "perception/src/rcr_proposals.py": "95c0b6dea64b4efea3815a0276e78fcff01cc65c13561ad2d01c2de64f823007",
+      "perception/src/rcr_s2m2_depth.py": "a275812212f79f6ba92cb5d521756f7cb1d92098b995b158137a35620e5fe2a8",
+      "perception/src/rcr_sam6d_tuning.py": "408fe51fdfd2d91272f53166d0e228d0ff27b74319b99b92d34d825c0114e73f",
+      "perception/src/rcr_sam_search.py": "7228da98261d7a8a5fe7ab3f09e7cf0152a2fe036711a093f488678a9deb2c18",
+      "perception/src/rcr_search_overview.py": "26f7c34ac9fede100854d89e36815d58d733089b119d81d7bea057489fe420ba",
+      "perception/src/rcr_search_runner.py": "ead91aa2df85d866721782c95ec41bc53c84bf9eff07a137ad0cbd5663d00055",
+      "perception/src/rcr_seed_benchmark.py": "5ea1f2a02aa63936788c670ecc45ba1eb0b9d2eb7244f7692f88640684003dc7",
+      "perception/src/rcr_seed_recovery.py": "c3b9dc1543f25b1d884ee6290493dbb4e5af514d4655c57e5151135be0e2df27",
+      "perception/src/rcr_seedscan.cpp": "d179a52322fce7979aea278f42e84ac70b09bdd05740648c0c3388f6261cf33a",
+      "perception/src/rcr_seedscan.cu": "e6c716afb4142b29a9509350f10b50ec5e37a32f1e209cf5512400c5094be52c",
+      "perception/src/rcr_seedverify.cpp": "73e11807041387f7e5d6cfe59eb8a450f123ed45349277c6dfc8ff7b68de8c20",
+      "perception/src/rcr_stereo_search.py": "5b4bf104ad7654b4f861c76c62b01115948872bdb1c370cc1174d3c36824c046",
+      "perception/src/rcr_surface_hybrid.py": "7078491a8cafb97b65a8dae7404d5f1803e740b9cc1ae3d7fd480079a79e51c4",
+      "perception/src/rcr_validate_dataset.py": "6d0d98d08220831903dd10d80c56dfbf186e0ed3b9dfa5d186d8670affbc1889",
+      "perception/src/run_stereo_models.py": "5c8ee48a86dd0a835d854a35461f0d80b7471e6605a4dfd29a420e6e322014f7",
+      "perception/src/run_suite.py": "7a9d34487e06a50a3c9260f38b43694e30bff29cb2d79ae0d51d48de2e51be15",
+      "perception/src/sam6d_pose.py": "8eb2e7caa5c0883c08c4e33dd9affe7c0325c503511c869b0d060e0228f7cb68",
+      "perception/src/sam_detection.py": "57ddee9754fd9a5f5621cf52531785aa016a33b0f6b96658054b414f73d73c84",
+      "perception/src/sim_dataset.py": "74b5ff33261abbfe87444e8b6c881f9d824aa71888dc394cce8fdd62d93b0d76",
+      "perception/src/stereo_benchmark.py": "5e32b8884527885d40b095fa7fc3be5c12497a5ca487c68dedcf3e155bbe863c",
+      "perception/tests/test_cad_ransac.py": "83cb155256500764484b5134c24b762998fd56ea0c77c5398f374d92bdb6e2b3",
+      "perception/tests/test_cad_silhouette.py": "a693b5a07492645824792ac1622cecc66bbb91b34c1fbdc1a2090ded3f479fd3",
+      "perception/tests/test_camera_and_truth.py": "3f4ddd1fcdc6fbd59769d4d6d5d5db411bc17367c46dded7000cd2b12e1f51d9",
+      "perception/tests/test_geometry.py": "34077c513af2efa21614f4fc7b1dcffa5b642584a239db523239084430fd4904",
+      "perception/tests/test_gpu_scheduler.py": "0db984cdb1aaa90d46d27b1bff549fcf4aa47bfaf175ae96e4edc97a8507d567",
+      "perception/tests/test_live_and_stereo.py": "c1ab5ae0758e9d9be6f980bba54fb8c97bf15485526848b2ba860e5ec4e52387",
+      "perception/tests/test_perception_exchange.py": "5d3d1b48389e88aa95d92713e3783287c2becaf0e2386944860c79963aa7c2b2",
+      "perception/tests/test_pose_contract.py": "c80051261230a80f1268ca38678dd305f363da320f85b682faefd15e1786450a",
+      "perception/tests/test_pose_retries.py": "9fce8a60db833ce08208f521c22098cd3e7586726cf57d9bf18707b1053845a6",
+      "perception/tests/test_rcr_best_search.py": "1e82326df9306007203a351e6f129c1e38668228f0fa2ece8816f6f69b203eb4",
+      "perception/tests/test_rcr_candidate_filter.py": "2743a7bec271ce300fa0e3d0fb3b2d8f1300e4460be30c06b6ea854fdf0cc399",
+      "perception/tests/test_rcr_contract.py": "d6349cf97524ae5ceadf8134967aa5176e0e0e222f0fff00ba58ca7e50091731",
+      "perception/tests/test_rcr_depth_comparison.py": "06278105e643693b9ba203a06a17ad871108dc6221d8f729cadb41b34864bfd6",
+      "perception/tests/test_rcr_exact_fit.py": "8eb5547c502f66796a13270100b58d4ee60d4ecdea56636163f03d835b128451",
+      "perception/tests/test_rcr_foundationpose.py": "dfcbe026c89159cbb2d54e0fb2e0ac7c3e75be69041134a2d62c624809fc719b",
+      "perception/tests/test_rcr_fp_additions.py": "e9220f5eb3505578f5b2c3bd5bc1c746795d1799fd1b036f726b38c2ebd1d910",
+      "perception/tests/test_rcr_hybrid.py": "4d85dcf5bb717ae31aafd0738723a553b50917365609fb32e58a8271b49b1d27",
+      "perception/tests/test_rcr_learned.py": "c26419785944d4b923d735cbcf524bf461dc95d2cebae486f3b900c57342eecd",
+      "perception/tests/test_rcr_learned_depth.py": "a3905c4d21ad9a8c2c18175a3feb1f7ace61ee4901624a79a7d2ab66b33cd028",
+      "perception/tests/test_rcr_maxfit.py": "02900a20f8cf926bea86e9bd2be6110fa62c999bf470e22dc6bcc78939009652",
+      "perception/tests/test_rcr_methods.py": "9e27963c5a2523a4a1ed44d198f48cb3434a2f611dc9397eed7232be73d47f59",
+      "perception/tests/test_rcr_pose_selection.py": "2e300ab0919328e0b1ae9dcfcdacc25237d4f9cabf9cc61a8b290abc0bce5e4a",
+      "perception/tests/test_rcr_proposals.py": "2de3ddcc5f237f674bda3df2420845537c64db095c03f9b29d14f47e4d717cda",
+      "perception/tests/test_rcr_s2m2_depth.py": "d10380159b43e238579076408310f2fb5449dfbc074c4e44c691e14570a9e1f1",
+      "perception/tests/test_rcr_sam6d_tuning.py": "02996d69e15a48cef375b114717a83c74976a01b33e64b95d5ebfd5a555e67ba",
+      "perception/tests/test_rcr_sam_search.py": "28d80e3955e463a3c088bcbb257f64bbff925fb6ac0cf444f6754bfaf59b7107",
+      "perception/tests/test_rcr_seed_recovery.py": "280013cc5aa0ff75f1b0726f063fe99bc92cbd8103353bcf8fb105b9fb341cb9",
+      "perception/tests/test_rcr_stereo_search.py": "591173583ca5fd74b55d460e7c9721969067c0453cf8069fd4d12c8b828088bd",
+      "perception/tests/test_rcr_surface_hybrid.py": "c1af2fd52209dd282951ef494d0bebc75c3679f0e472cddfe408270a69e4a5dc",
+      "perception/tests/test_realsense_capture.py": "b32d540e7fe885cda0c24422c40589b14e4598d0949b61fc8fe5e27bc31beefb",
+      "perception/tests/test_sam_metrics.py": "c2b724b86cc9e3afc46823680901c703f0e27b4a2e0989b1d7771376bceb61b0",
+      "development/scripts/gpu_guard.py": "500bda9ba0d90b8f9ba3fc2117f1e1d039e5590b253826abf6cb39d52667ac11",
+      "development/scripts/prepare_perception_final.py": "c5523a0c34e47fe7722e4f9270f2e354a3eca2cd21d7ac7739f8b6e5d445e233",
+      "development/scripts/verify_perception_final.py": "37d9a86f4fd4665a61a67985cffd497924ec07fc5365a43ed6c56b599d63b372",
+      "development/scripts/package_perception_final.py": "e5e057e454980909e117b60b865ad28738c11d6e4451745a569f9449cd6363c6",
+      "development/scripts/smoke_final_perception.py": "ab568db88984d811d76bd4003b220993216b019adbf604e3571522ad448506dd",
+      "development/scripts/smoke_perception_overlay.py": "7372654199f81558e86fcb872e51ef11f6b855beedada5fd8efeb50e7b4170a0",
+      "development/scripts/check_perception_overview.mjs": "69f535ca46ea832fe10b5fffbcea087cdffa4e6553e69743d28ee16e0106be5c"
+    },
+    "hardware_status": "RealSense SDK imported; no attached cameras, physical capture/synchronization/accuracy unavailable",
+    "scope": "Final available perception package; no official robot scorer or closed-loop climbing claim"
+  },
+  "historical_source_sha256": {
+    "perception/RCR_BENCHMARK.md": "7df10114a116016e25cdf68f4ae5ed0855e1842e4fce7c9780afc0ce7ec137b9",
+    "perception/RCR_SEARCH_100.md": "f18349036e3f911e23342d6fb7b3cb5366b372f54d8ae7ddabb8097928ebccd2",
+    "perception/RCR_MODEL_TUNING.md": "7c24c12d98d5e99cc9280446a5f54babda7c56ad8da540d78445aab4a3ad72f3",
+    "perception/RCR_S2M2.md": "a1cfc61b10a0af47ee910fd50d4f0a9154c6b6cadf632c84645fb71c3e80f51b",
+    "perception/RCR_MAXXING.md": "ebe6484136cbccf110c617c3802d58e3510226d2224430ce245e7ce9a5ad17ef",
+    "perception/FINAL.md": "b4fa90c7e84677cbde9c73e58715c60514652361ba991ecb568e511d21004041"
+  }
+}

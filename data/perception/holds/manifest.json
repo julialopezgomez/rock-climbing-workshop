@@ -1,0 +1,20 @@
+{
+  "cases": [
+    {
+      "id": "000000"
+    },
+    {
+      "id": "000024"
+    },
+    {
+      "id": "000049"
+    },
+    {
+      "id": "000074"
+    },
+    {
+      "id": "000099"
+    }
+  ],
+  "scope": "Five saved regression examples, not new blind accuracy evidence"
+}

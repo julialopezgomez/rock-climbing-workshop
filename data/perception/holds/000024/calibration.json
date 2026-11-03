@@ -1,0 +1,133 @@
+{
+  "schema": "rcr-calibration-v1",
+  "frame": "scene",
+  "units": "metres",
+  "baseline_m": 0.064,
+  "image_width": 800,
+  "image_height": 720,
+  "camera_height_m": 0.7,
+  "camera_distance_m": 1,
+  "provenance": "Declared calibrated rig; derived from public generator camera configuration, not estimated from hold labels",
+  "cameras": {
+    "left": {
+      "width": 800,
+      "height": 720,
+      "K": [
+        [
+          477.73613578334755,
+          0,
+          400
+        ],
+        [
+          0,
+          477.73613578334755,
+          360
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "T_camera_scene": [
+        [
+          0.9994883928807561,
+          0,
+          0.031983628572184196,
+          0
+        ],
+        [
+          0,
+          -1,
+          0,
+          0.7000000000000001
+        ],
+        [
+          0.031983628572184196,
+          0,
+          -0.9994883928807561,
+          1.000511868995066
+        ],
+        [
+          0,
+          0,
+          0,
+          1
+        ]
+      ],
+      "distortion": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "distortion_model": "none",
+      "position_scene_m": [
+        -0.032,
+        0.7,
+        1
+      ]
+    },
+    "right": {
+      "width": 800,
+      "height": 720,
+      "K": [
+        [
+          477.73613578334755,
+          0,
+          400
+        ],
+        [
+          0,
+          477.73613578334755,
+          360
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "T_camera_scene": [
+        [
+          0.9994883928807561,
+          0,
+          -0.031983628572184196,
+          0
+        ],
+        [
+          0,
+          -1,
+          0,
+          0.7000000000000001
+        ],
+        [
+          -0.031983628572184196,
+          0,
+          -0.9994883928807561,
+          1.000511868995066
+        ],
+        [
+          0,
+          0,
+          0,
+          1
+        ]
+      ],
+      "distortion": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "distortion_model": "none",
+      "position_scene_m": [
+        0.032,
+        0.7,
+        1
+      ]
+    }
+  }
+}
