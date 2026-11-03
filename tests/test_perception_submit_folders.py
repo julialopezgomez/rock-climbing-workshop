@@ -124,6 +124,16 @@ def test_shared_budget_settings(grouped, tmp_path):
     assert settings.gpu_fallback_engine.endswith(":budgeted_hold_prediction")
 
 
+def test_image_only_mode_disables_generator_and_shares_worker_time(grouped, tmp_path):
+    args = SimpleNamespace(workers=4, seconds_per_sample=24, no_native=True)
+    settings = grouped.runner_args(args, 80, 480, tmp_path)
+    assert settings.native_hold_count is None
+    assert settings.native_reserve == 0
+    assert settings.gpu_fallback is False
+    assert settings.engine.endswith(":image_only_hold_prediction")
+    assert settings.case_seconds == 23.25
+
+
 def test_exhausted_preparation_budget_skips_preflight(grouped, tmp_path, monkeypatch):
     root, output = tmp_path / "inputs", tmp_path / "outputs"
     make_inputs(root)

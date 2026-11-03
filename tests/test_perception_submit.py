@@ -121,6 +121,42 @@ def test_timed_out_worker_keeps_a_complete_upload(runner, tmp_path, monkeypatch)
         assert archive.namelist() == ["scene.json"]
 
 
+def test_image_only_keeps_valid_checkpoint_after_worker_failure(runner, tmp_path, monkeypatch):
+    engine = tmp_path / "checkpoint_frontend.py"
+    engine.write_text(
+        "import json\nfrom pathlib import Path\n"
+        "def predict(image, calibration, output):\n"
+        "    hold = dict(type='cube_hold', color='#F2554E', "
+        "position=dict(x=0., y=.3, z=0.), orientation=dict(roll=0., pitch=0., yaw=0.))\n"
+        "    path = Path(output) / 'prediction.json'\n"
+        "    path.write_text(json.dumps(dict(formatVersion=1, holds=dict(hold_1=hold))))\n"
+        "    raise RuntimeError('Refinement failed after saving a valid estimate')\n"
+    )
+    monkeypatch.setenv("PYTHONPATH", str(tmp_path))
+    monkeypatch.setattr(runner, "gpu_preflight", lambda _: (tmp_path / "lock").open("w"))
+    image = tmp_path / "scene.png"
+    image.write_bytes(png())
+    args = rig(
+        inputs=[image],
+        out=tmp_path / "out",
+        check=False,
+        seconds=10,
+        native_hold_count=None,
+        native_reserve=0,
+        workers=1,
+        case_seconds=3,
+        engine="checkpoint_frontend:predict",
+    )
+    runner.run(args, time.monotonic())
+    report = json.loads((args.out / "manifest.json").read_text())
+    assert report["inferred"] == 1
+    assert report["native_recovered"] == 0
+    assert report["state"] == "complete_with_warnings"
+    assert report["cases"][0]["fit_completed"] is False
+    with zipfile.ZipFile(args.out / "submission.zip") as archive:
+        assert len(json.loads(archive.read("scene.json"))["holds"]) == 1
+
+
 def test_mixed_directory_includes_archives_and_loose_images(runner, tmp_path):
     (tmp_path / "loose.png").write_bytes(png())
     with zipfile.ZipFile(tmp_path / "images.zip", "w") as archive:
@@ -234,6 +270,54 @@ def test_worker_forwards_image_fit_budget(runner, tmp_path, monkeypatch):
     )
     assert runner.run_worker(SimpleNamespace(worker=task)) == 0
     assert received == [("24", ("rgb.png", "rig.json", "out"))]
+
+
+@pytest.mark.parametrize("retry_complete", [False, True])
+def test_partial_retry_preserves_baseline_until_complete(
+    runner, tmp_path, monkeypatch, retry_complete
+):
+    engine = tmp_path / "retry_fixture.py"
+    engine.write_text(
+        "import json\nfrom pathlib import Path\n"
+        "def predict(stereo, calibration, out):\n"
+        " p=Path(out);p.mkdir(parents=True,exist_ok=True)\n"
+        " retry=p.parent.name=='retry_cad'\n"
+        " hold={'type':'microban_hold','color':'#F2554E',"
+        "'position':{'x':.9 if retry else .1,'y':.5,'z':0},"
+        "'orientation':{'roll':0,'pitch':0,'yaw':0}}\n"
+        " doc={'formatVersion':1,'seed':0,'materialSeed':0,"
+        "'scene':{'wall':{'width':3,'height':1.4,'depth':.025},'volumes':[]},"
+        "'holds':{'hold_1':hold}}\n"
+        " (p/'prediction.json').write_text(json.dumps(doc))\n"
+        f" partial=not (retry and {retry_complete!r})\n"
+        " (p/'debug.json').write_text(json.dumps({'partial':partial}))\n"
+    )
+    monkeypatch.setenv("PYTHONPATH", str(tmp_path))
+    monkeypatch.setattr(runner, "gpu_preflight", lambda _: (tmp_path / "lock").open("w"))
+    image = tmp_path / "scene.png"
+    image.write_bytes(png())
+    args = rig(
+        inputs=[image],
+        out=tmp_path / "out",
+        check=False,
+        seconds=30,
+        native_hold_count=None,
+        native_reserve=0,
+        workers=1,
+        case_seconds=2,
+        engine="retry_fixture:predict",
+        gpu_fallback=False,
+        retry_partial=True,
+    )
+    started = time.monotonic()
+    assert runner.run(args, started) == 0
+    assert time.monotonic() - started < args.seconds
+    prediction = json.loads((args.out / "json/scene.json").read_text())
+    assert prediction["holds"]["hold_1"]["position"]["x"] == (0.9 if retry_complete else 0.1)
+    report = json.loads((args.out / "manifest.json").read_text())
+    assert report["total"] == report["inferred"] == 1
+    assert report["native_recovered"] == 0
+    assert (args.out / "work/retry_cad/scene_0000/task.json").exists()
 
 
 def test_adaptive_pass_refines_uncertain_case_and_protects_native_output(

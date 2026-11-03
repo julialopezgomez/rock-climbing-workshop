@@ -1,6 +1,107 @@
 # Ten-minute perception submission
 
-## Real/sim folders: eight-minute batch
+## Selected version: image_only_best_20261101_1202
+
+Restored on 3 November 2026. The runtime, selected weights and launcher match
+all 13 hashes recorded for this version. The saved
+[baseline manifest](baselines/image_only_best_20261101_1202.json) records the
+source hashes, model hashes and inference settings.
+
+Restoration checks passed: 35 targeted tests and a fresh four-scene grouped run
+(one scene from each archive) in 44.22 seconds. All four predicted JSON documents
+are identical to the saved version, and the original image bytes are preserved.
+
+```bash
+cd /workspace/students/rock-climbing-workshop
+export RCR_GPU_LOCK=/workspace/development/outputs/perception/gpu_experiment.lock
+./perception_submit_image_only.sh /workspace/perception/samples \
+  --seconds 475 --out "outputs/image_only_$(date +%Y%m%d_%H%M%S)"
+```
+
+The command reads `real/*.zip` and `sim/*.zip`, then writes identically named
+ZIPs under the output folder's `real/` and `sim/` directories. Each ZIP preserves
+the original images and adds their predicted JSON siblings. Input answer JSON
+files are ignored. The timestamp gives each run a fresh output directory.
+
+Scene-seed search and generator matching are disabled. Four workers share one
+475-second budget across preparation, fitting, retries and packaging. For 80
+images, initial tasks receive 23 seconds each. Remaining time retries unfinished
+fits, up to 45 seconds per retry. A retry replaces an earlier result only when
+it completes; otherwise the saved estimate is retained.
+
+### Method
+
+A fixed paint classifier separates hold paint from background features in
+real-style images. Connected components are associated across the stereo views
+with a 2.5-pixel epipolar tolerance. CPU CAD estimates initialize multiview CAD
+fitting, which retains original RGB for photometric comparisons. Stereo color
+clustering estimates volume surfaces. A local crop classifier rejects background
+hypotheses and chooses among fitted CAD types. Uncertain wall Fingerpocket yaw
+estimates are reduced by half. Support and collision checks finish the scene.
+
+This version uses the original paint components and volume detector. The later
+center network, wider stereo gate, additional volume-color search, separate
+support-refitting pass and final candidate-selection filter are not active.
+All four CAD meshes remain available; the supplied archives do not establish
+Cube accuracy.
+
+The packaged paint and crop models use development labels rendered from
+previously recovered scenes: 24 real-style images for paint and 48 stereo images
+for crop classification. Inference reads RGB, declared calibration, CAD and fixed
+weights. It reads no scene seeds, reference JSON or earlier reconstructed answers.
+Model cards and training commands are in
+[paint_forest.json](../../src/rcr/perception/challenge/assets/weights/paint_forest.json)
+and [hold_crop_model.json](../../src/rcr/perception/challenge/assets/weights/hold_crop_model.json).
+
+### Recorded benchmark for this version
+
+The original 1 November run completed all 80 scenes in **383.33 seconds**,
+including 16 completed refinement retries, with zero runtime errors. These are
+the saved version's benchmark results, not a new full-batch run on 3 November.
+The actual output ZIPs were checked with the upstream JavaScript scorer and
+preserve the input images. Lower scores are better.
+
+| Archive | Scenes | Mean hold score |
+|---|---:|---:|
+| real_v0 | 20 | 9.3142 |
+| real_v3 | 20 | 38.4312 |
+| synth_v0 | 20 | 8.2754 |
+| synth_v3 | 20 | 19.8883 |
+| All | 80 | 18.9773 |
+
+There are 2,317 position matches among 2,400 reference holds, with 83 missing
+holds, 35 extras and 11 matched type errors. Matched position error has a
+0.560 mm median and 1.721 mm 90th percentile. Inclined and occluded holds remain
+difficult: 38 inclined holds are missing. Volume matches are 109/120.
+
+The 32-image reserved-subset mean is 23.0554. Those images were excluded from
+training for this version but had been evaluated in earlier experiments; they
+are not a fresh blind test. Scores use reconstructed references, not independently
+supplied organizer labels. A later audit found a suspected reference-geometry
+discrepancy in `real_v3/0014`; that case and its score remain included unchanged.
+The `real` archives use textured rendering. These results do not establish
+physical-camera accuracy.
+
+The saved delivery and evaluation remain under
+`outputs/image_only_best_20261101_1202/`:
+
+```text
+real/real_v0.zip
+real/real_v3.zip
+sim/synth_v0.zip
+sim/synth_v3.zip
+evaluation/scores.json
+image_only_provenance.json
+```
+
+Local output archives and experiment backups are not included in Git.
+
+## Earlier generator-assisted runs
+
+The commands and zero-score results below used seed recovery. They are retained
+as historical results and do not apply to the image-only mode above.
+
+### Real/sim folders
 
 Put the release ZIPs in two directories:
 

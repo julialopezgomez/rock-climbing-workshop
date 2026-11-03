@@ -121,15 +121,36 @@ def prioritize_pairs(pairs, parts, losses):
     return [item[2] for row in itertools.zip_longest(*groups) for item in row if item is not None]
 
 
-def infer(images, calibration, *, deadline=None, pair_losses=None):
+def infer(
+    images,
+    calibration,
+    *,
+    deadline=None,
+    pair_losses=None,
+    geometry_images=None,
+    estimated_volumes=None,
+    photo_images=None,
+    hold_types=None,
+    candidate_kinds=None,
+    fast=False,
+):
     """Fit complete hold hypotheses; an optional deadline stops between holds."""
     started = time.perf_counter()
     geometry = SceneGeometry.from_calibration(calibration)
     k, t = _calibration(calibration)
     parts = [proposals(image) for image in images]
-    volumes = refine_volume_faces(
-        images, calibration, geometry, estimate_volumes(images, calibration, geometry)
-    )
+    # Paint normalization can erase the wall and volume appearance. Preserve
+    # the original views for support geometry while fitting normalized holds.
+    geometry_images = images if geometry_images is None else geometry_images
+    photo_images = images if photo_images is None else photo_images
+    volumes = estimated_volumes
+    if volumes is None:
+        volumes = refine_volume_faces(
+            geometry_images,
+            calibration,
+            geometry,
+            estimate_volumes(geometry_images, calibration, geometry),
+        )
     planes = support_planes(geometry, volumes)
     pairs = match_proposals(*parts, k, t, geometry)
     total_pairs = len(pairs)
@@ -141,7 +162,7 @@ def infer(images, calibration, *, deadline=None, pair_losses=None):
     renders = {}
     holds, diagnostics = {}, []
     try:
-        for kind in sorted(TYPES) if pairs else []:
+        for kind in sorted(TYPES if hold_types is None else hold_types) if pairs else []:
             renders[kind] = ExactRenderer(
                 kind=kind,
                 wall=True,
@@ -158,6 +179,10 @@ def infer(images, calibration, *, deadline=None, pair_losses=None):
             )
             candidates = []
             for kind, render in renders.items():
+                if candidate_kinds is not None and kind not in candidate_kinds.get(
+                    (left, right), TYPES
+                ):
+                    continue
                 for normal, anchor, triangle, name in planes:
                     for yaw in [0.0, -np.pi / 4, np.pi / 4]:
                         rotation = _rotation(normal, yaw)
@@ -167,7 +192,16 @@ def infer(images, calibration, *, deadline=None, pair_losses=None):
                         if not on_face(point, triangle, margin=0.18):
                             continue
                         point, rotation, loss = fit_plane(
-                            point, rotation, normal, anchor, obs, k, t, render=render, rounds=2
+                            point,
+                            rotation,
+                            normal,
+                            anchor,
+                            obs,
+                            k,
+                            t,
+                            render=render,
+                            rounds=2,
+                            grid_samples=7 if fast else 13,
                         )
                         if on_face(point, triangle):
                             candidates.append((loss, point, rotation, kind, name))
@@ -195,9 +229,18 @@ def infer(images, calibration, *, deadline=None, pair_losses=None):
                 for yaw in [0.0, -np.pi / 4, np.pi / 4]:
                     candidate = _rotation(normal, yaw)
                     p, r, score = fit_plane(
-                        point, candidate, normal, point, obs, k, t, render=renders[kind], rounds=2
+                        point,
+                        candidate,
+                        normal,
+                        point,
+                        obs,
+                        k,
+                        t,
+                        render=renders[kind],
+                        rounds=2,
+                        grid_samples=7 if fast else 13,
                     )
-                    photo = stereo_photo_error(p, r, images, obs, k, t, render=renders[kind])
+                    photo = stereo_photo_error(p, r, photo_images, obs, k, t, render=renders[kind])
                     alternatives.append((score, photo, p, r))
                 minimum = min(candidate[0] for candidate in alternatives)
                 supported = sorted(
@@ -227,11 +270,28 @@ def infer(images, calibration, *, deadline=None, pair_losses=None):
                 dict(
                     left_proposal=left,
                     right_proposal=right,
+                    centers=[part["center"].tolist() for part in selected],
                     kind=kind,
                     family=name,
                     loss=float(loss),
                     accepted=accepted,
                     stereo_RGB=photo_diagnostics,
+                    hypotheses=[
+                        dict(
+                            kind=h[3], family=h[4], loss=float(h[0]),
+                            position=dict(zip("xyz", map(float, h[1]), strict=True)),
+                            orientation=dict(zip(
+                                ["roll", "pitch", "yaw"],
+                                map(float, Rotation.from_matrix(h[2]).as_euler("XYZ")),
+                                strict=True,
+                            )),
+                        )
+                        for candidate_kind in renders
+                        if (h := min(
+                            (c for c in candidates if c[3] == candidate_kind),
+                            key=lambda c: c[0], default=None,
+                        )) is not None
+                    ],
                 )
             )
             if accepted:

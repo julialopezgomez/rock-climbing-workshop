@@ -1,0 +1,68 @@
+{
+  "name": "Local hold crop classifier",
+  "model_sha256": "d0f0c8e62b2f51924b0199792a60a8c216d6a1bb51a1d281e9a64ef4203a112c",
+  "architecture": "96 ExtraTrees, maximum depth 18, minimum leaf size 2, and 1,152 local image features.",
+  "training_images": 48,
+  "development_split": "The first 12 images in each of the four archives form the development set. The internal scene-separated check trains on images 1–8 and evaluates images 9–12. The final model uses all 48 development images. Images 13–20 are excluded from training.",
+  "training_reference": "CAD object-ID masks rendered from previously recovered scene references. These supply supervised development labels only.",
+  "classes": [
+    "background",
+    "microban_hold",
+    "sidepull_hold",
+    "fingerpocket_hold"
+  ],
+  "runtime_inputs": "Centered 24-pixel and 40-pixel RGB crops: gradient histograms, saturation, and intensity. No global image coordinates, filenames, scene identifiers, generator seeds, or reference JSON enter the classifier.",
+  "scope": "Training covers the three hold families sampled in the released distribution. Cube holds are absent from these training labels. Geometric fitting retains all four CAD meshes.",
+  "internal_cv": {
+    "0": {
+      "precision": 0.9391534391534392,
+      "recall": 0.9673024523160763,
+      "f1-score": 0.9530201342281879,
+      "support": 367.0
+    },
+    "1": {
+      "precision": 0.9546875,
+      "recall": 0.9760383386581469,
+      "f1-score": 0.9652448657187994,
+      "support": 626.0
+    },
+    "2": {
+      "precision": 0.9893939393939394,
+      "recall": 0.950509461426492,
+      "f1-score": 0.9695619896065331,
+      "support": 687.0
+    },
+    "3": {
+      "precision": 0.9510603588907015,
+      "recall": 0.9541734860883797,
+      "f1-score": 0.9526143790849673,
+      "support": 611.0
+    },
+    "accuracy": 0.9611523352247927,
+    "macro avg": {
+      "precision": 0.9585738093595201,
+      "recall": 0.9620059346222737,
+      "f1-score": 0.960110342159622,
+      "support": 2291.0
+    },
+    "weighted avg": {
+      "precision": 0.9616391107879386,
+      "recall": 0.9611523352247927,
+      "f1-score": 0.9612126353916703,
+      "support": 2291.0
+    }
+  },
+  "selected_policy": {
+    "background_probability_threshold": 0.85,
+    "type_probability_threshold": 0.65,
+    "wall_finger_yaw_scale": 0.5
+  },
+  "reproduce": "python scripts/perception/train_hold_crop.py --labels outputs/image_only_tuning_20261101_1143/finger_labels --model MODEL.npz --report REPORT.json",
+  "runtime_dependencies": [
+    "numpy",
+    "opencv",
+    "scipy"
+  ],
+  "training_extra_dependency": "scikit-learn, required for training only.",
+  "validation_scope": "The reserved subset was evaluated earlier in the project. It is validation for this tuning round, not a fresh unseen dataset."
+}

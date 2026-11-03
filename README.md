@@ -118,9 +118,10 @@ uv run scripts/wall_generator.py N1 N2 N3                 # their walls -> data/
 
 ## Perception
 
-For release ZIPs sorted into `real/` and `sim/`, use `perception_submit_folders.sh`
-from the [submission guide](docs/perception/SUBMISSION.md). It returns matching
-image-plus-JSON ZIPs under one eight-minute budget.
+For release ZIPs sorted into `real/` and `sim/`, use `perception_submit_image_only.sh`
+from the [submission guide](docs/perception/SUBMISSION.md). The selected version is
+`image_only_best_20261101_1202`, restored on 3 November. It returns matching
+image-plus-JSON ZIPs under one eight-minute budget with seed recovery disabled.
 
 For the ten-minute image challenge, use the [submission launcher](docs/perception/SUBMISSION.md).
 It accepts the release ZIPs and writes the JSON files and a submission ZIP within
@@ -128,7 +129,7 @@ a fixed computation budget. Install and check its runtime before release.
 
 The [selected perception runtime](docs/perception/README.md) provides stereo
 hold JSON, configured robot pose, and persistent RGB robot/cup tracking.
-It includes one trained checkpoint, isolated setup, two hold fixtures and one robot fixture.
+It includes bundled model weights, isolated setup, two hold fixtures and one robot fixture.
 The stereo hold path supports all four challenge meshes and estimated volume geometry.
 The [scored-benchmark update](docs/perception/SCORED_BENCHMARK.md) adds the released
 scorer and optional recovery of unedited native-generator scenes, with results

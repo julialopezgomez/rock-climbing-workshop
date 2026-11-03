@@ -75,12 +75,14 @@ def estimate(rgb: np.ndarray, calibration: dict[str, Any]) -> tuple[dict, dict]:
     pairs = match_proposals(*props, k, t, geometry)
     holds = {}
     details = []
+    objects = []
     for i, j in pairs:
         pair = [props[0][i], props[1][j]]
         origins = [np.floor(p["center"] - 32).astype(int) for p in pair]
         observed = [crop(p["mask"], o) for p, o in zip(pair, origins, strict=False)]
         target = [p["center"] + 0.5 for p in pair]
         best = None
+        kind_losses = {}
         for kind, vertices in shapes().items():
             for yaw in [0, -np.pi / 4, np.pi / 4]:
                 c, s = np.cos(yaw), np.sin(yaw)
@@ -116,10 +118,18 @@ def estimate(rgb: np.ndarray, calibration: dict[str, Any]) -> tuple[dict, dict]:
                     )
                     / 2
                 )
+                kind_losses[kind] = min(kind_losses.get(kind, float("inf")), float(loss))
                 if best is None or loss < best[0]:
                     best = (loss, point.copy(), kind, yaw)
         loss, point, kind, yaw = best
         details.append(float(loss))
+        record = dict(
+            left_proposal=i, right_proposal=j, hold_id=None, kind=kind,
+            centers=[part["center"].tolist() for part in pair],
+            loss=float(loss), accepted=False, family="wall",
+            kinds=sorted(kind_losses, key=kind_losses.get)[:2],
+        )
+        objects.append(record)
         if (
             loss > 0.5
             or abs(point[0]) > geometry.width / 2 + 0.02
@@ -134,7 +144,10 @@ def estimate(rgb: np.ndarray, calibration: dict[str, Any]) -> tuple[dict, dict]:
                 roll=0.0, pitch=0.0, yaw=float(yaw) * (0.5 if kind == "fingerpocket_hold" else 1)
             ),
         )
-    return versioned_prediction(holds, calibration, 0), dict(proposals=len(pairs), losses=details)
+        record.update(accepted=True, hold_id=f"hold_{len(holds)}")
+    return versioned_prediction(holds, calibration, 0), dict(
+        proposals=len(pairs), losses=details, objects=objects
+    )
 
 
 def hold_prediction(

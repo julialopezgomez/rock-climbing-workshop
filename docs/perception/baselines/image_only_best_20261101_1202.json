@@ -1,0 +1,35 @@
+{
+  "frozen_utc": "2026-11-01T11:59:06.263006+00:00",
+  "inference_seed_search": false,
+  "training_references": "Recovered scenes for development subset only; evaluation references were not supplied independently by organiser.",
+  "validation": "Indices13..20 in each archive, excluded from this round training/tuning, but previously evaluated in earlier experiments.",
+  "options": {
+    "masks": true,
+    "volumes": true,
+    "classifier": true,
+    "allow_cube": true,
+    "finger_yaw_policy": "half"
+  },
+  "sources": {
+    "improved_frontend.py": "144a957bf08a505405792704faeeeda7b49490fe7f9103646a1c4bb2e29b9179",
+    "improved_masks.py": "395aa6e6f65f19431851285742903b33f5911b639a087d8ab770a90890991ed3",
+    "improved_pose.py": "d7b03b76a79c0eb52ca3f2dcd6703d6d8f996a38f24644f81f866f2401363523",
+    "improved_volumes.py": "b2d4075143d0721813bd73e4151e6ec44ad377589108a56def2da83f1e4ed87f",
+    "src/hold_scene.py": "c905d872a856247df676d267daaeca61bf280fd2f30f52e8c72d1e0d2a792865",
+    "src/hold_geometry.py": "8af958927da9681774ad741893c90993d1be45e7e5f655d072c300d9d90c4838",
+    "src/hold_fit.py": "7ef183830c80bedb5845f95cb99ea9800069159ecd4b4cac150d1a2b1acc8b96",
+    "cpu_frontend.py": "93d5df35cbc3e8c187b264146174a520e3780dcbd751924b7541e732afe66e69",
+    "assets/weights/paint_forest.npz": "98103e524e6ba3bfca869d077a787aad547e5571d6414150c703cff3c31c7876",
+    "assets/weights/hold_crop_forest.npz": "d0f0c8e62b2f51924b0199792a60a8c216d6a1bb51a1d281e9a64ef4203a112c"
+  },
+  "delivery_started_utc": "2026-11-01T12:02:27.753927+00:00",
+  "budget_seconds": 475,
+  "retry_partial": true,
+  "validation_mean_score": 23.333134140076357,
+  "validation_previous_mean_score": 56.506776064704525,
+  "runner_sha256": {
+    "perception_submit_image_only.sh": "b58b6e4194954b27bb6e6a1ddaade2aa8abb06c0a478e70b6f2b312025e5e597",
+    "scripts/perception/submit.py": "6f93af7960f9c798d6a33cbb4f1daaa544c07e8939f7aebed6c9278112eefe7f",
+    "scripts/perception/submit_folders.py": "4ac3921d22913dc5092006098b13fb624f2f2befebb2efeb3787ac238b33c64a"
+  }
+}

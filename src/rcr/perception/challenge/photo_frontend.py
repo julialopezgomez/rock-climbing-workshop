@@ -148,3 +148,100 @@ def budgeted_hold_prediction(stereo, calibration, out):
     ]
     write_prediction(out, holds, calibration, 0, debug, volumes=volumes)
     return holds, debug
+
+
+def volume_rgb(rgb):
+    """Flatten the textured purple volume material for triangle extraction."""
+    values = cv2.medianBlur(rgb, 3).astype(np.int16)
+    red, green, blue = np.moveaxis(values, -1, 0)
+    mask = (blue > red + 5) & (blue > green + 5) & (red < 170)
+    result = np.full_like(rgb, 150)
+    pixels = values[mask].astype(np.float32)
+    if len(pixels) >= 100:
+        # This fixes color-clustering initialization; it never queries scene seeds.
+        cv2.setRNGSeed(0)
+        _, labels, centers = cv2.kmeans(
+            pixels, 4, None,
+            (cv2.TERM_CRITERIA_MAX_ITER | cv2.TERM_CRITERIA_EPS, 30, 0.1),
+            1, cv2.KMEANS_PP_CENTERS,
+        )
+        result[mask] = np.rint(centers[labels[:, 0]]).astype(np.uint8)
+    return result
+
+
+def image_only_hold_prediction(stereo, calibration, out, *, full_types=False):
+    """Fit all observed holds, then refine difficult pairs within a time limit.
+
+    Every output is estimated from this image. No generator, seed search or
+    prior prediction is opened. CPU estimates remain for unrefined pairs.
+    """
+    from .cpu_frontend import estimate
+    from .src.hold_constraints import recover_scene
+    from .src.hold_scene import infer
+    from .src.rcr_contract import write_prediction
+
+    started = time.perf_counter()
+    budget = float(os.environ.get("RCR_IMAGE_FIT_SECONDS", "24"))
+    deadline = started + max(0.1, budget - 4.5)
+    out = Path(out)
+    out.mkdir(parents=True, exist_ok=True)
+    raw = np.asarray(Image.open(stereo).convert("RGB"))
+    calibration = json.loads(Path(calibration).read_text())
+    width = raw.shape[1] // 2
+    if raw.shape[1] % 2 or (width, raw.shape[0]) != (
+        calibration["image_width"], calibration["image_height"]
+    ):
+        raise ValueError("Stereo dimensions differ from declared calibration")
+    style, fraction = appearance(raw)
+    normalized = canonical_rgb(raw) if style == "real" else raw
+    baseline, cpu_debug = estimate(normalized, calibration)
+    debug = dict(
+        method="image-only stereo CAD fitting", seed_search=False,
+        source_exact=False, partial=True, volumes=[],
+        appearance=dict(style=style, bright_paint_fraction=fraction),
+        baseline_holds=len(baseline["holds"]), refined_pairs=0,
+        inputs=["stereo RGB", "declared calibration", "four public CAD meshes"],
+    )
+    write_prediction(out, baseline["holds"], calibration, 0, debug, volumes=[])
+    cpu_records = cpu_debug["objects"]
+    geometry_images = [raw[:, :width], raw[:, width:]]
+    if style == "real" or full_types:
+        geometry_images = [volume_rgb(image) for image in geometry_images]
+    exact, fit_debug = infer(
+        [normalized[:, :width], normalized[:, width:]], calibration,
+        geometry_images=geometry_images, deadline=deadline,
+        pair_losses=[-value for value in cpu_debug["losses"]],
+        candidate_kinds=None if full_types else {
+            (r["left_proposal"], r["right_proposal"]): r["kinds"] for r in cpu_records
+        },
+        fast=True,
+    )
+    merged = {
+        (r["left_proposal"], r["right_proposal"]): (baseline["holds"][r["hold_id"]], r)
+        for r in cpu_records if r["accepted"]
+    }
+    accepted = [r for r in fit_debug["objects"] if r["accepted"]]
+    for hold, record in zip(exact.values(), accepted, strict=True):
+        merged[(record["left_proposal"], record["right_proposal"])] = (hold, record)
+    holds = {f"hold_{i + 1}": value[0] for i, value in enumerate(merged.values())}
+    debug.update(fit_debug)
+    debug.update(
+        method="image-only stereo CAD fitting", seed_search=False, source_exact=False,
+        objects=[value[1] for value in merged.values()],
+        refined_pairs=len(fit_debug["objects"]),
+        cpu_retained_pairs=len(merged) - len(accepted),
+        runtime_s=time.perf_counter() - started,
+        requested_engine_budget_s=budget,
+    )
+    volumes = [
+        dict(name=f"Volume_{i}", center=dict(x=v["parameters"][0], y=v["parameters"][1]),
+             baseWidth=v["parameters"][2], baseHeight=v["base_height"], depth=v["parameters"][3])
+        for i, v in enumerate(debug["volumes"])
+    ]
+    # Preserve a complete estimate before checking fitted-hull consistency.
+    write_prediction(out, holds, calibration, 0, debug, volumes=volumes)
+    if time.perf_counter() < started + budget - 2.5:
+        holds, debug["scene_recovery"] = recover_scene(holds, debug, calibration)
+        debug["runtime_s"] = time.perf_counter() - started
+        write_prediction(out, holds, calibration, 0, debug, volumes=volumes)
+    return holds, debug

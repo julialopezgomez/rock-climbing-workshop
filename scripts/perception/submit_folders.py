@@ -3,6 +3,7 @@
 
 import argparse
 import hashlib
+import math
 import os
 import signal
 import sys
@@ -63,7 +64,15 @@ def inventory(input_root):
 
 
 def runner_args(args, count, budget, work):
-    """The per-image fit cap and the shared native-search reserve are separate."""
+    """Share the deadline across image workers and optional native recovery."""
+    native_enabled = not getattr(args, "no_native", False)
+    if native_enabled:
+        fit_seconds = min(args.seconds_per_sample, budget / count)
+        default_engine = "rcr.perception.challenge.cpu_frontend:hold_prediction"
+    else:
+        batches = math.ceil(count / args.workers)
+        fit_seconds = min(args.seconds_per_sample, max(0.1, (budget - 15) / batches))
+        default_engine = "rcr.perception.challenge.photo_frontend:image_only_hold_prediction"
     return SimpleNamespace(
         inputs=[work / "images"],
         out=work / "inference",
@@ -71,11 +80,12 @@ def runner_args(args, count, budget, work):
         seconds=budget,
         workers=args.workers,
         native_workers=getattr(args, "native_workers", 8),
-        native_hold_count=30,
-        native_reserve=min(90.0, budget / 4),
-        case_seconds=min(args.seconds_per_sample, budget / count),
-        engine="rcr.perception.challenge.cpu_frontend:hold_prediction",
-        gpu_fallback=True,
+        native_hold_count=30 if native_enabled else None,
+        native_reserve=min(90.0, budget / 4) if native_enabled else 0.0,
+        case_seconds=fit_seconds,
+        retry_partial=getattr(args, "retry_partial", False),
+        engine=getattr(args, "engine", None) or default_engine,
+        gpu_fallback=native_enabled,
         gpu_fallback_engine="rcr.perception.challenge.photo_frontend:budgeted_hold_prediction",
         wall_width=3.0,
         wall_height=1.4,
@@ -164,6 +174,8 @@ def publisher(groups, out, work, started, settings):
                 image_fit_timeout_s=settings.case_seconds,
                 native_reserve_s=settings.native_reserve,
                 native_workers=settings.native_workers,
+                native_enabled=bool(settings.native_hold_count),
+                engine=settings.engine,
                 total=sum(g["total"] for g in archives),
                 inferred=report.get("inferred", 0),
                 native_recovered=report.get("native_recovered", 0),
@@ -246,6 +258,20 @@ def main():
         help="Budget per image and maximum image-fit time; native search is shared",
     )
     parser.add_argument("--workers", type=int, choices=range(1, 5), default=4)
+    parser.add_argument(
+        "--retry-partial",
+        action="store_true",
+        help="Retry unfinished image fits within the same shared deadline",
+    )
+    parser.add_argument(
+        "--no-native",
+        action="store_true",
+        help="Fit images and CAD only; disable all generator and seed recovery",
+    )
+    parser.add_argument(
+        "--engine",
+        help="Image estimator as module:function; image-only CAD is selected with --no-native",
+    )
     parser.add_argument(
         "--native-workers",
         type=int,

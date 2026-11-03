@@ -1,0 +1,123 @@
+{
+  "model": "ExtraTrees local-colour segmentation",
+  "classes": [
+    "background",
+    "red",
+    "green",
+    "blue"
+  ],
+  "development_images": 24,
+  "training_pixels": 361481,
+  "features": "RGB, HSV, RGB-minus-median5, RGB-minus-median31, normalized RGB",
+  "excluded_features": [
+    "pixel coordinates",
+    "image identity",
+    "scene seed",
+    "geometry"
+  ],
+  "trees": 24,
+  "maximum_depth": 16,
+  "minimum_leaf_samples": 4,
+  "random_state": 1207,
+  "annotation_sources": [
+    {
+      "path": "/workspace/students/rock-climbing-workshop/outputs/image_only_tuning_20261101_1143/masks/real_v0_00.npz",
+      "sha256": "1c34a39941d886360978ac6817bd010be11ace2ee6bfe3258cf1db84ed44f432"
+    },
+    {
+      "path": "/workspace/students/rock-climbing-workshop/outputs/image_only_tuning_20261101_1143/masks/real_v0_01.npz",
+      "sha256": "26439f8bd1c32266361c44d406372ac8e322a8a7cbc3e9a69983ddd484372900"
+    },
+    {
+      "path": "/workspace/students/rock-climbing-workshop/outputs/image_only_tuning_20261101_1143/masks/real_v0_02.npz",
+      "sha256": "59e240f57defca8ef777b2ceec577040cea92d02eb9e311af543bd2e6b4eb30c"
+    },
+    {
+      "path": "/workspace/students/rock-climbing-workshop/outputs/image_only_tuning_20261101_1143/masks/real_v0_03.npz",
+      "sha256": "0ac3db41508c2078853adabf36a609f8dd26a44f5425a4a92bacbe42a03c0494"
+    },
+    {
+      "path": "/workspace/students/rock-climbing-workshop/outputs/image_only_tuning_20261101_1143/masks/real_v0_04.npz",
+      "sha256": "3862d8fdffe6224a78c1f7d00ffbc04ad0a742a9cdadc868f9dcecb5eb070c1f"
+    },
+    {
+      "path": "/workspace/students/rock-climbing-workshop/outputs/image_only_tuning_20261101_1143/masks/real_v0_05.npz",
+      "sha256": "dfb197780b3aeda71531b20b769d70653445b78cded8b4b8ed1a1950c1bba722"
+    },
+    {
+      "path": "/workspace/students/rock-climbing-workshop/outputs/image_only_tuning_20261101_1143/masks/real_v0_06.npz",
+      "sha256": "25fc87c7994ca72a356d9d2fe4b7f27237ea47b2741937adc307d91f94f4c18b"
+    },
+    {
+      "path": "/workspace/students/rock-climbing-workshop/outputs/image_only_tuning_20261101_1143/masks/real_v0_07.npz",
+      "sha256": "18a6ac752d62e1ffe0f5c2563e8ec7a1fb12f39fed78d96db7a5340f5658f7ed"
+    },
+    {
+      "path": "/workspace/students/rock-climbing-workshop/outputs/image_only_tuning_20261101_1143/masks/real_v0_08.npz",
+      "sha256": "5cef7f6ec544650ca73c7a20385bf6e2d611d8cf12f127e09561387a18c30cfc"
+    },
+    {
+      "path": "/workspace/students/rock-climbing-workshop/outputs/image_only_tuning_20261101_1143/masks/real_v0_09.npz",
+      "sha256": "114597bd4675ed79b879e86a5ddd4d18642e89e94628b6e2f8c80a9a007b8091"
+    },
+    {
+      "path": "/workspace/students/rock-climbing-workshop/outputs/image_only_tuning_20261101_1143/masks/real_v0_10.npz",
+      "sha256": "079fd0e8e78c557227cb5453d373535e8e4a2a1140ff029b79953b24688a23fa"
+    },
+    {
+      "path": "/workspace/students/rock-climbing-workshop/outputs/image_only_tuning_20261101_1143/masks/real_v0_11.npz",
+      "sha256": "8a75779950b9460763864010df4b6411e5cf14ebe9fcda7dc948a2306547a232"
+    },
+    {
+      "path": "/workspace/students/rock-climbing-workshop/outputs/image_only_tuning_20261101_1143/masks/real_v3_00.npz",
+      "sha256": "fa80535e2dfc6183345d0ecc5d1fd6c2e2b7af07733a5bafeb155a4137016466"
+    },
+    {
+      "path": "/workspace/students/rock-climbing-workshop/outputs/image_only_tuning_20261101_1143/masks/real_v3_01.npz",
+      "sha256": "6676cb793da9d0374ccb4155e43271214be475d95b54a133fbce773dfd2d5752"
+    },
+    {
+      "path": "/workspace/students/rock-climbing-workshop/outputs/image_only_tuning_20261101_1143/masks/real_v3_02.npz",
+      "sha256": "2243c37e101904ae9d56fbb81e2b29e75a3d20a12b60993e771475778c336eae"
+    },
+    {
+      "path": "/workspace/students/rock-climbing-workshop/outputs/image_only_tuning_20261101_1143/masks/real_v3_03.npz",
+      "sha256": "aa4ae46401fb012cb431edb545ebfecdf2fdf6bb1e663e44172c4f3acbf92031"
+    },
+    {
+      "path": "/workspace/students/rock-climbing-workshop/outputs/image_only_tuning_20261101_1143/masks/real_v3_04.npz",
+      "sha256": "f7c26177d49bd06527f7d0f4a8c2bb96780259b1044a94da74193e92e9499832"
+    },
+    {
+      "path": "/workspace/students/rock-climbing-workshop/outputs/image_only_tuning_20261101_1143/masks/real_v3_05.npz",
+      "sha256": "e903396649f2efd5416146eecade825e84d0947e273df16296bbecb186674dc5"
+    },
+    {
+      "path": "/workspace/students/rock-climbing-workshop/outputs/image_only_tuning_20261101_1143/masks/real_v3_06.npz",
+      "sha256": "a5714974e052046547a2160d8d8ef32fb263c880a8a2645baa7782e16fb10be4"
+    },
+    {
+      "path": "/workspace/students/rock-climbing-workshop/outputs/image_only_tuning_20261101_1143/masks/real_v3_07.npz",
+      "sha256": "33b9fa20397cd8cf5c40f1a7fee29f98cd9a9963a28136a8dba655254d2510b4"
+    },
+    {
+      "path": "/workspace/students/rock-climbing-workshop/outputs/image_only_tuning_20261101_1143/masks/real_v3_08.npz",
+      "sha256": "2f10f15b97a46999e15ed84d12f3ee8bf3c6dd012abb0000d7bf8a35b6d001ed"
+    },
+    {
+      "path": "/workspace/students/rock-climbing-workshop/outputs/image_only_tuning_20261101_1143/masks/real_v3_09.npz",
+      "sha256": "f518fd02d58ae41fbcc403ca043a700a633b6b0435b738b28f38d051fb7348a9"
+    },
+    {
+      "path": "/workspace/students/rock-climbing-workshop/outputs/image_only_tuning_20261101_1143/masks/real_v3_10.npz",
+      "sha256": "8d56705143f0d77102e1ec1ea9088a6b747c4ef1c7a851f1813d8a7d13898ca8"
+    },
+    {
+      "path": "/workspace/students/rock-climbing-workshop/outputs/image_only_tuning_20261101_1143/masks/real_v3_11.npz",
+      "sha256": "08c132f2f66c84603f3b4e0cab3e15dcfd9425c3f4712ac0e91f3ae4918ab678"
+    }
+  ],
+  "model_sha256": "98103e524e6ba3bfca869d077a787aad547e5571d6414150c703cff3c31c7876",
+  "annotation_origin": "CAD segmentation rendered from recovered-scene development references, first12images each realarchive; no validation images.",
+  "reproduced_array_identical": true
+}

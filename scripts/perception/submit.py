@@ -257,6 +257,14 @@ def gpu_preflight(args):
         raise
 
 
+def complete_image_fit(folder):
+    """A retry can replace its baseline only after complete image refinement."""
+    try:
+        return json.loads((folder / "debug.json").read_text()).get("partial") is False
+    except (OSError, ValueError):
+        return False
+
+
 def run(args, started, on_package=None):
     lock = gpu_preflight(args)
     if args.check:
@@ -303,7 +311,10 @@ def run(args, started, on_package=None):
             flush=True,
         )
 
-    def image_pass(selected, engine, directory, stage_deadline):
+    def image_pass(
+        selected, engine, directory, stage_deadline, *, fit_seconds=None, complete_only=False
+    ):
+        fit_seconds = args.case_seconds if fit_seconds is None else fit_seconds
         pending, running, completed = list(selected), {}, []
         while (pending or running) and time.monotonic() < stage_deadline:
             while pending and len(running) < args.workers:
@@ -318,7 +329,7 @@ def run(args, started, on_package=None):
                         stereo=str(source / "stereo.png"),
                         calibration=str(source / "calibration.json"),
                         output=str(folder),
-                        fit_seconds=args.case_seconds,
+                        fit_seconds=fit_seconds,
                     ),
                 )
                 process = launch(
@@ -327,7 +338,7 @@ def run(args, started, on_package=None):
                 )
                 running[case["id"]] = (case, process, time.monotonic())
             for identifier, (case, process, launched) in list(running.items()):
-                if process.poll() is None and time.monotonic() - launched > args.case_seconds:
+                if process.poll() is None and time.monotonic() - launched > fit_seconds:
                     stop_process(process)
                     errors.append(
                         dict(case=identifier, stage=directory.name, reason="image time limit")
@@ -336,15 +347,39 @@ def run(args, started, on_package=None):
                     continue
                 folder = directory / identifier
                 try:
-                    if process.returncode != 0:
+                    if complete_only and (
+                        process.returncode != 0 or not complete_image_fit(folder)
+                    ):
+                        case["retry_status"] = "incomplete; retained previous estimate"
+                        del running[identifier]
+                        changed(directory.name)
+                        continue
+                    prediction = folder / "prediction.json"
+                    checkpoint = not args.native_hold_count and prediction.exists()
+                    if process.returncode != 0 and not checkpoint:
                         raise RuntimeError(
                             f"estimator exit {process.returncode}; see {folder / 'run.log'}"
                         )
-                    prediction = folder / "prediction.json"
                     if not prediction.exists():
                         raise RuntimeError("estimator produced no prediction")
                     if not (case.get("native_accepted") or case.get("native_pending")):
-                        publish(prediction, args.out, case, directory.name)
+                        stage = directory.name
+                        if process.returncode != 0:
+                            stage += "_checkpoint"
+                            case["fit_completed"] = False
+                            errors.append(
+                                dict(
+                                    case=identifier,
+                                    stage=directory.name,
+                                    reason=(
+                                        f"estimator exit {process.returncode}; retained checkpoint"
+                                    ),
+                                )
+                            )
+                        publish(prediction, args.out, case, stage)
+                        if complete_only:
+                            case["retry_status"] = "completed"
+                            case["fit_completed"] = True
                     completed.append(case)
                 except (OSError, ValueError, RuntimeError, KeyError) as error:
                     errors.append(dict(case=identifier, stage=directory.name, reason=str(error)))
@@ -356,6 +391,14 @@ def run(args, started, on_package=None):
             errors.append(
                 dict(case=case["id"], stage=directory.name, reason="image-stage deadline")
             )
+            if not args.native_hold_count and not complete_only:
+                try:
+                    checkpoint = directory / case["id"] / "prediction.json"
+                    if publish(checkpoint, args.out, case, directory.name + "_checkpoint"):
+                        case["fit_completed"] = False
+                        completed.append(case)
+                except (OSError, ValueError, KeyError) as error:
+                    errors.append(dict(case=case["id"], stage=directory.name, reason=str(error)))
         errors.extend(
             dict(case=c["id"], stage=directory.name, reason="not started before deadline")
             for c in pending
@@ -485,6 +528,21 @@ def run(args, started, on_package=None):
             baseline,
             deadline - (args.native_reserve if args.native_hold_count else 0),
         )
+        if getattr(args, "retry_partial", False) and not args.native_hold_count:
+            partial = [case for case in completed if not complete_image_fit(baseline / case["id"])]
+            remaining = deadline - time.monotonic()
+            if partial and remaining > 15:
+                retry_seconds = min(45.0, (remaining - 5) * args.workers / len(partial))
+                if retry_seconds > args.case_seconds:
+                    changed("retry_partial")
+                    image_pass(
+                        partial,
+                        args.engine,
+                        args.out / "work/retry_cad",
+                        deadline,
+                        fit_seconds=retry_seconds,
+                        complete_only=True,
+                    )
         first_deadline = (
             min(deadline, time.monotonic() + 2 * args.native_reserve) if adaptive else deadline
         )
@@ -562,6 +620,11 @@ def main():
     parser.add_argument("--workers", type=int, choices=range(1, 5), default=4)
     parser.add_argument("--native-hold-count", type=int, default=30)
     parser.add_argument("--no-native", action="store_true", help="Use image estimates only")
+    parser.add_argument(
+        "--retry-partial",
+        action="store_true",
+        help="Spend remaining image-only budget on complete refinement retries",
+    )
     parser.add_argument(
         "--no-gpu-fallback",
         action="store_true",

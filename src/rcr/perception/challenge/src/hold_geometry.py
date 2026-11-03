@@ -50,7 +50,7 @@ class SceneGeometry:
         )
 
 
-def volume_candidates(rgb, k, t, geometry):
+def volume_candidates(rgb, k, t, geometry, *, base_tolerance=0.012, vertex_loss_limit=4.0):
     faces, _ = flat_faces(rgb)
     candidates = []
     for face in faces:
@@ -81,7 +81,7 @@ def volume_candidates(rgb, k, t, geometry):
                         error = abs(a[1] - b[1] - geometry.volume_height)
                     if not (
                         0.04 * geometry.width < w < 0.28 * geometry.width
-                        and error < 0.012
+                        and error < base_tolerance
                         and -geometry.width / 2 - 0.05 < x < geometry.width / 2 + 0.05
                         and -0.05 < y < geometry.height + 0.05
                     ):
@@ -108,7 +108,7 @@ def volume_candidates(rgb, k, t, geometry):
                         max_nfev=35,
                     )
                     loss = float(np.mean(residual(fit.x) ** 2))
-                    if loss < 4:
+                    if loss < vertex_loss_limit:
                         candidates.append(
                             dict(
                                 parameters=fit.x,
@@ -121,9 +121,16 @@ def volume_candidates(rgb, k, t, geometry):
     return candidates, faces
 
 
-def estimate_volumes(images, calibration, geometry):
+def estimate_volumes(images, calibration, geometry, *, base_tolerance=0.012, vertex_loss_limit=4.0):
     k, t = _calibration(calibration)
-    candidates, faces = volume_candidates(images[0], k[0], t[0], geometry)
+    candidates, faces = volume_candidates(
+        images[0],
+        k[0],
+        t[0],
+        geometry,
+        base_tolerance=base_tolerance,
+        vertex_loss_limit=vertex_loss_limit,
+    )
     right_faces, _ = flat_faces(images[1])
     accepted = []
     for c in sorted(candidates, key=lambda c: c["loss"]):

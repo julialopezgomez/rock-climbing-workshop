@@ -80,7 +80,7 @@ def scene_stubs(monkeypatch):
         hold_scene, "SceneGeometry", SimpleNamespace(from_calibration=lambda c: geometry)
     )
     monkeypatch.setattr(hold_scene, "_calibration", lambda c: ([np.eye(3)] * 2, [np.eye(4)] * 2))
-    props = [dict(color=np.array([99, 137, 237]), hue_group=2)] * 2
+    props = [dict(color=np.array([99, 137, 237]), hue_group=2, center=np.array([5.0, 5.0]))] * 2
     monkeypatch.setattr(hold_scene, "proposals", lambda image: props)
     monkeypatch.setattr(hold_scene, "estimate_volumes", lambda *a: [])
     monkeypatch.setattr(hold_scene, "refine_volume_faces", lambda *a: [])

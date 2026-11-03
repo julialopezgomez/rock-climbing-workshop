@@ -24,7 +24,7 @@ def render_pair(p, r, obs, k, t, *, render):
     ]
 
 
-def fit_plane(initial, r, normal, plane_point, obs, k, t, rounds=3, *, render):
+def fit_plane(initial, r, normal, plane_point, obs, k, t, rounds=3, *, render, grid_samples=13):
     """Fast exact rerender/translation alternation; fixed supporting plane."""
     p = initial.copy()
     n = np.asarray(normal)
@@ -60,8 +60,8 @@ def fit_plane(initial, r, normal, plane_point, obs, k, t, rounds=3, *, render):
         if it == 0:
             grid = [
                 np.array([a, b])
-                for a in np.linspace(-2.5, 2.5, 13)
-                for b in np.linspace(-2.5, 2.5, 13)
+                for a in np.linspace(-2.5, 2.5, grid_samples)
+                for b in np.linspace(-2.5, 2.5, grid_samples)
             ]
             initial_shift = min(grid, key=loss)
         fit = minimize(

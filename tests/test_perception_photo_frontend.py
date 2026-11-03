@@ -67,3 +67,64 @@ def test_wrapper_exports_native_observations_and_flags(tmp_path, monkeypatch):
     assert spec["native_partial_paint_masks"]
     assert called[0][0] == output / "native_stereo.png"
     assert called[0][1] == calibration
+
+
+def test_image_only_keeps_unrefined_pairs_and_saves_baseline_first(tmp_path, monkeypatch):
+    from PIL import Image
+
+    from rcr.perception.challenge import cpu_frontend, photo_frontend
+    from rcr.perception.challenge.src import hold_constraints, hold_scene
+
+    def hold(x):
+        return dict(
+            type="microban_hold",
+            color="#59C77B",
+            position=dict(x=x, y=0.5, z=0.0),
+            orientation=dict(roll=0.0, pitch=0.0, yaw=0.0),
+        )
+
+    def record(i, loss):
+        return dict(
+            left_proposal=i,
+            right_proposal=i,
+            hold_id=f"hold_{i + 1}",
+            accepted=True,
+            loss=loss,
+            family="wall",
+            kinds=["microban_hold"],
+        )
+
+    raw = np.full((40, 80, 3), 180, dtype=np.uint8)
+    source = tmp_path / "source.png"
+    Image.fromarray(raw).save(source)
+    calibration = tmp_path / "calibration.json"
+    calibration.write_text(json.dumps(dict(image_width=40, image_height=40)))
+    output = tmp_path / "out"
+    baseline = {"hold_1": hold(-0.1), "hold_2": hold(0.2)}
+    records = [record(0, 0.1), record(1, 0.4)]
+    monkeypatch.setattr(
+        cpu_frontend,
+        "estimate",
+        lambda *_: ({"holds": baseline}, {"objects": records, "losses": [0.1, 0.4]}),
+    )
+
+    def refine(images, rig, **kwargs):
+        checkpoint = json.loads((output / "prediction.json").read_text())
+        assert checkpoint["holds"] == baseline
+        assert kwargs["pair_losses"] == [-0.1, -0.4]
+        assert np.array_equal(kwargs["geometry_images"][0], raw[:, :40])
+        return {"hold_1": hold(-0.12)}, dict(
+            objects=[records[0]], volumes=[], partial=True, runtime_s=0.0
+        )
+
+    monkeypatch.setattr(hold_scene, "infer", refine)
+    monkeypatch.setattr(photo_frontend, "volume_rgb", lambda image: image)
+    monkeypatch.setattr(hold_constraints, "recover_scene", lambda holds, *_: (holds, {}))
+    monkeypatch.setenv("RCR_IMAGE_FIT_SECONDS", "24")
+    holds, diagnostics = photo_frontend.image_only_hold_prediction(source, calibration, output)
+    assert holds == {"hold_1": hold(-0.12), "hold_2": hold(0.2)}
+    assert diagnostics["cpu_retained_pairs"] == 1
+    assert diagnostics["seed_search"] is False
+    assert diagnostics["source_exact"] is False
+    assert not (output / "native_stereo.png").exists()
+    assert not (output / "native_calibration.json").exists()
